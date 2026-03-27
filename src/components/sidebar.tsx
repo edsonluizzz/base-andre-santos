@@ -14,6 +14,7 @@ import {
   LogOut,
   Menu,
   X,
+  BarChart2,
 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -24,6 +25,7 @@ const navItems = [
   { href: "/membros", icon: Users, label: "Membros" },
   { href: "/aniversarios", icon: Cake, label: "Aniversários" },
   { href: "/chamada", icon: ClipboardList, label: "Chamada" },
+  { href: "/relatorios", icon: BarChart2, label: "Relatórios" },
   { href: "/financeiro", icon: DollarSign, label: "Financeiro" },
   { href: "/configuracoes", icon: Settings, label: "Configurações" },
 ];
