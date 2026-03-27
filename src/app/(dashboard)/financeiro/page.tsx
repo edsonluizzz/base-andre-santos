@@ -31,7 +31,7 @@ type Offering = {
   event: { id: string; title: string; type: string } | null;
 };
 
-type Member = { id: string; name: string };
+type Member = { id: string; name: string; status: string };
 type Event = { id: string; title: string; type: string };
 
 const METHOD_LABELS = { CASH: "Dinheiro", PIX: "PIX" };
