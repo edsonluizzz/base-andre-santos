@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
-import { Plus, Search, Pencil, Trash2, Phone, UserCheck, UserX } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, Phone } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";

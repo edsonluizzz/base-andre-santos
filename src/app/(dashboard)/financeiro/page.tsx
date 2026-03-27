@@ -20,7 +20,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 
 type Offering = {
   id: string;
@@ -61,7 +60,7 @@ export default function FinanceiroPage() {
 
   useEffect(() => {
     fetch("/api/members").then((r) => r.json()).then((d) =>
-      setMembers(d.filter((m: any) => m.status === "ACTIVE"))
+      setMembers((d as Member[]).filter((m) => m.status === "ACTIVE"))
     );
     fetch("/api/events").then((r) => r.json()).then(setEvents);
   }, []);

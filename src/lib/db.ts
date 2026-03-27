@@ -12,6 +12,7 @@ function createPrismaClient(): PrismaClient {
     return new PrismaClient();
   }
   const adapter = new PrismaNeon({ connectionString });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return new PrismaClient({ adapter } as any);
 }
 
