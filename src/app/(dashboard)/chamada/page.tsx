@@ -6,7 +6,6 @@ import { Plus, CalendarDays, ChevronRight, Check, X, Clock } from "lucide-react"
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
@@ -35,7 +34,7 @@ type Event = {
   location: string | null;
   _count: { attendances: number; offerings: number };
 };
-type Attendance = { memberId: string; status: AttendanceStatus };
+type AttendanceRecord = { memberId: string; status: AttendanceStatus };
 
 const EVENT_LABELS: Record<EventType, string> = {
   CULTO: "Culto",
@@ -67,7 +66,7 @@ export default function ChamadaPage() {
   useEffect(() => {
     fetchEvents();
     fetch("/api/members").then((r) => r.json()).then((data) =>
-      setMembers(data.filter((m: any) => m.status === "ACTIVE"))
+      setMembers((data as Member[]).filter((m) => m.status === "ACTIVE"))
     );
   }, [fetchEvents]);
 
@@ -78,7 +77,7 @@ export default function ChamadaPage() {
     const map: Record<string, AttendanceStatus> = {};
     // Initialize all active members as ABSENT
     members.forEach((m) => (map[m.id] = "ABSENT"));
-    data.attendances.forEach((a: any) => (map[a.memberId] = a.status));
+    (data.attendances as AttendanceRecord[]).forEach((a) => (map[a.memberId] = a.status));
     setAttendances(map);
   }
 
