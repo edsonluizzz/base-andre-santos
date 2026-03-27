@@ -25,7 +25,7 @@ import { ptBR } from "date-fns/locale";
 type EventType = "CULTO" | "ENSAIO" | "REUNIAO" | "RETIRO" | "OUTRO";
 type AttendanceStatus = "PRESENT" | "ABSENT" | "JUSTIFIED";
 
-type Member = { id: string; name: string };
+type Member = { id: string; name: string; status: string };
 type Event = {
   id: string;
   title: string;
