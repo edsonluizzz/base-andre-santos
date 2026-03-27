@@ -16,7 +16,7 @@ import {
   X,
   BarChart2,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
@@ -34,6 +34,28 @@ export function Sidebar() {
   const pathname = usePathname();
   const { data: session } = useSession();
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  // Church appearance settings from localStorage
+  const [churchName, setChurchName] = useState("Porto Belo");
+  const [churchLogoUrl, setChurchLogoUrl] = useState("");
+  const [logoError, setLogoError] = useState(false);
+
+  useEffect(() => {
+    function loadSettings() {
+      try {
+        const raw = localStorage.getItem("church_settings");
+        if (raw) {
+          const s = JSON.parse(raw);
+          if (s.name) setChurchName(s.name);
+          setChurchLogoUrl(s.logoUrl ?? "");
+          setLogoError(false);
+        }
+      } catch { /* ignore */ }
+    }
+    loadSettings();
+    window.addEventListener("storage", loadSettings);
+    return () => window.removeEventListener("storage", loadSettings);
+  }, []);
 
   const initials = session?.user?.name
     ?.split(" ")
@@ -75,9 +97,18 @@ export function Sidebar() {
         {/* Header */}
         <div className="p-6 border-b border-[#2a2a2a]">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-[#1e1e1e] border border-[#c9a84c33] flex items-center justify-center text-lg">
-              ✝️
-            </div>
+            {churchLogoUrl && !logoError ? (
+              <img
+                src={churchLogoUrl}
+                alt="Logo"
+                className="w-9 h-9 rounded-lg object-cover border border-[#c9a84c33]"
+                onError={() => setLogoError(true)}
+              />
+            ) : (
+              <div className="w-9 h-9 rounded-lg bg-[#1e1e1e] border border-[#c9a84c33] flex items-center justify-center text-lg">
+                ✝️
+              </div>
+            )}
             <div>
               <p className="text-[10px] tracking-[3px] uppercase text-[#c9a84c] opacity-70">
                 UMADC
@@ -86,7 +117,7 @@ export function Sidebar() {
                 className="text-sm font-bold text-[#e8c97a]"
                 style={{ fontFamily: "var(--font-heading)" }}
               >
-                Porto Belo
+                {churchName}
               </p>
             </div>
           </div>

@@ -1,8 +1,21 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { format } from "date-fns";
+import { format, isValid } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { Printer } from "lucide-react";
+
+// ─── Safe date format ─────────────────────────────────────────────────────────
+
+function safeFormat(dateStr: string | Date, fmt: string): string {
+  try {
+    const d = typeof dateStr === "string" ? new Date(dateStr) : dateStr;
+    if (!isValid(d)) return String(dateStr).slice(0, 10);
+    return format(d, fmt, { locale: ptBR });
+  } catch {
+    return String(dateStr).slice(0, 10);
+  }
+}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -48,9 +61,9 @@ function RateBar({ rate }: { rate: number | null }) {
 
 function Card({ label, value }: { label: string; value: string | number }) {
   return (
-    <div className="bg-[#1e1e1e] border border-[#2a2a2a] rounded-xl p-4">
-      <p className="text-[10px] tracking-[2px] uppercase text-[#c9a84c] mb-1">{label}</p>
-      <p className="text-xl font-bold text-[#f0ece4]" style={{ fontFamily: "var(--font-heading)" }}>{value}</p>
+    <div className="bg-[#1e1e1e] border border-[#2a2a2a] rounded-xl p-4 print:border-gray-300 print:bg-white">
+      <p className="text-[10px] tracking-[2px] uppercase text-[#c9a84c] mb-1 print:text-gray-500">{label}</p>
+      <p className="text-xl font-bold text-[#f0ece4] print:text-black" style={{ fontFamily: "var(--font-heading)" }}>{value}</p>
     </div>
   );
 }
@@ -69,19 +82,19 @@ function FilterBar({
   onMode: (m: FilterMode) => void; onYear: (y: string) => void; onMonth: (m: string) => void;
 }) {
   return (
-    <div className="flex flex-wrap items-center gap-2 mb-6">
+    <div className="flex flex-wrap items-center gap-2 mb-6 no-print">
       <span className="text-[10px] tracking-[2px] uppercase text-[#555]">Período:</span>
-      {(["all", "year", "month"] as FilterMode[]).map((m) => (
+      {(["all", "year", "month"] as FilterMode[]).map((fm) => (
         <button
-          key={m}
-          onClick={() => onMode(m)}
+          key={fm}
+          onClick={() => onMode(fm)}
           className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-            mode === m
+            mode === fm
               ? "bg-[#c9a84c22] text-[#c9a84c] border border-[#c9a84c44]"
               : "text-[#888] border border-[#2a2a2a] hover:text-[#f0ece4]"
           }`}
         >
-          {m === "all" ? "Total" : m === "year" ? "Por Ano" : "Por Mês"}
+          {fm === "all" ? "Total" : fm === "year" ? "Por Ano" : "Por Mês"}
         </button>
       ))}
       {mode === "year" && (
@@ -125,6 +138,13 @@ const TYPE_MAP: Record<Tab, string> = {
   "membros": "members",
 };
 
+// Print-friendly period label
+function periodLabel(mode: FilterMode, year: string, month: string): string {
+  if (mode === "month") return safeFormat(`${month}-01`, "MMMM 'de' yyyy");
+  if (mode === "year") return year;
+  return "Todo o período";
+}
+
 export default function RelatoriosPage() {
   const now = new Date();
   const [tab, setTab] = useState<Tab>("freq-evento");
@@ -148,6 +168,7 @@ export default function RelatoriosPage() {
         if (filterMode === "year") params.set("year", filterYear);
         if (filterMode === "month") params.set("month", filterMonth);
         const res = await fetch(`/api/reports?${params}`);
+        if (!res.ok) { setData([]); setLoading(false); return; }
         const raw = await res.json();
         json = Array.isArray(raw) ? raw : [];
       }
@@ -162,50 +183,95 @@ export default function RelatoriosPage() {
     fetchData();
   }, [fetchData]);
 
+  const currentTabLabel = TABS.find((t) => t.id === tab)?.label ?? "";
+
   return (
-    <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-[#e8c97a]" style={{ fontFamily: "var(--font-heading)" }}>
-          Relatórios
-        </h1>
-        <p className="text-[#888] text-sm mt-1">Frequência e financeiro consolidados</p>
-      </div>
+    <>
+      {/* Print styles */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        @media print {
+          body { background: white !important; color: black !important; }
+          .no-print { display: none !important; }
+          nav, aside, header { display: none !important; }
+          main { margin: 0 !important; padding: 0 !important; }
+          table { border-collapse: collapse !important; width: 100% !important; }
+          table, th, td { border: 1px solid #ccc !important; }
+          th { background: #f5f5f5 !important; color: #333 !important; }
+          td { color: #111 !important; background: white !important; }
+          th.hidden, td.hidden { display: table-cell !important; }
+          [class*="sm:table-cell"] { display: table-cell !important; }
+          [class*="md:table-cell"] { display: table-cell !important; }
+          .print\\:text-black { color: black !important; }
+          .print\\:bg-white { background: white !important; }
+          .print\\:border-gray-300 { border-color: #d1d5db !important; }
+          .print\\:text-gray-500 { color: #6b7280 !important; }
+          .print-header { display: block !important; }
+        }
+        .print-header { display: none; }
+      ` }} />
 
-      {/* Tabs */}
-      <div className="flex gap-1 mb-4 bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-1 flex-wrap">
-        {TABS.map((t) => (
+      <div>
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-[#e8c97a] print:text-black" style={{ fontFamily: "var(--font-heading)" }}>
+              Relatórios
+            </h1>
+            <p className="text-[#888] text-sm mt-1 print:text-gray-500">Frequência e financeiro consolidados</p>
+          </div>
           <button
-            key={t.id}
-            onClick={() => setTab(t.id)}
-            className={`flex-1 min-w-fit px-3 py-2 rounded-lg text-xs font-medium transition-all ${
-              tab === t.id
-                ? "bg-[#c9a84c22] text-[#c9a84c] border border-[#c9a84c33]"
-                : "text-[#888] hover:text-[#f0ece4]"
-            }`}
+            onClick={() => window.print()}
+            className="no-print flex items-center gap-2 px-3 py-2 rounded-lg border border-[#2a2a2a] text-[#888] hover:text-[#f0ece4] hover:border-[#7a6330] text-xs transition-colors"
           >
-            {t.label}
+            <Printer className="w-3.5 h-3.5" />
+            Exportar PDF
           </button>
-        ))}
+        </div>
+
+        {/* Print header (visible only when printing) */}
+        <div className="print-header mb-4">
+          <p className="text-gray-500 text-sm">
+            {currentTabLabel} · {periodLabel(filterMode, filterYear, filterMonth)} · {safeFormat(now, "dd/MM/yyyy")}
+          </p>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex gap-1 mb-4 bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-1 flex-wrap no-print">
+          {TABS.map((t) => (
+            <button
+              key={t.id}
+              onClick={() => setTab(t.id)}
+              className={`flex-1 min-w-fit px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+                tab === t.id
+                  ? "bg-[#c9a84c22] text-[#c9a84c] border border-[#c9a84c33]"
+                  : "text-[#888] hover:text-[#f0ece4]"
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Filter — hidden for membros tab */}
+        {tab !== "membros" && (
+          <FilterBar
+            mode={filterMode} year={filterYear} month={filterMonth}
+            onMode={setFilterMode} onYear={setFilterYear} onMonth={setFilterMonth}
+          />
+        )}
+
+        {loading ? (
+          <div className="flex items-center justify-center py-20 text-[#555] text-sm">Carregando...</div>
+        ) : (
+          <>
+            {tab === "freq-evento" && <FreqEventoTab data={data as AttendanceByEvent[]} />}
+            {tab === "freq-membro" && <FreqMembroTab data={data as AttendanceByMember[]} />}
+            {tab === "fin-mes" && <FinMesTab data={data as FinancialByMonth[]} />}
+            {tab === "fin-membro" && <FinMembroTab data={data as FinancialByMember[]} />}
+            {tab === "membros" && <MembrosTab data={data as MemberRecord[]} />}
+          </>
+        )}
       </div>
-
-      {/* Filter */}
-      <FilterBar
-        mode={filterMode} year={filterYear} month={filterMonth}
-        onMode={setFilterMode} onYear={setFilterYear} onMonth={setFilterMonth}
-      />
-
-      {loading ? (
-        <div className="flex items-center justify-center py-20 text-[#555] text-sm">Carregando...</div>
-      ) : (
-        <>
-          {tab === "freq-evento" && <FreqEventoTab data={data as AttendanceByEvent[]} />}
-          {tab === "freq-membro" && <FreqMembroTab data={data as AttendanceByMember[]} />}
-          {tab === "fin-mes" && <FinMesTab data={data as FinancialByMonth[]} />}
-          {tab === "fin-membro" && <FinMembroTab data={data as FinancialByMember[]} />}
-          {tab === "membros" && <MembrosTab data={data as MemberRecord[]} />}
-        </>
-      )}
-    </div>
+    </>
   );
 }
 
@@ -227,33 +293,36 @@ function FreqEventoTab({ data }: { data: AttendanceByEvent[] }) {
         <Card label="Melhor evento" value={best ? `${best.rate}%` : "—"} />
       </div>
 
-      <div className="bg-[#1e1e1e] border border-[#2a2a2a] rounded-xl overflow-hidden">
+      <div className="bg-[#1e1e1e] border border-[#2a2a2a] rounded-xl overflow-hidden print:border-gray-300">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-[#2a2a2a]">
-                <th className="text-left px-4 py-3 text-[10px] tracking-[2px] uppercase text-[#555] font-medium">Evento</th>
-                <th className="text-left px-4 py-3 text-[10px] tracking-[2px] uppercase text-[#555] font-medium hidden sm:table-cell">Data</th>
+              <tr className="border-b border-[#2a2a2a] print:border-gray-300">
+                <th className="text-left px-4 py-3 text-[10px] tracking-[2px] uppercase text-[#555] font-medium print:text-gray-500">Evento</th>
+                <th className="text-left px-4 py-3 text-[10px] tracking-[2px] uppercase text-[#555] font-medium hidden sm:table-cell print:text-gray-500">Data</th>
                 <th className="text-center px-3 py-3 text-[10px] tracking-[2px] uppercase text-[#2ecc71] font-medium">Pres.</th>
                 <th className="text-center px-3 py-3 text-[10px] tracking-[2px] uppercase text-[#e74c3c] font-medium">Aus.</th>
                 <th className="text-center px-3 py-3 text-[10px] tracking-[2px] uppercase text-[#c9a84c] font-medium">Just.</th>
-                <th className="text-left px-4 py-3 text-[10px] tracking-[2px] uppercase text-[#555] font-medium">Taxa</th>
+                <th className="text-left px-4 py-3 text-[10px] tracking-[2px] uppercase text-[#555] font-medium print:text-gray-500">Taxa</th>
               </tr>
             </thead>
             <tbody>
               {data.map((e, i) => (
-                <tr key={e.id} className={i % 2 === 0 ? "bg-[#1a1a1a]" : ""}>
+                <tr key={e.id} className={i % 2 === 0 ? "bg-[#1a1a1a] print:bg-gray-50" : "print:bg-white"}>
                   <td className="px-4 py-3">
-                    <p className="text-[#f0ece4] font-medium">{e.title}</p>
-                    <p className="text-[#555] text-xs">{EVENT_LABELS[e.type] ?? e.type}</p>
+                    <p className="text-[#f0ece4] font-medium print:text-black">{e.title}</p>
+                    <p className="text-[#555] text-xs print:text-gray-500">{EVENT_LABELS[e.type] ?? e.type}</p>
                   </td>
-                  <td className="px-4 py-3 text-[#888] hidden sm:table-cell">
-                    {format(new Date(e.date), "dd/MM/yyyy", { locale: ptBR })}
+                  <td className="px-4 py-3 text-[#888] hidden sm:table-cell print:text-gray-600">
+                    {safeFormat(e.date, "dd/MM/yyyy")}
                   </td>
-                  <td className="px-3 py-3 text-center text-[#2ecc71] font-medium">{e.present}</td>
-                  <td className="px-3 py-3 text-center text-[#e74c3c] font-medium">{e.absent}</td>
-                  <td className="px-3 py-3 text-center text-[#c9a84c] font-medium">{e.justified}</td>
-                  <td className="px-4 py-3"><RateBar rate={e.rate} /></td>
+                  <td className="px-3 py-3 text-center text-[#2ecc71] font-medium print:text-green-700">{e.present}</td>
+                  <td className="px-3 py-3 text-center text-[#e74c3c] font-medium print:text-red-700">{e.absent}</td>
+                  <td className="px-3 py-3 text-center text-[#c9a84c] font-medium print:text-yellow-700">{e.justified}</td>
+                  <td className="px-4 py-3">
+                    <span className="print:text-black">{e.rate !== null ? `${e.rate}%` : "—"}</span>
+                    <span className="no-print"><RateBar rate={e.rate} /></span>
+                  </td>
                 </tr>
               ))}
               {data.length === 0 && (
@@ -284,26 +353,29 @@ function FreqMembroTab({ data }: { data: AttendanceByMember[] }) {
         <Card label="≥ 70% presença" value={data.filter((m) => (m.rate ?? 0) >= 70).length} />
       </div>
 
-      <div className="bg-[#1e1e1e] border border-[#2a2a2a] rounded-xl overflow-hidden">
+      <div className="bg-[#1e1e1e] border border-[#2a2a2a] rounded-xl overflow-hidden print:border-gray-300">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-[#2a2a2a]">
-                <th className="text-left px-4 py-3 text-[10px] tracking-[2px] uppercase text-[#555] font-medium">Membro</th>
+              <tr className="border-b border-[#2a2a2a] print:border-gray-300">
+                <th className="text-left px-4 py-3 text-[10px] tracking-[2px] uppercase text-[#555] font-medium print:text-gray-500">Membro</th>
                 <th className="text-center px-3 py-3 text-[10px] tracking-[2px] uppercase text-[#2ecc71] font-medium">Pres.</th>
                 <th className="text-center px-3 py-3 text-[10px] tracking-[2px] uppercase text-[#e74c3c] font-medium">Aus.</th>
                 <th className="text-center px-3 py-3 text-[10px] tracking-[2px] uppercase text-[#c9a84c] font-medium">Just.</th>
-                <th className="text-left px-4 py-3 text-[10px] tracking-[2px] uppercase text-[#555] font-medium">Taxa</th>
+                <th className="text-left px-4 py-3 text-[10px] tracking-[2px] uppercase text-[#555] font-medium print:text-gray-500">Taxa</th>
               </tr>
             </thead>
             <tbody>
               {data.map((m, i) => (
-                <tr key={m.id} className={i % 2 === 0 ? "bg-[#1a1a1a]" : ""}>
-                  <td className="px-4 py-3 text-[#f0ece4] font-medium">{m.name}</td>
-                  <td className="px-3 py-3 text-center text-[#2ecc71] font-medium">{m.present}</td>
-                  <td className="px-3 py-3 text-center text-[#e74c3c] font-medium">{m.absent}</td>
-                  <td className="px-3 py-3 text-center text-[#c9a84c] font-medium">{m.justified}</td>
-                  <td className="px-4 py-3"><RateBar rate={m.rate} /></td>
+                <tr key={m.id} className={i % 2 === 0 ? "bg-[#1a1a1a] print:bg-gray-50" : "print:bg-white"}>
+                  <td className="px-4 py-3 text-[#f0ece4] font-medium print:text-black">{m.name}</td>
+                  <td className="px-3 py-3 text-center text-[#2ecc71] font-medium print:text-green-700">{m.present}</td>
+                  <td className="px-3 py-3 text-center text-[#e74c3c] font-medium print:text-red-700">{m.absent}</td>
+                  <td className="px-3 py-3 text-center text-[#c9a84c] font-medium print:text-yellow-700">{m.justified}</td>
+                  <td className="px-4 py-3">
+                    <span className="print:text-black">{m.rate !== null ? `${m.rate}%` : "—"}</span>
+                    <span className="no-print"><RateBar rate={m.rate} /></span>
+                  </td>
                 </tr>
               ))}
               {data.length === 0 && (
@@ -321,7 +393,7 @@ function FreqMembroTab({ data }: { data: AttendanceByMember[] }) {
 
 function FinMesTab({ data }: { data: FinancialByMonth[] }) {
   const totalGeral = data.reduce((s, m) => s + Number(m.total), 0);
-  const melhorMes = [...data].sort((a, b) => Number(b.total) - Number(a.total))[0];
+  const melhorMes = data.length > 0 ? [...data].sort((a, b) => Number(b.total) - Number(a.total))[0] : null;
 
   return (
     <>
@@ -332,29 +404,28 @@ function FinMesTab({ data }: { data: FinancialByMonth[] }) {
         <Card label="Média/mês" value={data.length > 0 ? fmt(totalGeral / data.length) : "—"} />
       </div>
 
-      <div className="bg-[#1e1e1e] border border-[#2a2a2a] rounded-xl overflow-hidden">
+      <div className="bg-[#1e1e1e] border border-[#2a2a2a] rounded-xl overflow-hidden print:border-gray-300">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-[#2a2a2a]">
-                <th className="text-left px-4 py-3 text-[10px] tracking-[2px] uppercase text-[#555] font-medium">Mês</th>
-                <th className="text-right px-4 py-3 text-[10px] tracking-[2px] uppercase text-[#555] font-medium">Total</th>
-                <th className="text-right px-4 py-3 text-[10px] tracking-[2px] uppercase text-[#555] font-medium hidden sm:table-cell">Dinheiro</th>
-                <th className="text-right px-4 py-3 text-[10px] tracking-[2px] uppercase text-[#555] font-medium hidden sm:table-cell">PIX</th>
-                <th className="text-center px-3 py-3 text-[10px] tracking-[2px] uppercase text-[#555] font-medium">Registros</th>
+              <tr className="border-b border-[#2a2a2a] print:border-gray-300">
+                <th className="text-left px-4 py-3 text-[10px] tracking-[2px] uppercase text-[#555] font-medium print:text-gray-500">Mês</th>
+                <th className="text-right px-4 py-3 text-[10px] tracking-[2px] uppercase text-[#555] font-medium print:text-gray-500">Total</th>
+                <th className="text-right px-4 py-3 text-[10px] tracking-[2px] uppercase text-[#555] font-medium hidden sm:table-cell print:text-gray-500">Dinheiro</th>
+                <th className="text-right px-4 py-3 text-[10px] tracking-[2px] uppercase text-[#555] font-medium hidden sm:table-cell print:text-gray-500">PIX</th>
+                <th className="text-center px-3 py-3 text-[10px] tracking-[2px] uppercase text-[#555] font-medium print:text-gray-500">Registros</th>
               </tr>
             </thead>
             <tbody>
               {data.map((m, i) => {
-                const [yr, mo] = m.month.split("-");
-                const label = format(new Date(Number(yr), Number(mo) - 1, 1), "MMMM yyyy", { locale: ptBR });
+                const label = safeFormat(`${m.month}-01`, "MMMM yyyy");
                 return (
-                  <tr key={m.month} className={i % 2 === 0 ? "bg-[#1a1a1a]" : ""}>
-                    <td className="px-4 py-3 text-[#f0ece4] font-medium capitalize">{label}</td>
-                    <td className="px-4 py-3 text-right text-[#c9a84c] font-bold">{fmt(m.total)}</td>
-                    <td className="px-4 py-3 text-right text-[#888] hidden sm:table-cell">{fmt(m.cash)}</td>
-                    <td className="px-4 py-3 text-right text-[#888] hidden sm:table-cell">{fmt(m.pix)}</td>
-                    <td className="px-3 py-3 text-center text-[#888]">{m.count}</td>
+                  <tr key={m.month} className={i % 2 === 0 ? "bg-[#1a1a1a] print:bg-gray-50" : "print:bg-white"}>
+                    <td className="px-4 py-3 text-[#f0ece4] font-medium capitalize print:text-black">{label}</td>
+                    <td className="px-4 py-3 text-right text-[#c9a84c] font-bold print:text-black">{fmt(m.total)}</td>
+                    <td className="px-4 py-3 text-right text-[#888] hidden sm:table-cell print:text-gray-600">{fmt(m.cash)}</td>
+                    <td className="px-4 py-3 text-right text-[#888] hidden sm:table-cell print:text-gray-600">{fmt(m.pix)}</td>
+                    <td className="px-3 py-3 text-center text-[#888] print:text-gray-600">{m.count}</td>
                   </tr>
                 );
               })}
@@ -373,7 +444,7 @@ function FinMesTab({ data }: { data: FinancialByMonth[] }) {
 
 function FinMembroTab({ data }: { data: FinancialByMember[] }) {
   const totalGeral = data.reduce((s, m) => s + Number(m.total), 0);
-  const top = data[0];
+  const top = data[0] ?? null;
 
   return (
     <>
@@ -384,28 +455,28 @@ function FinMembroTab({ data }: { data: FinancialByMember[] }) {
         <Card label="Média por membro" value={data.length > 0 ? fmt(totalGeral / data.length) : "—"} />
       </div>
 
-      <div className="bg-[#1e1e1e] border border-[#2a2a2a] rounded-xl overflow-hidden">
+      <div className="bg-[#1e1e1e] border border-[#2a2a2a] rounded-xl overflow-hidden print:border-gray-300">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-[#2a2a2a]">
-                <th className="text-left px-4 py-3 text-[10px] tracking-[2px] uppercase text-[#555] font-medium">#</th>
-                <th className="text-left px-4 py-3 text-[10px] tracking-[2px] uppercase text-[#555] font-medium">Membro</th>
-                <th className="text-right px-4 py-3 text-[10px] tracking-[2px] uppercase text-[#555] font-medium">Total</th>
-                <th className="text-right px-4 py-3 text-[10px] tracking-[2px] uppercase text-[#555] font-medium hidden sm:table-cell">Dinheiro</th>
-                <th className="text-right px-4 py-3 text-[10px] tracking-[2px] uppercase text-[#555] font-medium hidden sm:table-cell">PIX</th>
-                <th className="text-center px-3 py-3 text-[10px] tracking-[2px] uppercase text-[#555] font-medium">Registros</th>
+              <tr className="border-b border-[#2a2a2a] print:border-gray-300">
+                <th className="text-left px-4 py-3 text-[10px] tracking-[2px] uppercase text-[#555] font-medium print:text-gray-500">#</th>
+                <th className="text-left px-4 py-3 text-[10px] tracking-[2px] uppercase text-[#555] font-medium print:text-gray-500">Membro</th>
+                <th className="text-right px-4 py-3 text-[10px] tracking-[2px] uppercase text-[#555] font-medium print:text-gray-500">Total</th>
+                <th className="text-right px-4 py-3 text-[10px] tracking-[2px] uppercase text-[#555] font-medium hidden sm:table-cell print:text-gray-500">Dinheiro</th>
+                <th className="text-right px-4 py-3 text-[10px] tracking-[2px] uppercase text-[#555] font-medium hidden sm:table-cell print:text-gray-500">PIX</th>
+                <th className="text-center px-3 py-3 text-[10px] tracking-[2px] uppercase text-[#555] font-medium print:text-gray-500">Registros</th>
               </tr>
             </thead>
             <tbody>
               {data.map((m, i) => (
-                <tr key={m.id} className={i % 2 === 0 ? "bg-[#1a1a1a]" : ""}>
-                  <td className="px-4 py-3 text-[#555] text-xs">{i + 1}</td>
-                  <td className="px-4 py-3 text-[#f0ece4] font-medium">{m.name}</td>
-                  <td className="px-4 py-3 text-right text-[#c9a84c] font-bold">{fmt(m.total)}</td>
-                  <td className="px-4 py-3 text-right text-[#888] hidden sm:table-cell">{fmt(m.cash)}</td>
-                  <td className="px-4 py-3 text-right text-[#888] hidden sm:table-cell">{fmt(m.pix)}</td>
-                  <td className="px-3 py-3 text-center text-[#888]">{m.count}</td>
+                <tr key={m.id} className={i % 2 === 0 ? "bg-[#1a1a1a] print:bg-gray-50" : "print:bg-white"}>
+                  <td className="px-4 py-3 text-[#555] text-xs print:text-gray-500">{i + 1}</td>
+                  <td className="px-4 py-3 text-[#f0ece4] font-medium print:text-black">{m.name}</td>
+                  <td className="px-4 py-3 text-right text-[#c9a84c] font-bold print:text-black">{fmt(m.total)}</td>
+                  <td className="px-4 py-3 text-right text-[#888] hidden sm:table-cell print:text-gray-600">{fmt(m.cash)}</td>
+                  <td className="px-4 py-3 text-right text-[#888] hidden sm:table-cell print:text-gray-600">{fmt(m.pix)}</td>
+                  <td className="px-3 py-3 text-center text-[#888] print:text-gray-600">{m.count}</td>
                 </tr>
               ))}
               {data.length === 0 && (
@@ -439,35 +510,35 @@ function MembrosTab({ data }: { data: MemberRecord[] }) {
         <Card label="Total de membros" value={data.length} />
         <Card label="Ativos" value={active.length} />
         <Card label="Inativos" value={inactive.length} />
-        <Card label={`Aniversários em ${format(now, "MMMM", { locale: ptBR })}`} value={birthdayThisMonth.length} />
+        <Card label={`Aniversários em ${safeFormat(now, "MMMM")}`} value={birthdayThisMonth.length} />
       </div>
 
-      <div className="bg-[#1e1e1e] border border-[#2a2a2a] rounded-xl overflow-hidden">
+      <div className="bg-[#1e1e1e] border border-[#2a2a2a] rounded-xl overflow-hidden print:border-gray-300">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-[#2a2a2a]">
-                <th className="text-left px-4 py-3 text-[10px] tracking-[2px] uppercase text-[#555] font-medium">Nome</th>
-                <th className="text-left px-4 py-3 text-[10px] tracking-[2px] uppercase text-[#555] font-medium hidden sm:table-cell">Aniversário</th>
-                <th className="text-left px-4 py-3 text-[10px] tracking-[2px] uppercase text-[#555] font-medium hidden md:table-cell">Telefone</th>
-                <th className="text-center px-4 py-3 text-[10px] tracking-[2px] uppercase text-[#555] font-medium">Status</th>
+              <tr className="border-b border-[#2a2a2a] print:border-gray-300">
+                <th className="text-left px-4 py-3 text-[10px] tracking-[2px] uppercase text-[#555] font-medium print:text-gray-500">Nome</th>
+                <th className="text-left px-4 py-3 text-[10px] tracking-[2px] uppercase text-[#555] font-medium hidden sm:table-cell print:text-gray-500">Aniversário</th>
+                <th className="text-left px-4 py-3 text-[10px] tracking-[2px] uppercase text-[#555] font-medium hidden md:table-cell print:text-gray-500">Telefone</th>
+                <th className="text-center px-4 py-3 text-[10px] tracking-[2px] uppercase text-[#555] font-medium print:text-gray-500">Status</th>
               </tr>
             </thead>
             <tbody>
               {data.map((m, i) => (
-                <tr key={m.id} className={i % 2 === 0 ? "bg-[#1a1a1a]" : ""}>
-                  <td className="px-4 py-3 text-[#f0ece4] font-medium">{m.name}</td>
-                  <td className="px-4 py-3 text-[#888] hidden sm:table-cell">
+                <tr key={m.id} className={i % 2 === 0 ? "bg-[#1a1a1a] print:bg-gray-50" : "print:bg-white"}>
+                  <td className="px-4 py-3 text-[#f0ece4] font-medium print:text-black">{m.name}</td>
+                  <td className="px-4 py-3 text-[#888] hidden sm:table-cell print:text-gray-600">
                     {m.birthday ?? <span className="text-[#444]">—</span>}
                   </td>
-                  <td className="px-4 py-3 text-[#888] hidden md:table-cell">
+                  <td className="px-4 py-3 text-[#888] hidden md:table-cell print:text-gray-600">
                     {m.phone ?? <span className="text-[#444]">—</span>}
                   </td>
                   <td className="px-4 py-3 text-center">
                     <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
                       m.status === "ACTIVE"
-                        ? "bg-[#2ecc7122] text-[#2ecc71]"
-                        : "bg-[#88888822] text-[#888]"
+                        ? "bg-[#2ecc7122] text-[#2ecc71] print:text-green-700 print:bg-transparent"
+                        : "bg-[#88888822] text-[#888] print:text-gray-500 print:bg-transparent"
                     }`}>
                       {m.status === "ACTIVE" ? "Ativo" : "Inativo"}
                     </span>

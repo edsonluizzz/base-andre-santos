@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
-import { Users, DollarSign, CalendarDays, Cake } from "lucide-react";
+import { Users, DollarSign, CalendarDays, Cake, TrendingUp, AlertTriangle, CheckCircle } from "lucide-react";
 import Link from "next/link";
-import { format } from "date-fns";
+import { format, isValid } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 type Member = {
@@ -20,6 +20,24 @@ type Event = {
   type: string;
   date: string;
 };
+
+type AttendanceByMember = {
+  id: string;
+  name: string;
+  total: number;
+  present: number;
+  rate: number | null;
+};
+
+function safeFormat(dateStr: string | Date, fmt: string): string {
+  try {
+    const d = typeof dateStr === "string" ? new Date(dateStr) : dateStr;
+    if (!isValid(d)) return "";
+    return format(d, fmt, { locale: ptBR });
+  } catch {
+    return "";
+  }
+}
 
 function daysUntil(ddmm: string): number {
   const [d, m] = ddmm.split("/").map(Number);
@@ -48,17 +66,30 @@ export default function DashboardPage() {
   const [members, setMembers] = useState<Member[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
   const [totalMonth, setTotalMonth] = useState(0);
+  const [expensesTotal, setExpensesTotal] = useState(0);
+  const [attendance, setAttendance] = useState<AttendanceByMember[]>([]);
 
   useEffect(() => {
     fetch("/api/members").then((r) => r.json()).then(setMembers);
     fetch("/api/events").then((r) => r.json()).then(setEvents);
-    const m = new Date();
-    const month = `${m.getFullYear()}-${String(m.getMonth() + 1).padStart(2, "0")}`;
-    fetch(`/api/offerings?month=${month}`).then((r) => r.json()).then((d) => setTotalMonth(d.total));
+    fetch("/api/reports?type=attendance-by-member")
+      .then((r) => r.json())
+      .then((d) => setAttendance(Array.isArray(d) ? d : []));
+
+    const now = new Date();
+    const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    fetch(`/api/offerings?month=${month}`)
+      .then((r) => r.json())
+      .then((d) => setTotalMonth(d.total ?? 0));
+    fetch(`/api/expenses?month=${month}`)
+      .then((r) => r.json())
+      .then((d) => setExpensesTotal(d.total ?? 0));
   }, []);
 
   const active = members.filter((m) => m.status === "ACTIVE").length;
+  const saldo = totalMonth - expensesTotal;
   const now = new Date();
+
   const upcomingBirthdays = members
     .filter((m) => m.birthday && daysUntil(m.birthday) <= 30)
     .sort((a, b) => daysUntil(a.birthday!) - daysUntil(b.birthday!))
@@ -67,6 +98,12 @@ export default function DashboardPage() {
   const upcomingEvents = events
     .filter((e) => new Date(e.date) >= now)
     .slice(0, 5);
+
+  // Members with low attendance (rate < 50%, at least 1 event)
+  const lowAttendance = attendance.filter((m) => m.total > 0 && (m.rate ?? 100) < 50);
+  const topAttendee = attendance
+    .filter((m) => m.total > 0)
+    .sort((a, b) => (b.rate ?? 0) - (a.rate ?? 0))[0];
 
   const greeting = (() => {
     const h = now.getHours();
@@ -87,7 +124,7 @@ export default function DashboardPage() {
           {session?.user?.name?.split(" ")[0] ?? "Pastor"}
         </h1>
         <p className="text-[#888] text-sm mt-1">
-          {format(now, "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+          {safeFormat(now, "EEEE, dd 'de' MMMM 'de' yyyy")}
         </p>
       </div>
 
@@ -100,10 +137,12 @@ export default function DashboardPage() {
           href="/membros"
         />
         <StatCard
-          icon={DollarSign}
-          label="Ofertas (mês)"
-          value={`R$ ${totalMonth.toFixed(2).replace(".", ",")}`}
+          icon={saldo >= 0 ? TrendingUp : DollarSign}
+          label="Saldo do Mês"
+          value={`R$ ${Math.abs(saldo).toFixed(2).replace(".", ",")}`}
+          sub={saldo < 0 ? "déficit" : "superávit"}
           href="/financeiro"
+          valueColor={saldo >= 0 ? "#2ecc71" : "#e74c3c"}
         />
         <StatCard
           icon={CalendarDays}
@@ -120,7 +159,7 @@ export default function DashboardPage() {
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         {/* Upcoming birthdays */}
         <div className="bg-[#1e1e1e] border border-[#2a2a2a] rounded-xl p-5">
           <div className="flex items-center justify-between mb-4">
@@ -184,7 +223,7 @@ export default function DashboardPage() {
                   <div className="flex-1">
                     <p className="text-sm font-medium text-[#f0ece4]">{ev.title}</p>
                     <p className="text-xs text-[#888]">
-                      {format(new Date(ev.date), "dd/MM HH:mm")} · {EVENT_TYPE_LABELS[ev.type]}
+                      {safeFormat(ev.date, "dd/MM HH:mm")} · {EVENT_TYPE_LABELS[ev.type]}
                     </p>
                   </div>
                 </div>
@@ -192,6 +231,60 @@ export default function DashboardPage() {
             </div>
           )}
         </div>
+      </div>
+
+      {/* Insights — Alertas de Frequência */}
+      <div className="bg-[#1e1e1e] border border-[#2a2a2a] rounded-xl p-5">
+        <div className="flex items-center justify-between mb-4">
+          <p className="text-[11px] tracking-[3px] uppercase text-[#c9a84c]">
+            Insights de Frequência
+          </p>
+          <Link href="/relatorios" className="text-xs text-[#888] hover:text-[#c9a84c] transition-colors">
+            Ver relatório →
+          </Link>
+        </div>
+
+        {attendance.length === 0 ? (
+          <p className="text-[#888] text-sm py-2 text-center">Nenhuma chamada registrada ainda</p>
+        ) : (
+          <div className="space-y-3">
+            {lowAttendance.length > 0 ? (
+              <div className="flex items-start gap-3 p-3 bg-[#e74c3c11] border border-[#e74c3c22] rounded-xl">
+                <AlertTriangle className="w-4 h-4 text-[#e74c3c] flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium text-[#e74c3c]">
+                    {lowAttendance.length} membro{lowAttendance.length !== 1 ? "s" : ""} com frequência abaixo de 50%
+                  </p>
+                  <p className="text-xs text-[#888] mt-0.5">
+                    {lowAttendance.slice(0, 3).map((m) => `${m.name} (${m.rate ?? 0}%)`).join(", ")}
+                    {lowAttendance.length > 3 && ` e mais ${lowAttendance.length - 3}...`}
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center gap-3 p-3 bg-[#2ecc7111] border border-[#2ecc7122] rounded-xl">
+                <CheckCircle className="w-4 h-4 text-[#2ecc71]" />
+                <p className="text-sm text-[#2ecc71]">Todos os membros com boa frequência</p>
+              </div>
+            )}
+
+            {topAttendee && (
+              <div className="flex items-center gap-3 p-3 border border-[#2a2a2a] rounded-xl">
+                <div className="w-8 h-8 rounded-full bg-[#7a6330] flex items-center justify-center text-[#e8c97a] text-xs font-bold"
+                  style={{ fontFamily: "var(--font-heading)" }}>
+                  {topAttendee.name.split(" ").slice(0, 2).map((n: string) => n[0]).join("").toUpperCase()}
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-[#f0ece4]">{topAttendee.name}</p>
+                  <p className="text-xs text-[#888]">Maior presença — {topAttendee.rate ?? 0}%</p>
+                </div>
+                <span className="text-xs font-semibold px-2.5 py-1 bg-[#c9a84c22] text-[#c9a84c] rounded-full">
+                  ⭐ Destaque
+                </span>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -203,12 +296,14 @@ function StatCard({
   value,
   sub,
   href,
+  valueColor,
 }: {
   icon: React.ElementType;
   label: string;
   value: string | number;
   sub?: string;
   href: string;
+  valueColor?: string;
 }) {
   return (
     <Link
@@ -221,8 +316,8 @@ function StatCard({
         </div>
       </div>
       <p
-        className="text-2xl font-bold text-[#f0ece4] group-hover:text-[#c9a84c] transition-colors"
-        style={{ fontFamily: "var(--font-heading)" }}
+        className="text-2xl font-bold group-hover:opacity-90 transition-opacity"
+        style={{ fontFamily: "var(--font-heading)", color: valueColor ?? "#f0ece4" }}
       >
         {value}
       </p>

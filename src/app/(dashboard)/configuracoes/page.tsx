@@ -3,7 +3,10 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
-import { Shield, Users, UserCog } from "lucide-react";
+import { Shield, Users, UserCog, ImageIcon, Save } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -37,11 +40,39 @@ export default function ConfiguracoesPage() {
   const [users, setUsers] = useState<SystemUser[]>([]);
   const isAdmin = session?.user?.role === "ADMIN";
 
+  // Church appearance settings
+  const [churchName, setChurchName] = useState("Porto Belo");
+  const [churchLogoUrl, setChurchLogoUrl] = useState("");
+  const [logoPreviewError, setLogoPreviewError] = useState(false);
+
   useEffect(() => {
     if (isAdmin) {
       fetch("/api/users").then((r) => r.json()).then(setUsers);
     }
+    // Load church settings from localStorage
+    try {
+      const raw = localStorage.getItem("church_settings");
+      if (raw) {
+        const s = JSON.parse(raw);
+        if (s.name) setChurchName(s.name);
+        if (s.logoUrl) setChurchLogoUrl(s.logoUrl);
+      }
+    } catch { /* ignore */ }
   }, [isAdmin]);
+
+  function saveChurchSettings() {
+    try {
+      localStorage.setItem("church_settings", JSON.stringify({ name: churchName, logoUrl: churchLogoUrl }));
+      // Dispatch storage event so sidebar can react
+      window.dispatchEvent(new StorageEvent("storage", {
+        key: "church_settings",
+        newValue: JSON.stringify({ name: churchName, logoUrl: churchLogoUrl }),
+      }));
+      toast.success("Configurações salvas");
+    } catch {
+      toast.error("Erro ao salvar");
+    }
+  }
 
   async function changeRole(userId: string, role: string) {
     const res = await fetch(`/api/users/${userId}`, {
@@ -68,6 +99,78 @@ export default function ConfiguracoesPage() {
         </h1>
         <p className="text-[#888] text-sm mt-1">Gerenciamento do sistema</p>
       </div>
+
+      {/* Church Appearance — admin only */}
+      {isAdmin && (
+        <div className="bg-[#1e1e1e] border border-[#2a2a2a] rounded-xl p-6 mb-6">
+          <div className="flex items-center gap-3 mb-5">
+            <ImageIcon className="w-5 h-5 text-[#c9a84c]" />
+            <p className="font-semibold text-[#f0ece4]">Aparência da Igreja</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-4">
+              <div className="space-y-1.5">
+                <Label className="text-[#888] text-xs">Nome da Igreja</Label>
+                <Input
+                  value={churchName}
+                  onChange={(e) => setChurchName(e.target.value)}
+                  placeholder="Ex: Porto Belo"
+                  className="bg-[#0d0d0d] border-[#2a2a2a] text-[#f0ece4] focus-visible:ring-[#7a6330]"
+                />
+                <p className="text-[11px] text-[#555]">Exibido no cabeçalho da barra lateral</p>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-[#888] text-xs">URL do Logo / Imagem</Label>
+                <Input
+                  value={churchLogoUrl}
+                  onChange={(e) => { setChurchLogoUrl(e.target.value); setLogoPreviewError(false); }}
+                  placeholder="https://exemplo.com/logo.png"
+                  className="bg-[#0d0d0d] border-[#2a2a2a] text-[#f0ece4] focus-visible:ring-[#7a6330]"
+                />
+                <p className="text-[11px] text-[#555]">Cole a URL de uma imagem (PNG, JPG, WebP)</p>
+              </div>
+
+              <Button
+                onClick={saveChurchSettings}
+                className="bg-[#c9a84c] hover:bg-[#e8c97a] text-black font-semibold"
+              >
+                <Save className="w-4 h-4 mr-2" />
+                Salvar configurações
+              </Button>
+            </div>
+
+            {/* Logo preview */}
+            <div className="flex flex-col items-center justify-center">
+              <p className="text-[10px] tracking-[2px] uppercase text-[#555] mb-3">Prévia</p>
+              <div className="bg-[#111] border border-[#2a2a2a] rounded-xl p-4 flex items-center gap-3 w-full max-w-[220px]">
+                {churchLogoUrl && !logoPreviewError ? (
+                  <img
+                    src={churchLogoUrl}
+                    alt="Logo"
+                    className="w-9 h-9 rounded-lg object-cover border border-[#c9a84c33]"
+                    onError={() => setLogoPreviewError(true)}
+                  />
+                ) : (
+                  <div className="w-9 h-9 rounded-lg bg-[#1e1e1e] border border-[#c9a84c33] flex items-center justify-center text-lg">
+                    ✝️
+                  </div>
+                )}
+                <div>
+                  <p className="text-[10px] tracking-[3px] uppercase text-[#c9a84c] opacity-70">UMADC</p>
+                  <p className="text-sm font-bold text-[#e8c97a]" style={{ fontFamily: "var(--font-heading)" }}>
+                    {churchName || "Porto Belo"}
+                  </p>
+                </div>
+              </div>
+              {logoPreviewError && (
+                <p className="text-[11px] text-[#e74c3c] mt-2">URL inválida ou imagem inacessível</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* My account */}
       <div className="bg-[#1e1e1e] border border-[#2a2a2a] rounded-xl p-6 mb-6">
