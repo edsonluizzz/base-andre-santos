@@ -41,20 +41,23 @@ export function Sidebar() {
   const [logoError, setLogoError] = useState(false);
 
   useEffect(() => {
-    function loadSettings() {
-      try {
-        const raw = localStorage.getItem("church_settings");
-        if (raw) {
-          const s = JSON.parse(raw);
-          if (s.name) setChurchName(s.name);
-          setChurchLogoUrl(s.logoUrl ?? "");
-          setLogoError(false);
-        }
-      } catch { /* ignore */ }
+    fetch("/api/settings")
+      .then((r) => r.json())
+      .then((s) => {
+        if (s.churchName) setChurchName(s.churchName);
+        setChurchLogoUrl(s.logoBase64 ?? "");
+        setLogoError(false);
+      })
+      .catch(() => {});
+
+    function onSettingsUpdated(e: Event) {
+      const detail = (e as CustomEvent).detail;
+      if (detail.churchName) setChurchName(detail.churchName);
+      setChurchLogoUrl(detail.logoBase64 ?? "");
+      setLogoError(false);
     }
-    loadSettings();
-    window.addEventListener("storage", loadSettings);
-    return () => window.removeEventListener("storage", loadSettings);
+    window.addEventListener("church-settings-updated", onSettingsUpdated);
+    return () => window.removeEventListener("church-settings-updated", onSettingsUpdated);
   }, []);
 
   const initials = session?.user?.name

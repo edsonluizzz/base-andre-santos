@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
-import { Shield, Users, UserCog, ImageIcon, Save } from "lucide-react";
+import { Shield, Users, UserCog, ImageIcon, Save, Upload, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -43,30 +43,62 @@ export default function ConfiguracoesPage() {
   // Church appearance settings
   const [churchName, setChurchName] = useState("Porto Belo");
   const [churchLogoUrl, setChurchLogoUrl] = useState("");
-  const [logoPreviewError, setLogoPreviewError] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (isAdmin) {
       fetch("/api/users").then((r) => r.json()).then(setUsers);
     }
-    // Load church settings from localStorage
-    try {
-      const raw = localStorage.getItem("church_settings");
-      if (raw) {
-        const s = JSON.parse(raw);
-        if (s.name) setChurchName(s.name);
-        if (s.logoUrl) setChurchLogoUrl(s.logoUrl);
-      }
-    } catch { /* ignore */ }
+    fetch("/api/settings")
+      .then((r) => r.json())
+      .then((s) => {
+        if (s.churchName) setChurchName(s.churchName);
+        if (s.logoBase64) setChurchLogoUrl(s.logoBase64);
+      })
+      .catch(() => {});
   }, [isAdmin]);
 
-  function saveChurchSettings() {
+  function handleImageFile(file: File) {
+    if (!file.type.startsWith("image/")) {
+      toast.error("Selecione um arquivo de imagem (PNG, JPG, WebP)");
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("Imagem muito grande. Máximo 2MB.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const base64 = e.target?.result as string;
+      setChurchLogoUrl(base64);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function handleFileInputChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file) handleImageFile(file);
+  }
+
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) handleImageFile(file);
+  }
+
+  async function saveChurchSettings() {
     try {
-      localStorage.setItem("church_settings", JSON.stringify({ name: churchName, logoUrl: churchLogoUrl }));
-      // Dispatch storage event so sidebar can react
-      window.dispatchEvent(new StorageEvent("storage", {
-        key: "church_settings",
-        newValue: JSON.stringify({ name: churchName, logoUrl: churchLogoUrl }),
+      const res = await fetch("/api/settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ churchName, logoBase64: churchLogoUrl }),
+      });
+      if (!res.ok) throw new Error();
+      // Notify sidebar via custom event
+      window.dispatchEvent(new CustomEvent("church-settings-updated", {
+        detail: { churchName, logoBase64: churchLogoUrl },
       }));
       toast.success("Configurações salvas");
     } catch {
@@ -122,14 +154,51 @@ export default function ConfiguracoesPage() {
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-[#888] text-xs">URL do Logo / Imagem</Label>
-                <Input
-                  value={churchLogoUrl}
-                  onChange={(e) => { setChurchLogoUrl(e.target.value); setLogoPreviewError(false); }}
-                  placeholder="https://exemplo.com/logo.png"
-                  className="bg-[#0d0d0d] border-[#2a2a2a] text-[#f0ece4] focus-visible:ring-[#7a6330]"
+                <Label className="text-[#888] text-xs">Logo / Imagem da Igreja</Label>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleFileInputChange}
                 />
-                <p className="text-[11px] text-[#555]">Cole a URL de uma imagem (PNG, JPG, WebP)</p>
+                <div
+                  onClick={() => fileInputRef.current?.click()}
+                  onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                  onDragLeave={() => setIsDragging(false)}
+                  onDrop={handleDrop}
+                  className={`relative flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed cursor-pointer transition-colors p-5 ${
+                    isDragging
+                      ? "border-[#c9a84c] bg-[#c9a84c11]"
+                      : "border-[#2a2a2a] bg-[#0d0d0d] hover:border-[#7a6330] hover:bg-[#c9a84c08]"
+                  }`}
+                >
+                  {churchLogoUrl ? (
+                    <>
+                      <img
+                        src={churchLogoUrl}
+                        alt="Logo"
+                        className="w-16 h-16 rounded-xl object-cover border border-[#c9a84c33]"
+                      />
+                      <p className="text-[11px] text-[#888]">Clique para trocar</p>
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); setChurchLogoUrl(""); }}
+                        className="absolute top-2 right-2 w-6 h-6 rounded-full bg-[#e74c3c22] flex items-center justify-center hover:bg-[#e74c3c44] transition-colors"
+                      >
+                        <X className="w-3 h-3 text-[#e74c3c]" />
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="w-6 h-6 text-[#555]" />
+                      <p className="text-xs text-[#888] text-center">
+                        Clique ou arraste uma imagem aqui
+                      </p>
+                      <p className="text-[11px] text-[#555]">PNG, JPG, WebP — máx. 2MB</p>
+                    </>
+                  )}
+                </div>
               </div>
 
               <Button
@@ -145,12 +214,11 @@ export default function ConfiguracoesPage() {
             <div className="flex flex-col items-center justify-center">
               <p className="text-[10px] tracking-[2px] uppercase text-[#555] mb-3">Prévia</p>
               <div className="bg-[#111] border border-[#2a2a2a] rounded-xl p-4 flex items-center gap-3 w-full max-w-[220px]">
-                {churchLogoUrl && !logoPreviewError ? (
+                {churchLogoUrl ? (
                   <img
                     src={churchLogoUrl}
                     alt="Logo"
                     className="w-9 h-9 rounded-lg object-cover border border-[#c9a84c33]"
-                    onError={() => setLogoPreviewError(true)}
                   />
                 ) : (
                   <div className="w-9 h-9 rounded-lg bg-[#1e1e1e] border border-[#c9a84c33] flex items-center justify-center text-lg">
@@ -164,9 +232,6 @@ export default function ConfiguracoesPage() {
                   </p>
                 </div>
               </div>
-              {logoPreviewError && (
-                <p className="text-[11px] text-[#e74c3c] mt-2">URL inválida ou imagem inacessível</p>
-              )}
             </div>
           </div>
         </div>

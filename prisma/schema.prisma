@@ -135,6 +135,15 @@ model Expense {
   createdAt   DateTime        @default(now())
 }
 
+// ─── Configurações globais ────────────────────────────────────────────────
+
+model Settings {
+  id         String   @id @default("singleton")
+  churchName String   @default("Porto Belo")
+  logoBase64 String?  @db.Text
+  updatedAt  DateTime @updatedAt
+}
+
 // ─── Enums ────────────────────────────────────────────────────────────────
 
 enum Role {
