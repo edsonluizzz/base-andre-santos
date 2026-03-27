@@ -47,7 +47,8 @@
   }
 
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border;
+    outline-color: rgb(122 99 48 / 0.5);
   }
 
   body {
