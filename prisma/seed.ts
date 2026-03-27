@@ -1,82 +1,75 @@
+import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
+import { PrismaNeon } from "@prisma/adapter-neon";
 
-const prisma = new PrismaClient();
+const connectionString = process.env.DATABASE_URL_UNPOOLED ?? process.env.DATABASE_URL!;
+const adapter = new PrismaNeon({ connectionString });
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const prisma = new PrismaClient({ adapter } as any);
 
 const members = [
-  { name: "Abimael", birthday: "28/12", phone: null },
-  { name: "Alana Silva De Oliveira", birthday: "16/12", phone: null },
-  { name: "Alessandra Caroline", birthday: "01/08", phone: null },
-  { name: "Alex Sales Martins", birthday: "17/03", phone: null },
-  { name: "Andre França Fonseca", birthday: "18/01", phone: null },
-  { name: "Andressa Sales Martins", birthday: "30/05", phone: null },
-  { name: "Anny", birthday: "25/09", phone: null },
-  { name: "Bruna Marques", birthday: "23/10", phone: null },
-  { name: "Cristina", birthday: "14/06", phone: null },
-  { name: "Cyntia", birthday: "19/12", phone: null },
-  { name: "Daniel Borge Sales", birthday: "16/11", phone: null },
-  { name: "Diovana Ribeiro", birthday: "19/05", phone: null },
-  { name: "Edson Luiz da Silva", birthday: "07/09", phone: null },
-  { name: "Evander", birthday: "23/11", phone: null },
-  { name: "Gabriela", birthday: "23/02", phone: null },
-  { name: "Giovanna", birthday: "10/06", phone: null },
-  { name: "Giulia Felix Gonçalves Godoy", birthday: "06/10", phone: null },
-  { name: "Grazi", birthday: "15/04", phone: null },
-  { name: "Hellen", birthday: "28/06", phone: null },
-  { name: "Ingrid", birthday: "09/06", phone: null },
-  { name: "Jean", birthday: "31/03", phone: null },
-  { name: "Jessica Caroline Andrioli", birthday: "07/12", phone: null },
-  { name: "Jô", birthday: "17/06", phone: null },
-  { name: "João Victor Ferreira", birthday: "19/02", phone: null },
-  { name: "Kamille", birthday: "19/12", phone: null },
-  { name: "Kauana", birthday: "18/10", phone: null },
-  { name: "Khevin", birthday: "08/08", phone: null },
-  { name: "Lucas Camargo", birthday: "22/10", phone: null },
-  { name: "Lucas Diego", birthday: null, phone: null },
-  { name: "Luciana De Jesus De Sousa", birthday: "05/08", phone: null },
-  { name: "Marcelo", birthday: "27/11", phone: null },
-  { name: "Max", birthday: null, phone: null },
-  { name: "Mayko Espirito Santo", birthday: "09/12", phone: null },
-  { name: "Miriã Pereira De Morais", birthday: "27/05", phone: null },
-  { name: "Pedro Henrique", birthday: "24/11", phone: null },
-  { name: "Pr Ailton", birthday: "11/11", phone: null },
-  { name: "Pra Néia", birthday: "18/09", phone: null },
-  { name: "Rafael Foice", birthday: "19/08", phone: null },
-  { name: "Rafinha", birthday: null, phone: null },
-  { name: "Raphaelee", birthday: "21/10", phone: null },
-  { name: "Ronaldo", birthday: "13/08", phone: null },
-  { name: "Taiwan", birthday: "20/03", phone: null },
-  { name: "Thaiane", birthday: "23/03", phone: null },
-  { name: "Thainan Crystian Moraes", birthday: "14/10", phone: null },
-  { name: "Vitor", birthday: "03/12", phone: null },
-  { name: "Viviane", birthday: "07/04", phone: null },
-  { name: "Wagner", birthday: "18/08", phone: null },
+  { name: "Abimael", birthday: "28/12" },
+  { name: "Alana Silva De Oliveira", birthday: "16/12" },
+  { name: "Alessandra Caroline", birthday: "01/08" },
+  { name: "Alex Sales Martins", birthday: "17/03" },
+  { name: "Andre França Fonseca", birthday: "18/01" },
+  { name: "Andressa Sales Martins", birthday: "30/05" },
+  { name: "Anny", birthday: "25/09" },
+  { name: "Bruna Marques", birthday: "23/10" },
+  { name: "Cristina", birthday: "14/06" },
+  { name: "Cyntia", birthday: "19/12" },
+  { name: "Daniel Borge Sales", birthday: "16/11" },
+  { name: "Diovana Ribeiro", birthday: "19/05" },
+  { name: "Edson Luiz da Silva", birthday: "07/09" },
+  { name: "Evander", birthday: "23/11" },
+  { name: "Gabriela", birthday: "23/02" },
+  { name: "Giovanna", birthday: "10/06" },
+  { name: "Giulia Felix Gonçalves Godoy", birthday: "06/10" },
+  { name: "Grazi", birthday: "15/04" },
+  { name: "Hellen", birthday: "28/06" },
+  { name: "Ingrid", birthday: "09/06" },
+  { name: "Jean", birthday: "31/03" },
+  { name: "Jessica Caroline Andrioli", birthday: "07/12" },
+  { name: "Jô", birthday: "17/06" },
+  { name: "João Victor Ferreira", birthday: "19/02" },
+  { name: "Kamille", birthday: "19/12" },
+  { name: "Kauana", birthday: "18/10" },
+  { name: "Khevin", birthday: "08/08" },
+  { name: "Lucas Camargo", birthday: "22/10" },
+  { name: "Lucas Diego", birthday: null },
+  { name: "Luciana De Jesus De Sousa", birthday: "05/08" },
+  { name: "Marcelo", birthday: "27/11" },
+  { name: "Max", birthday: null },
+  { name: "Mayko Espirito Santo", birthday: "09/12" },
+  { name: "Miriã Pereira De Morais", birthday: "27/05" },
+  { name: "Pedro Henrique", birthday: "24/11" },
+  { name: "Pr Ailton", birthday: "11/11" },
+  { name: "Pra Néia", birthday: "18/09" },
+  { name: "Rafael Foice", birthday: "19/08" },
+  { name: "Rafinha", birthday: null },
+  { name: "Raphaelee", birthday: "21/10" },
+  { name: "Ronaldo", birthday: "13/08" },
+  { name: "Taiwan", birthday: "20/03" },
+  { name: "Thaiane", birthday: "23/03" },
+  { name: "Thainan Crystian Moraes", birthday: "14/10" },
+  { name: "Vitor", birthday: "03/12" },
+  { name: "Viviane", birthday: "07/04" },
+  { name: "Wagner", birthday: "18/08" },
 ];
 
 async function main() {
-  console.log("🌱 Seeding members...");
-  for (const m of members) {
-    await prisma.member.upsert({
-      where: { id: m.name }, // temp, will use name as key
-      update: {},
-      create: {
-        name: m.name,
-        birthday: m.birthday ?? undefined,
-        phone: m.phone ?? undefined,
-      },
-    });
-  }
-  // Use createMany for simplicity (no upsert needed for fresh DB)
+  console.log("Seeding members...");
   await prisma.member.deleteMany();
   await prisma.member.createMany({
     data: members.map((m) => ({
       name: m.name,
       birthday: m.birthday ?? undefined,
-      phone: m.phone ?? undefined,
+      status: "ACTIVE",
     })),
   });
-  console.log(`✅ ${members.length} members seeded.`);
+  console.log(`Done — ${members.length} members seeded.`);
 }
 
 main()
-  .catch(console.error)
+  .catch((e) => { console.error(e); process.exit(1); })
   .finally(() => prisma.$disconnect());
