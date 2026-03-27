@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
-import { Plus, Search, Pencil, Trash2, Phone } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, Phone, LayoutGrid, List } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,7 @@ export default function MembrosPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editMember, setEditMember] = useState<Member | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<"cards" | "list">("cards");
 
   const fetchMembers = useCallback(async () => {
     const res = await fetch("/api/members");
@@ -79,13 +80,31 @@ export default function MembrosPage() {
             {members.length} total
           </p>
         </div>
-        <Button
-          onClick={openAdd}
-          className="bg-[#c9a84c] hover:bg-[#e8c97a] text-black font-semibold"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Novo
-        </Button>
+        <div className="flex items-center gap-2">
+          <div className="flex bg-[#1e1e1e] border border-[#2a2a2a] rounded-lg p-0.5">
+            <button
+              onClick={() => setViewMode("cards")}
+              className={`p-1.5 rounded-md transition-all ${viewMode === "cards" ? "bg-[#c9a84c22] text-[#c9a84c]" : "text-[#888] hover:text-[#f0ece4]"}`}
+              title="Visão em cards"
+            >
+              <LayoutGrid className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setViewMode("list")}
+              className={`p-1.5 rounded-md transition-all ${viewMode === "list" ? "bg-[#c9a84c22] text-[#c9a84c]" : "text-[#888] hover:text-[#f0ece4]"}`}
+              title="Visão em lista"
+            >
+              <List className="w-4 h-4" />
+            </button>
+          </div>
+          <Button
+            onClick={openAdd}
+            className="bg-[#c9a84c] hover:bg-[#e8c97a] text-black font-semibold"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Novo
+          </Button>
+        </div>
       </div>
 
       {/* Search */}
@@ -106,6 +125,7 @@ export default function MembrosPage() {
           <MemberList
             title="Ativos"
             members={active}
+            viewMode={viewMode}
             onEdit={openEdit}
             onDelete={setDeleteId}
           />
@@ -113,6 +133,7 @@ export default function MembrosPage() {
             <MemberList
               title="Inativos"
               members={inactive}
+              viewMode={viewMode}
               onEdit={openEdit}
               onDelete={setDeleteId}
             />
@@ -144,11 +165,13 @@ export default function MembrosPage() {
 function MemberList({
   title,
   members,
+  viewMode,
   onEdit,
   onDelete,
 }: {
   title: string;
   members: Member[];
+  viewMode: "cards" | "list";
   onEdit: (m: Member) => void;
   onDelete: (id: string) => void;
 }) {
@@ -169,16 +192,71 @@ function MemberList({
         <div className="flex-1 h-px bg-[#2a2a2a]" />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-        {members.map((m) => (
-          <MemberCard
-            key={m.id}
-            member={m}
-            onEdit={() => onEdit(m)}
-            onDelete={() => onDelete(m.id)}
-          />
-        ))}
-      </div>
+      {viewMode === "cards" ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+          {members.map((m) => (
+            <MemberCard
+              key={m.id}
+              member={m}
+              onEdit={() => onEdit(m)}
+              onDelete={() => onDelete(m.id)}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="bg-[#1e1e1e] border border-[#2a2a2a] rounded-xl overflow-hidden">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-[#2a2a2a]">
+                <th className="text-left px-4 py-2.5 text-[10px] tracking-[2px] uppercase text-[#555] font-medium">Nome</th>
+                <th className="text-left px-4 py-2.5 text-[10px] tracking-[2px] uppercase text-[#555] font-medium hidden sm:table-cell">Aniversário</th>
+                <th className="text-left px-4 py-2.5 text-[10px] tracking-[2px] uppercase text-[#555] font-medium hidden md:table-cell">Telefone</th>
+                <th className="px-4 py-2.5" />
+              </tr>
+            </thead>
+            <tbody>
+              {members.map((m, i) => {
+                const whatsappUrl = m.phone
+                  ? `https://wa.me/55${m.phone.replace(/\D/g, "")}`
+                  : null;
+                return (
+                  <tr key={m.id} className={`group ${i % 2 === 0 ? "bg-[#1a1a1a]" : ""}`}>
+                    <td className="px-4 py-2.5">
+                      <p className="text-[#f0ece4] font-medium">{m.name}</p>
+                    </td>
+                    <td className="px-4 py-2.5 text-[#888] hidden sm:table-cell">
+                      {m.birthday ? (
+                        <span className="text-[#c9a84c] text-xs">🎂 {m.birthday}</span>
+                      ) : <span className="text-[#444]">—</span>}
+                    </td>
+                    <td className="px-4 py-2.5 text-[#888] text-xs hidden md:table-cell">
+                      {m.phone ?? <span className="text-[#444]">—</span>}
+                    </td>
+                    <td className="px-3 py-2.5">
+                      <div className="flex items-center gap-1 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+                        {whatsappUrl && (
+                          <a href={whatsappUrl} target="_blank" rel="noopener noreferrer"
+                            className="p-1.5 rounded-lg text-[#888] hover:text-[#2ecc71] hover:bg-[#2ecc7111] transition-colors">
+                            <Phone className="w-3.5 h-3.5" />
+                          </a>
+                        )}
+                        <button onClick={() => onEdit(m)}
+                          className="p-1.5 rounded-lg text-[#888] hover:text-[#c9a84c] hover:bg-[#c9a84c11] transition-colors">
+                          <Pencil className="w-3.5 h-3.5" />
+                        </button>
+                        <button onClick={() => onDelete(m.id)}
+                          className="p-1.5 rounded-lg text-[#888] hover:text-[#e74c3c] hover:bg-[#e74c3c11] transition-colors">
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }

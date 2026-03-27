@@ -123,6 +123,18 @@ model Offering {
   event  Event? @relation(fields: [eventId], references: [id], onDelete: SetNull)
 }
 
+// ─── Despesas ─────────────────────────────────────────────────────────────
+
+model Expense {
+  id          String          @id @default(cuid())
+  description String
+  amount      Float
+  category    ExpenseCategory @default(OUTRO)
+  date        DateTime        @default(now())
+  notes       String?
+  createdAt   DateTime        @default(now())
+}
+
 // ─── Enums ────────────────────────────────────────────────────────────────
 
 enum Role {
@@ -153,4 +165,12 @@ enum AttendanceStatus {
 enum PaymentMethod {
   CASH
   PIX
+}
+
+enum ExpenseCategory {
+  MATERIAL
+  TRANSPORTE
+  ALIMENTACAO
+  EVENTO
+  OUTRO
 }

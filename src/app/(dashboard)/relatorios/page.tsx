@@ -4,7 +4,12 @@ import { useState, useEffect, useCallback } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-// ─── Types ───────────────────────────────────────────────────────────────────
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+type MemberRecord = {
+  id: string; name: string; birthday: string | null; phone: string | null;
+  status: "ACTIVE" | "INACTIVE"; notes: string | null;
+};
 
 type AttendanceByEvent = {
   id: string; title: string; type: string; date: string;
@@ -21,7 +26,8 @@ const EVENT_LABELS: Record<string, string> = {
   CULTO: "Culto", ENSAIO: "Ensaio", REUNIAO: "Reunião", RETIRO: "Retiro", OUTRO: "Outro",
 };
 
-const fmt = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
+const fmt = (v: number | string | null | undefined) =>
+  `R$ ${Number(v ?? 0).toFixed(2).replace(".", ",")}`;
 
 // ─── Rate bar ─────────────────────────────────────────────────────────────────
 
@@ -49,15 +55,66 @@ function Card({ label, value }: { label: string; value: string | number }) {
   );
 }
 
+// ─── Filter bar ───────────────────────────────────────────────────────────────
+
+type FilterMode = "all" | "year" | "month";
+
+const YEARS = Array.from({ length: 5 }, (_, i) => String(new Date().getFullYear() - 2 + i));
+
+function FilterBar({
+  mode, year, month,
+  onMode, onYear, onMonth,
+}: {
+  mode: FilterMode; year: string; month: string;
+  onMode: (m: FilterMode) => void; onYear: (y: string) => void; onMonth: (m: string) => void;
+}) {
+  return (
+    <div className="flex flex-wrap items-center gap-2 mb-6">
+      <span className="text-[10px] tracking-[2px] uppercase text-[#555]">Período:</span>
+      {(["all", "year", "month"] as FilterMode[]).map((m) => (
+        <button
+          key={m}
+          onClick={() => onMode(m)}
+          className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+            mode === m
+              ? "bg-[#c9a84c22] text-[#c9a84c] border border-[#c9a84c44]"
+              : "text-[#888] border border-[#2a2a2a] hover:text-[#f0ece4]"
+          }`}
+        >
+          {m === "all" ? "Total" : m === "year" ? "Por Ano" : "Por Mês"}
+        </button>
+      ))}
+      {mode === "year" && (
+        <select
+          value={year}
+          onChange={(e) => onYear(e.target.value)}
+          className="bg-[#1e1e1e] border border-[#2a2a2a] text-[#f0ece4] text-xs rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#c9a84c44]"
+        >
+          {YEARS.map((y) => <option key={y} value={y}>{y}</option>)}
+        </select>
+      )}
+      {mode === "month" && (
+        <input
+          type="month"
+          value={month}
+          onChange={(e) => onMonth(e.target.value)}
+          className="bg-[#1e1e1e] border border-[#2a2a2a] text-[#f0ece4] text-xs rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#c9a84c44]"
+        />
+      )}
+    </div>
+  );
+}
+
 // ─── Main page ────────────────────────────────────────────────────────────────
 
-type Tab = "freq-evento" | "freq-membro" | "fin-mes" | "fin-membro";
+type Tab = "freq-evento" | "freq-membro" | "fin-mes" | "fin-membro" | "membros";
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "freq-evento", label: "Freq. por Evento" },
   { id: "freq-membro", label: "Freq. por Membro" },
   { id: "fin-mes", label: "Fin. por Mês" },
   { id: "fin-membro", label: "Fin. por Membro" },
+  { id: "membros", label: "Membros" },
 ];
 
 const TYPE_MAP: Record<Tab, string> = {
@@ -65,29 +122,45 @@ const TYPE_MAP: Record<Tab, string> = {
   "freq-membro": "attendance-by-member",
   "fin-mes": "financial-by-month",
   "fin-membro": "financial-by-member",
+  "membros": "members",
 };
 
 export default function RelatoriosPage() {
+  const now = new Date();
   const [tab, setTab] = useState<Tab>("freq-evento");
   const [data, setData] = useState<unknown[]>([]);
   const [loading, setLoading] = useState(false);
-  const [loaded, setLoaded] = useState<Set<Tab>>(new Set());
+  const [filterMode, setFilterMode] = useState<FilterMode>("all");
+  const [filterYear, setFilterYear] = useState(String(now.getFullYear()));
+  const [filterMonth, setFilterMonth] = useState(now.toISOString().slice(0, 7));
 
-  const fetchTab = useCallback(async (t: Tab) => {
-    if (loaded.has(t)) return;
+  const fetchData = useCallback(async () => {
     setLoading(true);
-    const res = await fetch(`/api/reports?type=${TYPE_MAP[t]}`);
-    const json = await res.json();
-    setData(json);
-    setLoaded((prev) => new Set(prev).add(t));
+    setData([]);
+    try {
+      let json: unknown[];
+      if (tab === "membros") {
+        const res = await fetch("/api/members");
+        const raw = await res.json();
+        json = Array.isArray(raw) ? raw : [];
+      } else {
+        const params = new URLSearchParams({ type: TYPE_MAP[tab] });
+        if (filterMode === "year") params.set("year", filterYear);
+        if (filterMode === "month") params.set("month", filterMonth);
+        const res = await fetch(`/api/reports?${params}`);
+        const raw = await res.json();
+        json = Array.isArray(raw) ? raw : [];
+      }
+      setData(json);
+    } catch {
+      setData([]);
+    }
     setLoading(false);
-  }, [loaded]);
+  }, [tab, filterMode, filterYear, filterMonth]);
 
   useEffect(() => {
-    setData([]);
-    fetchTab(tab);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tab]);
+    fetchData();
+  }, [fetchData]);
 
   return (
     <div>
@@ -99,7 +172,7 @@ export default function RelatoriosPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 mb-6 bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-1 flex-wrap">
+      <div className="flex gap-1 mb-4 bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-1 flex-wrap">
         {TABS.map((t) => (
           <button
             key={t.id}
@@ -115,6 +188,12 @@ export default function RelatoriosPage() {
         ))}
       </div>
 
+      {/* Filter */}
+      <FilterBar
+        mode={filterMode} year={filterYear} month={filterMonth}
+        onMode={setFilterMode} onYear={setFilterYear} onMonth={setFilterMonth}
+      />
+
       {loading ? (
         <div className="flex items-center justify-center py-20 text-[#555] text-sm">Carregando...</div>
       ) : (
@@ -123,6 +202,7 @@ export default function RelatoriosPage() {
           {tab === "freq-membro" && <FreqMembroTab data={data as AttendanceByMember[]} />}
           {tab === "fin-mes" && <FinMesTab data={data as FinancialByMonth[]} />}
           {tab === "fin-membro" && <FinMembroTab data={data as FinancialByMember[]} />}
+          {tab === "membros" && <MembrosTab data={data as MemberRecord[]} />}
         </>
       )}
     </div>
@@ -136,7 +216,7 @@ function FreqEventoTab({ data }: { data: AttendanceByEvent[] }) {
   const avgRate = withData.length > 0
     ? Math.round(withData.reduce((s, e) => s + (e.rate ?? 0), 0) / withData.length)
     : null;
-  const best = withData.sort((a, b) => (b.rate ?? 0) - (a.rate ?? 0))[0];
+  const best = [...withData].sort((a, b) => (b.rate ?? 0) - (a.rate ?? 0))[0];
 
   return (
     <>
@@ -177,7 +257,7 @@ function FreqEventoTab({ data }: { data: AttendanceByEvent[] }) {
                 </tr>
               ))}
               {data.length === 0 && (
-                <tr><td colSpan={6} className="px-4 py-10 text-center text-[#555]">Nenhum evento cadastrado</td></tr>
+                <tr><td colSpan={6} className="px-4 py-10 text-center text-[#555]">Nenhum evento encontrado</td></tr>
               )}
             </tbody>
           </table>
@@ -240,8 +320,8 @@ function FreqMembroTab({ data }: { data: AttendanceByMember[] }) {
 // ─── Tab: Financeiro por Mês ──────────────────────────────────────────────────
 
 function FinMesTab({ data }: { data: FinancialByMonth[] }) {
-  const totalGeral = data.reduce((s, m) => s + m.total, 0);
-  const melhorMes = data[0];
+  const totalGeral = data.reduce((s, m) => s + Number(m.total), 0);
+  const melhorMes = [...data].sort((a, b) => Number(b.total) - Number(a.total))[0];
 
   return (
     <>
@@ -266,8 +346,8 @@ function FinMesTab({ data }: { data: FinancialByMonth[] }) {
             </thead>
             <tbody>
               {data.map((m, i) => {
-                const [year, month] = m.month.split("-");
-                const label = format(new Date(Number(year), Number(month) - 1, 1), "MMMM yyyy", { locale: ptBR });
+                const [yr, mo] = m.month.split("-");
+                const label = format(new Date(Number(yr), Number(mo) - 1, 1), "MMMM yyyy", { locale: ptBR });
                 return (
                   <tr key={m.month} className={i % 2 === 0 ? "bg-[#1a1a1a]" : ""}>
                     <td className="px-4 py-3 text-[#f0ece4] font-medium capitalize">{label}</td>
@@ -292,7 +372,7 @@ function FinMesTab({ data }: { data: FinancialByMonth[] }) {
 // ─── Tab: Financeiro por Membro ───────────────────────────────────────────────
 
 function FinMembroTab({ data }: { data: FinancialByMember[] }) {
-  const totalGeral = data.reduce((s, m) => s + m.total, 0);
+  const totalGeral = data.reduce((s, m) => s + Number(m.total), 0);
   const top = data[0];
 
   return (
@@ -335,6 +415,75 @@ function FinMembroTab({ data }: { data: FinancialByMember[] }) {
           </table>
         </div>
       </div>
+    </>
+  );
+}
+
+// ─── Tab: Membros ─────────────────────────────────────────────────────────────
+
+function MembrosTab({ data }: { data: MemberRecord[] }) {
+  const active = data.filter((m) => m.status === "ACTIVE");
+  const inactive = data.filter((m) => m.status === "INACTIVE");
+  const now = new Date();
+  const currentMonth = String(now.getMonth() + 1).padStart(2, "0");
+  const birthdayThisMonth = active.filter((m) => {
+    if (!m.birthday) return false;
+    const parts = m.birthday.split("/");
+    return parts.length >= 2 && parts[1] === currentMonth;
+  });
+  const withPhone = active.filter((m) => m.phone);
+
+  return (
+    <>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+        <Card label="Total de membros" value={data.length} />
+        <Card label="Ativos" value={active.length} />
+        <Card label="Inativos" value={inactive.length} />
+        <Card label={`Aniversários em ${format(now, "MMMM", { locale: ptBR })}`} value={birthdayThisMonth.length} />
+      </div>
+
+      <div className="bg-[#1e1e1e] border border-[#2a2a2a] rounded-xl overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-[#2a2a2a]">
+                <th className="text-left px-4 py-3 text-[10px] tracking-[2px] uppercase text-[#555] font-medium">Nome</th>
+                <th className="text-left px-4 py-3 text-[10px] tracking-[2px] uppercase text-[#555] font-medium hidden sm:table-cell">Aniversário</th>
+                <th className="text-left px-4 py-3 text-[10px] tracking-[2px] uppercase text-[#555] font-medium hidden md:table-cell">Telefone</th>
+                <th className="text-center px-4 py-3 text-[10px] tracking-[2px] uppercase text-[#555] font-medium">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.map((m, i) => (
+                <tr key={m.id} className={i % 2 === 0 ? "bg-[#1a1a1a]" : ""}>
+                  <td className="px-4 py-3 text-[#f0ece4] font-medium">{m.name}</td>
+                  <td className="px-4 py-3 text-[#888] hidden sm:table-cell">
+                    {m.birthday ?? <span className="text-[#444]">—</span>}
+                  </td>
+                  <td className="px-4 py-3 text-[#888] hidden md:table-cell">
+                    {m.phone ?? <span className="text-[#444]">—</span>}
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                      m.status === "ACTIVE"
+                        ? "bg-[#2ecc7122] text-[#2ecc71]"
+                        : "bg-[#88888822] text-[#888]"
+                    }`}>
+                      {m.status === "ACTIVE" ? "Ativo" : "Inativo"}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+              {data.length === 0 && (
+                <tr><td colSpan={4} className="px-4 py-10 text-center text-[#555]">Nenhum membro cadastrado</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      {withPhone.length > 0 && (
+        <p className="text-[#555] text-xs mt-3 text-right">{withPhone.length} de {active.length} ativos com telefone cadastrado</p>
+      )}
     </>
   );
 }
