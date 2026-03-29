@@ -12,43 +12,60 @@
 
 @layer base {
   :root {
-    --background: #0d0d0d;
-    --foreground: #f0ece4;
-    --card: #1e1e1e;
-    --card-foreground: #f0ece4;
-    --popover: #1e1e1e;
-    --popover-foreground: #f0ece4;
-    --primary: #c9a84c;
-    --primary-foreground: #111111;
-    --secondary: #2a2a2a;
-    --secondary-foreground: #f0ece4;
-    --muted: #1a1a1a;
-    --muted-foreground: #888888;
-    --accent: #c9a84c22;
-    --accent-foreground: #c9a84c;
-    --destructive: #e74c3c;
-    --destructive-foreground: #f0ece4;
-    --border: #2a2a2a;
-    --input: #2a2a2a;
-    --ring: #7a6330;
-    --gold: #c9a84c;
-    --gold-light: #e8c97a;
-    --gold-muted: #7a6330;
-    --green: #2ecc71;
+    /* ── Backgrounds ───────────────────────────────── */
+    --background: #09090b;        /* zinc-950 */
+    --card: #18181b;              /* zinc-900 */
+    --card-foreground: #fafafa;
+    --popover: #18181b;
+    --popover-foreground: #fafafa;
+    --secondary: #27272a;         /* zinc-800 */
+    --secondary-foreground: #fafafa;
+    --muted: #18181b;
+    --muted-foreground: #a1a1aa;  /* zinc-400 */
+
+    /* ── Accent Principal — Royal Purple ───────────── */
+    --primary: #7c3aed;           /* violet-700 */
+    --primary-foreground: #ffffff;
+    --accent: #7c3aed1a;          /* violet/10 */
+    --accent-foreground: #a78bfa; /* violet-400 */
+    --ring: #7c3aed80;
+
+    /* ── Gold — accent secundário (herança da V1) ──── */
+    --gold: #d4a843;
+    --gold-light: #fbbf24;        /* amber-400 */
+    --gold-muted: #92700a;
+
+    /* ── Textos ────────────────────────────────────── */
+    --foreground: #fafafa;        /* zinc-50 */
+
+    /* ── Bordas / Inputs ───────────────────────────── */
+    --border: #27272a;            /* zinc-800 */
+    --input: #27272a;
+
+    /* ── Status ────────────────────────────────────── */
+    --destructive: #ef4444;       /* red-500 */
+    --destructive-foreground: #fafafa;
+    --success: #22c55e;           /* green-500 */
+    --warning: #f59e0b;           /* amber-500 */
+    --green: #22c55e;
+
+    /* ── Sidebar ───────────────────────────────────── */
+    --sidebar: #0d0d10;
+    --sidebar-foreground: #fafafa;
+    --sidebar-primary: #7c3aed;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #7c3aed1a;
+    --sidebar-accent-foreground: #a78bfa;
+    --sidebar-border: #27272a;
+    --sidebar-ring: #7c3aed80;
+
+    /* ── Radius ────────────────────────────────────── */
     --radius: 0.625rem;
-    --sidebar: #161616;
-    --sidebar-foreground: #f0ece4;
-    --sidebar-primary: #c9a84c;
-    --sidebar-primary-foreground: #111111;
-    --sidebar-accent: #c9a84c22;
-    --sidebar-accent-foreground: #c9a84c;
-    --sidebar-border: #2a2a2a;
-    --sidebar-ring: #7a6330;
   }
 
   * {
     @apply border-border;
-    outline-color: rgb(122 99 48 / 0.5);
+    outline-color: rgb(124 58 237 / 0.4);
   }
 
   body {
@@ -71,9 +88,9 @@
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #2a2a2a;
+  background: #27272a;
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #7a6330;
+  background: #7c3aed;
 }

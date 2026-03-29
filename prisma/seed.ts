@@ -57,17 +57,115 @@ const members = [
   { name: "Wagner", birthday: "18/08" },
 ];
 
+// Default permission grants for LEADER and MEMBER roles.
+// ADMIN always has full access and is not stored in this table.
+const defaultPermissions = [
+  // MEMBERS
+  { role: "LEADER", module: "MEMBERS", action: "VIEW", granted: true },
+  { role: "LEADER", module: "MEMBERS", action: "CREATE", granted: true },
+  { role: "LEADER", module: "MEMBERS", action: "EDIT", granted: true },
+  { role: "LEADER", module: "MEMBERS", action: "DELETE", granted: false },
+  { role: "MEMBER", module: "MEMBERS", action: "VIEW", granted: false },
+  { role: "MEMBER", module: "MEMBERS", action: "CREATE", granted: false },
+  { role: "MEMBER", module: "MEMBERS", action: "EDIT", granted: false },
+  { role: "MEMBER", module: "MEMBERS", action: "DELETE", granted: false },
+  // ATTENDANCE
+  { role: "LEADER", module: "ATTENDANCE", action: "VIEW", granted: true },
+  { role: "LEADER", module: "ATTENDANCE", action: "CREATE", granted: true },
+  { role: "LEADER", module: "ATTENDANCE", action: "EDIT", granted: true },
+  { role: "LEADER", module: "ATTENDANCE", action: "DELETE", granted: false },
+  { role: "MEMBER", module: "ATTENDANCE", action: "VIEW", granted: true },
+  { role: "MEMBER", module: "ATTENDANCE", action: "CREATE", granted: false },
+  { role: "MEMBER", module: "ATTENDANCE", action: "EDIT", granted: false },
+  { role: "MEMBER", module: "ATTENDANCE", action: "DELETE", granted: false },
+  // FINANCIAL
+  { role: "LEADER", module: "FINANCIAL", action: "VIEW", granted: true },
+  { role: "LEADER", module: "FINANCIAL", action: "CREATE", granted: true },
+  { role: "LEADER", module: "FINANCIAL", action: "EDIT", granted: true },
+  { role: "LEADER", module: "FINANCIAL", action: "DELETE", granted: false },
+  { role: "MEMBER", module: "FINANCIAL", action: "VIEW", granted: false },
+  { role: "MEMBER", module: "FINANCIAL", action: "CREATE", granted: false },
+  { role: "MEMBER", module: "FINANCIAL", action: "EDIT", granted: false },
+  { role: "MEMBER", module: "FINANCIAL", action: "DELETE", granted: false },
+  // REPORTS
+  { role: "LEADER", module: "REPORTS", action: "VIEW", granted: true },
+  { role: "LEADER", module: "REPORTS", action: "EXPORT", granted: true },
+  { role: "MEMBER", module: "REPORTS", action: "VIEW", granted: false },
+  { role: "MEMBER", module: "REPORTS", action: "EXPORT", granted: false },
+  // EVENTS
+  { role: "LEADER", module: "EVENTS", action: "VIEW", granted: true },
+  { role: "LEADER", module: "EVENTS", action: "CREATE", granted: true },
+  { role: "LEADER", module: "EVENTS", action: "EDIT", granted: true },
+  { role: "LEADER", module: "EVENTS", action: "DELETE", granted: false },
+  { role: "MEMBER", module: "EVENTS", action: "VIEW", granted: true },
+  { role: "MEMBER", module: "EVENTS", action: "CREATE", granted: false },
+  { role: "MEMBER", module: "EVENTS", action: "EDIT", granted: false },
+  { role: "MEMBER", module: "EVENTS", action: "DELETE", granted: false },
+  // BIRTHDAYS
+  { role: "LEADER", module: "BIRTHDAYS", action: "VIEW", granted: true },
+  { role: "MEMBER", module: "BIRTHDAYS", action: "VIEW", granted: true },
+  // SHIRTS
+  { role: "LEADER", module: "SHIRTS", action: "VIEW", granted: true },
+  { role: "LEADER", module: "SHIRTS", action: "CREATE", granted: true },
+  { role: "LEADER", module: "SHIRTS", action: "EDIT", granted: true },
+  { role: "LEADER", module: "SHIRTS", action: "DELETE", granted: false },
+  { role: "LEADER", module: "SHIRTS", action: "EXPORT", granted: true },
+  { role: "MEMBER", module: "SHIRTS", action: "VIEW", granted: true },
+  { role: "MEMBER", module: "SHIRTS", action: "CREATE", granted: false },
+  { role: "MEMBER", module: "SHIRTS", action: "EDIT", granted: false },
+  { role: "MEMBER", module: "SHIRTS", action: "DELETE", granted: false },
+  { role: "MEMBER", module: "SHIRTS", action: "EXPORT", granted: false },
+  // SETTINGS
+  { role: "LEADER", module: "SETTINGS", action: "VIEW", granted: false },
+  { role: "LEADER", module: "SETTINGS", action: "EDIT", granted: false },
+  { role: "MEMBER", module: "SETTINGS", action: "VIEW", granted: false },
+  { role: "MEMBER", module: "SETTINGS", action: "EDIT", granted: false },
+  // USERS
+  { role: "LEADER", module: "USERS", action: "VIEW", granted: false },
+  { role: "LEADER", module: "USERS", action: "EDIT", granted: false },
+  { role: "MEMBER", module: "USERS", action: "VIEW", granted: false },
+  { role: "MEMBER", module: "USERS", action: "EDIT", granted: false },
+] as const;
+
 async function main() {
-  console.log("Seeding members...");
-  await prisma.member.deleteMany();
-  await prisma.member.createMany({
-    data: members.map((m) => ({
-      name: m.name,
-      birthday: m.birthday ?? undefined,
-      status: "ACTIVE",
-    })),
-  });
-  console.log(`Done — ${members.length} members seeded.`);
+  console.log("Seeding members (só adiciona novos — não apaga dados existentes)...");
+  const existingNames = new Set(
+    (await prisma.member.findMany({ select: { name: true } })).map((m) => m.name)
+  );
+  const toCreate = members.filter((m) => !existingNames.has(m.name));
+  if (toCreate.length > 0) {
+    await prisma.member.createMany({
+      data: toCreate.map((m) => ({
+        name: m.name,
+        birthday: m.birthday ?? undefined,
+        status: "ACTIVE",
+      })),
+    });
+    console.log(`Done — ${toCreate.length} novos membros adicionados.`);
+  } else {
+    console.log("Nenhum membro novo para adicionar.");
+  }
+
+  console.log("Seeding default permissions...");
+  for (const p of defaultPermissions) {
+    await prisma.rolePermission.upsert({
+      where: {
+        role_module_action: {
+          role: p.role as "LEADER" | "MEMBER",
+          module: p.module as "MEMBERS" | "ATTENDANCE" | "FINANCIAL" | "REPORTS" | "EVENTS" | "BIRTHDAYS" | "SHIRTS" | "SETTINGS" | "USERS",
+          action: p.action as "VIEW" | "CREATE" | "EDIT" | "DELETE" | "EXPORT",
+        },
+      },
+      update: { granted: p.granted },
+      create: {
+        role: p.role as "LEADER" | "MEMBER",
+        module: p.module as "MEMBERS" | "ATTENDANCE" | "FINANCIAL" | "REPORTS" | "EVENTS" | "BIRTHDAYS" | "SHIRTS" | "SETTINGS" | "USERS",
+        action: p.action as "VIEW" | "CREATE" | "EDIT" | "DELETE" | "EXPORT",
+        granted: p.granted,
+      },
+    });
+  }
+  console.log(`Done — ${defaultPermissions.length} permission records seeded.`);
 }
 
 main()

@@ -7,17 +7,20 @@ export async function GET() {
     const session = await auth();
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const settings = await db.settings.findUnique({ where: { id: "singleton" } });
-    return NextResponse.json({
-      churchName: settings?.churchName ?? "Porto Belo",
-      logoBase64: settings?.logoBase64 ?? null,
+    const congresses = await db.congress.findMany({
+      orderBy: { date: "desc" },
+      include: {
+        _count: { select: { shirtOrders: true } },
+      },
     });
+
+    return NextResponse.json(congresses);
   } catch {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
 
-export async function PATCH(req: NextRequest) {
+export async function POST(req: NextRequest) {
   try {
     const session = await auth();
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -25,23 +28,22 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
     const body = await req.json();
-    const settings = await db.settings.upsert({
-      where: { id: "singleton" },
-      update: {
-        ...(body.churchName !== undefined && { churchName: body.churchName }),
-        ...(body.logoBase64 !== undefined && { logoBase64: body.logoBase64 }),
-      },
-      create: {
-        id: "singleton",
-        churchName: body.churchName ?? "Porto Belo",
-        logoBase64: body.logoBase64 ?? null,
+    const { name, date, location, description } = body;
+
+    if (!name?.trim() || !date) {
+      return NextResponse.json({ error: "Nome e data são obrigatórios" }, { status: 400 });
+    }
+
+    const congress = await db.congress.create({
+      data: {
+        name: name.trim(),
+        date: new Date(date),
+        location: location?.trim() || null,
+        description: description?.trim() || null,
       },
     });
 
-    return NextResponse.json({
-      churchName: settings.churchName,
-      logoBase64: settings.logoBase64,
-    });
+    return NextResponse.json(congress, { status: 201 });
   } catch {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }

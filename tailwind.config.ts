@@ -42,6 +42,13 @@ const config: Config = {
         border: "var(--border)",
         input: "var(--input)",
         ring: "var(--ring)",
+        // Semantic tokens
+        gold: "var(--gold)",
+        "gold-light": "var(--gold-light)",
+        "gold-muted": "var(--gold-muted)",
+        success: "var(--success)",
+        warning: "var(--warning)",
+        // Sidebar tokens
         sidebar: {
           DEFAULT: "var(--sidebar)",
           foreground: "var(--sidebar-foreground)",

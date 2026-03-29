@@ -74,6 +74,7 @@ model Member {
 
   attendances Attendance[]
   offerings   Offering[]
+  shirtOrders ShirtOrder[]
 }
 
 // ─── Eventos ──────────────────────────────────────────────────────────────
@@ -144,6 +145,59 @@ model Settings {
   updatedAt  DateTime @updatedAt
 }
 
+// ─── Permissões por Role ───────────────────────────────────────────────────
+
+model RolePermission {
+  id        String           @id @default(cuid())
+  role      Role
+  module    PermissionModule
+  action    PermissionAction
+  granted   Boolean          @default(false)
+  updatedAt DateTime         @updatedAt
+  updatedBy String?
+
+  @@unique([role, module, action])
+}
+
+// ─── Congressos e Camisetas ───────────────────────────────────────────────
+
+model Congress {
+  id          String         @id @default(cuid())
+  name        String
+  date        DateTime
+  location    String?
+  description String?
+  status      CongressStatus @default(OPEN)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  shirtOrders ShirtOrder[]
+}
+
+model ShirtOrder {
+  id            String           @id @default(cuid())
+  congressId    String
+  memberId      String
+  size          ShirtSize
+  quantity      Int              @default(1)
+  color         String?
+  paidAmount    Decimal          @default(0) @db.Decimal(10, 2)
+  totalAmount   Decimal          @db.Decimal(10, 2)
+  paymentMethod PaymentMethod?
+  paymentDate   DateTime?
+  status        ShirtOrderStatus @default(PENDING)
+  deliveredAt   DateTime?
+  notes         String?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  createdBy     String?
+
+  congress Congress @relation(fields: [congressId], references: [id], onDelete: Cascade)
+  member   Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@unique([congressId, memberId])
+}
+
 // ─── Enums ────────────────────────────────────────────────────────────────
 
 enum Role {
@@ -182,4 +236,49 @@ enum ExpenseCategory {
   ALIMENTACAO
   EVENTO
   OUTRO
+}
+
+enum PermissionModule {
+  MEMBERS
+  ATTENDANCE
+  FINANCIAL
+  REPORTS
+  EVENTS
+  BIRTHDAYS
+  SHIRTS
+  SETTINGS
+  USERS
+}
+
+enum PermissionAction {
+  VIEW
+  CREATE
+  EDIT
+  DELETE
+  EXPORT
+}
+
+enum ShirtSize {
+  PP
+  P
+  M
+  G
+  GG
+  XG
+  XXG
+}
+
+enum ShirtOrderStatus {
+  PENDING
+  PAID
+  PRODUCTION
+  READY
+  DELIVERED
+  CANCELLED
+}
+
+enum CongressStatus {
+  OPEN
+  CLOSED
+  FINISHED
 }

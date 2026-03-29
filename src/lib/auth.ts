@@ -7,7 +7,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   ...authConfig,
   adapter: PrismaAdapter(db),
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
       if (user) {
         token.id = user.id;
         const dbUser = await db.user.findUnique({
@@ -16,6 +16,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         });
         token.id = dbUser?.id ?? user.id;
         token.role = dbUser?.role ?? "MEMBER";
+      }
+      // Re-fetch role from DB on token update (fixes stale role after admin changes)
+      if (trigger === "update" && token.id) {
+        const dbUser = await db.user.findUnique({
+          where: { id: token.id as string },
+          select: { role: true },
+        });
+        if (dbUser) token.role = dbUser.role;
       }
       return token;
     },

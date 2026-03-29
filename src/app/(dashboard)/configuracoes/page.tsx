@@ -3,7 +3,8 @@
 import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
-import { Shield, Users, UserCog, ImageIcon, Save, Upload, X } from "lucide-react";
+import { Shield, Users, UserCog, ImageIcon, Save, Upload, X, ShieldCog } from "lucide-react";
+import { PermissionsTable } from "@/components/shirts/permissions-table";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -317,6 +318,18 @@ export default function ConfiguracoesPage() {
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Permissions management — admin only */}
+      {isAdmin && (
+        <div className="bg-[#1e1e1e] border border-[#2a2a2a] rounded-xl p-6 mt-6">
+          <div className="flex items-center gap-3 mb-5">
+            <ShieldCog className="w-5 h-5 text-[#c9a84c]" />
+            <p className="font-semibold text-[#f0ece4]">Permissões por Papel</p>
+            <span className="text-xs text-[#888]">(o que Líderes e Membros podem fazer)</span>
+          </div>
+          <PermissionsTable />
         </div>
       )}
 
