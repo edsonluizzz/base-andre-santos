@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import { Plus, Trash2, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -66,6 +67,7 @@ export default function FinanceiroPage() {
   const [events, setEvents] = useState<Event[]>([]);
   const [offeringDialogOpen, setOfferingDialogOpen] = useState(false);
   const [expenseDialogOpen, setExpenseDialogOpen] = useState(false);
+  const [pageLoading, setPageLoading] = useState(true);
 
   const fetchOfferings = useCallback(async () => {
     const res = await fetch(`/api/offerings?month=${month}`);
@@ -82,8 +84,10 @@ export default function FinanceiroPage() {
   }, [month]);
 
   useEffect(() => {
-    fetchOfferings();
-    fetchExpenses();
+    setPageLoading(true);
+    Promise.all([fetchOfferings(), fetchExpenses()]).finally(() =>
+      setPageLoading(false)
+    );
   }, [fetchOfferings, fetchExpenses]);
 
   useEffect(() => {
@@ -123,16 +127,16 @@ export default function FinanceiroPage() {
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1
-            className="text-2xl lg:text-3xl font-bold text-[#e8c97a]"
+            className="text-2xl lg:text-3xl font-bold text-gold-light"
             style={{ fontFamily: "var(--font-heading)" }}
           >
             Financeiro
           </h1>
-          <p className="text-[#888] text-sm mt-1">Entradas e despesas do mês</p>
+          <p className="text-muted-foreground text-sm mt-1">Entradas e despesas do mês</p>
         </div>
         <Button
           onClick={() => setOfferingDialogOpen(true)}
-          className="bg-[#c9a84c] hover:bg-[#e8c97a] text-black font-semibold"
+          className="bg-gold hover:bg-gold-light text-black font-semibold"
         >
           <Plus className="w-4 h-4 mr-2" />
           Registrar Oferta
@@ -141,53 +145,89 @@ export default function FinanceiroPage() {
 
       {/* Month filter */}
       <div className="flex items-center gap-3 mb-6">
-        <Label className="text-[#888] text-sm whitespace-nowrap">Mês:</Label>
+        <Label className="text-muted-foreground text-sm whitespace-nowrap">Mês:</Label>
         <Input
           type="month"
           value={month}
           onChange={(e) => setMonth(e.target.value)}
-          className="w-44 bg-[#1e1e1e] border-[#2a2a2a] text-[#f0ece4] focus-visible:ring-[#7a6330]"
+          className="w-44 bg-card border-border text-foreground focus-visible:ring-gold-muted"
         />
       </div>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <div className="bg-[#1e1e1e] border border-[#2a2a2a] rounded-xl p-5">
-          <div className="flex items-center gap-2 mb-2">
-            <TrendingUp className="w-3.5 h-3.5 text-[#2ecc71]" />
-            <p className="text-[10px] uppercase tracking-wider text-[#888]">Entradas</p>
+      {pageLoading ? (
+        <div className="space-y-6">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="bg-card border border-border rounded-xl p-5 space-y-2">
+                <Skeleton className="h-3 w-16" />
+                <Skeleton className="h-8 w-24" />
+              </div>
+            ))}
           </div>
-          <p className="text-2xl font-bold text-[#2ecc71]" style={{ fontFamily: "var(--font-heading)" }}>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="bg-card border border-border rounded-xl p-3 flex items-center gap-3">
+                  <Skeleton className="h-4 w-4" />
+                  <div className="flex-1 space-y-1.5">
+                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-3 w-1/3" />
+                  </div>
+                  <Skeleton className="h-4 w-16" />
+                </div>
+              ))}
+            </div>
+            <div className="space-y-2">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="bg-card border border-border rounded-xl p-3 flex items-center gap-3">
+                  <div className="flex-1 space-y-1.5">
+                    <Skeleton className="h-4 w-2/3" />
+                    <Skeleton className="h-3 w-1/2" />
+                  </div>
+                  <Skeleton className="h-4 w-14" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {!pageLoading && (<>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="bg-card border border-border rounded-xl p-5">
+          <div className="flex items-center gap-2 mb-2">
+            <TrendingUp className="w-3.5 h-3.5 text-success" />
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Entradas</p>
+          </div>
+          <p className="text-2xl font-bold text-success" style={{ fontFamily: "var(--font-heading)" }}>
             R$ {offeringsTotal.toFixed(2).replace(".", ",")}
           </p>
         </div>
-        <div className="bg-[#1e1e1e] border border-[#2a2a2a] rounded-xl p-5">
+        <div className="bg-card border border-border rounded-xl p-5">
           <div className="flex items-center gap-2 mb-2">
-            <TrendingDown className="w-3.5 h-3.5 text-[#e74c3c]" />
-            <p className="text-[10px] uppercase tracking-wider text-[#888]">Saídas</p>
+            <TrendingDown className="w-3.5 h-3.5 text-destructive" />
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Saídas</p>
           </div>
-          <p className="text-2xl font-bold text-[#e74c3c]" style={{ fontFamily: "var(--font-heading)" }}>
+          <p className="text-2xl font-bold text-destructive" style={{ fontFamily: "var(--font-heading)" }}>
             R$ {expensesTotal.toFixed(2).replace(".", ",")}
           </p>
         </div>
-        <div className="bg-[#1e1e1e] border border-[#2a2a2a] rounded-xl p-5">
+        <div className="bg-card border border-border rounded-xl p-5">
           <div className="flex items-center gap-2 mb-2">
-            <Minus className="w-3.5 h-3.5 text-[#c9a84c]" />
-            <p className="text-[10px] uppercase tracking-wider text-[#888]">Saldo</p>
+            <Minus className="w-3.5 h-3.5 text-gold" />
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Saldo</p>
           </div>
           <p
-            className="text-2xl font-bold"
-            style={{
-              fontFamily: "var(--font-heading)",
-              color: saldo >= 0 ? "#2ecc71" : "#e74c3c",
-            }}
+            className={`text-2xl font-bold ${saldo >= 0 ? "text-success" : "text-destructive"}`}
+            style={{ fontFamily: "var(--font-heading)" }}
           >
             R$ {saldo.toFixed(2).replace(".", ",")}
           </p>
         </div>
-        <div className="bg-[#1e1e1e] border border-[#2a2a2a] rounded-xl p-5">
-          <p className="text-[10px] uppercase tracking-wider text-[#888] mb-2">Contribuintes</p>
-          <p className="text-2xl font-bold text-[#c9a84c]" style={{ fontFamily: "var(--font-heading)" }}>
+        <div className="bg-card border border-border rounded-xl p-5">
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2">Contribuintes</p>
+          <p className="text-2xl font-bold text-gold" style={{ fontFamily: "var(--font-heading)" }}>
             {Object.keys(perMember).length}
           </p>
         </div>
@@ -197,22 +237,22 @@ export default function FinanceiroPage() {
         {/* Per-member ranking */}
         <div>
           <div className="flex items-center gap-3 mb-4">
-            <TrendingUp className="w-4 h-4 text-[#c9a84c]" />
-            <span className="text-[11px] tracking-[3px] uppercase text-[#c9a84c]">Por participante</span>
-            <div className="flex-1 h-px bg-[#2a2a2a]" />
+            <TrendingUp className="w-4 h-4 text-gold" />
+            <span className="text-[11px] tracking-[3px] uppercase text-gold">Por participante</span>
+            <div className="flex-1 h-px bg-border" />
           </div>
           <div className="space-y-2">
             {sorted.length === 0 && (
-              <p className="text-[#888] text-sm py-8 text-center">Nenhum registro neste mês</p>
+              <p className="text-muted-foreground text-sm py-8 text-center">Nenhum registro neste mês</p>
             )}
             {sorted.map((m, i) => (
-              <div key={m.name} className="bg-[#1e1e1e] border border-[#2a2a2a] rounded-xl p-3 flex items-center gap-3">
-                <span className="text-[#888] text-xs font-bold w-5 text-center">{i + 1}</span>
+              <div key={m.name} className="bg-card border border-border rounded-xl p-3 flex items-center gap-3">
+                <span className="text-muted-foreground text-xs font-bold w-5 text-center">{i + 1}</span>
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-[#f0ece4]">{m.name}</p>
-                  <p className="text-xs text-[#888]">{m.count} contribuição{m.count !== 1 ? "ões" : ""}</p>
+                  <p className="text-sm font-medium text-foreground">{m.name}</p>
+                  <p className="text-xs text-muted-foreground">{m.count} contribuição{m.count !== 1 ? "ões" : ""}</p>
                 </div>
-                <p className="text-sm font-bold text-[#c9a84c]">
+                <p className="text-sm font-bold text-gold">
                   R$ {m.total.toFixed(2).replace(".", ",")}
                 </p>
               </div>
@@ -225,32 +265,32 @@ export default function FinanceiroPage() {
           {/* Recent offerings */}
           <div>
             <div className="flex items-center gap-3 mb-4">
-              <span className="text-[11px] tracking-[3px] uppercase text-[#c9a84c]">Lançamentos</span>
-              <div className="flex-1 h-px bg-[#2a2a2a]" />
+              <span className="text-[11px] tracking-[3px] uppercase text-gold">Lançamentos</span>
+              <div className="flex-1 h-px bg-border" />
             </div>
             <div className="space-y-2">
               {offerings.length === 0 && (
-                <p className="text-[#888] text-sm py-4 text-center">Nenhum lançamento</p>
+                <p className="text-muted-foreground text-sm py-4 text-center">Nenhum lançamento</p>
               )}
               {offerings.slice(0, 12).map((o) => (
-                <div key={o.id} className="bg-[#1e1e1e] border border-[#2a2a2a] rounded-xl p-3 flex items-center gap-3 group">
+                <div key={o.id} className="bg-card border border-border rounded-xl p-3 flex items-center gap-3 group">
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-[#f0ece4] truncate">{o.member.name}</p>
-                    <p className="text-xs text-[#888]">
+                    <p className="text-sm font-medium text-foreground truncate">{o.member.name}</p>
+                    <p className="text-xs text-muted-foreground">
                       {format(new Date(o.date), "dd/MM/yyyy")}
                       {o.event && ` · ${o.event.title}`}
                       {" · "}
-                      <span className={o.method === "PIX" ? "text-[#c9a84c]" : "text-[#888]"}>
+                      <span className={o.method === "PIX" ? "text-gold" : "text-muted-foreground"}>
                         {METHOD_LABELS[o.method]}
                       </span>
                     </p>
                   </div>
-                  <p className="text-sm font-bold text-[#2ecc71] flex-shrink-0">
+                  <p className="text-sm font-bold text-success flex-shrink-0">
                     R$ {o.amount.toFixed(2).replace(".", ",")}
                   </p>
                   <button
                     onClick={() => handleDeleteOffering(o.id)}
-                    className="opacity-0 group-hover:opacity-100 p-1.5 text-[#888] hover:text-[#e74c3c] hover:bg-[#e74c3c11] rounded-lg transition-all"
+                    className="opacity-0 group-hover:opacity-100 p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/5 rounded-lg transition-all"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
@@ -262,12 +302,12 @@ export default function FinanceiroPage() {
           {/* Expenses */}
           <div>
             <div className="flex items-center gap-3 mb-4">
-              <TrendingDown className="w-4 h-4 text-[#e74c3c]" />
-              <span className="text-[11px] tracking-[3px] uppercase text-[#e74c3c]">Despesas</span>
-              <div className="flex-1 h-px bg-[#2a2a2a]" />
+              <TrendingDown className="w-4 h-4 text-destructive" />
+              <span className="text-[11px] tracking-[3px] uppercase text-destructive">Despesas</span>
+              <div className="flex-1 h-px bg-border" />
               <button
                 onClick={() => setExpenseDialogOpen(true)}
-                className="flex items-center gap-1 text-xs text-[#888] hover:text-[#c9a84c] transition-colors"
+                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-gold transition-colors"
               >
                 <Plus className="w-3.5 h-3.5" />
                 Adicionar
@@ -275,24 +315,24 @@ export default function FinanceiroPage() {
             </div>
             <div className="space-y-2">
               {expenses.length === 0 && (
-                <p className="text-[#888] text-sm py-4 text-center">Nenhuma despesa registrada</p>
+                <p className="text-muted-foreground text-sm py-4 text-center">Nenhuma despesa registrada</p>
               )}
               {expenses.map((e) => (
-                <div key={e.id} className="bg-[#1e1e1e] border border-[#2a2a2a] rounded-xl p-3 flex items-center gap-3 group">
+                <div key={e.id} className="bg-card border border-border rounded-xl p-3 flex items-center gap-3 group">
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-[#f0ece4] truncate">{e.description}</p>
-                    <p className="text-xs text-[#888]">
+                    <p className="text-sm font-medium text-foreground truncate">{e.description}</p>
+                    <p className="text-xs text-muted-foreground">
                       {format(new Date(e.date), "dd/MM/yyyy")}
                       {" · "}
-                      <span className="text-[#888]">{CATEGORY_LABELS[e.category] ?? e.category}</span>
+                      <span className="text-muted-foreground">{CATEGORY_LABELS[e.category] ?? e.category}</span>
                     </p>
                   </div>
-                  <p className="text-sm font-bold text-[#e74c3c] flex-shrink-0">
+                  <p className="text-sm font-bold text-destructive flex-shrink-0">
                     − R$ {e.amount.toFixed(2).replace(".", ",")}
                   </p>
                   <button
                     onClick={() => handleDeleteExpense(e.id)}
-                    className="opacity-0 group-hover:opacity-100 p-1.5 text-[#888] hover:text-[#e74c3c] hover:bg-[#e74c3c11] rounded-lg transition-all"
+                    className="opacity-0 group-hover:opacity-100 p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/5 rounded-lg transition-all"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
@@ -302,6 +342,7 @@ export default function FinanceiroPage() {
           </div>
         </div>
       </div>
+      </>)}
 
       <AddOfferingDialog
         open={offeringDialogOpen}
@@ -365,20 +406,20 @@ function AddOfferingDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-[#1e1e1e] border-[#2a2a2a] text-[#f0ece4] max-w-md">
+      <DialogContent className="bg-card border-border text-foreground max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-[#e8c97a]" style={{ fontFamily: "var(--font-heading)" }}>
+          <DialogTitle className="text-gold-light" style={{ fontFamily: "var(--font-heading)" }}>
             Registrar Oferta
           </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 mt-2">
           <div className="space-y-1.5">
-            <Label className="text-[#888] text-xs">Participante *</Label>
+            <Label className="text-muted-foreground text-xs">Participante *</Label>
             <Select value={form.memberId} onValueChange={(v: string | null) => v && set("memberId", v)}>
-              <SelectTrigger className="bg-[#0d0d0d] border-[#2a2a2a] text-[#f0ece4]">
+              <SelectTrigger className="bg-background border-border text-foreground">
                 <SelectValue placeholder="Selecione..." />
               </SelectTrigger>
-              <SelectContent className="bg-[#1e1e1e] border-[#2a2a2a] max-h-52">
+              <SelectContent className="bg-card border-border max-h-52">
                 {members.map((m) => (
                   <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
                 ))}
@@ -387,18 +428,18 @@ function AddOfferingDialog({
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label className="text-[#888] text-xs">Valor (R$) *</Label>
+              <Label className="text-muted-foreground text-xs">Valor (R$) *</Label>
               <Input type="number" min="0.01" step="0.01" value={form.amount}
                 onChange={(e) => set("amount", e.target.value)} placeholder="0,00"
-                className="bg-[#0d0d0d] border-[#2a2a2a] text-[#f0ece4] focus-visible:ring-[#7a6330]" />
+                className="bg-background border-border text-foreground focus-visible:ring-gold-muted" />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-[#888] text-xs">Método</Label>
+              <Label className="text-muted-foreground text-xs">Método</Label>
               <Select value={form.method} onValueChange={(v: string | null) => v && set("method", v)}>
-                <SelectTrigger className="bg-[#0d0d0d] border-[#2a2a2a] text-[#f0ece4]">
+                <SelectTrigger className="bg-background border-border text-foreground">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-[#1e1e1e] border-[#2a2a2a]">
+                <SelectContent className="bg-card border-border">
                   <SelectItem value="CASH">Dinheiro</SelectItem>
                   <SelectItem value="PIX">PIX</SelectItem>
                 </SelectContent>
@@ -407,17 +448,17 @@ function AddOfferingDialog({
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label className="text-[#888] text-xs">Data</Label>
+              <Label className="text-muted-foreground text-xs">Data</Label>
               <Input type="date" value={form.date} onChange={(e) => set("date", e.target.value)}
-                className="bg-[#0d0d0d] border-[#2a2a2a] text-[#f0ece4] focus-visible:ring-[#7a6330]" />
+                className="bg-background border-border text-foreground focus-visible:ring-gold-muted" />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-[#888] text-xs">Evento (opcional)</Label>
+              <Label className="text-muted-foreground text-xs">Evento (opcional)</Label>
               <Select value={form.eventId} onValueChange={(v: string | null) => set("eventId", v ?? "")}>
-                <SelectTrigger className="bg-[#0d0d0d] border-[#2a2a2a] text-[#f0ece4]">
+                <SelectTrigger className="bg-background border-border text-foreground">
                   <SelectValue placeholder="Nenhum" />
                 </SelectTrigger>
-                <SelectContent className="bg-[#1e1e1e] border-[#2a2a2a] max-h-48">
+                <SelectContent className="bg-card border-border max-h-48">
                   <SelectItem value="">Nenhum</SelectItem>
                   {events.map((ev) => (
                     <SelectItem key={ev.id} value={ev.id}>{ev.title}</SelectItem>
@@ -428,11 +469,11 @@ function AddOfferingDialog({
           </div>
           <div className="flex gap-3 pt-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}
-              className="flex-1 border-[#2a2a2a] text-[#888] hover:bg-[#2a2a2a]">
+              className="flex-1 border-border text-muted-foreground hover:bg-secondary">
               Cancelar
             </Button>
             <Button type="submit" disabled={loading}
-              className="flex-1 bg-[#c9a84c] hover:bg-[#e8c97a] text-black font-semibold">
+              className="flex-1 bg-gold hover:bg-gold-light text-black font-semibold">
               {loading ? "Salvando..." : "Registrar"}
             </Button>
           </div>
@@ -485,33 +526,33 @@ function AddExpenseDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-[#1e1e1e] border-[#2a2a2a] text-[#f0ece4] max-w-md">
+      <DialogContent className="bg-card border-border text-foreground max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-[#e8c97a]" style={{ fontFamily: "var(--font-heading)" }}>
+          <DialogTitle className="text-gold-light" style={{ fontFamily: "var(--font-heading)" }}>
             Registrar Despesa
           </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 mt-2">
           <div className="space-y-1.5">
-            <Label className="text-[#888] text-xs">Descrição *</Label>
+            <Label className="text-muted-foreground text-xs">Descrição *</Label>
             <Input value={form.description} onChange={(e) => set("description", e.target.value)}
               placeholder="Ex: Compra de material..."
-              className="bg-[#0d0d0d] border-[#2a2a2a] text-[#f0ece4] focus-visible:ring-[#7a6330]" />
+              className="bg-background border-border text-foreground focus-visible:ring-gold-muted" />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label className="text-[#888] text-xs">Valor (R$) *</Label>
+              <Label className="text-muted-foreground text-xs">Valor (R$) *</Label>
               <Input type="number" min="0.01" step="0.01" value={form.amount}
                 onChange={(e) => set("amount", e.target.value)} placeholder="0,00"
-                className="bg-[#0d0d0d] border-[#2a2a2a] text-[#f0ece4] focus-visible:ring-[#7a6330]" />
+                className="bg-background border-border text-foreground focus-visible:ring-gold-muted" />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-[#888] text-xs">Categoria</Label>
+              <Label className="text-muted-foreground text-xs">Categoria</Label>
               <Select value={form.category} onValueChange={(v: string | null) => v && set("category", v)}>
-                <SelectTrigger className="bg-[#0d0d0d] border-[#2a2a2a] text-[#f0ece4]">
+                <SelectTrigger className="bg-background border-border text-foreground">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-[#1e1e1e] border-[#2a2a2a]">
+                <SelectContent className="bg-card border-border">
                   <SelectItem value="MATERIAL">Material</SelectItem>
                   <SelectItem value="TRANSPORTE">Transporte</SelectItem>
                   <SelectItem value="ALIMENTACAO">Alimentação</SelectItem>
@@ -522,17 +563,17 @@ function AddExpenseDialog({
             </div>
           </div>
           <div className="space-y-1.5">
-            <Label className="text-[#888] text-xs">Data</Label>
+            <Label className="text-muted-foreground text-xs">Data</Label>
             <Input type="date" value={form.date} onChange={(e) => set("date", e.target.value)}
-              className="bg-[#0d0d0d] border-[#2a2a2a] text-[#f0ece4] focus-visible:ring-[#7a6330]" />
+              className="bg-background border-border text-foreground focus-visible:ring-gold-muted" />
           </div>
           <div className="flex gap-3 pt-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}
-              className="flex-1 border-[#2a2a2a] text-[#888] hover:bg-[#2a2a2a]">
+              className="flex-1 border-border text-muted-foreground hover:bg-secondary">
               Cancelar
             </Button>
             <Button type="submit" disabled={loading}
-              className="flex-1 bg-[#c9a84c] hover:bg-[#e8c97a] text-black font-semibold">
+              className="flex-1 bg-gold hover:bg-gold-light text-black font-semibold">
               {loading ? "Salvando..." : "Registrar"}
             </Button>
           </div>

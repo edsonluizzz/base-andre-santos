@@ -20,15 +20,23 @@ import {
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { usePermissions } from "@/context/permissions-context";
+import type { PermissionModule } from "@/types/permissions";
 
-const navItems = [
+const navItems: {
+  href: string;
+  icon: React.ElementType;
+  label: string;
+  module?: PermissionModule;
+  adminOnly?: boolean;
+}[] = [
   { href: "/", icon: LayoutDashboard, label: "Dashboard" },
-  { href: "/membros", icon: Users, label: "Membros" },
-  { href: "/aniversarios", icon: Cake, label: "Aniversários" },
-  { href: "/chamada", icon: ClipboardList, label: "Chamada" },
-  { href: "/relatorios", icon: BarChart2, label: "Relatórios" },
-  { href: "/financeiro", icon: DollarSign, label: "Financeiro" },
-  { href: "/camisetas", icon: Shirt, label: "Camisetas" },
+  { href: "/membros", icon: Users, label: "Membros", module: "MEMBERS" },
+  { href: "/aniversarios", icon: Cake, label: "Aniversários", module: "BIRTHDAYS" },
+  { href: "/chamada", icon: ClipboardList, label: "Chamada", module: "ATTENDANCE" },
+  { href: "/relatorios", icon: BarChart2, label: "Relatórios", module: "REPORTS" },
+  { href: "/financeiro", icon: DollarSign, label: "Financeiro", module: "FINANCIAL" },
+  { href: "/camisetas", icon: Shirt, label: "Camisetas", module: "SHIRTS" },
   { href: "/configuracoes", icon: Settings, label: "Configurações", adminOnly: true },
 ];
 
@@ -69,7 +77,12 @@ export function Sidebar() {
     .toUpperCase() ?? "U";
 
   const isAdmin = session?.user?.role === "ADMIN";
-  const visibleItems = navItems.filter((item) => !item.adminOnly || isAdmin);
+  const { canView } = usePermissions();
+  const visibleItems = navItems.filter((item) => {
+    if (item.adminOnly && !isAdmin) return false;
+    if (item.module && !canView(item.module)) return false;
+    return true;
+  });
 
   const roleLabel =
     session?.user?.role === "ADMIN"

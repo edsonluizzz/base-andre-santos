@@ -67,12 +67,10 @@ export default function AniversariosPage() {
   const withDate = members.filter((m) => m.birthday);
   const withoutDate = members.filter((m) => !m.birthday);
 
-  // Next 8 birthdays
   const upcoming = [...withDate]
     .sort((a, b) => daysUntil(a.birthday!) - daysUntil(b.birthday!))
     .slice(0, 8);
 
-  // Filter
   let filtered = members;
   if (search) {
     filtered = filtered.filter((m) =>
@@ -88,7 +86,6 @@ export default function AniversariosPage() {
     });
   }
 
-  // Group by month
   const grouped: Record<number, Member[]> = {};
   for (const m of filtered) {
     if (!m.birthday) continue;
@@ -104,7 +101,6 @@ export default function AniversariosPage() {
     });
   }
 
-  // Stats
   const now = new Date();
   const thisMonth = members.filter(
     (m) => m.birthday && parseInt(m.birthday.split("/")[1]) === now.getMonth() + 1
@@ -116,12 +112,12 @@ export default function AniversariosPage() {
       {/* Header */}
       <div className="mb-8">
         <h1
-          className="text-2xl lg:text-3xl font-bold text-[#e8c97a]"
+          className="text-2xl lg:text-3xl font-bold text-gold-light"
           style={{ fontFamily: "var(--font-heading)" }}
         >
           🎂 Aniversários
         </h1>
-        <p className="text-[#888] text-sm mt-1">
+        <p className="text-muted-foreground text-sm mt-1">
           Lista completa · Mensagens para WhatsApp
         </p>
       </div>
@@ -136,15 +132,15 @@ export default function AniversariosPage() {
         ].map((s) => (
           <div
             key={s.label}
-            className="bg-[#1e1e1e] border border-[#2a2a2a] rounded-xl p-4 text-center"
+            className="bg-card border border-border rounded-xl p-4 text-center"
           >
             <p
-              className="text-3xl font-bold text-[#c9a84c]"
+              className="text-3xl font-bold text-gold"
               style={{ fontFamily: "var(--font-heading)" }}
             >
               {s.num}
             </p>
-            <p className="text-[10px] text-[#888] uppercase tracking-wider mt-1">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mt-1">
               {s.label}
             </p>
           </div>
@@ -155,10 +151,10 @@ export default function AniversariosPage() {
       {upcoming.length > 0 && (
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-3">
-            <span className="text-[11px] tracking-[3px] uppercase text-[#c9a84c]">
+            <span className="text-[11px] tracking-[3px] uppercase text-gold">
               Próximos aniversários
             </span>
-            <div className="flex-1 h-px bg-[#2a2a2a]" />
+            <div className="flex-1 h-px bg-border" />
           </div>
           <div className="flex gap-3 overflow-x-auto pb-2">
             {upcoming.map((m) => {
@@ -167,15 +163,15 @@ export default function AniversariosPage() {
               return (
                 <div
                   key={m.id}
-                  className="flex-shrink-0 bg-gradient-to-br from-[#1e1e1e] to-[#1a1508] border border-[#7a6330] rounded-xl p-4 min-w-[150px] hover:-translate-y-1 transition-transform"
+                  className="flex-shrink-0 bg-gradient-to-br from-card to-[#1a1508] border border-gold-muted rounded-xl p-4 min-w-[150px] hover:-translate-y-1 transition-transform"
                 >
-                  <p className="text-[10px] tracking-[2px] uppercase text-[#c9a84c] mb-1">
+                  <p className="text-[10px] tracking-[2px] uppercase text-gold mb-1">
                     {today ? "🎉 Hoje!" : `${days}d`}
                   </p>
-                  <p className="font-semibold text-sm text-[#f0ece4] truncate max-w-[130px]">
+                  <p className="font-semibold text-sm text-foreground truncate max-w-[130px]">
                     {m.name.split(" ")[0]}
                   </p>
-                  <p className="text-xs text-[#888] mt-0.5">{m.birthday}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{m.birthday}</p>
                 </div>
               );
             })}
@@ -186,12 +182,12 @@ export default function AniversariosPage() {
       {/* Controls */}
       <div className="flex flex-col md:flex-row gap-3 mb-6">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#888]" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             placeholder="Buscar por nome..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 bg-[#1e1e1e] border-[#2a2a2a] text-[#f0ece4] placeholder:text-[#888] focus-visible:ring-[#7a6330]"
+            className="pl-9 bg-card border-border text-foreground placeholder:text-muted-foreground focus-visible:ring-gold-muted"
           />
         </div>
         <div className="flex flex-wrap gap-2">
@@ -255,7 +251,7 @@ export default function AniversariosPage() {
       )}
 
       {filtered.length === 0 && (
-        <p className="text-center text-[#888] py-16">Nenhum resultado encontrado</p>
+        <p className="text-center text-muted-foreground py-16">Nenhum resultado encontrado</p>
       )}
     </div>
   );
@@ -275,8 +271,8 @@ function FilterBtn({
       onClick={onClick}
       className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap ${
         active
-          ? "bg-[#c9a84c22] text-[#c9a84c] border border-[#c9a84c33]"
-          : "bg-[#1e1e1e] text-[#888] border border-[#2a2a2a] hover:text-[#f0ece4]"
+          ? "bg-gold/10 text-gold border border-gold/20"
+          : "bg-card text-muted-foreground border border-border hover:text-foreground"
       }`}
     >
       {label}
@@ -288,15 +284,15 @@ function SectionTitle({ title, count }: { title: string; count: number }) {
   return (
     <div className="flex items-center gap-3 mb-4">
       <span
-        className="text-[#e8c97a] font-bold text-lg"
+        className="text-gold-light font-bold text-lg"
         style={{ fontFamily: "var(--font-heading)" }}
       >
         {title}
       </span>
-      <span className="bg-[#7a6330] text-[#e8c97a] text-xs font-semibold px-2 py-0.5 rounded-full">
+      <span className="bg-gold-muted text-gold-light text-xs font-semibold px-2 py-0.5 rounded-full">
         {count}
       </span>
-      <div className="flex-1 h-px bg-[#2a2a2a]" />
+      <div className="flex-1 h-px bg-border" />
     </div>
   );
 }
@@ -314,36 +310,36 @@ function BirthdayCard({
 
   return (
     <div
-      className={`bg-[#1e1e1e] border rounded-xl overflow-hidden transition-colors hover:border-[#7a6330] ${
-        today ? "border-[#c9a84c] bg-gradient-to-br from-[#1e1e1e] to-[#1a1508]" : "border-[#2a2a2a]"
+      className={`bg-card border rounded-xl overflow-hidden transition-colors hover:border-gold-muted ${
+        today ? "border-gold bg-gradient-to-br from-card to-[#1a1508]" : "border-border"
       }`}
     >
       <div className="flex items-start p-4 gap-3">
         <div
-          className="w-10 h-10 rounded-full bg-[#7a6330] flex items-center justify-center text-[#e8c97a] font-bold text-sm flex-shrink-0"
+          className="w-10 h-10 rounded-full bg-gold-muted flex items-center justify-center text-gold-light font-bold text-sm flex-shrink-0"
           style={{ fontFamily: "var(--font-heading)" }}
         >
           {initials(member.name)}
         </div>
         <div className="flex-1">
           <div className="flex items-center gap-2">
-            <p className="font-semibold text-sm text-[#f0ece4]">{member.name}</p>
+            <p className="font-semibold text-sm text-foreground">{member.name}</p>
             {today && (
-              <span className="bg-[#c9a84c] text-black text-[9px] font-bold tracking-wider px-2 py-0.5 rounded-full uppercase">
+              <span className="bg-gold text-black text-[9px] font-bold tracking-wider px-2 py-0.5 rounded-full uppercase">
                 Hoje!
               </span>
             )}
           </div>
           {member.birthday ? (
-            <p className="text-[#c9a84c] text-xs mt-0.5">{member.birthday}</p>
+            <p className="text-gold text-xs mt-0.5">{member.birthday}</p>
           ) : (
-            <p className="text-[#888] text-xs mt-0.5 italic">Sem data</p>
+            <p className="text-muted-foreground text-xs mt-0.5 italic">Sem data</p>
           )}
         </div>
       </div>
 
-      <div className="mx-4 mb-3 bg-[#161616] border border-[#252525] rounded-lg px-3 py-2">
-        <p className="text-xs text-[#ccc] leading-relaxed line-clamp-2">
+      <div className="mx-4 mb-3 bg-background border border-border rounded-lg px-3 py-2">
+        <p className="text-xs text-foreground/80 leading-relaxed line-clamp-2">
           {birthdayMessage(member.name)}
         </p>
       </div>
@@ -353,8 +349,8 @@ function BirthdayCard({
           onClick={onCopy}
           className={`flex items-center gap-2 text-xs px-3 py-1.5 rounded-full border transition-all ${
             isCopied
-              ? "border-[#2ecc71] text-[#2ecc71] bg-[#2ecc7118]"
-              : "border-[#2a2a2a] text-[#888] hover:border-[#2ecc71] hover:text-[#2ecc71] hover:bg-[#2ecc7111]"
+              ? "border-success text-success bg-success/10"
+              : "border-border text-muted-foreground hover:border-success hover:text-success hover:bg-success/5"
           }`}
         >
           {isCopied ? (

@@ -58,9 +58,9 @@ const STATUS_LABELS: Record<AttendanceStatus, string> = {
 };
 
 const STATUS_CONFIG = {
-  PRESENT: { label: "Presente", color: "text-[#2ecc71] bg-[#2ecc7122] border-[#2ecc7133]", icon: Check },
-  ABSENT: { label: "Ausente", color: "text-[#e74c3c] bg-[#e74c3c22] border-[#e74c3c33]", icon: X },
-  JUSTIFIED: { label: "Justificado", color: "text-[#c9a84c] bg-[#c9a84c22] border-[#c9a84c33]", icon: Clock },
+  PRESENT:   { label: "Presente",    color: "text-success bg-success/10 border-success/20",         icon: Check },
+  ABSENT:    { label: "Ausente",     color: "text-destructive bg-destructive/10 border-destructive/20", icon: X },
+  JUSTIFIED: { label: "Justificado", color: "text-gold bg-gold/10 border-gold/20",                  icon: Clock },
 };
 
 function safeFormat(dateStr: string, fmt: string): string {
@@ -249,16 +249,16 @@ export default function ChamadaPage() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1
-              className="text-2xl lg:text-3xl font-bold text-[#e8c97a]"
+              className="text-2xl lg:text-3xl font-bold text-gold-light"
               style={{ fontFamily: "var(--font-heading)" }}
             >
               Chamada
             </h1>
-            <p className="text-[#888] text-sm mt-1">Controle de presença por evento</p>
+            <p className="text-muted-foreground text-sm mt-1">Controle de presença por evento</p>
           </div>
           <Button
             onClick={() => setNewEventOpen(true)}
-            className="bg-[#c9a84c] hover:bg-[#e8c97a] text-black font-semibold"
+            className="bg-gold hover:bg-gold-light text-black font-semibold"
           >
             <Plus className="w-4 h-4 mr-2" />
             Novo Evento
@@ -269,36 +269,36 @@ export default function ChamadaPage() {
         {!activeEvent && (
           <div className="space-y-3">
             {events.length === 0 && (
-              <p className="text-center text-[#888] py-16">Nenhum evento cadastrado</p>
+              <p className="text-center text-muted-foreground py-16">Nenhum evento cadastrado</p>
             )}
             {events.map((ev) => (
               <div
                 key={ev.id}
                 onClick={() => openEvent(ev)}
-                className="bg-[#1e1e1e] border border-[#2a2a2a] hover:border-[#7a6330] rounded-xl p-4 cursor-pointer flex items-center gap-4 group transition-colors"
+                className="bg-card border border-border hover:border-gold-muted rounded-xl p-4 cursor-pointer flex items-center gap-4 group transition-colors"
               >
-                <div className="w-10 h-10 rounded-xl bg-[#c9a84c22] border border-[#c9a84c33] flex items-center justify-center">
-                  <CalendarDays className="w-5 h-5 text-[#c9a84c]" />
+                <div className="w-10 h-10 rounded-xl bg-gold/10 border border-gold/20 flex items-center justify-center">
+                  <CalendarDays className="w-5 h-5 text-gold" />
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
-                    <p className="font-semibold text-[#f0ece4]">{ev.title}</p>
-                    <span className="text-[10px] bg-[#2a2a2a] text-[#888] px-2 py-0.5 rounded-full">
+                    <p className="font-semibold text-foreground">{ev.title}</p>
+                    <span className="text-[10px] bg-secondary text-muted-foreground px-2 py-0.5 rounded-full">
                       {EVENT_LABELS[ev.type]}
                     </span>
                   </div>
-                  <p className="text-sm text-[#888] mt-0.5">
+                  <p className="text-sm text-muted-foreground mt-0.5">
                     {safeFormat(ev.date, "dd 'de' MMMM 'de' yyyy")}
                     {ev.location && ` · ${ev.location}`}
                   </p>
                 </div>
                 <div className="text-right">
                   {ev._count.attendances > 0 && (
-                    <p className="text-xs text-[#c9a84c] font-medium">
+                    <p className="text-xs text-gold font-medium">
                       {ev._count.attendances} registros
                     </p>
                   )}
-                  <ChevronRight className="w-4 h-4 text-[#888] group-hover:text-[#c9a84c] transition-colors ml-auto mt-1" />
+                  <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-gold transition-colors ml-auto mt-1" />
                 </div>
               </div>
             ))}
@@ -311,27 +311,27 @@ export default function ChamadaPage() {
             <div className="flex items-center gap-3 mb-6">
               <button
                 onClick={() => setActiveEvent(null)}
-                className="text-[#888] hover:text-[#f0ece4] text-sm transition-colors"
+                className="text-muted-foreground hover:text-foreground text-sm transition-colors"
               >
                 ← Voltar
               </button>
               <div className="flex-1">
-                <p className="font-semibold text-[#f0ece4]">{activeEvent.title}</p>
-                <p className="text-xs text-[#888]">
+                <p className="font-semibold text-foreground">{activeEvent.title}</p>
+                <p className="text-xs text-muted-foreground">
                   {safeFormat(activeEvent.date, "dd 'de' MMMM")}
                 </p>
               </div>
               <div className="flex items-center gap-2">
                 <div className="text-right">
-                  <p className="text-sm font-bold text-[#2ecc71]">
+                  <p className="text-sm font-bold text-success">
                     {present}/{total}
                   </p>
-                  <p className="text-xs text-[#888]">presentes</p>
+                  <p className="text-xs text-muted-foreground">presentes</p>
                 </div>
                 <button
                   onClick={handleExportPDF}
                   disabled={printLoading}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[#2a2a2a] text-[#888] hover:text-[#f0ece4] hover:border-[#7a6330] text-xs transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border text-muted-foreground hover:text-foreground hover:border-gold-muted text-xs transition-colors"
                 >
                   <Printer className="w-3.5 h-3.5" />
                   {printLoading ? "..." : "PDF"}
@@ -342,12 +342,12 @@ export default function ChamadaPage() {
             {/* Legend */}
             <div className="flex gap-3 mb-4 flex-wrap">
               {Object.entries(STATUS_CONFIG).map(([k, v]) => (
-                <div key={k} className="flex items-center gap-1.5 text-xs text-[#888]">
-                  <div className={`w-2 h-2 rounded-full ${k === "PRESENT" ? "bg-[#2ecc71]" : k === "ABSENT" ? "bg-[#e74c3c]" : "bg-[#c9a84c]"}`} />
+                <div key={k} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <div className={`w-2 h-2 rounded-full ${k === "PRESENT" ? "bg-success" : k === "ABSENT" ? "bg-destructive" : "bg-gold"}`} />
                   {v.label}
                 </div>
               ))}
-              <p className="text-xs text-[#888] ml-auto">Toque para alternar status</p>
+              <p className="text-xs text-muted-foreground ml-auto">Toque para alternar status</p>
             </div>
 
             <div className="space-y-2 mb-6">
@@ -366,13 +366,13 @@ export default function ChamadaPage() {
                   <div
                     key={m.id}
                     onClick={() => cycleStatus(m.id)}
-                    className="flex items-center gap-3 p-3 bg-[#1e1e1e] border border-[#2a2a2a] rounded-xl cursor-pointer hover:border-[#7a6330] transition-colors select-none"
+                    className="flex items-center gap-3 p-3 bg-card border border-border rounded-xl cursor-pointer hover:border-gold-muted transition-colors select-none"
                   >
-                    <div className="w-9 h-9 rounded-full bg-[#7a6330] flex items-center justify-center text-[#e8c97a] text-xs font-bold flex-shrink-0"
+                    <div className="w-9 h-9 rounded-full bg-gold-muted flex items-center justify-center text-gold-light text-xs font-bold flex-shrink-0"
                       style={{ fontFamily: "var(--font-heading)" }}>
                       {inits}
                     </div>
-                    <p className="flex-1 text-sm font-medium text-[#f0ece4]">{m.name}</p>
+                    <p className="flex-1 text-sm font-medium text-foreground">{m.name}</p>
                     <span
                       className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full border ${cfg.color}`}
                     >
@@ -387,7 +387,7 @@ export default function ChamadaPage() {
             <Button
               onClick={saveAttendances}
               disabled={saving}
-              className="w-full bg-[#c9a84c] hover:bg-[#e8c97a] text-black font-semibold"
+              className="w-full bg-gold hover:bg-gold-light text-black font-semibold"
             >
               {saving ? "Salvando..." : "Salvar Chamada"}
             </Button>
@@ -446,27 +446,27 @@ function NewEventDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-[#1e1e1e] border-[#2a2a2a] text-[#f0ece4] max-w-md">
+      <DialogContent className="bg-card border-border text-foreground max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-[#e8c97a]" style={{ fontFamily: "var(--font-heading)" }}>
+          <DialogTitle className="text-gold-light" style={{ fontFamily: "var(--font-heading)" }}>
             Novo Evento
           </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 mt-2">
           <div className="space-y-1.5">
-            <Label className="text-[#888] text-xs">Título *</Label>
+            <Label className="text-muted-foreground text-xs">Título *</Label>
             <Input value={form.title} onChange={(e) => set("title", e.target.value)}
               placeholder="Ex: Ensaio de louvor" required
-              className="bg-[#0d0d0d] border-[#2a2a2a] text-[#f0ece4] focus-visible:ring-[#7a6330]" />
+              className="bg-background border-border text-foreground focus-visible:ring-gold-muted" />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label className="text-[#888] text-xs">Tipo *</Label>
+              <Label className="text-muted-foreground text-xs">Tipo *</Label>
               <Select value={form.type} onValueChange={(v: string | null) => v && set("type", v)}>
-                <SelectTrigger className="bg-[#0d0d0d] border-[#2a2a2a] text-[#f0ece4]">
+                <SelectTrigger className="bg-background border-border text-foreground">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-[#1e1e1e] border-[#2a2a2a]">
+                <SelectContent className="bg-card border-border">
                   {Object.entries(EVENT_LABELS).map(([k, v]) => (
                     <SelectItem key={k} value={k}>{v}</SelectItem>
                   ))}
@@ -474,24 +474,24 @@ function NewEventDialog({
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label className="text-[#888] text-xs">Data e hora *</Label>
+              <Label className="text-muted-foreground text-xs">Data e hora *</Label>
               <Input type="datetime-local" value={form.date} onChange={(e) => set("date", e.target.value)}
-                className="bg-[#0d0d0d] border-[#2a2a2a] text-[#f0ece4] focus-visible:ring-[#7a6330]" />
+                className="bg-background border-border text-foreground focus-visible:ring-gold-muted" />
             </div>
           </div>
           <div className="space-y-1.5">
-            <Label className="text-[#888] text-xs">Local</Label>
+            <Label className="text-muted-foreground text-xs">Local</Label>
             <Input value={form.location} onChange={(e) => set("location", e.target.value)}
               placeholder="Ex: Igreja IEADC Porto Belo"
-              className="bg-[#0d0d0d] border-[#2a2a2a] text-[#f0ece4] focus-visible:ring-[#7a6330]" />
+              className="bg-background border-border text-foreground focus-visible:ring-gold-muted" />
           </div>
           <div className="flex gap-3 pt-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}
-              className="flex-1 border-[#2a2a2a] text-[#888] hover:bg-[#2a2a2a]">
+              className="flex-1 border-border text-muted-foreground hover:bg-secondary">
               Cancelar
             </Button>
             <Button type="submit" disabled={loading}
-              className="flex-1 bg-[#c9a84c] hover:bg-[#e8c97a] text-black font-semibold">
+              className="flex-1 bg-gold hover:bg-gold-light text-black font-semibold">
               {loading ? "Criando..." : "Criar Evento"}
             </Button>
           </div>
