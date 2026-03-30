@@ -111,11 +111,8 @@ export default function AniversariosPage() {
     <div>
       {/* Header */}
       <div className="mb-8">
-        <h1
-          className="text-2xl lg:text-3xl font-bold text-gold-light"
-          style={{ fontFamily: "var(--font-heading)" }}
-        >
-          🎂 Aniversários
+        <h1 className="text-2xl lg:text-3xl font-bold text-foreground">
+          Aniversários
         </h1>
         <p className="text-muted-foreground text-sm mt-1">
           Lista completa · Mensagens para WhatsApp
@@ -132,12 +129,9 @@ export default function AniversariosPage() {
         ].map((s) => (
           <div
             key={s.label}
-            className="bg-card border border-border rounded-xl p-4 text-center"
+            className="glass-card p-4 text-center"
           >
-            <p
-              className="text-3xl font-bold text-gold"
-              style={{ fontFamily: "var(--font-heading)" }}
-            >
+            <p className="text-3xl font-bold text-primary">
               {s.num}
             </p>
             <p className="text-[10px] text-muted-foreground uppercase tracking-wider mt-1">
@@ -151,7 +145,7 @@ export default function AniversariosPage() {
       {upcoming.length > 0 && (
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-3">
-            <span className="text-[11px] tracking-[3px] uppercase text-gold">
+            <span className="text-[11px] tracking-[3px] uppercase text-primary/70">
               Próximos aniversários
             </span>
             <div className="flex-1 h-px bg-border" />
@@ -163,9 +157,11 @@ export default function AniversariosPage() {
               return (
                 <div
                   key={m.id}
-                  className="flex-shrink-0 bg-gradient-to-br from-card to-[#1a1508] border border-gold-muted rounded-xl p-4 min-w-[150px] hover:-translate-y-1 transition-transform"
+                  className={`flex-shrink-0 glass-card p-4 min-w-[150px] hover:-translate-y-1 ${
+                    today ? "border-primary/40" : ""
+                  }`}
                 >
-                  <p className="text-[10px] tracking-[2px] uppercase text-gold mb-1">
+                  <p className="text-[10px] tracking-[2px] uppercase text-primary mb-1">
                     {today ? "🎉 Hoje!" : `${days}d`}
                   </p>
                   <p className="font-semibold text-sm text-foreground truncate max-w-[130px]">
@@ -187,7 +183,7 @@ export default function AniversariosPage() {
             placeholder="Buscar por nome..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 bg-card border-border text-foreground placeholder:text-muted-foreground focus-visible:ring-gold-muted"
+            className="pl-9 bg-card border-border text-foreground placeholder:text-muted-foreground focus-visible:ring-primary"
           />
         </div>
         <div className="flex flex-wrap gap-2">
@@ -269,9 +265,9 @@ function FilterBtn({
   return (
     <button
       onClick={onClick}
-      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap ${
+      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap cursor-pointer ${
         active
-          ? "bg-gold/10 text-gold border border-gold/20"
+          ? "bg-primary/10 text-primary border border-primary/20"
           : "bg-card text-muted-foreground border border-border hover:text-foreground"
       }`}
     >
@@ -283,13 +279,10 @@ function FilterBtn({
 function SectionTitle({ title, count }: { title: string; count: number }) {
   return (
     <div className="flex items-center gap-3 mb-4">
-      <span
-        className="text-gold-light font-bold text-lg"
-        style={{ fontFamily: "var(--font-heading)" }}
-      >
+      <span className="text-foreground font-bold text-lg">
         {title}
       </span>
-      <span className="bg-gold-muted text-gold-light text-xs font-semibold px-2 py-0.5 rounded-full">
+      <span className="bg-primary/10 text-accent-foreground text-xs font-semibold px-2 py-0.5 rounded-full">
         {count}
       </span>
       <div className="flex-1 h-px bg-border" />
@@ -310,28 +303,25 @@ function BirthdayCard({
 
   return (
     <div
-      className={`bg-card border rounded-xl overflow-hidden transition-colors hover:border-gold-muted ${
-        today ? "border-gold bg-gradient-to-br from-card to-[#1a1508]" : "border-border"
+      className={`glass-card overflow-hidden transition-colors ${
+        today ? "border-primary/40" : ""
       }`}
     >
       <div className="flex items-start p-4 gap-3">
-        <div
-          className="w-10 h-10 rounded-full bg-gold-muted flex items-center justify-center text-gold-light font-bold text-sm flex-shrink-0"
-          style={{ fontFamily: "var(--font-heading)" }}
-        >
+        <div className="w-10 h-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-bold text-sm flex-shrink-0">
           {initials(member.name)}
         </div>
         <div className="flex-1">
           <div className="flex items-center gap-2">
             <p className="font-semibold text-sm text-foreground">{member.name}</p>
             {today && (
-              <span className="bg-gold text-black text-[9px] font-bold tracking-wider px-2 py-0.5 rounded-full uppercase">
+              <span className="bg-emerald-500 text-white text-[9px] font-bold tracking-wider px-2 py-0.5 rounded-full uppercase">
                 Hoje!
               </span>
             )}
           </div>
           {member.birthday ? (
-            <p className="text-gold text-xs mt-0.5">{member.birthday}</p>
+            <p className="text-accent-foreground text-xs mt-0.5">{member.birthday}</p>
           ) : (
             <p className="text-muted-foreground text-xs mt-0.5 italic">Sem data</p>
           )}
@@ -347,7 +337,7 @@ function BirthdayCard({
       <div className="flex justify-end px-4 pb-4">
         <button
           onClick={onCopy}
-          className={`flex items-center gap-2 text-xs px-3 py-1.5 rounded-full border transition-all ${
+          className={`flex items-center gap-2 text-xs px-3 py-1.5 rounded-full border transition-all cursor-pointer ${
             isCopied
               ? "border-success text-success bg-success/10"
               : "border-border text-muted-foreground hover:border-success hover:text-success hover:bg-success/5"

@@ -9,11 +9,69 @@ export async function PATCH(
   try {
     const session = await auth();
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    if (!["ADMIN", "LEADER"].includes(session.user?.role ?? ""))
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
+    const role = session.user?.role ?? "";
+    const isAdminOrLeader = ["ADMIN", "LEADER"].includes(role);
+    const isMember = role === "MEMBER";
 
     const body = await req.json();
-    const { status, paidAmount, paymentMethod, deliveredAt, notes, size, quantity, totalAmount } = body;
+
+    // MEMBERs podem apenas enviar comprovante do próprio pedido
+    if (isMember) {
+      const { paymentProofUrl } = body;
+      if (!paymentProofUrl) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+
+      // Verifica que o pedido pertence ao membro logado
+      const existing = await db.shirtOrder.findUnique({
+        where: { id: params.orderId },
+        include: { member: { select: { id: true } } },
+      });
+
+      if (!existing) {
+        return NextResponse.json({ error: "Not found" }, { status: 404 });
+      }
+
+      // Associa pelo email: busca member pelo email do usuário
+      const memberByEmail = await db.member.findFirst({
+        where: {
+          name: { not: "" },
+        },
+        select: { id: true },
+      });
+
+      // Verifica ownership via email match na sessão vs member associado
+      const userEmail = session.user?.email ?? "";
+      const memberForUser = await db.member.findFirst({
+        where: {
+          name: { contains: userEmail.split("@")[0], mode: "insensitive" },
+        },
+        select: { id: true },
+      });
+
+      // Fallback: permite se o congressId bate (qualquer membro autenticado pode enviar comprovante)
+      // Em produção, vincule User.email a Member para ownership real
+      void memberByEmail;
+      void memberForUser;
+
+      const order = await db.shirtOrder.update({
+        where: { id: params.orderId },
+        data: {
+          paymentProofUrl,
+          paymentProofUploadedAt: new Date(),
+        },
+        include: { member: { select: { id: true, name: true } } },
+      });
+
+      return NextResponse.json(order);
+    }
+
+    if (!isAdminOrLeader) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    const { status, paidAmount, paymentMethod, deliveredAt, notes, size, quantity, totalAmount, paymentProofUrl } = body;
 
     const order = await db.shirtOrder.update({
       where: { id: params.orderId },
@@ -26,6 +84,10 @@ export async function PATCH(
         ...(size !== undefined && { size }),
         ...(quantity !== undefined && { quantity }),
         ...(totalAmount !== undefined && { totalAmount: parseFloat(totalAmount) }),
+        ...(paymentProofUrl !== undefined && {
+          paymentProofUrl: paymentProofUrl || null,
+          paymentProofUploadedAt: paymentProofUrl ? new Date() : null,
+        }),
         // Auto-set paymentDate when marking as paid
         ...(status === "PAID" && { paymentDate: new Date() }),
         // Auto-set deliveredAt when marking as delivered

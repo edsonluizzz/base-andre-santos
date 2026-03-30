@@ -47,8 +47,24 @@ model User {
   role          Role      @default(MEMBER)
   createdAt     DateTime  @default(now())
 
-  accounts Account[]
-  sessions Session[]
+  accounts      Account[]
+  sessions      Session[]
+  notifications Notification[]
+}
+
+// ─── Notificações ─────────────────────────────────────────────────────────
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  body      String?
+  type      String
+  read      Boolean  @default(false)
+  link      String?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model VerificationToken {
@@ -162,35 +178,39 @@ model RolePermission {
 // ─── Congressos e Camisetas ───────────────────────────────────────────────
 
 model Congress {
-  id          String         @id @default(cuid())
-  name        String
-  date        DateTime
-  location    String?
-  description String?
-  status      CongressStatus @default(OPEN)
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
+  id            String         @id @default(cuid())
+  name          String
+  date          DateTime
+  location      String?
+  description   String?
+  status        CongressStatus @default(OPEN)
+  shirtArtUrl   String?
+  shirtPricing  Json?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 
   shirtOrders ShirtOrder[]
 }
 
 model ShirtOrder {
-  id            String           @id @default(cuid())
-  congressId    String
-  memberId      String
-  size          ShirtSize
-  quantity      Int              @default(1)
-  color         String?
-  paidAmount    Decimal          @default(0) @db.Decimal(10, 2)
-  totalAmount   Decimal          @db.Decimal(10, 2)
-  paymentMethod PaymentMethod?
-  paymentDate   DateTime?
-  status        ShirtOrderStatus @default(PENDING)
-  deliveredAt   DateTime?
-  notes         String?
-  createdAt     DateTime         @default(now())
-  updatedAt     DateTime         @updatedAt
-  createdBy     String?
+  id                     String           @id @default(cuid())
+  congressId             String
+  memberId               String
+  size                   ShirtSize
+  quantity               Int              @default(1)
+  color                  String?
+  paidAmount             Decimal          @default(0) @db.Decimal(10, 2)
+  totalAmount            Decimal          @db.Decimal(10, 2)
+  paymentMethod          PaymentMethod?
+  paymentDate            DateTime?
+  status                 ShirtOrderStatus @default(PENDING)
+  deliveredAt            DateTime?
+  notes                  String?
+  paymentProofUrl        String?
+  paymentProofUploadedAt DateTime?
+  createdAt              DateTime         @default(now())
+  updatedAt              DateTime         @updatedAt
+  createdBy              String?
 
   congress Congress @relation(fields: [congressId], references: [id], onDelete: Cascade)
   member   Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)

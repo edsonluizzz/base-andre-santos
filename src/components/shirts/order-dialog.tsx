@@ -38,6 +38,8 @@ interface OrderDialogProps {
   onSaved: () => void;
   congressId: string;
   order?: ShirtOrder | null;
+  congressPricing?: Record<string, number> | null;
+  shirtArtUrl?: string | null;
 }
 
 const SHIRT_SIZES = ["PP", "P", "M", "G", "GG", "XG", "XXG"];
@@ -50,7 +52,7 @@ const SHIRT_STATUS = [
   { value: "CANCELLED", label: "Cancelado" },
 ];
 
-export function OrderDialog({ open, onClose, onSaved, congressId, order }: OrderDialogProps) {
+export function OrderDialog({ open, onClose, onSaved, congressId, order, congressPricing, shirtArtUrl }: OrderDialogProps) {
   const [members, setMembers] = useState<Member[]>([]);
   const [memberId, setMemberId] = useState("");
   const [size, setSize] = useState("M");
@@ -83,13 +85,27 @@ export function OrderDialog({ open, onClose, onSaved, congressId, order }: Order
       setMemberId("");
       setSize("M");
       setQuantity("1");
-      setTotalAmount("");
+      // Auto-fill price from congress pricing for default size M
+      const defaultPrice = congressPricing?.["M"];
+      setTotalAmount(defaultPrice ? defaultPrice.toFixed(2) : "");
       setPaidAmount("0");
       setPaymentMethod("CASH");
       setStatus("PENDING");
       setNotes("");
     }
-  }, [order, open]);
+  }, [order, open, congressPricing]);
+
+  // Auto-fill price when size changes (new orders only)
+  function handleSizeChange(newSize: string | null) {
+    if (!newSize) return;
+    setSize(newSize);
+    if (!order && congressPricing) {
+      const price = congressPricing[newSize];
+      if (price !== undefined) {
+        setTotalAmount(price.toFixed(2));
+      }
+    }
+  }
 
   async function handleSave() {
     if (!memberId || !size || !totalAmount || parseFloat(totalAmount) <= 0) {
@@ -128,6 +144,8 @@ export function OrderDialog({ open, onClose, onSaved, congressId, order }: Order
     }
   }
 
+  const hasPricing = congressPricing && Object.keys(congressPricing).length > 0;
+
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="bg-card border-border max-w-lg">
@@ -138,6 +156,25 @@ export function OrderDialog({ open, onClose, onSaved, congressId, order }: Order
         </DialogHeader>
 
         <div className="space-y-4 py-2">
+          {/* Shirt art preview */}
+          {shirtArtUrl && (
+            <div className="rounded-xl border border-border bg-background p-3 flex items-center gap-3">
+              <img
+                src={shirtArtUrl}
+                alt="Arte da camiseta"
+                className="w-16 h-16 object-contain rounded-lg border border-border flex-shrink-0"
+              />
+              <div>
+                <p className="text-xs font-medium text-foreground">Arte do congresso</p>
+                {hasPricing && (
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                    Preço auto-preenchido ao selecionar tamanho
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
           {!order && (
             <div className="space-y-1.5">
               <Label className="text-foreground">Membro *</Label>
@@ -157,13 +194,20 @@ export function OrderDialog({ open, onClose, onSaved, congressId, order }: Order
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label className="text-foreground">Tamanho *</Label>
-              <Select value={size} onValueChange={(v) => v && setSize(v)}>
+              <Select value={size} onValueChange={handleSizeChange}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   {SHIRT_SIZES.map((s) => (
-                    <SelectItem key={s} value={s}>{s}</SelectItem>
+                    <SelectItem key={s} value={s}>
+                      {s}
+                      {hasPricing && congressPricing![s] !== undefined && (
+                        <span className="ml-2 text-muted-foreground text-[11px]">
+                          R$ {congressPricing![s].toFixed(2).replace(".", ",")}
+                        </span>
+                      )}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -181,7 +225,10 @@ export function OrderDialog({ open, onClose, onSaved, congressId, order }: Order
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label className="text-foreground">Valor Total (R$) *</Label>
+              <Label className="text-foreground">
+                Valor Total (R$) *
+                {hasPricing && <span className="ml-1 text-[10px] text-primary">(auto)</span>}
+              </Label>
               <Input
                 type="number"
                 step="0.01"

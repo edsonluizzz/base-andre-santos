@@ -15,6 +15,9 @@ import {
   Download,
   Pencil,
   Trash2,
+  Upload,
+  FileCheck,
+  ExternalLink,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,6 +36,8 @@ interface Congress {
   location: string | null;
   description: string | null;
   status: "OPEN" | "CLOSED" | "FINISHED";
+  shirtArtUrl?: string | null;
+  shirtPricing?: Record<string, number> | null;
   _count?: { shirtOrders: number };
 }
 
@@ -46,6 +51,8 @@ interface ShirtOrder {
   status: "PENDING" | "PAID" | "PRODUCTION" | "READY" | "DELIVERED" | "CANCELLED";
   paymentMethod: string | null;
   notes: string | null;
+  paymentProofUrl?: string | null;
+  paymentProofUploadedAt?: string | null;
   member: { id: string; name: string };
 }
 
@@ -70,7 +77,7 @@ const STATUS_COLORS: Record<string, string> = {
   PENDING: "bg-warning/10 text-warning border-warning/20",
   PAID: "bg-success/10 text-success border-success/20",
   PRODUCTION: "bg-primary/10 text-primary border-primary/20",
-  READY: "bg-gold/10 text-gold border-gold/20",
+  READY: "bg-amber-500/10 text-amber-400 border-amber-500/20",
   DELIVERED: "bg-muted text-muted-foreground border-border",
   CANCELLED: "bg-destructive/10 text-destructive border-destructive/20",
 };
@@ -105,6 +112,40 @@ export default function CamisetasPage() {
 
   const isAdmin = session?.user?.role === "ADMIN";
   const isLeaderOrAdmin = ["ADMIN", "LEADER"].includes(session?.user?.role ?? "");
+  const isMember = session?.user?.role === "MEMBER";
+  const [uploadingProofFor, setUploadingProofFor] = useState<string | null>(null);
+
+  async function uploadProof(orderId: string, file: File) {
+    if (!selectedCongress) return;
+    setUploadingProofFor(orderId);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("folder", "payment-proofs");
+      const uploadRes = await fetch("/api/upload", { method: "POST", body: formData });
+      if (!uploadRes.ok) throw new Error("Erro no upload");
+      const { url } = await uploadRes.json();
+
+      const patchRes = await fetch(
+        `/api/congresses/${selectedCongress.id}/orders/${orderId}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ paymentProofUrl: url }),
+        }
+      );
+      if (patchRes.ok) {
+        toast.success("Comprovante enviado!");
+        fetchOrdersAndSummary(selectedCongress.id);
+      } else {
+        toast.error("Erro ao salvar comprovante");
+      }
+    } catch {
+      toast.error("Erro ao enviar comprovante");
+    } finally {
+      setUploadingProofFor(null);
+    }
+  }
 
   const fetchCongresses = useCallback(async () => {
     const res = await fetch("/api/congresses");
@@ -514,6 +555,9 @@ export default function CamisetasPage() {
                           <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                             Status
                           </th>
+                          <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide hidden md:table-cell">
+                            Comprovante
+                          </th>
                           {isLeaderOrAdmin && (
                             <th className="text-right px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                               Ações
@@ -560,6 +604,37 @@ export default function CamisetasPage() {
                               >
                                 {STATUS_LABELS[order.status]}
                               </span>
+                            </td>
+                            <td className="px-4 py-3 hidden md:table-cell">
+                              {order.paymentProofUrl ? (
+                                <a
+                                  href={order.paymentProofUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex items-center gap-1.5 text-xs text-success hover:text-success/80 transition-colors"
+                                >
+                                  <FileCheck className="w-3.5 h-3.5" />
+                                  Ver
+                                  <ExternalLink className="w-3 h-3" />
+                                </a>
+                              ) : (isMember || isLeaderOrAdmin) ? (
+                                <label className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors cursor-pointer">
+                                  <Upload className="w-3.5 h-3.5" />
+                                  {uploadingProofFor === order.id ? "Enviando..." : "Enviar"}
+                                  <input
+                                    type="file"
+                                    accept="image/*,application/pdf"
+                                    className="hidden"
+                                    disabled={uploadingProofFor === order.id}
+                                    onChange={(e) => {
+                                      const file = e.target.files?.[0];
+                                      if (file) uploadProof(order.id, file);
+                                    }}
+                                  />
+                                </label>
+                              ) : (
+                                <span className="text-muted-foreground/40 text-xs">—</span>
+                              )}
                             </td>
                             {isLeaderOrAdmin && (
                               <td className="px-4 py-3">
@@ -634,6 +709,8 @@ export default function CamisetasPage() {
           }}
           congressId={selectedCongress.id}
           order={editingOrder}
+          congressPricing={selectedCongress.shirtPricing}
+          shirtArtUrl={selectedCongress.shirtArtUrl}
         />
       )}
     </div>

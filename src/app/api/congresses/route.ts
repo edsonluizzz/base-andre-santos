@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
     const body = await req.json();
-    const { name, date, location, description } = body;
+    const { name, date, location, description, shirtArtUrl, shirtPricing } = body;
 
     if (!name?.trim() || !date) {
       return NextResponse.json({ error: "Nome e data são obrigatórios" }, { status: 400 });
@@ -40,6 +40,8 @@ export async function POST(req: NextRequest) {
         date: new Date(date),
         location: location?.trim() || null,
         description: description?.trim() || null,
+        shirtArtUrl: shirtArtUrl || null,
+        shirtPricing: shirtPricing || null,
       },
     });
 
