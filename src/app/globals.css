@@ -13,51 +13,51 @@
 @layer base {
   :root {
     /* ── Backgrounds ───────────────────────────────── */
-    --background: #09090b;        /* zinc-950 */
-    --card: #18181b;              /* zinc-900 */
-    --card-foreground: #fafafa;
-    --popover: #18181b;
-    --popover-foreground: #fafafa;
-    --secondary: #27272a;         /* zinc-800 */
-    --secondary-foreground: #fafafa;
-    --muted: #18181b;
-    --muted-foreground: #a1a1aa;  /* zinc-400 */
+    --background: #06080F;          /* slate azul-profundo */
+    --card: rgba(15,23,42,0.65);    /* glass translúcido */
+    --card-foreground: #f8fafc;
+    --popover: #0F172A;             /* opaco — dialogs não recebem glass */
+    --popover-foreground: #f8fafc;
+    --secondary: #0F172A;           /* slate-900 */
+    --secondary-foreground: #f8fafc;
+    --muted: #0F172A;
+    --muted-foreground: #94a3b8;    /* slate-400 */
 
-    /* ── Accent Principal — Royal Purple ───────────── */
-    --primary: #7c3aed;           /* violet-700 */
+    /* ── Accent Principal — Indigo ─────────────────── */
+    --primary: #6366F1;             /* indigo-500 */
     --primary-foreground: #ffffff;
-    --accent: #7c3aed1a;          /* violet/10 */
-    --accent-foreground: #a78bfa; /* violet-400 */
-    --ring: #7c3aed80;
+    --accent: #6366F11A;            /* indigo/10 */
+    --accent-foreground: #A5B4FC;   /* indigo-300 */
+    --ring: #6366F180;
 
-    /* ── Gold — accent secundário (herança da V1) ──── */
-    --gold: #d4a843;
-    --gold-light: #fbbf24;        /* amber-400 */
-    --gold-muted: #92700a;
+    /* ── CTA — Emerald (substituiu gold) ───────────── */
+    --cta: #10B981;                 /* emerald-500 */
+    --cta-foreground: #ffffff;
+    --cta-muted: #064e3b;           /* emerald-900 */
 
     /* ── Textos ────────────────────────────────────── */
-    --foreground: #fafafa;        /* zinc-50 */
+    --foreground: #f8fafc;          /* slate-50 */
 
     /* ── Bordas / Inputs ───────────────────────────── */
-    --border: #27272a;            /* zinc-800 */
-    --input: #27272a;
+    --border: rgba(255,255,255,0.07);
+    --input: #1e293b;               /* slate-800 */
 
     /* ── Status ────────────────────────────────────── */
-    --destructive: #ef4444;       /* red-500 */
+    --destructive: #ef4444;
     --destructive-foreground: #fafafa;
-    --success: #22c55e;           /* green-500 */
-    --warning: #f59e0b;           /* amber-500 */
-    --green: #22c55e;
+    --success: #10B981;             /* emerald — unificado com CTA */
+    --warning: #f59e0b;
+    --green: #10B981;
 
     /* ── Sidebar ───────────────────────────────────── */
-    --sidebar: #0d0d10;
-    --sidebar-foreground: #fafafa;
-    --sidebar-primary: #7c3aed;
+    --sidebar: rgba(6,8,15,0.85);
+    --sidebar-foreground: #f8fafc;
+    --sidebar-primary: #6366F1;
     --sidebar-primary-foreground: #ffffff;
-    --sidebar-accent: #7c3aed1a;
-    --sidebar-accent-foreground: #a78bfa;
-    --sidebar-border: #27272a;
-    --sidebar-ring: #7c3aed80;
+    --sidebar-accent: #6366F11A;
+    --sidebar-accent-foreground: #A5B4FC;
+    --sidebar-border: rgba(255,255,255,0.06);
+    --sidebar-ring: #6366F180;
 
     /* ── Radius ────────────────────────────────────── */
     --radius: 0.625rem;
@@ -65,11 +65,18 @@
 
   * {
     @apply border-border;
-    outline-color: rgb(124 58 237 / 0.4);
+    outline-color: rgb(99 102 241 / 0.4);
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply text-foreground;
+    background-color: #06080F;
+    background-image: radial-gradient(
+      ellipse 80% 50% at 50% -10%,
+      #1e2456 0%,
+      #06080F 65%
+    );
+    background-attachment: fixed;
     font-family: "DM Sans", sans-serif;
     -webkit-font-smoothing: antialiased;
   }
@@ -79,7 +86,34 @@
   }
 }
 
-/* Custom scrollbar */
+/* ── Glass card utility ──────────────────────────────── */
+@layer components {
+  .glass-card {
+    @apply rounded-xl border border-white/[0.07]
+           transition-all duration-200
+           hover:-translate-y-0.5;
+    background: rgba(15,23,42,0.6);
+    box-shadow:
+      0 1px 1px rgba(0,0,0,0.5),
+      inset 0 1px 0 rgba(255,255,255,0.04);
+  }
+
+  .glass-card:hover {
+    box-shadow:
+      0 8px 24px rgba(0,0,0,0.5),
+      0 0 0 1px rgba(99,102,241,0.15);
+  }
+
+  @supports (backdrop-filter: blur(1px)) {
+    .glass-card {
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      background: rgba(15,23,42,0.55);
+    }
+  }
+}
+
+/* ── Custom scrollbar ───────────────────────────────── */
 ::-webkit-scrollbar {
   width: 5px;
   height: 5px;
@@ -88,9 +122,20 @@
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #27272a;
+  background: #1e293b;
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #7c3aed;
+  background: #6366F1;
+}
+
+/* ── Reduced motion ─────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

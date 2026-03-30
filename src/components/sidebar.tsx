@@ -16,6 +16,7 @@ import {
   X,
   BarChart2,
   Shirt,
+  Cross,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
@@ -95,7 +96,7 @@ export function Sidebar() {
     <>
       {/* Mobile toggle */}
       <button
-        className="fixed top-4 left-4 z-50 lg:hidden bg-card border border-border p-2 rounded-lg"
+        className="fixed top-4 left-4 z-50 lg:hidden glass-card border border-white/[0.07] p-2 rounded-lg cursor-pointer"
         onClick={() => setMobileOpen(!mobileOpen)}
       >
         {mobileOpen ? (
@@ -116,34 +117,37 @@ export function Sidebar() {
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed top-0 left-0 h-full w-64 bg-sidebar border-r border-sidebar-border z-40 flex flex-col transition-transform duration-300",
+          "fixed top-0 left-0 h-full w-64 z-40 flex flex-col transition-transform duration-300",
+          "border-r border-white/[0.06]",
+          "bg-slate-950/80",
           "lg:translate-x-0",
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         )}
+        style={{
+          backdropFilter: "blur(20px)",
+          WebkitBackdropFilter: "blur(20px)",
+        }}
       >
         {/* Header */}
-        <div className="p-6 border-b border-sidebar-border">
+        <div className="p-6 border-b border-white/[0.06]">
           <div className="flex items-center gap-3">
             {churchLogoUrl && !logoError ? (
               <img
                 src={churchLogoUrl}
                 alt="Logo"
-                className="w-9 h-9 rounded-lg object-cover border border-primary/20"
+                className="w-9 h-9 rounded-lg object-cover border border-primary/30"
                 onError={() => setLogoError(true)}
               />
             ) : (
-              <div className="w-9 h-9 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-lg">
-                ✝️
+              <div className="w-9 h-9 rounded-lg bg-primary/10 border border-primary/25 flex items-center justify-center animate-glow-pulse">
+                <Cross className="w-4 h-4 text-primary" />
               </div>
             )}
             <div>
-              <p className="text-[10px] tracking-[3px] uppercase text-primary opacity-70">
+              <p className="text-[10px] tracking-[3px] uppercase text-primary/70">
                 UMADC
               </p>
-              <p
-                className="text-sm font-bold text-gold-light"
-                style={{ fontFamily: "var(--font-heading)" }}
-              >
+              <p className="text-sm font-bold text-foreground">
                 {churchName}
               </p>
             </div>
@@ -165,8 +169,8 @@ export function Sidebar() {
                 className={cn(
                   "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200",
                   active
-                    ? "bg-primary/10 text-primary border border-primary/20"
-                    : "text-muted-foreground hover:text-foreground hover:bg-card"
+                    ? "bg-primary/10 text-primary border border-primary/20 shadow-[inset_3px_0_0_#6366F1]"
+                    : "text-muted-foreground hover:text-foreground hover:bg-white/[0.04] hover:translate-x-0.5"
                 )}
               >
                 <item.icon className="w-4 h-4 flex-shrink-0" />
@@ -176,8 +180,11 @@ export function Sidebar() {
           })}
         </nav>
 
+        {/* Slot para notificações V2.1 — reservado */}
+        {/* <div className="px-4 pb-2">{notificationSlot}</div> */}
+
         {/* User footer */}
-        <div className="p-4 border-t border-sidebar-border">
+        <div className="p-4 border-t border-white/[0.06]">
           <div className="flex items-center gap-3 mb-3">
             <Avatar className="w-8 h-8">
               <AvatarImage src={session?.user?.image ?? ""} />
@@ -194,7 +201,7 @@ export function Sidebar() {
           </div>
           <button
             onClick={() => signOut({ callbackUrl: "/login" })}
-            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
           >
             <LogOut className="w-3.5 h-3.5" />
             Sair

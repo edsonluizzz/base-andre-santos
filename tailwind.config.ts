@@ -43,9 +43,11 @@ const config: Config = {
         input: "var(--input)",
         ring: "var(--ring)",
         // Semantic tokens
-        gold: "var(--gold)",
-        "gold-light": "var(--gold-light)",
-        "gold-muted": "var(--gold-muted)",
+        cta: {
+          DEFAULT: "var(--cta)",
+          foreground: "var(--cta-foreground)",
+          muted: "var(--cta-muted)",
+        },
         success: "var(--success)",
         warning: "var(--warning)",
         // Sidebar tokens
@@ -64,6 +66,20 @@ const config: Config = {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+      },
+      keyframes: {
+        "glow-pulse": {
+          "0%, 100%": { boxShadow: "0 0 0 rgba(99,102,241,0)" },
+          "50%": { boxShadow: "0 0 20px rgba(99,102,241,0.35)" },
+        },
+        "fade-up": {
+          "0%": { opacity: "0", transform: "translateY(12px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
+      },
+      animation: {
+        "glow-pulse": "glow-pulse 3s ease-in-out infinite",
+        "fade-up": "fade-up 0.5s ease-out forwards",
       },
     },
   },

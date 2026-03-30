@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
-import { Plus, Search, Pencil, Trash2, Phone, LayoutGrid, List } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, Phone, LayoutGrid, List, Cake } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -70,10 +70,7 @@ export default function MembrosPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1
-            className="text-2xl lg:text-3xl font-bold text-gold-light"
-            style={{ fontFamily: "var(--font-heading)" }}
-          >
+          <h1 className="text-2xl lg:text-3xl font-bold text-foreground">
             Participantes
           </h1>
           <p className="text-muted-foreground text-sm mt-1">
@@ -82,26 +79,23 @@ export default function MembrosPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <div className="flex bg-card border border-border rounded-lg p-0.5">
+          <div className="flex glass-card border border-white/[0.07] rounded-lg p-0.5">
             <button
               onClick={() => setViewMode("cards")}
-              className={`p-1.5 rounded-md transition-all ${viewMode === "cards" ? "bg-gold/10 text-gold" : "text-muted-foreground hover:text-foreground"}`}
+              className={`p-1.5 rounded-md transition-all cursor-pointer ${viewMode === "cards" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground"}`}
               title="Visão em cards"
             >
               <LayoutGrid className="w-4 h-4" />
             </button>
             <button
               onClick={() => setViewMode("list")}
-              className={`p-1.5 rounded-md transition-all ${viewMode === "list" ? "bg-gold/10 text-gold" : "text-muted-foreground hover:text-foreground"}`}
+              className={`p-1.5 rounded-md transition-all cursor-pointer ${viewMode === "list" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground"}`}
               title="Visão em lista"
             >
               <List className="w-4 h-4" />
             </button>
           </div>
-          <Button
-            onClick={openAdd}
-            className="bg-gold hover:bg-gold-light text-black font-semibold"
-          >
+          <Button onClick={openAdd}>
             <Plus className="w-4 h-4 mr-2" />
             Novo
           </Button>
@@ -115,14 +109,14 @@ export default function MembrosPage() {
           placeholder="Buscar por nome..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="pl-9 bg-card border-border text-foreground placeholder:text-muted-foreground focus-visible:ring-gold-muted"
+          className="pl-9 bg-card border-border text-foreground placeholder:text-muted-foreground"
         />
       </div>
 
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="bg-card border border-border rounded-xl p-4">
+            <div key={i} className="glass-card p-4">
               <div className="flex items-start gap-3">
                 <Skeleton className="w-10 h-10 rounded-full flex-shrink-0" />
                 <div className="flex-1 space-y-2">
@@ -193,13 +187,8 @@ function MemberList({
   return (
     <div className="mb-8">
       <div className="flex items-center gap-3 mb-4">
-        <span
-          className="text-gold-light font-bold text-lg"
-          style={{ fontFamily: "var(--font-heading)" }}
-        >
-          {title}
-        </span>
-        <span className="bg-gold-muted text-gold-light text-xs font-semibold px-2 py-0.5 rounded-full">
+        <span className="text-foreground font-bold text-lg">{title}</span>
+        <span className="bg-primary/10 text-accent-foreground text-xs font-semibold px-2 py-0.5 rounded-full">
           {members.length}
         </span>
         <div className="flex-1 h-px bg-border" />
@@ -207,20 +196,25 @@ function MemberList({
 
       {viewMode === "cards" ? (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-          {members.map((m) => (
-            <MemberCard
+          {members.map((m, i) => (
+            <div
               key={m.id}
-              member={m}
-              onEdit={() => onEdit(m)}
-              onDelete={() => onDelete(m.id)}
-            />
+              className="animate-in fade-in fill-mode-both"
+              style={{ animationDelay: `${Math.min(i, 12) * 40}ms` }}
+            >
+              <MemberCard
+                member={m}
+                onEdit={() => onEdit(m)}
+                onDelete={() => onDelete(m.id)}
+              />
+            </div>
           ))}
         </div>
       ) : (
-        <div className="bg-card border border-border rounded-xl overflow-hidden">
+        <div className="glass-card overflow-hidden">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-border">
+              <tr className="border-b border-white/[0.07]">
                 <th className="text-left px-4 py-2.5 text-[10px] tracking-[2px] uppercase text-muted-foreground/60 font-medium">Nome</th>
                 <th className="text-left px-4 py-2.5 text-[10px] tracking-[2px] uppercase text-muted-foreground/60 font-medium hidden sm:table-cell">Aniversário</th>
                 <th className="text-left px-4 py-2.5 text-[10px] tracking-[2px] uppercase text-muted-foreground/60 font-medium hidden md:table-cell">Telefone</th>
@@ -233,13 +227,15 @@ function MemberList({
                   ? `https://wa.me/55${m.phone.replace(/\D/g, "")}`
                   : null;
                 return (
-                  <tr key={m.id} className={`group ${i % 2 === 0 ? "bg-card" : ""}`}>
+                  <tr key={m.id} className={`group border-b border-white/[0.04] last:border-0 ${i % 2 === 0 ? "" : "bg-white/[0.01]"}`}>
                     <td className="px-4 py-2.5">
                       <p className="text-foreground font-medium">{m.name}</p>
                     </td>
                     <td className="px-4 py-2.5 text-muted-foreground hidden sm:table-cell">
                       {m.birthday ? (
-                        <span className="text-gold text-xs">🎂 {m.birthday}</span>
+                        <span className="text-accent-foreground text-xs flex items-center gap-1">
+                          <Cake className="w-3 h-3" /> {m.birthday}
+                        </span>
                       ) : <span className="text-muted-foreground/40">—</span>}
                     </td>
                     <td className="px-4 py-2.5 text-muted-foreground text-xs hidden md:table-cell">
@@ -249,16 +245,16 @@ function MemberList({
                       <div className="flex items-center gap-1 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
                         {whatsappUrl && (
                           <a href={whatsappUrl} target="_blank" rel="noopener noreferrer"
-                            className="p-1.5 rounded-lg text-muted-foreground hover:text-success hover:bg-success/5 transition-colors">
+                            className="p-1.5 rounded-lg text-muted-foreground hover:text-emerald-400 hover:bg-emerald-500/5 transition-colors">
                             <Phone className="w-3.5 h-3.5" />
                           </a>
                         )}
                         <button onClick={() => onEdit(m)}
-                          className="p-1.5 rounded-lg text-muted-foreground hover:text-gold hover:bg-gold/5 transition-colors">
+                          className="p-1.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/5 transition-colors cursor-pointer">
                           <Pencil className="w-3.5 h-3.5" />
                         </button>
                         <button onClick={() => onDelete(m.id)}
-                          className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/5 transition-colors">
+                          className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/5 transition-colors cursor-pointer">
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
@@ -295,11 +291,9 @@ function MemberCard({
     : null;
 
   return (
-    <div className="bg-card border border-border hover:border-gold-muted rounded-xl p-4 transition-colors group">
+    <div className="glass-card p-4 group">
       <div className="flex items-start gap-3">
-        {/* Avatar */}
-        <div className="w-10 h-10 rounded-full bg-gold-muted flex items-center justify-center text-gold-light font-bold text-sm flex-shrink-0"
-          style={{ fontFamily: "var(--font-heading)" }}>
+        <div className="w-10 h-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-bold text-sm flex-shrink-0">
           {initials}
         </div>
 
@@ -316,10 +310,14 @@ function MemberCard({
           </div>
 
           {member.birthday && (
-            <p className="text-gold text-xs mt-0.5">🎂 {member.birthday}</p>
+            <p className="text-accent-foreground text-xs mt-0.5 flex items-center gap-1">
+              <Cake className="w-3 h-3" /> {member.birthday}
+            </p>
           )}
           {member.phone && (
-            <p className="text-muted-foreground text-xs mt-0.5">📱 {member.phone}</p>
+            <p className="text-muted-foreground text-xs mt-0.5">
+              {member.phone}
+            </p>
           )}
         </div>
 
@@ -330,7 +328,7 @@ function MemberCard({
               href={whatsappUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="p-1.5 rounded-lg text-muted-foreground hover:text-success hover:bg-success/5 transition-colors"
+              className="p-1.5 rounded-lg text-muted-foreground hover:text-emerald-400 hover:bg-emerald-500/5 transition-colors"
               title="Abrir WhatsApp"
             >
               <Phone className="w-3.5 h-3.5" />
@@ -338,13 +336,13 @@ function MemberCard({
           )}
           <button
             onClick={onEdit}
-            className="p-1.5 rounded-lg text-muted-foreground hover:text-gold hover:bg-gold/5 transition-colors"
+            className="p-1.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/5 transition-colors cursor-pointer"
           >
             <Pencil className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={onDelete}
-            className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/5 transition-colors"
+            className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/5 transition-colors cursor-pointer"
           >
             <Trash2 className="w-3.5 h-3.5" />
           </button>

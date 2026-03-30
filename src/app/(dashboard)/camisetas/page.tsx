@@ -359,7 +359,7 @@ export default function CamisetasPage() {
                     value={`R$ ${summary.financial.totalPending.toFixed(2)}`}
                     icon={Clock}
                     description={`${summary.byStatus["PENDING"] ?? 0} pedidos sem pagamento`}
-                    variant="gold"
+                    variant="cta"
                   />
                   <StatCard
                     title="A Entregar"

@@ -6,7 +6,7 @@ interface StatCardProps {
   value: string | number;
   icon: LucideIcon;
   description?: string;
-  variant?: "default" | "gold" | "success" | "purple";
+  variant?: "default" | "cta" | "success" | "purple";
   className?: string;
 }
 
@@ -15,13 +15,13 @@ const variantStyles = {
     icon: "bg-primary/10 text-primary",
     value: "text-foreground",
   },
-  gold: {
-    icon: "bg-[var(--gold)]/10 text-[var(--gold)]",
-    value: "text-[var(--gold-light)]",
+  cta: {
+    icon: "bg-emerald-500/10 text-emerald-400",
+    value: "text-emerald-400",
   },
   success: {
-    icon: "bg-success/10 text-success",
-    value: "text-success",
+    icon: "bg-emerald-500/10 text-emerald-400",
+    value: "text-emerald-400",
   },
   purple: {
     icon: "bg-primary/10 text-accent-foreground",
@@ -42,7 +42,8 @@ export function StatCard({
   return (
     <div
       className={cn(
-        "rounded-xl border border-border bg-card p-5 transition-colors hover:border-primary/20",
+        "glass-card p-5 hover:-translate-y-1",
+        "hover:shadow-[0_12px_32px_rgba(0,0,0,0.4),0_0_0_1px_rgba(16,185,129,0.15)]",
         className
       )}
     >
