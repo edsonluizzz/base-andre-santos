@@ -38,7 +38,7 @@ export async function PATCH(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
     const body = await req.json();
-    const { name, date, location, description, status } = body;
+    const { name, date, location, description, status, shirtArtUrl, shirtPricing } = body;
 
     const congress = await db.congress.update({
       where: { id: params.id },
@@ -48,6 +48,8 @@ export async function PATCH(
         ...(location !== undefined && { location: location?.trim() || null }),
         ...(description !== undefined && { description: description?.trim() || null }),
         ...(status !== undefined && { status }),
+        ...(shirtArtUrl !== undefined && { shirtArtUrl: shirtArtUrl || null }),
+        ...(shirtPricing !== undefined && { shirtPricing: shirtPricing || null }),
       },
     });
 

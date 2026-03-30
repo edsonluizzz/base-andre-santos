@@ -18,6 +18,7 @@ import {
   Shirt,
   Cross,
 } from "lucide-react";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -180,8 +181,11 @@ export function Sidebar() {
           })}
         </nav>
 
-        {/* Slot para notificações V2.1 — reservado */}
-        {/* <div className="px-4 pb-2">{notificationSlot}</div> */}
+        {/* Notificações */}
+        <div className="px-4 pb-2 flex items-center gap-2">
+          <NotificationBell />
+          <span className="text-xs text-muted-foreground">Notificações</span>
+        </div>
 
         {/* User footer */}
         <div className="p-4 border-t border-white/[0.06]">
