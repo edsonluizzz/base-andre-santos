@@ -1,11 +1,8 @@
-import NextAuth from "next-auth";
-import { authConfig } from "@/lib/auth.config";
+import { getToken } from "next-auth/jwt";
 import { NextRequest, NextResponse } from "next/server";
 import { put } from "@vercel/blob";
 
 export const runtime = "edge";
-
-const { auth } = NextAuth(authConfig);
 
 const ALLOWED_TYPES = [
   "image/jpeg",
@@ -17,8 +14,12 @@ const ALLOWED_TYPES = [
 const MAX_SIZE = 4.5 * 1024 * 1024; // 4.5MB
 
 export async function POST(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user) {
+  if (!req.body) {
+    return NextResponse.json({ error: "Corpo da requisição ausente" }, { status: 400 });
+  }
+
+  const token = await getToken({ req, secret: process.env.AUTH_SECRET });
+  if (!token) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
 
@@ -45,7 +46,7 @@ export async function POST(req: NextRequest) {
   const ext = originalName.split(".").pop() ?? "bin";
   const filename = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
 
-  const blob = await put(filename, req.body!, {
+  const blob = await put(filename, req.body, {
     access: "public",
     contentType: mimeType,
   });

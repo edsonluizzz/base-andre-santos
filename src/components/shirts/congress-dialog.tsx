@@ -88,7 +88,7 @@ export function CongressDialog({ open, onClose, onSaved, congress }: CongressDia
         uploadFile = await imageCompression(file, {
           maxSizeMB: 2,
           maxWidthOrHeight: 1920,
-          useWebWorker: true,
+          useWebWorker: false,
         });
       }
       const res = await fetch("/api/upload", {
@@ -100,12 +100,15 @@ export function CongressDialog({ open, onClose, onSaved, congress }: CongressDia
         },
         body: uploadFile,
       });
-      if (!res.ok) throw new Error();
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error((errData as { error?: string }).error ?? `Erro ${res.status}`);
+      }
       const data = await res.json();
       setShirtArtUrl(data.url);
       toast.success("Arte enviada!");
-    } catch {
-      toast.error("Erro ao enviar imagem");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao enviar imagem");
     } finally {
       setUploadingArt(false);
     }
