@@ -50,10 +50,11 @@ export async function POST(req: NextRequest) {
       contentType: mimeType,
     });
     return NextResponse.json({ url: blob.url });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Upload error:", error);
+    const message = error instanceof Error ? error.message : "Erro interno ao processar o upload no Vercel Blob";
     return NextResponse.json(
-      { error: error.message || "Erro interno ao processar o upload no Vercel Blob" },
+      { error: message },
       { status: 500 }
     );
   }
