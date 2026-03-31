@@ -6,6 +6,7 @@ import { signOut } from "next-auth/react";
 import { useSession } from "next-auth/react";
 import {
   Users,
+  User,
   Cake,
   DollarSign,
   ClipboardList,
@@ -33,6 +34,7 @@ const navItems: {
   adminOnly?: boolean;
 }[] = [
   { href: "/", icon: LayoutDashboard, label: "Dashboard" },
+  { href: "/portal", icon: User, label: "Meu Portal" },
   { href: "/membros", icon: Users, label: "Membros", module: "MEMBERS" },
   { href: "/aniversarios", icon: Cake, label: "Aniversários", module: "BIRTHDAYS" },
   { href: "/chamada", icon: ClipboardList, label: "Chamada", module: "ATTENDANCE" },

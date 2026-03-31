@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
-import { Shield, Users, UserCog, ImageIcon, Save, Upload, X, ShieldCog } from "lucide-react";
+import { Shield, Users, UserCog, ImageIcon, Save, Upload, X, ShieldCog, Trash2, Link } from "lucide-react";
 import { PermissionsTable } from "@/components/shirts/permissions-table";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,6 +22,13 @@ type SystemUser = {
   email: string | null;
   role: string;
   image: string | null;
+  member: { id: string; name: string } | null;
+};
+
+type Member = {
+  id: string;
+  name: string;
+  userId: string | null;
 };
 
 const ROLE_LABELS: Record<string, string> = {
@@ -39,6 +46,8 @@ const ROLE_COLORS: Record<string, string> = {
 export default function ConfiguracoesPage() {
   const { data: session } = useSession();
   const [users, setUsers] = useState<SystemUser[]>([]);
+  const [members, setMembers] = useState<Member[]>([]);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const isAdmin = session?.user?.role === "ADMIN";
 
   const [churchName, setChurchName] = useState("Porto Belo");
@@ -49,6 +58,7 @@ export default function ConfiguracoesPage() {
   useEffect(() => {
     if (isAdmin) {
       fetch("/api/users").then((r) => r.json()).then(setUsers);
+      fetch("/api/members").then((r) => r.json()).then(setMembers);
     }
     fetch("/api/settings")
       .then((r) => r.json())
@@ -112,11 +122,58 @@ export default function ConfiguracoesPage() {
       body: JSON.stringify({ role }),
     });
     if (res.ok) {
+      const updated = await res.json();
       toast.success("Papel atualizado");
-      setUsers((prev) => prev.map((u) => u.id === userId ? { ...u, role } : u));
+      setUsers((prev) => prev.map((u) => u.id === userId ? { ...u, role: updated.role } : u));
     } else {
       toast.error("Erro ao atualizar");
     }
+  }
+
+  async function linkMember(userId: string, memberId: string | null) {
+    const res = await fetch(`/api/users/${userId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ memberId }),
+    });
+    if (res.ok) {
+      const updated = await res.json();
+      // Refresh members list so the linked member disappears from other selects
+      const membersRes = await fetch("/api/members");
+      const freshMembers = await membersRes.json();
+      setMembers(freshMembers);
+      setUsers((prev) =>
+        prev.map((u) => u.id === userId ? { ...u, member: updated.member } : u)
+      );
+      toast.success(memberId ? "Membro vinculado" : "Vínculo removido");
+    } else {
+      toast.error("Erro ao vincular");
+    }
+  }
+
+  async function deleteUser(userId: string, userName: string | null) {
+    if (!confirm(`Excluir o usuário "${userName ?? "sem nome"}"? Esta ação não pode ser desfeita.`)) return;
+    setDeletingId(userId);
+    try {
+      const res = await fetch(`/api/users/${userId}`, { method: "DELETE" });
+      if (res.ok) {
+        toast.success("Usuário excluído");
+        setUsers((prev) => prev.filter((u) => u.id !== userId));
+        // Refresh members (their userId becomes null after cascade SetNull)
+        const membersRes = await fetch("/api/members");
+        setMembers(await membersRes.json());
+      } else {
+        const data = await res.json();
+        toast.error(data.error ?? "Erro ao excluir");
+      }
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
+  // Members available for linking: unlinked ones + the one already linked to this user
+  function availableMembers(currentMember: { id: string; name: string } | null) {
+    return members.filter((m) => !m.userId || m.id === currentMember?.id);
   }
 
   return (
@@ -277,45 +334,99 @@ export default function ConfiguracoesPage() {
             <p className="text-muted-foreground text-sm">Nenhum usuário encontrado</p>
           ) : (
             <div className="space-y-3">
-              {users.map((u) => (
-                <div
-                  key={u.id}
-                  className="flex items-center gap-3 p-3 border border-white/[0.06] rounded-xl bg-white/[0.02]"
-                >
-                  {u.image ? (
-                    <img src={u.image} alt="" className="w-9 h-9 rounded-full" />
-                  ) : (
-                    <div className="w-9 h-9 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary text-xs font-bold">
-                      {u.name?.[0] ?? "?"}
+              {users.map((u) => {
+                const isSelf = u.id === session?.user?.id;
+                const options = availableMembers(u.member);
+                return (
+                  <div
+                    key={u.id}
+                    className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 border border-white/[0.06] rounded-xl bg-white/[0.02]"
+                  >
+                    {/* Avatar + info */}
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      {u.image ? (
+                        <img src={u.image} alt="" className="w-9 h-9 rounded-full flex-shrink-0" />
+                      ) : (
+                        <div className="w-9 h-9 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary text-xs font-bold flex-shrink-0">
+                          {u.name?.[0] ?? "?"}
+                        </div>
+                      )}
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">
+                          {u.name ?? "Sem nome"}
+                        </p>
+                        <p className="text-xs text-muted-foreground truncate">{u.email}</p>
+                      </div>
                     </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground truncate">
-                      {u.name ?? "Sem nome"}
-                    </p>
-                    <p className="text-xs text-muted-foreground truncate">{u.email}</p>
+
+                    {/* Controls */}
+                    <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+                      {/* Member link select */}
+                      {!isSelf && (
+                        <Select
+                          value={u.member?.id ?? "__none__"}
+                          onValueChange={(v: string | null) => {
+                            if (!v) return;
+                            linkMember(u.id, v === "__none__" ? null : v);
+                          }}
+                        >
+                          <SelectTrigger className="w-40 bg-background border-border text-foreground h-8 text-xs">
+                            <Link className="w-3 h-3 mr-1.5 text-muted-foreground flex-shrink-0" />
+                            <SelectValue placeholder="Vincular membro..." />
+                          </SelectTrigger>
+                          <SelectContent className="bg-card border-border">
+                            <SelectItem value="__none__">
+                              <span className="text-muted-foreground">Sem vínculo</span>
+                            </SelectItem>
+                            {options.map((m) => (
+                              <SelectItem key={m.id} value={m.id}>
+                                {m.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+
+                      {/* Role select */}
+                      {isSelf ? (
+                        <span className="text-xs text-muted-foreground px-1">Você</span>
+                      ) : (
+                        <Select
+                          value={u.role}
+                          onValueChange={(v: string | null) => v && changeRole(u.id, v)}
+                        >
+                          <SelectTrigger className="w-36 bg-background border-border text-foreground h-8 text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="bg-card border-border">
+                            <SelectItem value="ADMIN">Administrador</SelectItem>
+                            <SelectItem value="LEADER">Líder</SelectItem>
+                            <SelectItem value="MEMBER">Membro</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      )}
+
+                      {/* Delete button */}
+                      {!isSelf && (
+                        <button
+                          onClick={() => deleteUser(u.id, u.name)}
+                          disabled={deletingId === u.id}
+                          className="w-8 h-8 flex items-center justify-center rounded-lg border border-destructive/20 bg-destructive/10 hover:bg-destructive/20 text-destructive transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+                          title="Excluir usuário"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
                   </div>
-                  {u.id === session?.user?.id ? (
-                    <span className="text-xs text-muted-foreground">Você</span>
-                  ) : (
-                    <Select
-                      value={u.role}
-                      onValueChange={(v: string | null) => v && changeRole(u.id, v)}
-                    >
-                      <SelectTrigger className="w-36 bg-background border-border text-foreground h-8 text-xs">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="bg-card border-border">
-                        <SelectItem value="ADMIN">Administrador</SelectItem>
-                        <SelectItem value="LEADER">Líder</SelectItem>
-                        <SelectItem value="MEMBER">Membro</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  )}
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
+
+          <p className="text-[11px] text-muted-foreground/50 mt-4">
+            Vincule cada usuário ao seu cadastro de membro para unificar presenças e dados.
+          </p>
         </div>
       )}
 

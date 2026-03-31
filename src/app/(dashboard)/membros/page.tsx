@@ -1,14 +1,28 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useSession } from "next-auth/react";
 import { toast } from "sonner";
-import { Plus, Search, Pencil, Trash2, Phone, LayoutGrid, List, Cake, Printer } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, Phone, LayoutGrid, List, Cake, Printer, Link2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { MemberDialog } from "@/components/members/member-dialog";
 import { DeleteConfirm } from "@/components/members/delete-confirm";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type Member = {
   id: string;
@@ -17,9 +31,19 @@ type Member = {
   phone: string | null;
   status: "ACTIVE" | "INACTIVE";
   notes: string | null;
+  userId: string | null;
+};
+
+type UserOption = {
+  id: string;
+  name: string | null;
+  email: string | null;
 };
 
 export default function MembrosPage() {
+  const { data: session } = useSession();
+  const isAdmin = session?.user?.role === "ADMIN";
+
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -27,6 +51,13 @@ export default function MembrosPage() {
   const [editMember, setEditMember] = useState<Member | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"cards" | "list">("cards");
+
+  // Link dialog state
+  const [linkDialogMemberId, setLinkDialogMemberId] = useState<string | null>(null);
+  const [linkDialogMemberName, setLinkDialogMemberName] = useState("");
+  const [users, setUsers] = useState<UserOption[]>([]);
+  const [selectedUserId, setSelectedUserId] = useState("");
+  const [linkLoading, setLinkLoading] = useState(false);
 
   const fetchMembers = useCallback(async () => {
     const res = await fetch("/api/members");
@@ -63,6 +94,37 @@ export default function MembrosPage() {
   function openEdit(m: Member) {
     setEditMember(m);
     setDialogOpen(true);
+  }
+
+  async function openLinkDialog(member: Member) {
+    setLinkDialogMemberId(member.id);
+    setLinkDialogMemberName(member.name);
+    setSelectedUserId(member.userId ?? "");
+    if (users.length === 0) {
+      const res = await fetch("/api/users");
+      if (res.ok) {
+        const data = await res.json();
+        setUsers(data);
+      }
+    }
+  }
+
+  async function handleLink() {
+    if (!linkDialogMemberId) return;
+    setLinkLoading(true);
+    const res = await fetch(`/api/members/${linkDialogMemberId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId: selectedUserId || null }),
+    });
+    setLinkLoading(false);
+    if (res.ok) {
+      toast.success(selectedUserId ? "Conta vinculada com sucesso" : "Vínculo removido");
+      setLinkDialogMemberId(null);
+      fetchMembers();
+    } else {
+      toast.error("Erro ao salvar vínculo");
+    }
   }
 
   return (
@@ -143,6 +205,7 @@ export default function MembrosPage() {
             viewMode={viewMode}
             onEdit={openEdit}
             onDelete={setDeleteId}
+            onLink={isAdmin ? openLinkDialog : undefined}
           />
           {inactive.length > 0 && (
             <MemberList
@@ -151,6 +214,7 @@ export default function MembrosPage() {
               viewMode={viewMode}
               onEdit={openEdit}
               onDelete={setDeleteId}
+              onLink={isAdmin ? openLinkDialog : undefined}
             />
           )}
           {filtered.length === 0 && (
@@ -173,6 +237,61 @@ export default function MembrosPage() {
         onConfirm={() => deleteId && handleDelete(deleteId)}
         onCancel={() => setDeleteId(null)}
       />
+
+      {/* Link Account Dialog */}
+      <Dialog
+        open={!!linkDialogMemberId}
+        onOpenChange={(open) => !open && setLinkDialogMemberId(null)}
+      >
+        <DialogContent className="bg-card border-border text-foreground max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-foreground">Vincular Conta Google</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Selecione o usuário Google para vincular a{" "}
+            <span className="text-foreground font-medium">{linkDialogMemberName}</span>.
+          </p>
+          <Select
+            value={selectedUserId}
+            onValueChange={(v: string | null) => setSelectedUserId(v ?? "")}
+          >
+            <SelectTrigger className="w-full bg-secondary border-border text-foreground">
+              <SelectValue placeholder="Selecionar usuário..." />
+            </SelectTrigger>
+            <SelectContent className="bg-card border-border">
+              {users.map((u) => (
+                <SelectItem key={u.id} value={u.id}>
+                  {u.name ?? u.email ?? u.id}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {selectedUserId && (
+            <button
+              className="text-xs text-destructive hover:underline text-left"
+              onClick={() => setSelectedUserId("")}
+            >
+              Remover vínculo
+            </button>
+          )}
+          <div className="flex gap-3 pt-1">
+            <Button
+              variant="outline"
+              className="flex-1 border-border"
+              onClick={() => setLinkDialogMemberId(null)}
+            >
+              Cancelar
+            </Button>
+            <Button
+              className="flex-1"
+              disabled={linkLoading}
+              onClick={handleLink}
+            >
+              {linkLoading ? "Salvando..." : "Salvar"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -183,12 +302,14 @@ function MemberList({
   viewMode,
   onEdit,
   onDelete,
+  onLink,
 }: {
   title: string;
   members: Member[];
   viewMode: "cards" | "list";
   onEdit: (m: Member) => void;
   onDelete: (id: string) => void;
+  onLink?: (m: Member) => void;
 }) {
   if (members.length === 0) return null;
 
@@ -214,6 +335,7 @@ function MemberList({
                 member={m}
                 onEdit={() => onEdit(m)}
                 onDelete={() => onDelete(m.id)}
+                onLink={onLink ? () => onLink(m) : undefined}
               />
             </div>
           ))}
@@ -257,6 +379,13 @@ function MemberList({
                             <Phone className="w-3.5 h-3.5" />
                           </a>
                         )}
+                        {onLink && (
+                          <button onClick={() => onLink(m)}
+                            className={`p-1.5 rounded-lg hover:bg-primary/5 transition-colors cursor-pointer ${m.userId ? "text-emerald-400" : "text-muted-foreground hover:text-primary"}`}
+                            title={m.userId ? "Alterar vínculo" : "Vincular conta"}>
+                            <Link2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
                         <button onClick={() => onEdit(m)}
                           className="p-1.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/5 transition-colors cursor-pointer">
                           <Pencil className="w-3.5 h-3.5" />
@@ -282,10 +411,12 @@ function MemberCard({
   member,
   onEdit,
   onDelete,
+  onLink,
 }: {
   member: Member;
   onEdit: () => void;
   onDelete: () => void;
+  onLink?: () => void;
 }) {
   const initials = member.name
     .split(" ")
@@ -341,6 +472,15 @@ function MemberCard({
             >
               <Phone className="w-3.5 h-3.5" />
             </a>
+          )}
+          {onLink && (
+            <button
+              onClick={onLink}
+              className={`p-1.5 rounded-lg hover:bg-primary/5 transition-colors cursor-pointer ${member.userId ? "text-emerald-400" : "text-muted-foreground hover:text-primary"}`}
+              title={member.userId ? "Alterar vínculo" : "Vincular conta"}
+            >
+              <Link2 className="w-3.5 h-3.5" />
+            </button>
           )}
           <button
             onClick={onEdit}

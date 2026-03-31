@@ -13,7 +13,7 @@ export async function PATCH(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
     const body = await req.json();
-    const { name, birthday, phone, notes, status } = body;
+    const { name, birthday, phone, notes, status, userId } = body;
 
     const member = await db.member.update({
       where: { id: params.id },
@@ -23,6 +23,7 @@ export async function PATCH(
         ...(phone !== undefined && { phone: phone?.trim() || null }),
         ...(notes !== undefined && { notes: notes?.trim() || null }),
         ...(status !== undefined && { status }),
+        ...(userId !== undefined && { userId: userId || null }),
       },
     });
 
