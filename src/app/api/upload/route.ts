@@ -1,6 +1,8 @@
+import { getToken } from "next-auth/jwt";
 import { NextRequest, NextResponse } from "next/server";
 import { put } from "@vercel/blob";
-import { auth } from "@/lib/auth";
+
+export const runtime = "edge";
 
 const ALLOWED_TYPES = [
   "image/jpeg",
@@ -9,47 +11,45 @@ const ALLOWED_TYPES = [
   "image/gif",
   "application/pdf",
 ];
-const MAX_SIZE = 5 * 1024 * 1024; // 5MB
+const MAX_SIZE = 4.5 * 1024 * 1024; // 4.5MB
 
 export async function POST(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user) {
+  if (!req.body) {
+    return NextResponse.json({ error: "Corpo da requisição ausente" }, { status: 400 });
+  }
+
+  const token = await getToken({ req, secret: process.env.AUTH_SECRET });
+  if (!token) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
 
-  const formData = await req.formData();
-  const file = formData.get("file") as File | null;
+  const contentType = req.headers.get("content-type") ?? "application/octet-stream";
+  const mimeType = contentType.split(";")[0].trim();
 
-  if (!file) {
-    return NextResponse.json({ error: "Nenhum arquivo enviado" }, { status: 400 });
-  }
-
-  if (!ALLOWED_TYPES.includes(file.type)) {
+  if (!ALLOWED_TYPES.includes(mimeType)) {
     return NextResponse.json(
       { error: "Tipo de arquivo não permitido. Use JPG, PNG, WebP, GIF ou PDF." },
       { status: 400 }
     );
   }
 
-  if (file.size > MAX_SIZE) {
+  const contentLength = Number(req.headers.get("content-length") ?? 0);
+  if (contentLength > MAX_SIZE) {
     return NextResponse.json(
-      { error: "Arquivo muito grande. Máximo 5MB." },
+      { error: "Arquivo muito grande. Máximo 4.5MB." },
       { status: 400 }
     );
   }
 
-  const ext = file.name.split(".").pop() ?? "bin";
-  const folder = (formData.get("folder") as string) ?? "uploads";
+  const originalName = req.headers.get("x-filename") ?? `upload-${Date.now()}`;
+  const folder = req.headers.get("x-folder") ?? "uploads";
+  const ext = originalName.split(".").pop() ?? "bin";
   const filename = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
 
-  try {
-    const blob = await put(filename, file, { access: "public" });
-    return NextResponse.json({ url: blob.url });
-  } catch (error: any) {
-    console.error("Upload error:", error);
-    return NextResponse.json(
-      { error: error.message || "Erro interno ao processar o upload no Vercel Blob" },
-      { status: 500 }
-    );
-  }
+  const blob = await put(filename, req.body, {
+    access: "public",
+    contentType: mimeType,
+  });
+
+  return NextResponse.json({ url: blob.url });
 }

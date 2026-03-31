@@ -123,10 +123,7 @@ export default function CamisetasPage() {
       formData.append("file", file);
       formData.append("folder", "payment-proofs");
       const uploadRes = await fetch("/api/upload", { method: "POST", body: formData });
-      if (!uploadRes.ok) {
-        const errData = await uploadRes.json().catch(() => ({}));
-        throw new Error(errData.error || "Erro no upload");
-      }
+      if (!uploadRes.ok) throw new Error("Erro no upload");
       const { url } = await uploadRes.json();
 
       const patchRes = await fetch(
@@ -141,10 +138,10 @@ export default function CamisetasPage() {
         toast.success("Comprovante enviado!");
         fetchOrdersAndSummary(selectedCongress.id);
       } else {
-        toast.error("Erro ao salvar comprovante no pedido");
+        toast.error("Erro ao salvar comprovante");
       }
-    } catch (err: any) {
-      toast.error(err.message || "Erro ao enviar comprovante");
+    } catch {
+      toast.error("Erro ao enviar comprovante");
     } finally {
       setUploadingProofFor(null);
     }

@@ -76,25 +76,39 @@ export function CongressDialog({ open, onClose, onSaved, congress }: CongressDia
       toast.error("Selecione uma imagem (PNG, JPG, WebP)");
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("Imagem muito grande. Máximo 5MB.");
+    if (file.size > 4.5 * 1024 * 1024) {
+      toast.error("Imagem muito grande. Máximo 4.5MB.");
       return;
     }
     setUploadingArt(true);
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("folder", "shirt-art");
-      const res = await fetch("/api/upload", { method: "POST", body: formData });
+      let uploadFile: File | Blob = file;
+      if (file.size > 2 * 1024 * 1024) {
+        const imageCompression = (await import("browser-image-compression")).default;
+        uploadFile = await imageCompression(file, {
+          maxSizeMB: 2,
+          maxWidthOrHeight: 1920,
+          useWebWorker: false,
+        });
+      }
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        headers: {
+          "Content-Type": uploadFile.type || file.type,
+          "x-filename": file.name,
+          "x-folder": "shirt-art",
+        },
+        body: uploadFile,
+      });
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.error || "Erro no upload");
+        throw new Error((errData as { error?: string }).error ?? `Erro ${res.status}`);
       }
       const data = await res.json();
       setShirtArtUrl(data.url);
       toast.success("Arte enviada!");
-    } catch (err: any) {
-      toast.error(err.message || "Erro ao enviar imagem");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao enviar imagem");
     } finally {
       setUploadingArt(false);
     }
@@ -236,7 +250,7 @@ export function CongressDialog({ open, onClose, onSaved, congress }: CongressDia
                 <span className="text-xs text-muted-foreground">
                   {uploadingArt ? "Enviando..." : "Clique para enviar a arte"}
                 </span>
-                <span className="text-[11px] text-muted-foreground/50">PNG, JPG, WebP — máx. 5MB</span>
+                <span className="text-[11px] text-muted-foreground/50">PNG, JPG, WebP — máx. 4.5MB</span>
               </button>
             )}
           </div>
