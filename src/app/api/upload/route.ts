@@ -42,7 +42,14 @@ export async function POST(req: NextRequest) {
   const folder = (formData.get("folder") as string) ?? "uploads";
   const filename = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
 
-  const blob = await put(filename, file, { access: "public" });
-
-  return NextResponse.json({ url: blob.url });
+  try {
+    const blob = await put(filename, file, { access: "public" });
+    return NextResponse.json({ url: blob.url });
+  } catch (error: any) {
+    console.error("Upload error:", error);
+    return NextResponse.json(
+      { error: error.message || "Erro interno ao processar o upload no Vercel Blob" },
+      { status: 500 }
+    );
+  }
 }

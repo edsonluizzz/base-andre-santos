@@ -86,12 +86,15 @@ export function CongressDialog({ open, onClose, onSaved, congress }: CongressDia
       formData.append("file", file);
       formData.append("folder", "shirt-art");
       const res = await fetch("/api/upload", { method: "POST", body: formData });
-      if (!res.ok) throw new Error();
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || "Erro no upload");
+      }
       const data = await res.json();
       setShirtArtUrl(data.url);
       toast.success("Arte enviada!");
-    } catch {
-      toast.error("Erro ao enviar imagem");
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao enviar imagem");
     } finally {
       setUploadingArt(false);
     }
