@@ -380,19 +380,21 @@ export default function CamisetasPage() {
 
               {/* Congress shirt art preview */}
               {selectedCongress.shirtArtUrl && (
-                <div className="rounded-xl border border-border bg-card p-4 flex flex-col sm:flex-row items-center sm:items-start gap-4 mb-4">
-                  <img
-                    src={selectedCongress.shirtArtUrl}
-                    alt="Arte da camiseta"
-                    className="w-32 h-32 object-contain rounded-lg border border-border bg-neutral-50/50"
-                  />
-                  <div className="flex-1 text-center sm:text-left">
-                    <h3 className="text-lg font-semibold text-foreground">Arte Oficial Selecionada</h3>
-                    <p className="text-sm text-muted-foreground mt-1 mb-3">
+                <div className="rounded-xl border border-border bg-card p-4 flex flex-col sm:flex-row items-center sm:items-start gap-5 mb-4 shadow-sm">
+                  <div className="w-full sm:w-48 bg-black/30 rounded-lg border border-border/50 p-2 flex items-center justify-center shrink-0">
+                    <img
+                      src={selectedCongress.shirtArtUrl}
+                      alt="Arte da camiseta"
+                      className="max-w-full max-h-48 object-contain drop-shadow-lg"
+                    />
+                  </div>
+                  <div className="flex-1 text-center sm:text-left mt-2 sm:mt-0">
+                    <h3 className="text-xl font-bold text-foreground">Arte Oficial Selecionada</h3>
+                    <p className="text-sm text-muted-foreground mt-2 mb-4 leading-relaxed">
                       Esta é a estampa aprovada para as camisetas do {selectedCongress.name}. Veja como ficará o modelo final antes de confirmar seu pedido.
                     </p>
                     {isMember && !isLeaderOrAdmin && orders.length === 0 && (
-                      <Button onClick={() => setOrderDialogOpen(true)} size="sm" variant="default">
+                      <Button onClick={() => setOrderDialogOpen(true)} size="sm" variant="default" className="shadow-md">
                         Efetuar Meu Pedido
                       </Button>
                     )}

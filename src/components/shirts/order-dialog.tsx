@@ -148,7 +148,7 @@ export function OrderDialog({ open, onClose, onSaved, congressId, order, congres
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="bg-card border-border max-w-lg">
+      <DialogContent className="bg-popover border-border max-w-lg shadow-2xl">
         <DialogHeader>
           <DialogTitle className="text-foreground">
             {order ? "Editar Pedido" : "Novo Pedido de Camiseta"}
@@ -158,17 +158,19 @@ export function OrderDialog({ open, onClose, onSaved, congressId, order, congres
         <div className="space-y-4 py-2">
           {/* Shirt art preview */}
           {shirtArtUrl && (
-            <div className="rounded-xl border border-border bg-background p-3 flex items-center gap-3">
-              <img
-                src={shirtArtUrl}
-                alt="Arte da camiseta"
-                className="w-16 h-16 object-contain rounded-lg border border-border flex-shrink-0"
-              />
-              <div>
-                <p className="text-xs font-medium text-foreground">Arte do congresso</p>
+            <div className="rounded-xl border border-border bg-black/20 overflow-hidden flex flex-col mb-2">
+              <div className="w-full h-48 bg-black/40 flex items-center justify-center p-2">
+                <img
+                  src={shirtArtUrl}
+                  alt="Arte da camiseta"
+                  className="max-w-full max-h-full object-contain drop-shadow-lg"
+                />
+              </div>
+              <div className="p-3 bg-popover/50 border-t border-border/50">
+                <p className="text-sm font-medium text-foreground">Design em Produção</p>
                 {hasPricing && (
-                  <p className="text-[11px] text-muted-foreground mt-0.5">
-                    Preço auto-preenchido ao selecionar tamanho
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Preço calculado automaticamente pelo sistema.
                   </p>
                 )}
               </div>
