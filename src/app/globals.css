@@ -129,13 +129,53 @@
   background: #6366F1;
 }
 
-/* ── Reduced motion ─────────────────────────────────── */
-@media (prefers-reduced-motion: reduce) {
-  *,
-  ::before,
-  ::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+}
+
+/* ── Print Styles (Relatórios PDF) ───────────────────── */
+@media print {
+  /* Ocultar elementos de UI não necessários */
+  .hidden-print, nav, header, button:not(.print-visible), .no-print, input[type="text"], input[type="search"] {
+    display: none !important;
+  }
+  
+  /* Resetar cores para economia de tinta e legibilidade total */
+  body {
+    background: transparent !important;
+  }
+
+  .glass-card, .bg-card, .bg-popover, .bg-background, .bg-secondary, table, th, td, div {
+    background-color: transparent !important;
+    color: black !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    text-shadow: none !important;
+  }
+  * {
+    color: black !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    border-color: #ddd !important;
+  }
+
+  /* Evitar quebra no meio de colunas ou linhas */
+  tr, .glass-card, img {
+    page-break-inside: avoid;
+  }
+
+  /* Expandir a área útil da MAIN removendo a margem da Sidebar (lg:ml-64) */
+  .print-expand {
+    margin-left: 0 !important;
+    padding: 0 !important;
+    max-width: 100% !important;
+    width: 100vw !important;
+  }
+
+  /* Ajustar SVGs da Lucide para preto básico */
+  svg {
+    stroke: black !important;
+  }
+
+  .text-muted-foreground, .text-primary, .text-success, .text-warning {
+    color: #333 !important;
   }
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import { Search, Copy, Check } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
@@ -49,6 +50,9 @@ function initials(name: string): string {
 }
 
 export default function AniversariosPage() {
+  const { data: session } = useSession();
+  const isLeaderOrAdmin = ["ADMIN", "LEADER"].includes(session?.user?.role ?? "");
+
   const [members, setMembers] = useState<Member[]>([]);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<number | "todos" | "sem-data">("todos");
@@ -221,6 +225,7 @@ export default function AniversariosPage() {
                   member={m}
                   isCopied={copied === m.id}
                   onCopy={() => copyMsg(m.id, m.name)}
+                  isLeaderOrAdmin={isLeaderOrAdmin}
                 />
               ))}
           </div>
@@ -239,6 +244,7 @@ export default function AniversariosPage() {
                     member={m}
                     isCopied={copied === m.id}
                     onCopy={() => copyMsg(m.id, m.name)}
+                    isLeaderOrAdmin={isLeaderOrAdmin}
                   />
                 ))}
               </div>
@@ -294,10 +300,12 @@ function BirthdayCard({
   member,
   isCopied,
   onCopy,
+  isLeaderOrAdmin,
 }: {
   member: Member;
   isCopied: boolean;
   onCopy: () => void;
+  isLeaderOrAdmin: boolean;
 }) {
   const today = member.birthday ? isToday(member.birthday) : false;
 
@@ -328,29 +336,33 @@ function BirthdayCard({
         </div>
       </div>
 
-      <div className="mx-4 mb-3 bg-background border border-border rounded-lg px-3 py-2">
-        <p className="text-xs text-foreground/80 leading-relaxed line-clamp-2">
-          {birthdayMessage(member.name)}
-        </p>
-      </div>
+      {isLeaderOrAdmin && (
+        <>
+          <div className="mx-4 mb-3 bg-background border border-border rounded-lg px-3 py-2">
+            <p className="text-xs text-foreground/80 leading-relaxed line-clamp-2">
+              {birthdayMessage(member.name)}
+            </p>
+          </div>
 
-      <div className="flex justify-end px-4 pb-4">
-        <button
-          onClick={onCopy}
-          className={`flex items-center gap-2 text-xs px-3 py-1.5 rounded-full border transition-all cursor-pointer ${
-            isCopied
-              ? "border-success text-success bg-success/10"
-              : "border-border text-muted-foreground hover:border-success hover:text-success hover:bg-success/5"
-          }`}
-        >
-          {isCopied ? (
-            <Check className="w-3 h-3" />
-          ) : (
-            <Copy className="w-3 h-3" />
-          )}
-          {isCopied ? "Copiado!" : "Copiar mensagem"}
-        </button>
-      </div>
+          <div className="flex justify-end px-4 pb-4">
+            <button
+              onClick={onCopy}
+              className={`flex items-center gap-2 text-xs px-3 py-1.5 rounded-full border transition-all cursor-pointer ${
+                isCopied
+                  ? "border-success text-success bg-success/10"
+                  : "border-border text-muted-foreground hover:border-success hover:text-success hover:bg-success/5"
+              }`}
+            >
+              {isCopied ? (
+                <Check className="w-3 h-3" />
+              ) : (
+                <Copy className="w-3 h-3" />
+              )}
+              {isCopied ? "Copiado!" : "Copiar mensagem"}
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 }

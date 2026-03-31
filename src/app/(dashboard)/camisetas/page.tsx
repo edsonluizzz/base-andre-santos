@@ -18,6 +18,7 @@ import {
   Upload,
   FileCheck,
   ExternalLink,
+  Printer,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -231,6 +232,21 @@ export default function CamisetasPage() {
     }
   }
 
+  async function deleteCongress() {
+    if (!selectedCongress) return;
+    if (!window.confirm(`Tem certeza que deseja excluir o congresso '${selectedCongress.name}'? Certifique-se que não haja nenhum pedido atrelado a ele antes.`)) return;
+
+    const res = await fetch(`/api/congresses/${selectedCongress.id}`, { method: "DELETE" });
+    if (res.ok) {
+      toast.success("Congresso excluído com sucesso");
+      setSelectedCongress(null);
+      fetchCongresses();
+    } else {
+      const data = await res.json().catch(() => ({}));
+      toast.error(data.error || "Erro ao excluir o congresso.");
+    }
+  }
+
   function copySizeReport() {
     if (!summary) return;
     const lines = summary.bySize.map((s) => `${s.size}: ${s.quantity}`);
@@ -276,7 +292,16 @@ export default function CamisetasPage() {
             Gerencie pedidos de camisetas para congressos
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            onClick={() => window.print()}
+            variant="outline"
+            size="sm"
+            className="hidden-print"
+          >
+            <Printer className="w-4 h-4 mr-1.5" />
+            Imprimir PDF
+          </Button>
           {isAdmin && (
             <Button
               onClick={() => {
@@ -343,8 +368,8 @@ export default function CamisetasPage() {
 
           {selectedCongress && (
             <>
-              {/* Congress actions (admin only) */}
-              {isAdmin && (
+              {/* Congress actions (leader/admin only) */}
+              {isLeaderOrAdmin && (
                 <div className="flex items-center gap-2 flex-wrap">
                   {selectedCongress.status === "OPEN" && (
                     <Button
@@ -374,6 +399,15 @@ export default function CamisetasPage() {
                   >
                     <Pencil className="w-3.5 h-3.5 mr-1.5" />
                     Editar
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={deleteCongress}
+                    className="ml-auto md:ml-2"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 mr-1.5" />
+                    Excluir
                   </Button>
                 </div>
               )}

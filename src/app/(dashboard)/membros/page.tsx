@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
-import { Plus, Search, Pencil, Trash2, Phone, LayoutGrid, List, Cake } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, Phone, LayoutGrid, List, Cake, Printer } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -79,6 +79,14 @@ export default function MembrosPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            onClick={() => window.print()}
+            variant="outline"
+            className="hidden-print"
+          >
+            <Printer className="w-4 h-4 mr-2" />
+            Imprimir
+          </Button>
           <div className="flex glass-card border border-white/[0.07] rounded-lg p-0.5">
             <button
               onClick={() => setViewMode("cards")}
