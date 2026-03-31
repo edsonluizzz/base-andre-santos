@@ -152,7 +152,6 @@ export default function ChamadaPage() {
   }
 
   const isLeaderOrAdmin = ["ADMIN", "LEADER"].includes(session?.user?.role ?? "");
-  const isMember = session?.user?.role === "MEMBER";
 
   // Filter members based on role
   const visibleMembers = isLeaderOrAdmin
