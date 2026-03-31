@@ -11,7 +11,10 @@ export async function GET(
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const orders = await db.shirtOrder.findMany({
-      where: { congressId: params.id },
+      where: {
+        congressId: params.id,
+        ...(session.user.role === "MEMBER" ? { createdBy: session.user.id } : {}),
+      },
       include: { member: { select: { id: true, name: true } } },
       orderBy: { createdAt: "asc" },
     });
@@ -29,8 +32,6 @@ export async function POST(
   try {
     const session = await auth();
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    if (!["ADMIN", "LEADER"].includes(session.user?.role ?? ""))
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
     const body = await req.json();
     const { memberId, size, quantity, totalAmount, paidAmount, paymentMethod, notes, color } = body;
