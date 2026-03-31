@@ -129,8 +129,6 @@
   background: #6366F1;
 }
 
-}
-
 /* ── Print Styles (Relatórios PDF) ───────────────────── */
 @media print {
   /* Ocultar elementos de UI não necessários */
