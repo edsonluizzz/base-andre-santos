@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
-import { Plus, Trash2, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { Plus, Trash2, TrendingUp, TrendingDown, Minus, Lock } from "lucide-react";
+import { usePermissions } from "@/context/permissions-context";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -55,6 +56,7 @@ const CATEGORY_LABELS: Record<string, string> = {
 };
 
 export default function FinanceiroPage() {
+  const { canView } = usePermissions();
   const now = new Date();
   const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 
@@ -120,6 +122,18 @@ export default function FinanceiroPage() {
   }
   const sorted = Object.values(perMember).sort((a, b) => b.total - a.total);
   const saldo = offeringsTotal - expensesTotal;
+
+  if (!canView("FINANCIAL")) {
+    return (
+      <div className="glass-card p-10 flex flex-col items-center justify-center text-center">
+        <Lock className="w-8 h-8 text-muted-foreground/50 mb-3" />
+        <p className="text-foreground font-medium">Acesso restrito</p>
+        <p className="text-muted-foreground text-sm mt-1">
+          Você não tem permissão para acessar o módulo financeiro.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div>

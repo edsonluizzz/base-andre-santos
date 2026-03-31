@@ -5,6 +5,7 @@ import { format, isValid } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Printer } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { usePermissions } from "@/context/permissions-context";
 
 // ─── Safe date format ─────────────────────────────────────────────────────────
 
@@ -148,12 +149,23 @@ function periodLabel(mode: FilterMode, year: string, month: string): string {
 
 export default function RelatoriosPage() {
   const now = new Date();
+  const { canView } = usePermissions();
+  const visibleTabs = TABS.filter((t) =>
+    (t.id === "fin-mes" || t.id === "fin-membro") ? canView("FINANCIAL") : true
+  );
   const [tab, setTab] = useState<Tab>("freq-evento");
   const [data, setData] = useState<unknown[]>([]);
   const [loading, setLoading] = useState(false);
   const [filterMode, setFilterMode] = useState<FilterMode>("all");
   const [filterYear, setFilterYear] = useState(String(now.getFullYear()));
   const [filterMonth, setFilterMonth] = useState(now.toISOString().slice(0, 7));
+
+  // Se a tab ativa for financeira e sem permissão, resetar para a primeira disponível
+  useEffect(() => {
+    if ((tab === "fin-mes" || tab === "fin-membro") && !canView("FINANCIAL")) {
+      setTab(visibleTabs[0]?.id ?? "freq-evento");
+    }
+  }, [canView, tab, visibleTabs]);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -237,7 +249,7 @@ export default function RelatoriosPage() {
 
         {/* Tabs */}
         <div className="flex gap-1 mb-4 bg-secondary/50 border border-border rounded-xl p-1 flex-wrap no-print">
-          {TABS.map((t) => (
+          {visibleTabs.map((t) => (
             <button
               key={t.id}
               onClick={() => setTab(t.id)}

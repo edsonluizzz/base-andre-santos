@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
+import { usePermissions } from "@/context/permissions-context";
 import { Users, DollarSign, CalendarDays, Cake, TrendingUp, AlertTriangle, CheckCircle, Star } from "lucide-react";
 import Link from "next/link";
 import { format, isValid } from "date-fns";
@@ -63,6 +64,7 @@ const EVENT_TYPE_LABELS: Record<string, string> = {
 
 export default function DashboardPage() {
   const { data: session } = useSession();
+  const { canView } = usePermissions();
   const [members, setMembers] = useState<Member[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
   const [totalMonth, setTotalMonth] = useState(0);
@@ -76,15 +78,17 @@ export default function DashboardPage() {
       .then((r) => r.json())
       .then((d) => setAttendance(Array.isArray(d) ? d : []));
 
-    const now = new Date();
-    const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-    fetch(`/api/offerings?month=${month}`)
-      .then((r) => r.json())
-      .then((d) => setTotalMonth(d.total ?? 0));
-    fetch(`/api/expenses?month=${month}`)
-      .then((r) => r.json())
-      .then((d) => setExpensesTotal(d.total ?? 0));
-  }, []);
+    if (canView("FINANCIAL")) {
+      const now = new Date();
+      const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+      fetch(`/api/offerings?month=${month}`)
+        .then((r) => r.json())
+        .then((d) => setTotalMonth(d.total ?? 0));
+      fetch(`/api/expenses?month=${month}`)
+        .then((r) => r.json())
+        .then((d) => setExpensesTotal(d.total ?? 0));
+    }
+  }, [canView]);
 
   const active = members.filter((m) => m.status === "ACTIVE").length;
   const saldo = totalMonth - expensesTotal;
@@ -119,14 +123,14 @@ export default function DashboardPage() {
       href: "/membros",
       valueColor: undefined as string | undefined,
     },
-    {
+    ...(canView("FINANCIAL") ? [{
       icon: saldo >= 0 ? TrendingUp : DollarSign,
       label: "Saldo do Mês",
       value: `R$ ${Math.abs(saldo).toFixed(2).replace(".", ",")}`,
       sub: saldo < 0 ? "déficit" : "superávit",
       href: "/financeiro",
       valueColor: saldo >= 0 ? "#10B981" : "#ef4444",
-    },
+    }] : []),
     {
       icon: CalendarDays,
       label: "Eventos",
