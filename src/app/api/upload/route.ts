@@ -1,8 +1,6 @@
-import { getToken } from "next-auth/jwt";
 import { NextRequest, NextResponse } from "next/server";
 import { put } from "@vercel/blob";
-
-export const runtime = "edge";
+import { auth } from "@/lib/auth";
 
 const ALLOWED_TYPES = [
   "image/jpeg",
@@ -18,8 +16,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Corpo da requisição ausente" }, { status: 400 });
   }
 
-  const token = await getToken({ req, secret: process.env.AUTH_SECRET });
-  if (!token) {
+  const session = await auth();
+  if (!session?.user) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
 
@@ -46,10 +44,17 @@ export async function POST(req: NextRequest) {
   const ext = originalName.split(".").pop() ?? "bin";
   const filename = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
 
-  const blob = await put(filename, req.body, {
-    access: "public",
-    contentType: mimeType,
-  });
-
-  return NextResponse.json({ url: blob.url });
+  try {
+    const blob = await put(filename, req.body, {
+      access: "public",
+      contentType: mimeType,
+    });
+    return NextResponse.json({ url: blob.url });
+  } catch (error: any) {
+    console.error("Upload error:", error);
+    return NextResponse.json(
+      { error: error.message || "Erro interno ao processar o upload no Vercel Blob" },
+      { status: 500 }
+    );
+  }
 }
