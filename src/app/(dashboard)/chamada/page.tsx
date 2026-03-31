@@ -1,11 +1,13 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import { Plus, CalendarDays, ChevronRight, Check, X, Clock, Printer, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 import {
   Dialog,
   DialogContent,
@@ -74,6 +76,7 @@ function safeFormat(dateStr: string, fmt: string): string {
 }
 
 export default function ChamadaPage() {
+  const { data: session } = useSession();
   const [events, setEvents] = useState<Event[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
   const [newEventOpen, setNewEventOpen] = useState(false);
@@ -147,6 +150,18 @@ export default function ChamadaPage() {
     setPrintLoading(false);
     setTimeout(() => window.print(), 100);
   }
+
+  const isLeaderOrAdmin = ["ADMIN", "LEADER"].includes(session?.user?.role ?? "");
+  const isMember = session?.user?.role === "MEMBER";
+
+  // Filter members based on role
+  const visibleMembers = isLeaderOrAdmin
+    ? members
+    : members.filter(
+        (m) =>
+          m.name.toLowerCase().trim() ===
+          (session?.user?.name || "").toLowerCase().trim()
+      );
 
   const present = Object.values(attendances).filter((s) => s === "PRESENT").length;
   const total = members.length;
@@ -253,10 +268,12 @@ export default function ChamadaPage() {
             </h1>
             <p className="text-muted-foreground text-sm mt-1">Controle de presença por evento</p>
           </div>
-          <Button onClick={() => setNewEventOpen(true)}>
-            <Plus className="w-4 h-4 mr-2" />
-            Novo Evento
-          </Button>
+          {isLeaderOrAdmin && (
+            <Button onClick={() => setNewEventOpen(true)}>
+              <Plus className="w-4 h-4 mr-2" />
+              Novo Evento
+            </Button>
+          )}
         </div>
 
         {/* Events list */}
@@ -322,14 +339,16 @@ export default function ChamadaPage() {
                   </p>
                   <p className="text-xs text-muted-foreground">presentes</p>
                 </div>
-                <button
-                  onClick={handleExportPDF}
-                  disabled={printLoading}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border text-muted-foreground hover:text-foreground hover:border-primary/30 text-xs transition-colors cursor-pointer"
-                >
-                  <Printer className="w-3.5 h-3.5" />
-                  {printLoading ? "..." : "PDF"}
-                </button>
+                {isLeaderOrAdmin && (
+                  <button
+                    onClick={handleExportPDF}
+                    disabled={printLoading}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border text-muted-foreground hover:text-foreground hover:border-primary/30 text-xs transition-colors cursor-pointer"
+                  >
+                    <Printer className="w-3.5 h-3.5" />
+                    {printLoading ? "..." : "PDF"}
+                  </button>
+                )}
               </div>
             </div>
 
@@ -345,7 +364,12 @@ export default function ChamadaPage() {
             </div>
 
             <div className="space-y-2 mb-6">
-              {members.map((m) => {
+              {visibleMembers.length === 0 && !isLeaderOrAdmin && (
+                <p className="text-sm text-muted-foreground text-center py-8">
+                  Nenhum registro encontrado no seu nome ({session?.user?.name}).
+                </p>
+              )}
+              {visibleMembers.map((m) => {
                 const status = attendances[m.id] ?? "ABSENT";
                 const cfg = STATUS_CONFIG[status];
                 const Icon = cfg.icon;
@@ -359,8 +383,11 @@ export default function ChamadaPage() {
                 return (
                   <div
                     key={m.id}
-                    onClick={() => cycleStatus(m.id)}
-                    className="flex items-center gap-3 p-3 bg-card border border-border rounded-xl cursor-pointer hover:border-primary/30 transition-colors select-none"
+                    onClick={() => { if (isLeaderOrAdmin) cycleStatus(m.id); }}
+                    className={cn(
+                      "flex items-center gap-3 p-3 bg-card border border-border rounded-xl transition-colors select-none",
+                      isLeaderOrAdmin ? "cursor-pointer hover:border-primary/30" : "opacity-90"
+                    )}
                   >
                     <div className="w-9 h-9 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary text-xs font-bold flex-shrink-0">
                       {inits}
@@ -389,13 +416,15 @@ export default function ChamadaPage() {
               })}
             </div>
 
-            <Button
-              onClick={saveAttendances}
-              disabled={saving}
-              className="w-full"
-            >
-              {saving ? "Salvando..." : "Salvar Chamada"}
-            </Button>
+            {isLeaderOrAdmin && (
+              <Button
+                onClick={saveAttendances}
+                disabled={saving}
+                className="w-full"
+              >
+                {saving ? "Salvando..." : "Salvar Chamada"}
+              </Button>
+            )}
           </div>
         )}
 

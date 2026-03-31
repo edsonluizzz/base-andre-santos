@@ -290,7 +290,7 @@ export default function CamisetasPage() {
               Novo Congresso
             </Button>
           )}
-          {isLeaderOrAdmin && selectedCongress && (
+          {selectedCongress && (
             <Button
               onClick={() => {
                 setEditingOrder(null);
@@ -378,6 +378,28 @@ export default function CamisetasPage() {
                 </div>
               )}
 
+              {/* Congress shirt art preview */}
+              {selectedCongress.shirtArtUrl && (
+                <div className="rounded-xl border border-border bg-card p-4 flex flex-col sm:flex-row items-center sm:items-start gap-4 mb-4">
+                  <img
+                    src={selectedCongress.shirtArtUrl}
+                    alt="Arte da camiseta"
+                    className="w-32 h-32 object-contain rounded-lg border border-border bg-neutral-50/50"
+                  />
+                  <div className="flex-1 text-center sm:text-left">
+                    <h3 className="text-lg font-semibold text-foreground">Arte Oficial Selecionada</h3>
+                    <p className="text-sm text-muted-foreground mt-1 mb-3">
+                      Esta é a estampa aprovada para as camisetas do {selectedCongress.name}. Veja como ficará o modelo final antes de confirmar seu pedido.
+                    </p>
+                    {isMember && !isLeaderOrAdmin && orders.length === 0 && (
+                      <Button onClick={() => setOrderDialogOpen(true)} size="sm" variant="default">
+                        Efetuar Meu Pedido
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {/* KPI Cards */}
               {summary && (
                 <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -388,20 +410,24 @@ export default function CamisetasPage() {
                     description={`${summary.byStatus["CANCELLED"] ?? 0} cancelados`}
                     variant="default"
                   />
-                  <StatCard
-                    title="Arrecadado"
-                    value={`R$ ${summary.financial.totalPaid.toFixed(2)}`}
-                    icon={DollarSign}
-                    description={`de R$ ${summary.financial.totalExpected.toFixed(2)} esperados`}
-                    variant="success"
-                  />
-                  <StatCard
-                    title="Pendente"
-                    value={`R$ ${summary.financial.totalPending.toFixed(2)}`}
-                    icon={Clock}
-                    description={`${summary.byStatus["PENDING"] ?? 0} pedidos sem pagamento`}
-                    variant="cta"
-                  />
+                  {isLeaderOrAdmin && (
+                    <>
+                      <StatCard
+                        title="Arrecadado"
+                        value={`R$ ${summary.financial.totalPaid.toFixed(2)}`}
+                        icon={DollarSign}
+                        description={`de R$ ${summary.financial.totalExpected.toFixed(2)} esperados`}
+                        variant="success"
+                      />
+                      <StatCard
+                        title="Pendente"
+                        value={`R$ ${summary.financial.totalPending.toFixed(2)}`}
+                        icon={Clock}
+                        description={`${summary.byStatus["PENDING"] ?? 0} pedidos sem pagamento`}
+                        variant="cta"
+                      />
+                    </>
+                  )}
                   <StatCard
                     title="A Entregar"
                     value={(summary.byStatus["READY"] ?? 0) + (summary.byStatus["PRODUCTION"] ?? 0)}
@@ -413,7 +439,7 @@ export default function CamisetasPage() {
               )}
 
               {/* Size summary + report */}
-              {summary && summary.bySize.length > 0 && (
+              {summary && summary.bySize.length > 0 && isLeaderOrAdmin && (
                 <div className="rounded-xl border border-border bg-card p-4">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-sm font-semibold text-foreground">
@@ -524,9 +550,9 @@ export default function CamisetasPage() {
                       ? "Comece registrando o pedido de camiseta de um membro."
                       : "Nenhum pedido corresponde ao filtro atual."
                   }
-                  actionLabel={isLeaderOrAdmin && orders.length === 0 ? "Adicionar Pedido" : undefined}
+                  actionLabel={orders.length === 0 ? "Adicionar Pedido" : undefined}
                   onAction={
-                    isLeaderOrAdmin && orders.length === 0
+                    orders.length === 0
                       ? () => setOrderDialogOpen(true)
                       : undefined
                   }
