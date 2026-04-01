@@ -10,8 +10,9 @@ export async function GET(
     const session = await auth();
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const congress = await db.congress.findUnique({
-      where: { id: params.id },
+    const eid = session.user?.establishmentId ?? "default-porto-belo";
+    const congress = await db.congress.findFirst({
+      where: { id: params.id, establishmentId: eid },
       include: {
         shirtOrders: {
           include: { member: { select: { id: true, name: true } } },
@@ -36,6 +37,10 @@ export async function PATCH(
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     if (session.user?.role !== "ADMIN")
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
+    const eid = session.user?.establishmentId ?? "default-porto-belo";
+    const existing = await db.congress.findFirst({ where: { id: params.id, establishmentId: eid } });
+    if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
     const body = await req.json();
     const { name, date, location, description, status, shirtArtUrl, shirtPricing } = body;
@@ -68,6 +73,10 @@ export async function DELETE(
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     if (!["ADMIN", "LEADER"].includes(session.user?.role ?? ""))
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
+    const eid = session.user?.establishmentId ?? "default-porto-belo";
+    const existing = await db.congress.findFirst({ where: { id: params.id, establishmentId: eid } });
+    if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
     const count = await db.shirtOrder.count({ where: { congressId: params.id } });
     if (count > 0) {

@@ -12,6 +12,10 @@ export async function PATCH(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    const eid = session.user?.establishmentId ?? "default-porto-belo";
+    const existing = await db.user.findFirst({ where: { id: params.id, establishmentId: eid } });
+    if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
     const body = await req.json();
     const { role, memberId } = body;
 

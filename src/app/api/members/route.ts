@@ -7,7 +7,9 @@ export async function GET() {
     const session = await auth();
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+    const eid = session.user?.establishmentId ?? "default-porto-belo";
     const members = await db.member.findMany({
+      where: { establishmentId: eid },
       orderBy: { name: "asc" },
     });
     return NextResponse.json(members);
@@ -30,12 +32,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Nome é obrigatório" }, { status: 400 });
     }
 
+    const eid = session.user?.establishmentId ?? "default-porto-belo";
     const member = await db.member.create({
       data: {
         name: name.trim(),
         birthday: birthday?.trim() || null,
         phone: phone?.trim() || null,
         notes: notes?.trim() || null,
+        establishmentId: eid,
       },
     });
 

@@ -9,7 +9,9 @@ export async function GET() {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    const eid = session.user?.establishmentId ?? "default-porto-belo";
     const users = await db.user.findMany({
+      where: { establishmentId: eid },
       orderBy: { createdAt: "asc" },
       select: {
         id: true,

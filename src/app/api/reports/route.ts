@@ -21,6 +21,7 @@ export async function GET(req: NextRequest) {
     if (!["ADMIN", "LEADER"].includes(session.user?.role ?? ""))
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
+    const eid = session.user?.establishmentId ?? "default-porto-belo";
     const type = req.nextUrl.searchParams.get("type");
     const year = req.nextUrl.searchParams.get("year");
     const month = req.nextUrl.searchParams.get("month");
@@ -28,7 +29,7 @@ export async function GET(req: NextRequest) {
 
     if (type === "attendance-by-event") {
       const events = await db.event.findMany({
-        where: dateRange ? { date: dateRange } : undefined,
+        where: { establishmentId: eid, ...(dateRange ? { date: dateRange } : {}) },
         include: { attendances: { select: { status: true } } },
         orderBy: { date: "desc" },
       });
@@ -48,7 +49,7 @@ export async function GET(req: NextRequest) {
 
     if (type === "attendance-by-member") {
       const members = await db.member.findMany({
-        where: { status: "ACTIVE" },
+        where: { status: "ACTIVE", establishmentId: eid },
         include: {
           attendances: {
             select: { status: true },
@@ -74,7 +75,7 @@ export async function GET(req: NextRequest) {
     if (type === "financial-by-month") {
       const offerings = await db.offering.findMany({
         select: { amount: true, method: true, date: true },
-        where: dateRange ? { date: dateRange } : undefined,
+        where: { establishmentId: eid, ...(dateRange ? { date: dateRange } : {}) },
         orderBy: { date: "asc" },
       });
       const map: Record<string, { total: number; cash: number; pix: number; count: number }> = {};
@@ -94,11 +95,14 @@ export async function GET(req: NextRequest) {
 
     if (type === "financial-by-member") {
       const members = await db.member.findMany({
-        where: { offerings: { some: dateRange ? { date: dateRange } : {} } },
+        where: {
+          establishmentId: eid,
+          offerings: { some: dateRange ? { date: dateRange, establishmentId: eid } : { establishmentId: eid } },
+        },
         include: {
           offerings: {
             select: { amount: true, method: true },
-            where: dateRange ? { date: dateRange } : undefined,
+            where: { establishmentId: eid, ...(dateRange ? { date: dateRange } : {}) },
           },
         },
         orderBy: { name: "asc" },

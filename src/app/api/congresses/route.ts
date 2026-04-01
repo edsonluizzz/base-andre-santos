@@ -7,7 +7,9 @@ export async function GET() {
     const session = await auth();
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+    const eid = session.user?.establishmentId ?? "default-porto-belo";
     const congresses = await db.congress.findMany({
+      where: { establishmentId: eid },
       orderBy: { date: "desc" },
       include: {
         _count: { select: { shirtOrders: true } },
@@ -34,6 +36,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Nome e data são obrigatórios" }, { status: 400 });
     }
 
+    const eid = session.user?.establishmentId ?? "default-porto-belo";
     const congress = await db.congress.create({
       data: {
         name: name.trim(),
@@ -42,6 +45,7 @@ export async function POST(req: NextRequest) {
         description: description?.trim() || null,
         shirtArtUrl: shirtArtUrl || null,
         shirtPricing: shirtPricing || null,
+        establishmentId: eid,
       },
     });
 

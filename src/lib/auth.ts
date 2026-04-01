@@ -12,18 +12,22 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.id = user.id;
         const dbUser = await db.user.findUnique({
           where: { email: user.email! },
-          select: { id: true, role: true },
+          select: { id: true, role: true, establishmentId: true },
         });
         token.id = dbUser?.id ?? user.id;
         token.role = dbUser?.role ?? "MEMBER";
+        token.establishmentId = dbUser?.establishmentId ?? "default-porto-belo";
       }
       // Re-fetch role from DB on token update (fixes stale role after admin changes)
       if (trigger === "update" && token.id) {
         const dbUser = await db.user.findUnique({
           where: { id: token.id as string },
-          select: { role: true },
+          select: { role: true, establishmentId: true },
         });
-        if (dbUser) token.role = dbUser.role;
+        if (dbUser) {
+          token.role = dbUser.role;
+          token.establishmentId = dbUser.establishmentId;
+        }
       }
       return token;
     },
@@ -31,6 +35,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (session.user) {
         session.user.id = token.id as string;
         session.user.role = token.role as string;
+        session.user.establishmentId = (token.establishmentId as string) ?? "default-porto-belo";
       }
       return session;
     },

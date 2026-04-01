@@ -11,7 +11,8 @@ export default async function DashboardLayout({
   const session = await auth();
   const userRole = (session?.user?.role as string) ?? "MEMBER";
   const isAdmin = userRole === "ADMIN";
-  const permissionsMap = await loadPermissionsForRole(userRole as "ADMIN" | "LEADER" | "MEMBER");
+  const eid = session?.user?.establishmentId ?? "default-porto-belo";
+  const permissionsMap = await loadPermissionsForRole(userRole as "ADMIN" | "LEADER" | "MEMBER", eid);
 
   return (
     <PermissionsProvider isAdmin={isAdmin} userRole={userRole} permissionsMap={permissionsMap}>

@@ -10,8 +10,9 @@ export async function GET(
     const session = await auth();
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const event = await db.event.findUnique({
-      where: { id: params.id },
+    const eid = session.user?.establishmentId ?? "default-porto-belo";
+    const event = await db.event.findFirst({
+      where: { id: params.id, establishmentId: eid },
       include: {
         attendances: { include: { member: true } },
         offerings: { include: { member: true } },
@@ -27,7 +28,7 @@ export async function GET(
 
       if (absentMemberIds.length > 0) {
         const prev5 = await db.event.findMany({
-          where: { date: { lt: event.date } },
+          where: { date: { lt: event.date }, establishmentId: eid },
           orderBy: { date: "desc" },
           take: 5,
           select: { id: true },
@@ -82,6 +83,10 @@ export async function DELETE(
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     if (session.user?.role !== "ADMIN")
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
+    const eid = session.user?.establishmentId ?? "default-porto-belo";
+    const existing = await db.event.findFirst({ where: { id: params.id, establishmentId: eid } });
+    if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
     await db.event.delete({ where: { id: params.id } });
     return NextResponse.json({ ok: true });

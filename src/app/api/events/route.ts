@@ -7,7 +7,9 @@ export async function GET() {
     const session = await auth();
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+    const eid = session.user?.establishmentId ?? "default-porto-belo";
     const events = await db.event.findMany({
+      where: { establishmentId: eid },
       orderBy: { date: "desc" },
       include: {
         _count: { select: { attendances: true, offerings: true } },
@@ -33,6 +35,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Campos obrigatórios ausentes" }, { status: 400 });
     }
 
+    const eid = session.user?.establishmentId ?? "default-porto-belo";
     const event = await db.event.create({
       data: {
         title: title.trim(),
@@ -40,6 +43,7 @@ export async function POST(req: NextRequest) {
         date: new Date(date),
         location: location?.trim() || null,
         notes: notes?.trim() || null,
+        establishmentId: eid,
       },
     });
 

@@ -10,6 +10,10 @@ export async function GET(
     const session = await auth();
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+    const eid = session.user?.establishmentId ?? "default-porto-belo";
+    const congress = await db.congress.findFirst({ where: { id: params.id, establishmentId: eid } });
+    if (!congress) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
     const orders = await db.shirtOrder.findMany({
       where: { congressId: params.id },
       select: {

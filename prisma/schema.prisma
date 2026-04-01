@@ -9,6 +9,17 @@ datasource db {
   provider = "postgresql"
 }
 
+// ─── Multi-Tenant: Estabelecimentos ──────────────────────────────────────────
+
+model Establishment {
+  id         String   @id
+  name       String
+  logoBase64 String?  @db.Text
+  pixKey     String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
 // ─── Auth (NextAuth) ───────────────────────────────────────────────────────
 
 model Account {
@@ -39,18 +50,21 @@ model Session {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String?   @unique
-  emailVerified DateTime?
-  image         String?
-  role          Role      @default(MEMBER)
-  createdAt     DateTime  @default(now())
+  id              String    @id @default(cuid())
+  name            String?
+  email           String?   @unique
+  emailVerified   DateTime?
+  image           String?
+  role            Role      @default(MEMBER)
+  establishmentId String    @default("default-porto-belo")
+  createdAt       DateTime  @default(now())
 
   accounts      Account[]
   sessions      Session[]
   notifications Notification[]
   member        Member?
+
+  @@index([establishmentId])
 }
 
 // ─── Notificações ─────────────────────────────────────────────────────────
@@ -79,15 +93,16 @@ model VerificationToken {
 // ─── Membros do grupo ─────────────────────────────────────────────────────
 
 model Member {
-  id        String       @id @default(cuid())
-  name      String
-  birthday  String?
-  phone     String?
-  photoUrl  String?
-  status    MemberStatus @default(ACTIVE)
-  notes     String?
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
+  id              String       @id @default(cuid())
+  name            String
+  birthday        String?
+  phone           String?
+  photoUrl        String?
+  status          MemberStatus @default(ACTIVE)
+  notes           String?
+  establishmentId String       @default("default-porto-belo")
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
 
   userId    String?  @unique
   user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
@@ -95,22 +110,27 @@ model Member {
   attendances Attendance[]
   offerings   Offering[]
   shirtOrders ShirtOrder[]
+
+  @@index([establishmentId])
 }
 
 // ─── Eventos ──────────────────────────────────────────────────────────────
 
 model Event {
-  id        String    @id @default(cuid())
-  title     String
-  type      EventType
-  date      DateTime
-  location  String?
-  notes     String?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id              String    @id @default(cuid())
+  title           String
+  type            EventType
+  date            DateTime
+  location        String?
+  notes           String?
+  establishmentId String    @default("default-porto-belo")
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   attendances Attendance[]
   offerings   Offering[]
+
+  @@index([establishmentId])
 }
 
 // ─── Chamada ──────────────────────────────────────────────────────────────
@@ -131,29 +151,35 @@ model Attendance {
 // ─── Financeiro ───────────────────────────────────────────────────────────
 
 model Offering {
-  id        String        @id @default(cuid())
-  memberId  String
-  eventId   String?
-  amount    Float
-  method    PaymentMethod @default(CASH)
-  notes     String?
-  date      DateTime      @default(now())
-  createdAt DateTime      @default(now())
+  id              String        @id @default(cuid())
+  memberId        String
+  eventId         String?
+  amount          Float
+  method          PaymentMethod @default(CASH)
+  notes           String?
+  date            DateTime      @default(now())
+  establishmentId String        @default("default-porto-belo")
+  createdAt       DateTime      @default(now())
 
   member Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
   event  Event? @relation(fields: [eventId], references: [id], onDelete: SetNull)
+
+  @@index([establishmentId])
 }
 
 // ─── Despesas ─────────────────────────────────────────────────────────────
 
 model Expense {
-  id          String          @id @default(cuid())
-  description String
-  amount      Float
-  category    ExpenseCategory @default(OUTRO)
-  date        DateTime        @default(now())
-  notes       String?
-  createdAt   DateTime        @default(now())
+  id              String          @id @default(cuid())
+  description     String
+  amount          Float
+  category        ExpenseCategory @default(OUTRO)
+  date            DateTime        @default(now())
+  notes           String?
+  establishmentId String          @default("default-porto-belo")
+  createdAt       DateTime        @default(now())
+
+  @@index([establishmentId])
 }
 
 // ─── Configurações globais ────────────────────────────────────────────────
@@ -168,32 +194,37 @@ model Settings {
 // ─── Permissões por Role ───────────────────────────────────────────────────
 
 model RolePermission {
-  id        String           @id @default(cuid())
-  role      Role
-  module    PermissionModule
-  action    PermissionAction
-  granted   Boolean          @default(false)
-  updatedAt DateTime         @updatedAt
-  updatedBy String?
+  id              String           @id @default(cuid())
+  role            Role
+  module          PermissionModule
+  action          PermissionAction
+  granted         Boolean          @default(false)
+  establishmentId String           @default("default-porto-belo")
+  updatedAt       DateTime         @updatedAt
+  updatedBy       String?
 
-  @@unique([role, module, action])
+  @@unique([role, module, action, establishmentId])
+  @@index([establishmentId])
 }
 
 // ─── Congressos e Camisetas ───────────────────────────────────────────────
 
 model Congress {
-  id            String         @id @default(cuid())
-  name          String
-  date          DateTime
-  location      String?
-  description   String?
-  status        CongressStatus @default(OPEN)
-  shirtArtUrl   String?
-  shirtPricing  Json?
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  id              String         @id @default(cuid())
+  name            String
+  date            DateTime
+  location        String?
+  description     String?
+  status          CongressStatus @default(OPEN)
+  shirtArtUrl     String?
+  shirtPricing    Json?
+  establishmentId String         @default("default-porto-belo")
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
 
   shirtOrders ShirtOrder[]
+
+  @@index([establishmentId])
 }
 
 model ShirtOrder {

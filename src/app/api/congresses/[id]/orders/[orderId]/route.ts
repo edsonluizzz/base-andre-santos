@@ -10,6 +10,10 @@ export async function PATCH(
     const session = await auth();
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+    const eid = session.user?.establishmentId ?? "default-porto-belo";
+    const congress = await db.congress.findFirst({ where: { id: params.id, establishmentId: eid } });
+    if (!congress) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
     const role = session.user?.role ?? "";
     const isAdminOrLeader = ["ADMIN", "LEADER"].includes(role);
     const isMember = role === "MEMBER";
@@ -23,37 +27,13 @@ export async function PATCH(
         return NextResponse.json({ error: "Forbidden" }, { status: 403 });
       }
 
-      // Verifica que o pedido pertence ao membro logado
       const existing = await db.shirtOrder.findUnique({
         where: { id: params.orderId },
-        include: { member: { select: { id: true } } },
       });
 
       if (!existing) {
         return NextResponse.json({ error: "Not found" }, { status: 404 });
       }
-
-      // Associa pelo email: busca member pelo email do usuário
-      const memberByEmail = await db.member.findFirst({
-        where: {
-          name: { not: "" },
-        },
-        select: { id: true },
-      });
-
-      // Verifica ownership via email match na sessão vs member associado
-      const userEmail = session.user?.email ?? "";
-      const memberForUser = await db.member.findFirst({
-        where: {
-          name: { contains: userEmail.split("@")[0], mode: "insensitive" },
-        },
-        select: { id: true },
-      });
-
-      // Fallback: permite se o congressId bate (qualquer membro autenticado pode enviar comprovante)
-      // Em produção, vincule User.email a Member para ownership real
-      void memberByEmail;
-      void memberForUser;
 
       const order = await db.shirtOrder.update({
         where: { id: params.orderId },
@@ -111,6 +91,10 @@ export async function DELETE(
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     if (session.user?.role !== "ADMIN")
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
+    const eid = session.user?.establishmentId ?? "default-porto-belo";
+    const congress = await db.congress.findFirst({ where: { id: params.id, establishmentId: eid } });
+    if (!congress) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
     await db.shirtOrder.delete({ where: { id: params.orderId } });
     return NextResponse.json({ ok: true });

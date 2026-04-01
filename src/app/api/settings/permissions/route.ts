@@ -23,8 +23,9 @@ export async function GET() {
     if (!session || session.user?.role !== "ADMIN")
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
+    const eid = session.user?.establishmentId ?? "default-porto-belo";
     const records = await db.rolePermission.findMany({
-      where: { role: { in: ["LEADER", "MEMBER"] } },
+      where: { role: { in: ["LEADER", "MEMBER"] }, establishmentId: eid },
     });
 
     // Return full matrix merging DB records with defaults
@@ -59,6 +60,7 @@ export async function PATCH(req: NextRequest) {
     if (!session || session.user?.role !== "ADMIN")
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
+    const eid = session.user?.establishmentId ?? "default-porto-belo";
     const body: Array<{
       role: Role;
       module: PermissionModule;
@@ -72,9 +74,9 @@ export async function PATCH(req: NextRequest) {
 
     const ops = body.map(({ role, module, action, granted }) =>
       db.rolePermission.upsert({
-        where: { role_module_action: { role, module, action } },
+        where: { role_module_action_establishmentId: { role, module, action, establishmentId: eid } },
         update: { granted, updatedBy: session.user?.id },
-        create: { role, module, action, granted, updatedBy: session.user?.id },
+        create: { role, module, action, granted, establishmentId: eid, updatedBy: session.user?.id },
       })
     );
 
@@ -91,9 +93,10 @@ export async function DELETE() {
     if (!session || session.user?.role !== "ADMIN")
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-    // Reset to defaults: delete all custom records so fallback kicks in
+    const eid = session.user?.establishmentId ?? "default-porto-belo";
+    // Reset to defaults: delete all custom records for this establishment
     await db.rolePermission.deleteMany({
-      where: { role: { in: ["LEADER", "MEMBER"] } },
+      where: { role: { in: ["LEADER", "MEMBER"] }, establishmentId: eid },
     });
 
     return NextResponse.json({ ok: true });
