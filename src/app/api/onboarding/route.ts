@@ -50,9 +50,9 @@ export async function POST(req: NextRequest) {
     // Precisa dos IDs de ambos — vincula e semeia permissões em paralelo
     const permissionSeeds = [];
     for (const role of ["LEADER", "MEMBER"] as const) {
-      for (const module of MODULES) {
+      for (const mod of MODULES) {
         for (const action of ACTIONS) {
-          permissionSeeds.push({ role, module, action, granted: false, establishmentId });
+          permissionSeeds.push({ role, module: mod, action, granted: false, establishmentId });
         }
       }
     }
