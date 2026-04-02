@@ -1,6 +1,4 @@
-import { config } from "dotenv";
-config({ path: ".env.local" });
-config(); // fallback to .env
+import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
 import { PrismaNeon } from "@prisma/adapter-neon";
 
@@ -130,16 +128,14 @@ const defaultPermissions = [
 ] as const;
 
 async function main() {
-  // ── Establishment padrão (Porto Belo) ──────────────────────────────────────
-  console.log("Seeding establishment padrão...");
+  console.log("Seeding establishment padrão (Porto Belo)...");
   await prisma.establishment.upsert({
     where: { id: "default-porto-belo" },
     update: {},
-    create: { id: "default-porto-belo", name: "Porto Belo" },
+    create: { id: "default-porto-belo", name: "UMADC Porto Belo" },
   });
-  console.log("Done — establishment 'default-porto-belo' garantido.");
+  console.log("Done — establishment padrão garantido.");
 
-  // ── Membros ────────────────────────────────────────────────────────────────
   console.log("Seeding members (só adiciona novos — não apaga dados existentes)...");
   const existingNames = new Set(
     (await prisma.member.findMany({ select: { name: true } })).map((m) => m.name)
@@ -158,7 +154,6 @@ async function main() {
     console.log("Nenhum membro novo para adicionar.");
   }
 
-  // ── Permissões padrão ──────────────────────────────────────────────────────
   console.log("Seeding default permissions...");
   for (const p of defaultPermissions) {
     await prisma.rolePermission.upsert({
@@ -176,7 +171,6 @@ async function main() {
         module: p.module as "MEMBERS" | "ATTENDANCE" | "FINANCIAL" | "REPORTS" | "EVENTS" | "BIRTHDAYS" | "SHIRTS" | "SETTINGS" | "USERS",
         action: p.action as "VIEW" | "CREATE" | "EDIT" | "DELETE" | "EXPORT",
         granted: p.granted,
-        establishmentId: "default-porto-belo",
       },
     });
   }

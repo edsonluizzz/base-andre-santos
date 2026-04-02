@@ -9,11 +9,11 @@ datasource db {
   provider = "postgresql"
 }
 
-// ─── Multi-Tenant: Estabelecimentos ──────────────────────────────────────────
+// ─── Estabelecimento (Multi-Tenant) ───────────────────────────────────────────
 
 model Establishment {
   id         String   @id
-  name       String
+  name       String   @default("Porto Belo")
   logoBase64 String?  @db.Text
   pixKey     String?
   createdAt  DateTime @default(now())
@@ -56,8 +56,8 @@ model User {
   emailVerified   DateTime?
   image           String?
   role            Role      @default(MEMBER)
-  establishmentId String    @default("default-porto-belo")
   createdAt       DateTime  @default(now())
+  establishmentId String    @default("default-porto-belo")
 
   accounts      Account[]
   sessions      Session[]
@@ -100,9 +100,9 @@ model Member {
   photoUrl        String?
   status          MemberStatus @default(ACTIVE)
   notes           String?
-  establishmentId String       @default("default-porto-belo")
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
+  establishmentId String       @default("default-porto-belo")
 
   userId    String?  @unique
   user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
@@ -123,9 +123,9 @@ model Event {
   date            DateTime
   location        String?
   notes           String?
-  establishmentId String    @default("default-porto-belo")
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
+  establishmentId String    @default("default-porto-belo")
 
   attendances Attendance[]
   offerings   Offering[]
@@ -158,8 +158,8 @@ model Offering {
   method          PaymentMethod @default(CASH)
   notes           String?
   date            DateTime      @default(now())
-  establishmentId String        @default("default-porto-belo")
   createdAt       DateTime      @default(now())
+  establishmentId String        @default("default-porto-belo")
 
   member Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
   event  Event? @relation(fields: [eventId], references: [id], onDelete: SetNull)
@@ -176,8 +176,8 @@ model Expense {
   category        ExpenseCategory @default(OUTRO)
   date            DateTime        @default(now())
   notes           String?
-  establishmentId String          @default("default-porto-belo")
   createdAt       DateTime        @default(now())
+  establishmentId String          @default("default-porto-belo")
 
   @@index([establishmentId])
 }
@@ -199,9 +199,9 @@ model RolePermission {
   module          PermissionModule
   action          PermissionAction
   granted         Boolean          @default(false)
-  establishmentId String           @default("default-porto-belo")
   updatedAt       DateTime         @updatedAt
   updatedBy       String?
+  establishmentId String           @default("default-porto-belo")
 
   @@unique([role, module, action, establishmentId])
   @@index([establishmentId])
@@ -218,9 +218,9 @@ model Congress {
   status          CongressStatus @default(OPEN)
   shirtArtUrl     String?
   shirtPricing    Json?
-  establishmentId String         @default("default-porto-belo")
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
+  establishmentId String         @default("default-porto-belo")
 
   shirtOrders ShirtOrder[]
 
