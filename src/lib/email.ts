@@ -1,7 +1,11 @@
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
 const FROM = process.env.RESEND_FROM ?? "Ovile Gestão <noreply@ovile.com.br>";
+
+function getResend(): Resend | null {
+  if (!process.env.RESEND_API_KEY) return null;
+  return new Resend(process.env.RESEND_API_KEY);
+}
 
 // ─── E-mail de boas-vindas ao criar a congregação ─────────────────────────────
 
@@ -14,7 +18,8 @@ export async function sendWelcomeEmail({
   name: string;
   churchName: string;
 }) {
-  if (!process.env.RESEND_API_KEY) {
+  const resend = getResend();
+  if (!resend) {
     console.warn("[email] RESEND_API_KEY não configurado — e-mail não enviado.");
     return;
   }
@@ -59,7 +64,8 @@ export async function sendInviteEmail({
   churchName: string;
   invitedBy: string;
 }) {
-  if (!process.env.RESEND_API_KEY) {
+  const resend = getResend();
+  if (!resend) {
     console.warn("[email] RESEND_API_KEY não configurado — e-mail não enviado.");
     return;
   }
