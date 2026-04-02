@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { toast } from "sonner";
-import { Plus, Trash2, TrendingUp, TrendingDown, Minus, Lock } from "lucide-react";
+import { Plus, Trash2, TrendingUp, TrendingDown, Minus, Lock, Landmark, Settings2 } from "lucide-react";
 import { usePermissions } from "@/context/permissions-context";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -44,6 +44,7 @@ type Expense = {
 
 type Member = { id: string; name: string; status: string };
 type Event = { id: string; title: string; type: string };
+type BankAccount = { id: string; name: string; description?: string; isDefault: boolean };
 
 const METHOD_LABELS = { CASH: "Dinheiro", PIX: "PIX" };
 
@@ -67,6 +68,8 @@ export default function FinanceiroPage() {
   const [expensesTotal, setExpensesTotal] = useState(0);
   const [members, setMembers] = useState<Member[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
+  const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
+  const [bankAccountDialogOpen, setBankAccountDialogOpen] = useState(false);
   const [offeringDialogOpen, setOfferingDialogOpen] = useState(false);
   const [expenseDialogOpen, setExpenseDialogOpen] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);
@@ -92,12 +95,21 @@ export default function FinanceiroPage() {
     );
   }, [fetchOfferings, fetchExpenses]);
 
-  useEffect(() => {
-    fetch("/api/members").then((r) => r.json()).then((d) =>
-      setMembers((d as Member[]).filter((m) => m.status === "ACTIVE"))
-    );
-    fetch("/api/events").then((r) => r.json()).then(setEvents);
+  const fetchBankAccounts = useCallback(async () => {
+    const res = await fetch("/api/bank-accounts");
+    if (res.ok) setBankAccounts(await res.json());
   }, []);
+
+  useEffect(() => {
+    Promise.all([
+      fetch("/api/members").then((r) => r.json()),
+      fetch("/api/events").then((r) => r.json()),
+      fetchBankAccounts(),
+    ]).then(([membersData, eventsData]) => {
+      setMembers((membersData as Member[]).filter((m) => m.status === "ACTIVE"));
+      setEvents(eventsData);
+    });
+  }, [fetchBankAccounts]);
 
   async function handleDeleteOffering(id: string) {
     const res = await fetch(`/api/offerings?id=${id}`, { method: "DELETE" });
@@ -148,13 +160,24 @@ export default function FinanceiroPage() {
           </h1>
           <p className="text-muted-foreground text-sm mt-1">Entradas e despesas do mês</p>
         </div>
-        <Button
-          onClick={() => setOfferingDialogOpen(true)}
-          className="bg-gold hover:bg-gold-light text-black font-semibold"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Registrar Oferta
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setBankAccountDialogOpen(true)}
+            className="border-border text-muted-foreground hover:text-gold hover:border-gold/30 gap-2"
+          >
+            <Landmark className="w-4 h-4" />
+            <span className="hidden sm:inline">Contas</span>
+          </Button>
+          <Button
+            onClick={() => setOfferingDialogOpen(true)}
+            className="bg-gold hover:bg-gold-light text-black font-semibold"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Registrar Oferta
+          </Button>
+        </div>
       </div>
 
       {/* Month filter */}
@@ -363,13 +386,22 @@ export default function FinanceiroPage() {
         onOpenChange={setOfferingDialogOpen}
         members={members}
         events={events}
+        bankAccounts={bankAccounts}
         onSuccess={() => { fetchOfferings(); setOfferingDialogOpen(false); }}
       />
 
       <AddExpenseDialog
         open={expenseDialogOpen}
         onOpenChange={setExpenseDialogOpen}
+        bankAccounts={bankAccounts}
         onSuccess={() => { fetchExpenses(); setExpenseDialogOpen(false); }}
+      />
+
+      <BankAccountDialog
+        open={bankAccountDialogOpen}
+        onOpenChange={setBankAccountDialogOpen}
+        accounts={bankAccounts}
+        onSuccess={fetchBankAccounts}
       />
     </div>
   );
@@ -378,18 +410,30 @@ export default function FinanceiroPage() {
 // ─── Add Offering Dialog ──────────────────────────────────────────────────────
 
 function AddOfferingDialog({
-  open, onOpenChange, members, events, onSuccess,
+  open, onOpenChange, members, events, bankAccounts, onSuccess,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   members: Member[];
   events: Event[];
+  bankAccounts: BankAccount[];
   onSuccess: () => void;
 }) {
+  const defaultBankId = useMemo(
+    () => bankAccounts.find((b) => b.isDefault)?.id ?? "",
+    [bankAccounts]
+  );
   const [form, setForm] = useState({
-    memberId: "", eventId: "", amount: "", method: "CASH", notes: "",
+    memberId: "", eventId: "", bankAccountId: "", amount: "", method: "CASH", notes: "",
     date: new Date().toISOString().slice(0, 10),
   });
+
+  // Sincroniza conta padrão quando bankAccounts carrega
+  useEffect(() => {
+    if (defaultBankId && !form.bankAccountId) {
+      setForm((p) => ({ ...p, bankAccountId: defaultBankId }));
+    }
+  }, [defaultBankId]); // eslint-disable-line react-hooks/exhaustive-deps
   const [loading, setLoading] = useState(false);
 
   function set(field: string, value: string) {
@@ -406,12 +450,12 @@ function AddOfferingDialog({
     const res = await fetch("/api/offerings", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...form, eventId: form.eventId || null }),
+      body: JSON.stringify({ ...form, eventId: form.eventId || null, bankAccountId: form.bankAccountId || null }),
     });
     setLoading(false);
     if (res.ok) {
       toast.success("Oferta registrada!");
-      setForm({ memberId: "", eventId: "", amount: "", method: "CASH", notes: "", date: new Date().toISOString().slice(0, 10) });
+      setForm({ memberId: "", eventId: "", bankAccountId: defaultBankId, amount: "", method: "CASH", notes: "", date: new Date().toISOString().slice(0, 10), });
       onSuccess();
     } else {
       toast.error("Erro ao registrar");
@@ -481,6 +525,22 @@ function AddOfferingDialog({
               </Select>
             </div>
           </div>
+          {bankAccounts.length > 0 && (
+            <div className="space-y-1.5">
+              <Label className="text-muted-foreground text-xs">Conta de destino</Label>
+              <Select value={form.bankAccountId} onValueChange={(v: string | null) => set("bankAccountId", v ?? "")}>
+                <SelectTrigger className="bg-background border-border text-foreground">
+                  <SelectValue placeholder="Nenhuma" />
+                </SelectTrigger>
+                <SelectContent className="bg-card border-border">
+                  <SelectItem value="">Nenhuma</SelectItem>
+                  {bankAccounts.map((b) => (
+                    <SelectItem key={b.id} value={b.id}>{b.name}{b.isDefault ? " ★" : ""}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <div className="flex gap-3 pt-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}
               className="flex-1 border-border text-muted-foreground hover:bg-secondary">
@@ -500,16 +560,28 @@ function AddOfferingDialog({
 // ─── Add Expense Dialog ───────────────────────────────────────────────────────
 
 function AddExpenseDialog({
-  open, onOpenChange, onSuccess,
+  open, onOpenChange, bankAccounts, onSuccess,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
+  bankAccounts: BankAccount[];
   onSuccess: () => void;
 }) {
+  const defaultBankId = useMemo(
+    () => bankAccounts.find((b) => b.isDefault)?.id ?? "",
+    [bankAccounts]
+  );
   const [form, setForm] = useState({
-    description: "", amount: "", category: "OUTRO", notes: "",
+    description: "", amount: "", category: "OUTRO", bankAccountId: "", notes: "",
     date: new Date().toISOString().slice(0, 10),
   });
+
+  // Sincroniza conta padrão quando bankAccounts carrega
+  useEffect(() => {
+    if (defaultBankId && !form.bankAccountId) {
+      setForm((p) => ({ ...p, bankAccountId: defaultBankId }));
+    }
+  }, [defaultBankId]); // eslint-disable-line react-hooks/exhaustive-deps
   const [loading, setLoading] = useState(false);
 
   function set(field: string, value: string) {
@@ -531,7 +603,7 @@ function AddExpenseDialog({
     setLoading(false);
     if (res.ok) {
       toast.success("Despesa registrada!");
-      setForm({ description: "", amount: "", category: "OUTRO", notes: "", date: new Date().toISOString().slice(0, 10) });
+      setForm({ description: "", amount: "", category: "OUTRO", bankAccountId: defaultBankId, notes: "", date: new Date().toISOString().slice(0, 10), });
       onSuccess();
     } else {
       toast.error("Erro ao registrar");
@@ -581,6 +653,22 @@ function AddExpenseDialog({
             <Input type="date" value={form.date} onChange={(e) => set("date", e.target.value)}
               className="bg-background border-border text-foreground focus-visible:ring-gold-muted" />
           </div>
+          {bankAccounts.length > 0 && (
+            <div className="space-y-1.5">
+              <Label className="text-muted-foreground text-xs">Conta de saída</Label>
+              <Select value={form.bankAccountId} onValueChange={(v: string | null) => set("bankAccountId", v ?? "")}>
+                <SelectTrigger className="bg-background border-border text-foreground">
+                  <SelectValue placeholder="Nenhuma" />
+                </SelectTrigger>
+                <SelectContent className="bg-card border-border">
+                  <SelectItem value="">Nenhuma</SelectItem>
+                  {bankAccounts.map((b) => (
+                    <SelectItem key={b.id} value={b.id}>{b.name}{b.isDefault ? " ★" : ""}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <div className="flex gap-3 pt-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}
               className="flex-1 border-border text-muted-foreground hover:bg-secondary">
@@ -592,6 +680,107 @@ function AddExpenseDialog({
             </Button>
           </div>
         </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ─── Bank Account Dialog ──────────────────────────────────────────────────────
+
+function BankAccountDialog({
+  open, onOpenChange, accounts, onSuccess,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  accounts: BankAccount[];
+  onSuccess: () => void;
+}) {
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [isDefault, setIsDefault] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  async function handleCreate(e: React.FormEvent) {
+    e.preventDefault();
+    if (!name.trim()) { toast.error("Nome é obrigatório"); return; }
+    setLoading(true);
+    const res = await fetch("/api/bank-accounts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, description, isDefault }),
+    });
+    setLoading(false);
+    if (res.ok) {
+      toast.success("Conta criada!");
+      setName(""); setDescription(""); setIsDefault(false);
+      onSuccess();
+    } else {
+      toast.error("Erro ao criar conta");
+    }
+  }
+
+  async function handleDelete(id: string) {
+    const res = await fetch(`/api/bank-accounts?id=${id}`, { method: "DELETE" });
+    if (res.ok) { toast.success("Conta removida"); onSuccess(); }
+    else toast.error("Erro ao remover");
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="bg-card border-border text-foreground max-w-md">
+        <DialogHeader>
+          <DialogTitle className="text-gold-light flex items-center gap-2" style={{ fontFamily: "var(--font-heading)" }}>
+            <Landmark className="w-4 h-4" /> Contas Bancárias / Caixas
+          </DialogTitle>
+        </DialogHeader>
+
+        {accounts.length > 0 && (
+          <div className="space-y-2 mb-4">
+            {accounts.map((a) => (
+              <div key={a.id} className="flex items-center gap-3 bg-background rounded-xl px-4 py-3 border border-border group">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-foreground">
+                    {a.name}{a.isDefault && <span className="ml-2 text-[10px] text-gold uppercase tracking-wider">Padrão</span>}
+                  </p>
+                  {a.description && <p className="text-xs text-muted-foreground truncate">{a.description}</p>}
+                </div>
+                <button
+                  onClick={() => handleDelete(a.id)}
+                  className="opacity-0 group-hover:opacity-100 p-1.5 text-muted-foreground hover:text-destructive rounded-lg transition-all"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className="border-t border-border pt-4">
+          <p className="text-xs text-muted-foreground mb-3 flex items-center gap-1.5">
+            <Settings2 className="w-3.5 h-3.5" /> Nova conta
+          </p>
+          <form onSubmit={handleCreate} className="space-y-3">
+            <Input value={name} onChange={(e) => setName(e.target.value)}
+              placeholder="Ex: Caixa Geral, Bradesco, Espécie..."
+              className="bg-background border-border text-foreground focus-visible:ring-gold-muted" />
+            <Input value={description} onChange={(e) => setDescription(e.target.value)}
+              placeholder="Descrição (opcional)"
+              className="bg-background border-border text-foreground focus-visible:ring-gold-muted" />
+            <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer">
+              <input
+                type="checkbox"
+                checked={isDefault}
+                onChange={(e) => setIsDefault(e.target.checked)}
+                className="rounded"
+              />
+              Definir como conta padrão
+            </label>
+            <Button type="submit" disabled={loading}
+              className="w-full bg-gold hover:bg-gold-light text-black font-semibold">
+              {loading ? "Criando..." : "Criar Conta"}
+            </Button>
+          </form>
+        </div>
       </DialogContent>
     </Dialog>
   );

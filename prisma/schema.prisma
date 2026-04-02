@@ -18,6 +18,25 @@ model Establishment {
   pixKey     String?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+
+  userEstablishments UserEstablishment[]
+}
+
+// ─── Vínculo Usuário ↔ Estabelecimento (N:N) ─────────────────────────────────
+
+model UserEstablishment {
+  id              String   @id @default(cuid())
+  userId          String
+  establishmentId String
+  role            Role     @default(MEMBER)
+  createdAt       DateTime @default(now())
+
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  establishment Establishment @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, establishmentId])
+  @@index([userId])
+  @@index([establishmentId])
 }
 
 // ─── Auth (NextAuth) ───────────────────────────────────────────────────────
@@ -55,14 +74,16 @@ model User {
   email           String?   @unique
   emailVerified   DateTime?
   image           String?
+  // Mantidos para compatibilidade com dados existentes; contexto ativo vem do JWT
   role            Role      @default(MEMBER)
   createdAt       DateTime  @default(now())
   establishmentId String    @default("default-porto-belo")
 
-  accounts      Account[]
-  sessions      Session[]
-  notifications Notification[]
-  member        Member?
+  accounts           Account[]
+  sessions           Session[]
+  notifications      Notification[]
+  member             Member?
+  userEstablishments UserEstablishment[]
 
   @@index([establishmentId])
 }
@@ -107,9 +128,11 @@ model Member {
   userId    String?  @unique
   user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
 
-  attendances Attendance[]
-  offerings   Offering[]
-  shirtOrders ShirtOrder[]
+  attendances      Attendance[]
+  offerings        Offering[]
+  shirtOrders      ShirtOrder[]
+  ministryMembers  MinistryMember[]
+  eventRsvps       EventRsvp[]
 
   @@index([establishmentId])
 }
@@ -129,6 +152,7 @@ model Event {
 
   attendances Attendance[]
   offerings   Offering[]
+  eventRsvps  EventRsvp[]
 
   @@index([establishmentId])
 }
@@ -150,10 +174,26 @@ model Attendance {
 
 // ─── Financeiro ───────────────────────────────────────────────────────────
 
+model BankAccount {
+  id              String   @id @default(cuid())
+  name            String
+  description     String?
+  isDefault       Boolean  @default(false)
+  active          Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  establishmentId String   @default("default-porto-belo")
+
+  offerings Offering[]
+  expenses  Expense[]
+
+  @@index([establishmentId])
+}
+
 model Offering {
   id              String        @id @default(cuid())
   memberId        String
   eventId         String?
+  bankAccountId   String?
   amount          Float
   method          PaymentMethod @default(CASH)
   notes           String?
@@ -161,8 +201,9 @@ model Offering {
   createdAt       DateTime      @default(now())
   establishmentId String        @default("default-porto-belo")
 
-  member Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
-  event  Event? @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  member      Member       @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  event       Event?       @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  bankAccount BankAccount? @relation(fields: [bankAccountId], references: [id], onDelete: SetNull)
 
   @@index([establishmentId])
 }
@@ -174,10 +215,13 @@ model Expense {
   description     String
   amount          Float
   category        ExpenseCategory @default(OUTRO)
+  bankAccountId   String?
   date            DateTime        @default(now())
   notes           String?
   createdAt       DateTime        @default(now())
   establishmentId String          @default("default-porto-belo")
+
+  bankAccount BankAccount? @relation(fields: [bankAccountId], references: [id], onDelete: SetNull)
 
   @@index([establishmentId])
 }
@@ -251,6 +295,49 @@ model ShirtOrder {
   member   Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
 
   @@unique([congressId, memberId])
+}
+
+// ─── Ministérios ──────────────────────────────────────────────────────────
+
+model Ministry {
+  id              String   @id @default(cuid())
+  name            String
+  description     String?
+  active          Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  establishmentId String   @default("default-porto-belo")
+
+  members MinistryMember[]
+
+  @@index([establishmentId])
+}
+
+model MinistryMember {
+  id         String          @id @default(cuid())
+  ministryId String
+  memberId   String
+  role       MinistryRole    @default(MEMBER)
+  joinedAt   DateTime        @default(now())
+
+  ministry Ministry @relation(fields: [ministryId], references: [id], onDelete: Cascade)
+  member   Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@unique([ministryId, memberId])
+}
+
+// ─── RSVP de Eventos ──────────────────────────────────────────────────────
+
+model EventRsvp {
+  id        String   @id @default(cuid())
+  eventId   String
+  memberId  String
+  createdAt DateTime @default(now())
+
+  event  Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  member Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, memberId])
 }
 
 // ─── Enums ────────────────────────────────────────────────────────────────
@@ -336,4 +423,9 @@ enum CongressStatus {
   OPEN
   CLOSED
   FINISHED
+}
+
+enum MinistryRole {
+  LEADER
+  MEMBER
 }

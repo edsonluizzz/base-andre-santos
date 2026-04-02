@@ -18,6 +18,7 @@ import {
   BarChart2,
   Shirt,
   Cross,
+  Music2,
 } from "lucide-react";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { useState, useEffect } from "react";
@@ -40,6 +41,7 @@ const navItems: {
   { href: "/chamada", icon: ClipboardList, label: "Chamada", module: "ATTENDANCE" },
   { href: "/relatorios", icon: BarChart2, label: "Relatórios", module: "REPORTS" },
   { href: "/financeiro", icon: DollarSign, label: "Financeiro", module: "FINANCIAL" },
+  { href: "/ministerios", icon: Music2, label: "Ministérios" },
   { href: "/camisetas", icon: Shirt, label: "Camisetas", module: "SHIRTS" },
   { href: "/configuracoes", icon: Settings, label: "Configurações", adminOnly: true },
 ];

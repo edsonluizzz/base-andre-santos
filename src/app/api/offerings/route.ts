@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
     const body = await req.json();
-    const { memberId, eventId, amount, method, notes, date } = body;
+    const { memberId, eventId, bankAccountId, amount, method, notes, date } = body;
 
     if (!memberId || !amount || amount <= 0) {
       return NextResponse.json({ error: "Dados inválidos" }, { status: 400 });
@@ -54,6 +54,7 @@ export async function POST(req: NextRequest) {
       data: {
         memberId,
         eventId: eventId || null,
+        bankAccountId: bankAccountId || null,
         amount: parseFloat(amount),
         method: method || "CASH",
         notes: notes?.trim() || null,

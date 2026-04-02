@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
     const body = await req.json();
-    const { description, amount, category, notes, date } = body;
+    const { description, amount, category, bankAccountId, notes, date } = body;
 
     if (!description || !amount || amount <= 0) {
       return NextResponse.json({ error: "Dados inválidos" }, { status: 400 });
@@ -51,6 +51,7 @@ export async function POST(req: NextRequest) {
         description: description.trim(),
         amount: parseFloat(amount),
         category: category || "OUTRO",
+        bankAccountId: bankAccountId || null,
         notes: notes?.trim() || null,
         date: date ? new Date(date) : new Date(),
         establishmentId: eid,
