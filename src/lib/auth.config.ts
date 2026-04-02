@@ -19,15 +19,17 @@ export const authConfig: NextAuthConfig = {
   callbacks: {
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
-      const isLoginPage = nextUrl.pathname === "/login";
-      const isApiAuth = nextUrl.pathname.startsWith("/api/auth");
+      const { pathname } = nextUrl;
+      const isLoginPage = pathname === "/login";
+      const isLandingPage = pathname === "/";
+      const isApiAuth = pathname.startsWith("/api/auth");
 
-      if (isApiAuth) return true;
+      if (isApiAuth || isLandingPage) return true;
       if (!isLoggedIn && !isLoginPage) {
         return Response.redirect(new URL("/login", nextUrl));
       }
       if (isLoggedIn && isLoginPage) {
-        return Response.redirect(new URL("/", nextUrl));
+        return Response.redirect(new URL("/dashboard", nextUrl));
       }
       return true;
     },

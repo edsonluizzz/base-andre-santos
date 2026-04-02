@@ -33,7 +33,7 @@ const navItems: {
   module?: PermissionModule;
   adminOnly?: boolean;
 }[] = [
-  { href: "/", icon: LayoutDashboard, label: "Dashboard" },
+  { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
   { href: "/portal", icon: User, label: "Meu Portal" },
   { href: "/membros", icon: Users, label: "Membros", module: "MEMBERS" },
   { href: "/aniversarios", icon: Cake, label: "Aniversários", module: "BIRTHDAYS" },
@@ -161,8 +161,8 @@ export function Sidebar() {
         <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
           {visibleItems.map((item) => {
             const active =
-              item.href === "/"
-                ? pathname === "/"
+              item.href === "/dashboard"
+                ? pathname === "/dashboard"
                 : pathname.startsWith(item.href);
             return (
               <Link

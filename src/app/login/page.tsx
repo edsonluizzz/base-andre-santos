@@ -8,7 +8,7 @@ export default function LoginPage() {
 
   async function handleGoogleLogin() {
     setLoading(true);
-    await signIn("google", { callbackUrl: "/" });
+    await signIn("google", { callbackUrl: "/dashboard" });
   }
 
   return (
