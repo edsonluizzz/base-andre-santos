@@ -171,11 +171,21 @@ export default function FinanceiroPage() {
             <span className="hidden sm:inline">Contas</span>
           </Button>
           <Button
+            variant="outline"
+            onClick={() => setExpenseDialogOpen(true)}
+            className="border-destructive/40 text-destructive hover:bg-destructive/10 hover:border-destructive/60 font-semibold gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            <span className="hidden sm:inline">Nova Despesa</span>
+            <span className="sm:hidden">Despesa</span>
+          </Button>
+          <Button
             onClick={() => setOfferingDialogOpen(true)}
             className="bg-gold hover:bg-gold-light text-black font-semibold"
           >
             <Plus className="w-4 h-4 mr-2" />
-            Registrar Oferta
+            <span className="hidden sm:inline">Registrar Oferta</span>
+            <span className="sm:hidden">Oferta</span>
           </Button>
         </div>
       </div>

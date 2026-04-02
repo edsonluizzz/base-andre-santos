@@ -166,7 +166,7 @@ export default function DashboardPage() {
         {statCards.map((card, i) => (
           <div
             key={card.href + card.label}
-            className="animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-both"
+            className="animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-both h-full"
             style={{ animationDelay: `${i * 80}ms` }}
           >
             <StatCard
@@ -338,7 +338,7 @@ function StatCard({
   return (
     <Link
       href={href}
-      className="glass-card p-5 block group cursor-pointer hover:-translate-y-1"
+      className="glass-card p-5 flex flex-col group cursor-pointer hover:-translate-y-1 h-full"
     >
       <div className="flex items-start justify-between mb-3">
         <div className="w-9 h-9 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
