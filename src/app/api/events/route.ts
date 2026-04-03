@@ -2,14 +2,20 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
     const session = await auth();
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const eid = session.user?.establishmentId ?? "default-porto-belo";
+    const { searchParams } = new URL(req.url);
+    const ministryId = searchParams.get("ministryId");
+
     const events = await db.event.findMany({
-      where: { establishmentId: eid },
+      where: {
+        establishmentId: eid,
+        ...(ministryId ? { ministryId } : { ministryId: null }),
+      },
       orderBy: { date: "desc" },
       include: {
         _count: { select: { attendances: true, offerings: true } },
@@ -29,7 +35,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
     const body = await req.json();
-    const { title, type, date, location, notes } = body;
+    const { title, type, date, location, notes, ministryId } = body;
 
     if (!title?.trim() || !type || !date) {
       return NextResponse.json({ error: "Campos obrigatórios ausentes" }, { status: 400 });
@@ -44,6 +50,7 @@ export async function POST(req: NextRequest) {
         location: location?.trim() || null,
         notes: notes?.trim() || null,
         establishmentId: eid,
+        ministryId: ministryId || null,
       },
     });
 

@@ -127,6 +127,15 @@ const defaultPermissions = [
   { role: "LEADER", module: "USERS", action: "EDIT", granted: false },
   { role: "MEMBER", module: "USERS", action: "VIEW", granted: false },
   { role: "MEMBER", module: "USERS", action: "EDIT", granted: false },
+  // MINISTRIES
+  { role: "LEADER", module: "MINISTRIES", action: "VIEW", granted: true },
+  { role: "LEADER", module: "MINISTRIES", action: "CREATE", granted: true },
+  { role: "LEADER", module: "MINISTRIES", action: "EDIT", granted: true },
+  { role: "LEADER", module: "MINISTRIES", action: "DELETE", granted: false },
+  { role: "MEMBER", module: "MINISTRIES", action: "VIEW", granted: false },
+  { role: "MEMBER", module: "MINISTRIES", action: "CREATE", granted: false },
+  { role: "MEMBER", module: "MINISTRIES", action: "EDIT", granted: false },
+  { role: "MEMBER", module: "MINISTRIES", action: "DELETE", granted: false },
 ] as const;
 
 async function main() {
@@ -165,7 +174,7 @@ async function main() {
       where: {
         role_module_action_establishmentId: {
           role: p.role as "LEADER" | "MEMBER",
-          module: p.module as "MEMBERS" | "ATTENDANCE" | "FINANCIAL" | "REPORTS" | "EVENTS" | "BIRTHDAYS" | "SHIRTS" | "SETTINGS" | "USERS",
+          module: p.module as "MEMBERS" | "ATTENDANCE" | "FINANCIAL" | "REPORTS" | "EVENTS" | "BIRTHDAYS" | "SHIRTS" | "SETTINGS" | "USERS" | "MINISTRIES",
           action: p.action as "VIEW" | "CREATE" | "EDIT" | "DELETE" | "EXPORT",
           establishmentId: "default-porto-belo",
         },
@@ -173,7 +182,7 @@ async function main() {
       update: { granted: p.granted },
       create: {
         role: p.role as "LEADER" | "MEMBER",
-        module: p.module as "MEMBERS" | "ATTENDANCE" | "FINANCIAL" | "REPORTS" | "EVENTS" | "BIRTHDAYS" | "SHIRTS" | "SETTINGS" | "USERS",
+        module: p.module as "MEMBERS" | "ATTENDANCE" | "FINANCIAL" | "REPORTS" | "EVENTS" | "BIRTHDAYS" | "SHIRTS" | "SETTINGS" | "USERS" | "MINISTRIES",
         action: p.action as "VIEW" | "CREATE" | "EDIT" | "DELETE" | "EXPORT",
         granted: p.granted,
         establishmentId: "default-porto-belo",

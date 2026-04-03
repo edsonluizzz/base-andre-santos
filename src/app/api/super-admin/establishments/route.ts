@@ -1,0 +1,54 @@
+import { NextRequest, NextResponse } from "next/server";
+import { db } from "@/lib/db";
+import { auth } from "@/lib/auth";
+
+
+export async function GET() {
+  try {
+    const session = await auth();
+    if (!session || !session.user?.isSuperAdmin)
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
+    const establishments = await db.establishment.findMany({
+      orderBy: { createdAt: "asc" },
+    });
+
+    // Attach stats to each establishment
+    const enriched = await Promise.all(
+      establishments.map(async (est) => {
+        const [memberCount, userCount, eventCount, ministryCount] = await Promise.all([
+          db.member.count({ where: { establishmentId: est.id } }),
+          db.user.count({ where: { establishmentId: est.id } }),
+          db.event.count({ where: { establishmentId: est.id } }),
+          db.ministry.count({ where: { establishmentId: est.id } }),
+        ]);
+        return { ...est, memberCount, userCount, eventCount, ministryCount };
+      })
+    );
+
+    return NextResponse.json(enriched);
+  } catch {
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
+
+export async function POST(req: NextRequest) {
+  try {
+    const session = await auth();
+    if (!session || !session.user?.isSuperAdmin)
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
+    const { id, name, pixKey } = await req.json();
+    if (!id?.trim() || !name?.trim())
+      return NextResponse.json({ error: "id e name são obrigatórios" }, { status: 400 });
+
+    const establishment = await db.establishment.create({
+      data: { id: id.trim(), name: name.trim(), pixKey: pixKey?.trim() || null },
+    });
+    return NextResponse.json(establishment, { status: 201 });
+  } catch (e: unknown) {
+    if ((e as { code?: string })?.code === "P2002")
+      return NextResponse.json({ error: "ID já existe" }, { status: 409 });
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}

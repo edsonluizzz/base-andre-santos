@@ -19,8 +19,9 @@ export async function GET(req: NextRequest) {
       dateWhere = { date: { gte: start, lte: end } };
     }
 
+    const ministryId = searchParams.get("ministryId");
     const expenses = await db.expense.findMany({
-      where: { establishmentId: eid, ...dateWhere },
+      where: { establishmentId: eid, ...dateWhere, ...(ministryId ? { ministryId } : {}) },
       orderBy: { date: "desc" },
     });
 
@@ -39,7 +40,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
     const body = await req.json();
-    const { description, amount, category, notes, date } = body;
+    const { description, amount, category, notes, date, ministryId } = body;
 
     if (!description || !amount || amount <= 0) {
       return NextResponse.json({ error: "Dados inválidos" }, { status: 400 });
@@ -54,6 +55,7 @@ export async function POST(req: NextRequest) {
         notes: notes?.trim() || null,
         date: date ? new Date(date) : new Date(),
         establishmentId: eid,
+        ministryId: ministryId || null,
       },
     });
 

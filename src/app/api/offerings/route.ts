@@ -19,8 +19,9 @@ export async function GET(req: NextRequest) {
       dateWhere = { date: { gte: start, lte: end } };
     }
 
+    const ministryId = searchParams.get("ministryId");
     const offerings = await db.offering.findMany({
-      where: { establishmentId: eid, ...dateWhere },
+      where: { establishmentId: eid, ...dateWhere, ...(ministryId ? { ministryId } : {}) },
       orderBy: { date: "desc" },
       include: {
         member: { select: { id: true, name: true } },
@@ -43,7 +44,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
     const body = await req.json();
-    const { memberId, eventId, amount, method, notes, date } = body;
+    const { memberId, eventId, amount, method, notes, date, ministryId } = body;
 
     if (!memberId || !amount || amount <= 0) {
       return NextResponse.json({ error: "Dados inválidos" }, { status: 400 });
@@ -59,6 +60,7 @@ export async function POST(req: NextRequest) {
         notes: notes?.trim() || null,
         date: date ? new Date(date) : new Date(),
         establishmentId: eid,
+        ministryId: ministryId || null,
       },
       include: {
         member: { select: { id: true, name: true } },

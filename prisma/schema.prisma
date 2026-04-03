@@ -107,9 +107,10 @@ model Member {
   userId    String?  @unique
   user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
 
-  attendances Attendance[]
-  offerings   Offering[]
-  shirtOrders ShirtOrder[]
+  attendances      Attendance[]
+  offerings        Offering[]
+  shirtOrders      ShirtOrder[]
+  ministryMembers  MinistryMember[]
 
   @@index([establishmentId])
 }
@@ -129,8 +130,11 @@ model Event {
 
   attendances Attendance[]
   offerings   Offering[]
+  ministryId  String?
+  ministry    Ministry? @relation(fields: [ministryId], references: [id], onDelete: SetNull)
 
   @@index([establishmentId])
+  @@index([ministryId])
 }
 
 // ─── Chamada ──────────────────────────────────────────────────────────────
@@ -161,10 +165,13 @@ model Offering {
   establishmentId String        @default("default-porto-belo")
   createdAt       DateTime      @default(now())
 
-  member Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
-  event  Event? @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  member     Member    @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  event      Event?    @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  ministryId String?
+  ministry   Ministry? @relation(fields: [ministryId], references: [id], onDelete: SetNull)
 
   @@index([establishmentId])
+  @@index([ministryId])
 }
 
 // ─── Despesas ─────────────────────────────────────────────────────────────
@@ -177,9 +184,12 @@ model Expense {
   date            DateTime        @default(now())
   notes           String?
   establishmentId String          @default("default-porto-belo")
+  ministryId      String?
+  ministry        Ministry?       @relation(fields: [ministryId], references: [id], onDelete: SetNull)
   createdAt       DateTime        @default(now())
 
   @@index([establishmentId])
+  @@index([ministryId])
 }
 
 // ─── Configurações globais ────────────────────────────────────────────────
@@ -205,6 +215,38 @@ model RolePermission {
 
   @@unique([role, module, action, establishmentId])
   @@index([establishmentId])
+}
+
+// ─── Ministérios ──────────────────────────────────────────────────────────
+
+model Ministry {
+  id              String   @id @default(cuid())
+  name            String
+  description     String?
+  color           String?
+  establishmentId String   @default("default-porto-belo")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  members   MinistryMember[]
+  events    Event[]
+  offerings Offering[]
+  expenses  Expense[]
+
+  @@index([establishmentId])
+}
+
+model MinistryMember {
+  id         String       @id @default(cuid())
+  ministryId String
+  memberId   String
+  role       MinistryRole @default(MEMBER)
+  joinedAt   DateTime     @default(now())
+
+  ministry Ministry @relation(fields: [ministryId], references: [id], onDelete: Cascade)
+  member   Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@unique([ministryId, memberId])
 }
 
 // ─── Congressos e Camisetas ───────────────────────────────────────────────
@@ -303,6 +345,7 @@ enum PermissionModule {
   SHIRTS
   SETTINGS
   USERS
+  MINISTRIES
 }
 
 enum PermissionAction {
@@ -336,4 +379,9 @@ enum CongressStatus {
   OPEN
   CLOSED
   FINISHED
+}
+
+enum MinistryRole {
+  COORDINATOR
+  MEMBER
 }

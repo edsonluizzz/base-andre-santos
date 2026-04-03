@@ -7,7 +7,8 @@ export type PermissionModule =
   | "BIRTHDAYS"
   | "SHIRTS"
   | "SETTINGS"
-  | "USERS";
+  | "USERS"
+  | "MINISTRIES";
 
 export type PermissionAction = "VIEW" | "CREATE" | "EDIT" | "DELETE" | "EXPORT";
 

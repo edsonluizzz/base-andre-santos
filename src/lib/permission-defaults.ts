@@ -78,6 +78,16 @@ const PERMISSION_DEFAULTS: Partial<Record<PermissionKey, boolean>> = {
   "LEADER:USERS:EDIT": false,
   "MEMBER:USERS:VIEW": false,
   "MEMBER:USERS:EDIT": false,
+
+  // MINISTRIES
+  "LEADER:MINISTRIES:VIEW": true,
+  "LEADER:MINISTRIES:CREATE": true,
+  "LEADER:MINISTRIES:EDIT": true,
+  "LEADER:MINISTRIES:DELETE": false,
+  "MEMBER:MINISTRIES:VIEW": false,
+  "MEMBER:MINISTRIES:CREATE": false,
+  "MEMBER:MINISTRIES:EDIT": false,
+  "MEMBER:MINISTRIES:DELETE": false,
 };
 
 export function getDefaultPermission(

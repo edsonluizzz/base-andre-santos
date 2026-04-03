@@ -18,6 +18,8 @@ import {
   BarChart2,
   Shirt,
   Cross,
+  Church,
+  Shield,
 } from "lucide-react";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { useState, useEffect } from "react";
@@ -32,16 +34,19 @@ const navItems: {
   label: string;
   module?: PermissionModule;
   adminOnly?: boolean;
+  superAdminOnly?: boolean;
 }[] = [
   { href: "/", icon: LayoutDashboard, label: "Dashboard" },
   { href: "/portal", icon: User, label: "Meu Portal" },
   { href: "/membros", icon: Users, label: "Membros", module: "MEMBERS" },
+  { href: "/ministerios", icon: Church, label: "Ministérios", module: "MINISTRIES" },
   { href: "/aniversarios", icon: Cake, label: "Aniversários", module: "BIRTHDAYS" },
   { href: "/chamada", icon: ClipboardList, label: "Chamada", module: "ATTENDANCE" },
   { href: "/relatorios", icon: BarChart2, label: "Relatórios", module: "REPORTS" },
   { href: "/financeiro", icon: DollarSign, label: "Financeiro", module: "FINANCIAL" },
   { href: "/camisetas", icon: Shirt, label: "Camisetas", module: "SHIRTS" },
   { href: "/configuracoes", icon: Settings, label: "Configurações", adminOnly: true },
+  { href: "/super-admin", icon: Shield, label: "Super Admin", superAdminOnly: true },
 ];
 
 export function Sidebar() {
@@ -81,8 +86,10 @@ export function Sidebar() {
     .toUpperCase() ?? "U";
 
   const isAdmin = session?.user?.role === "ADMIN";
+  const isSuperAdmin = (session?.user as { isSuperAdmin?: boolean })?.isSuperAdmin ?? false;
   const { canView } = usePermissions();
   const visibleItems = navItems.filter((item) => {
+    if (item.superAdminOnly && !isSuperAdmin) return false;
     if (item.adminOnly && !isAdmin) return false;
     if (item.module && !canView(item.module)) return false;
     return true;
