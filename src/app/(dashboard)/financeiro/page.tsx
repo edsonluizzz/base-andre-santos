@@ -57,7 +57,7 @@ const CATEGORY_LABELS: Record<string, string> = {
 };
 
 export default function FinanceiroPage() {
-  const { canView } = usePermissions();
+  const { canView, canCreate } = usePermissions();
   const now = new Date();
   const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 
@@ -171,23 +171,28 @@ export default function FinanceiroPage() {
             <Landmark className="w-4 h-4" />
             <span className="hidden sm:inline">Contas</span>
           </Button>
-          <Button
-            variant="outline"
-            onClick={() => setExpenseDialogOpen(true)}
-            className="border-destructive/40 text-destructive hover:bg-destructive/10 hover:border-destructive/60 font-semibold gap-2"
-          >
-            <Plus className="w-4 h-4" />
-            <span className="hidden sm:inline">Nova Despesa</span>
-            <span className="sm:hidden">Despesa</span>
-          </Button>
-          <Button
-            onClick={() => setOfferingDialogOpen(true)}
-            className="bg-gold hover:bg-gold-light text-black font-semibold gap-2"
-          >
-            <Plus className="w-4 h-4" />
-            <span className="hidden sm:inline">Nova Entrada</span>
-            <span className="sm:hidden">Entrada</span>
-          </Button>
+          {canCreate("FINANCIAL") && (
+            <>
+              <Button
+                variant="outline"
+                onClick={() => setExpenseDialogOpen(true)}
+                className="border-destructive/40 text-destructive hover:bg-destructive/10 hover:border-destructive/60 font-semibold gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                <span className="hidden sm:inline">Nova Despesa</span>
+                <span className="sm:hidden">Despesa</span>
+              </Button>
+              <Button
+                onClick={() => setOfferingDialogOpen(true)}
+                className="border-emerald-500/60 text-emerald-400 hover:bg-emerald-500/10 hover:border-emerald-400 font-semibold gap-2"
+                variant="outline"
+              >
+                <Plus className="w-4 h-4" />
+                <span className="hidden sm:inline">Nova Entrada</span>
+                <span className="sm:hidden">Entrada</span>
+              </Button>
+            </>
+          )}
         </div>
       </div>
 
@@ -323,13 +328,15 @@ export default function FinanceiroPage() {
             <div className="flex items-center gap-3 mb-4">
               <span className="text-[11px] tracking-[3px] uppercase text-gold">Lançamentos</span>
               <div className="flex-1 h-px bg-border" />
-              <button
-                onClick={() => setOfferingDialogOpen(true)}
-                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-gold transition-colors"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                Adicionar
-              </button>
+              {canCreate("FINANCIAL") && (
+                <button
+                  onClick={() => setOfferingDialogOpen(true)}
+                  className="flex items-center gap-1 text-xs text-muted-foreground hover:text-gold transition-colors"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  Adicionar
+                </button>
+              )}
             </div>
             <div className="space-y-2">
               {offerings.length === 0 && (
