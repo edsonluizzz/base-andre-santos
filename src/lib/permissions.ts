@@ -9,21 +9,14 @@ export async function hasPermission(
   userRole: Role,
   module: PermissionModule,
   action: PermissionAction,
-  establishmentId: string = "default-porto-belo"
+  establishmentId: string
 ): Promise<boolean> {
   // ADMIN always has full access
   if (userRole === "ADMIN") return true;
 
   try {
     const record = await db.rolePermission.findUnique({
-      where: {
-        role_module_action_establishmentId: {
-          role: userRole,
-          module,
-          action,
-          establishmentId,
-        },
-      },
+      where: { role_module_action_establishmentId: { role: userRole, module, action, establishmentId } },
       select: { granted: true },
     });
 
@@ -38,7 +31,7 @@ export async function hasPermission(
 // Load all permissions for a given role (used by layout server component)
 export async function loadPermissionsForRole(
   userRole: Role,
-  establishmentId: string = "default-porto-belo"
+  establishmentId: string
 ): Promise<Record<string, boolean>> {
   if (userRole === "ADMIN") return {}; // ADMIN has everything, no need to load
 

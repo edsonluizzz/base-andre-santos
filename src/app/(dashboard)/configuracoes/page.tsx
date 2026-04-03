@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import { toast } from "sonner";
-import { Shield, Users, UserCog, ImageIcon, Save, Upload, X, ShieldCog, Trash2, Link } from "lucide-react";
+import { Shield, Users, UserCog, ImageIcon, Save, Upload, X, ShieldCog, Trash2, Link, Building2, RefreshCw } from "lucide-react";
 import { PermissionsTable } from "@/components/shirts/permissions-table";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -31,6 +31,11 @@ type Member = {
   userId: string | null;
 };
 
+type Establishment = {
+  id: string;
+  name: string;
+};
+
 const ROLE_LABELS: Record<string, string> = {
   ADMIN: "Administrador",
   LEADER: "Líder",
@@ -48,9 +53,12 @@ export default function ConfiguracoesPage() {
   const [users, setUsers] = useState<SystemUser[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [establishments, setEstablishments] = useState<Establishment[]>([]);
+  const [switchingEid, setSwitchingEid] = useState<string>("");
+  const [switching, setSwitching] = useState(false);
   const isAdmin = session?.user?.role === "ADMIN";
 
-  const [churchName, setChurchName] = useState("Porto Belo");
+  const [churchName, setChurchName] = useState("");
   const [churchLogoUrl, setChurchLogoUrl] = useState("");
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -59,6 +67,10 @@ export default function ConfiguracoesPage() {
     if (isAdmin) {
       fetch("/api/users").then((r) => r.json()).then(setUsers);
       fetch("/api/members").then((r) => r.json()).then(setMembers);
+      fetch("/api/establishments").then((r) => r.json()).then((data) => {
+        setEstablishments(Array.isArray(data) ? data : []);
+        setSwitchingEid(session?.user?.establishmentId ?? "");
+      });
     }
     fetch("/api/settings")
       .then((r) => r.json())
@@ -171,6 +183,25 @@ export default function ConfiguracoesPage() {
     }
   }
 
+  async function switchEstablishment() {
+    if (!switchingEid || switchingEid === session?.user?.establishmentId) return;
+    setSwitching(true);
+    try {
+      const res = await fetch("/api/users/me", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ establishmentId: switchingEid }),
+      });
+      if (!res.ok) throw new Error();
+      toast.success("Estabelecimento alterado. Redirecionando...");
+      // Força novo login para atualizar o JWT com o novo establishmentId
+      setTimeout(() => signOut({ callbackUrl: "/login" }), 1200);
+    } catch {
+      toast.error("Erro ao trocar estabelecimento");
+      setSwitching(false);
+    }
+  }
+
   // Members available for linking: unlinked ones + the one already linked to this user
   function availableMembers(currentMember: { id: string; name: string } | null) {
     return members.filter((m) => !m.userId || m.id === currentMember?.id);
@@ -202,7 +233,7 @@ export default function ConfiguracoesPage() {
                 <Input
                   value={churchName}
                   onChange={(e) => setChurchName(e.target.value)}
-                  placeholder="Ex: Porto Belo"
+                  placeholder="Ex: Igreja Central"
                   className="bg-background border-border text-foreground focus-visible:ring-primary"
                 />
                 <p className="text-[11px] text-muted-foreground/50">Exibido no cabeçalho da barra lateral</p>
@@ -278,9 +309,9 @@ export default function ConfiguracoesPage() {
                   </div>
                 )}
                 <div>
-                  <p className="text-[10px] tracking-[3px] uppercase text-primary/70">UMADC</p>
+                  <p className="text-[10px] tracking-[3px] uppercase text-primary/70">Ovile Gestão</p>
                   <p className="text-sm font-bold text-foreground">
-                    {churchName || "Porto Belo"}
+                    {churchName || "Minha Igreja"}
                   </p>
                 </div>
               </div>
@@ -317,6 +348,52 @@ export default function ConfiguracoesPage() {
             </span>
           </div>
         </div>
+
+        {/* Establishment switcher — admin only */}
+        {isAdmin && establishments.length > 0 && (
+          <div className="mt-5 pt-5 border-t border-white/[0.06]">
+            <div className="flex items-center gap-2 mb-3">
+              <Building2 className="w-4 h-4 text-primary" />
+              <p className="text-sm font-medium text-foreground">Estabelecimento ativo</p>
+            </div>
+            <p className="text-xs text-muted-foreground mb-3">
+              Você está visualizando os dados de:{" "}
+              <span className="text-foreground font-medium">
+                {establishments.find((e) => e.id === session?.user?.establishmentId)?.name ?? session?.user?.establishmentId}
+              </span>
+            </p>
+            <div className="flex items-center gap-2">
+              <Select value={switchingEid} onValueChange={(v) => v && setSwitchingEid(v)}>
+                <SelectTrigger className="flex-1 bg-background border-border text-foreground h-9 text-sm">
+                  <SelectValue placeholder="Selecionar estabelecimento..." />
+                </SelectTrigger>
+                <SelectContent className="bg-card border-border">
+                  {establishments.map((e) => (
+                    <SelectItem key={e.id} value={e.id}>
+                      {e.name}
+                      {e.id === session?.user?.establishmentId && (
+                        <span className="ml-2 text-[10px] text-primary">atual</span>
+                      )}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button
+                onClick={switchEstablishment}
+                disabled={switching || switchingEid === session?.user?.establishmentId}
+                size="sm"
+                variant="outline"
+                className="gap-1.5 h-9"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${switching ? "animate-spin" : ""}`} />
+                Trocar
+              </Button>
+            </div>
+            <p className="text-[11px] text-muted-foreground/50 mt-2">
+              Ao trocar, você será redirecionado para o login novamente.
+            </p>
+          </div>
+        )}
       </div>
 
       {/* User management — admin only */}

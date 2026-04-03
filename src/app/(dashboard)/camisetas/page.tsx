@@ -278,7 +278,69 @@ export default function CamisetasPage() {
   if (loading) return <PageSkeleton />;
 
   return (
-    <div className="space-y-6">
+    <>
+    {/* Print styles */}
+    <style dangerouslySetInnerHTML={{ __html: `
+      @media print {
+        body { background: white !important; color: black !important; }
+        .no-print, nav, aside, header { display: none !important; }
+        main { margin: 0 !important; padding: 0 !important; }
+        .print-only { display: block !important; }
+        table { border-collapse: collapse !important; width: 100% !important; }
+        table, th, td { border: 1px solid #ccc !important; }
+        th { background: #f5f5f5 !important; color: #333 !important; font-size: 11px !important; }
+        td { color: #111 !important; font-size: 12px !important; }
+      }
+      .print-only { display: none; }
+    ` }} />
+
+    {/* Print-only view */}
+    {selectedCongress && summary && (
+      <div className="print-only" style={{ fontFamily: "sans-serif", padding: "20px", color: "black" }}>
+        <h1 style={{ fontSize: "18px", fontWeight: "bold", marginBottom: "4px" }}>
+          {selectedCongress.name} — Relatório de Encomendas
+        </h1>
+        <p style={{ fontSize: "12px", color: "#555", marginBottom: "16px" }}>
+          Total: {summary.activeOrders} pedidos ·
+          Arrecadado: R$ {summary.financial.totalPaid.toFixed(2)} ·
+          Pendente: R$ {summary.financial.totalPending.toFixed(2)}
+        </p>
+        <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: "16px" }}>
+          <thead>
+            <tr style={{ background: "#f5f5f5" }}>
+              <th style={{ border: "1px solid #ccc", padding: "6px 8px", textAlign: "left" }}>Membro</th>
+              <th style={{ border: "1px solid #ccc", padding: "6px 8px", textAlign: "center" }}>Tam.</th>
+              <th style={{ border: "1px solid #ccc", padding: "6px 8px", textAlign: "center" }}>Qtd</th>
+              <th style={{ border: "1px solid #ccc", padding: "6px 8px", textAlign: "right" }}>Total</th>
+              <th style={{ border: "1px solid #ccc", padding: "6px 8px", textAlign: "right" }}>Pago</th>
+              <th style={{ border: "1px solid #ccc", padding: "6px 8px", textAlign: "center" }}>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {orders.filter((o) => o.status !== "CANCELLED").map((o, i) => (
+              <tr key={o.id} style={{ background: i % 2 === 0 ? "#fafafa" : "white" }}>
+                <td style={{ border: "1px solid #ccc", padding: "5px 8px" }}>{o.member.name}</td>
+                <td style={{ border: "1px solid #ccc", padding: "5px 8px", textAlign: "center" }}>{o.size}</td>
+                <td style={{ border: "1px solid #ccc", padding: "5px 8px", textAlign: "center" }}>{o.quantity}</td>
+                <td style={{ border: "1px solid #ccc", padding: "5px 8px", textAlign: "right" }}>R$ {Number(o.totalAmount).toFixed(2)}</td>
+                <td style={{ border: "1px solid #ccc", padding: "5px 8px", textAlign: "right" }}>R$ {Number(o.paidAmount).toFixed(2)}</td>
+                <td style={{ border: "1px solid #ccc", padding: "5px 8px", textAlign: "center" }}>{STATUS_LABELS[o.status]}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <div style={{ display: "flex", gap: "24px", flexWrap: "wrap", marginBottom: "8px" }}>
+          {summary.bySize.map((s) => (
+            <span key={s.size} style={{ fontSize: "12px" }}><strong>{s.size}</strong>: {s.quantity}</span>
+          ))}
+        </div>
+        <p style={{ fontSize: "11px", color: "#999", marginTop: "16px", textAlign: "right" }}>
+          Gerado em {new Date().toLocaleDateString("pt-BR")}
+        </p>
+      </div>
+    )}
+
+    <div className="space-y-6 no-print">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -776,5 +838,6 @@ export default function CamisetasPage() {
         />
       )}
     </div>
+    </>
   );
 }

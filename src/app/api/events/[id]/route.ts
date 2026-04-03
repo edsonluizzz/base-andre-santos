@@ -74,6 +74,41 @@ export async function GET(
   }
 }
 
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const session = await auth();
+    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const role = session.user?.role;
+    if (role !== "ADMIN" && role !== "LEADER")
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
+    const eid = session.user?.establishmentId ?? "default-porto-belo";
+    const existing = await db.event.findFirst({ where: { id: params.id, establishmentId: eid } });
+    if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+    const body = await req.json();
+    const { title, type, date, location, notes } = body;
+
+    const updated = await db.event.update({
+      where: { id: params.id },
+      data: {
+        ...(title !== undefined && { title: title.trim() }),
+        ...(type !== undefined && { type }),
+        ...(date !== undefined && { date: new Date(date) }),
+        ...(location !== undefined && { location: location?.trim() || null }),
+        ...(notes !== undefined && { notes: notes?.trim() || null }),
+      },
+    });
+
+    return NextResponse.json(updated);
+  } catch {
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
+
 export async function DELETE(
   _req: NextRequest,
   { params }: { params: { id: string } }

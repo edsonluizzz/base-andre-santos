@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
-import { Plus, CalendarDays, ChevronRight, Check, X, Clock, Printer, Phone } from "lucide-react";
+import { Plus, CalendarDays, ChevronRight, Check, X, Clock, Printer, Phone, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,7 +24,7 @@ import {
 import { format, isValid } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-type EventType = "CULTO" | "ENSAIO" | "REUNIAO" | "RETIRO" | "OUTRO";
+type EventType = "CULTO" | "ENSAIO" | "REUNIAO" | "RETIRO" | "CELULA" | "CONGRESSO" | "OUTRO";
 type AttendanceStatus = "PRESENT" | "ABSENT" | "JUSTIFIED";
 
 type Member = { id: string; name: string; status: string; phone?: string | null };
@@ -50,7 +50,19 @@ const EVENT_LABELS: Record<EventType, string> = {
   ENSAIO: "Ensaio",
   REUNIAO: "Reunião",
   RETIRO: "Retiro",
+  CELULA: "Célula",
+  CONGRESSO: "Congresso",
   OUTRO: "Outro",
+};
+
+const EVENT_BADGE: Record<EventType, string> = {
+  CULTO:     "bg-primary/15 text-primary border border-primary/25",
+  ENSAIO:    "bg-blue-500/15 text-blue-400 border border-blue-500/25",
+  REUNIAO:   "bg-amber-500/15 text-amber-400 border border-amber-500/25",
+  RETIRO:    "bg-emerald-500/15 text-emerald-400 border border-emerald-500/25",
+  CELULA:    "bg-cyan-500/15 text-cyan-400 border border-cyan-500/25",
+  CONGRESSO: "bg-orange-500/15 text-orange-400 border border-orange-500/25",
+  OUTRO:     "bg-secondary text-muted-foreground",
 };
 
 const STATUS_LABELS: Record<AttendanceStatus, string> = {
@@ -80,6 +92,7 @@ export default function ChamadaPage() {
   const [events, setEvents] = useState<Event[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
   const [newEventOpen, setNewEventOpen] = useState(false);
+  const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   const [activeEvent, setActiveEvent] = useState<Event | null>(null);
   const [attendances, setAttendances] = useState<Record<string, AttendanceStatus>>({});
   const [saving, setSaving] = useState(false);
@@ -299,7 +312,7 @@ export default function ChamadaPage() {
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
                     <p className="font-semibold text-foreground">{ev.title}</p>
-                    <span className="text-[10px] bg-secondary text-muted-foreground px-2 py-0.5 rounded-full">
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full ${EVENT_BADGE[ev.type]}`}>
                       {EVENT_LABELS[ev.type]}
                     </span>
                   </div>
@@ -308,13 +321,22 @@ export default function ChamadaPage() {
                     {ev.location && ` · ${ev.location}`}
                   </p>
                 </div>
-                <div className="text-right">
+                <div className="flex items-center gap-2">
                   {ev._count.attendances > 0 && (
-                    <p className="text-xs text-primary font-medium">
+                    <p className="text-xs text-primary font-medium hidden sm:block">
                       {ev._count.attendances} registros
                     </p>
                   )}
-                  <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors ml-auto mt-1" />
+                  {isLeaderOrAdmin && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setEditingEvent(ev); }}
+                      className="p-1.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/5 transition-colors opacity-0 group-hover:opacity-100"
+                      title="Editar evento"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                  <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
                 </div>
               </div>
             ))}
@@ -438,8 +460,113 @@ export default function ChamadaPage() {
           onOpenChange={setNewEventOpen}
           onSuccess={() => { fetchEvents(); setNewEventOpen(false); }}
         />
+        <EditEventDialog
+          event={editingEvent}
+          onOpenChange={(v) => { if (!v) setEditingEvent(null); }}
+          onSuccess={() => { fetchEvents(); setEditingEvent(null); }}
+        />
       </div>
     </>
+  );
+}
+
+function EditEventDialog({
+  event,
+  onOpenChange,
+  onSuccess,
+}: {
+  event: Event | null;
+  onOpenChange: (v: boolean) => void;
+  onSuccess: () => void;
+}) {
+  const [form, setForm] = useState({ title: "", type: "ENSAIO", date: "", location: "", notes: "" });
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (event) {
+      setForm({
+        title: event.title,
+        type: event.type,
+        date: new Date(event.date).toISOString().slice(0, 16),
+        location: event.location ?? "",
+        notes: "",
+      });
+    }
+  }, [event]);
+
+  function set(field: string, value: string) {
+    setForm((p) => ({ ...p, [field]: value }));
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!event) return;
+    setLoading(true);
+    const res = await fetch(`/api/events/${event.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(form),
+    });
+    setLoading(false);
+    if (res.ok) {
+      toast.success("Evento atualizado!");
+      onSuccess();
+    } else {
+      toast.error("Erro ao atualizar evento");
+    }
+  }
+
+  return (
+    <Dialog open={!!event} onOpenChange={onOpenChange}>
+      <DialogContent className="bg-card border-border text-foreground max-w-md">
+        <DialogHeader>
+          <DialogTitle className="text-foreground">Editar Evento</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4 mt-2">
+          <div className="space-y-1.5">
+            <Label className="text-muted-foreground text-xs">Título *</Label>
+            <Input value={form.title} onChange={(e) => set("title", e.target.value)}
+              placeholder="Ex: Ensaio de louvor" required
+              className="bg-background border-border text-foreground focus-visible:ring-primary" />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label className="text-muted-foreground text-xs">Tipo *</Label>
+              <Select value={form.type} onValueChange={(v: string | null) => v && set("type", v)}>
+                <SelectTrigger className="bg-background border-border text-foreground">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-card border-border">
+                  {Object.entries(EVENT_LABELS).map(([k, v]) => (
+                    <SelectItem key={k} value={k}>{v}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-muted-foreground text-xs">Data e hora *</Label>
+              <Input type="datetime-local" value={form.date} onChange={(e) => set("date", e.target.value)}
+                className="bg-background border-border text-foreground focus-visible:ring-primary" />
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-muted-foreground text-xs">Local</Label>
+            <Input value={form.location} onChange={(e) => set("location", e.target.value)}
+              placeholder="Ex: Igreja Central"
+              className="bg-background border-border text-foreground focus-visible:ring-primary" />
+          </div>
+          <div className="flex gap-3 pt-2">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}
+              className="flex-1 border-border text-muted-foreground hover:bg-secondary">
+              Cancelar
+            </Button>
+            <Button type="submit" disabled={loading} className="flex-1">
+              {loading ? "Salvando..." : "Salvar"}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -521,7 +648,7 @@ function NewEventDialog({
           <div className="space-y-1.5">
             <Label className="text-muted-foreground text-xs">Local</Label>
             <Input value={form.location} onChange={(e) => set("location", e.target.value)}
-              placeholder="Ex: Igreja IEADC Porto Belo"
+              placeholder="Ex: Igreja Central"
               className="bg-background border-border text-foreground focus-visible:ring-primary" />
           </div>
           <div className="flex gap-3 pt-2">

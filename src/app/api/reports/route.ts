@@ -73,22 +73,36 @@ export async function GET(req: NextRequest) {
     }
 
     if (type === "financial-by-month") {
-      const offerings = await db.offering.findMany({
-        select: { amount: true, method: true, date: true },
-        where: { establishmentId: eid, ...(dateRange ? { date: dateRange } : {}) },
-        orderBy: { date: "asc" },
-      });
-      const map: Record<string, { total: number; cash: number; pix: number; count: number }> = {};
+      const [offerings, expenses] = await Promise.all([
+        db.offering.findMany({
+          select: { amount: true, method: true, date: true },
+          where: { establishmentId: eid, ...(dateRange ? { date: dateRange } : {}) },
+        }),
+        db.expense.findMany({
+          select: { amount: true, date: true },
+          where: { establishmentId: eid, ...(dateRange ? { date: dateRange } : {}) },
+        }),
+      ]);
+
+      const map: Record<string, { income: number; cash: number; pix: number; count: number; expenses: number }> = {};
+
       for (const o of offerings) {
         const m = o.date.toISOString().slice(0, 7);
-        if (!map[m]) map[m] = { total: 0, cash: 0, pix: 0, count: 0 };
-        map[m].total += Number(o.amount);
+        if (!map[m]) map[m] = { income: 0, cash: 0, pix: 0, count: 0, expenses: 0 };
+        map[m].income += Number(o.amount);
         map[m].count += 1;
         if (o.method === "CASH") map[m].cash += Number(o.amount);
         else map[m].pix += Number(o.amount);
       }
+
+      for (const e of expenses) {
+        const m = e.date.toISOString().slice(0, 7);
+        if (!map[m]) map[m] = { income: 0, cash: 0, pix: 0, count: 0, expenses: 0 };
+        map[m].expenses += Number(e.amount);
+      }
+
       const data = Object.entries(map)
-        .map(([mo, v]) => ({ month: mo, ...v }))
+        .map(([mo, v]) => ({ month: mo, ...v, result: v.income - v.expenses }))
         .sort((a, b) => b.month.localeCompare(a.month));
       return NextResponse.json(data);
     }

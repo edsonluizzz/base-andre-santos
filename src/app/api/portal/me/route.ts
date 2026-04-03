@@ -29,7 +29,7 @@ export async function GET() {
   const attendanceRate = total > 0 ? Math.round((present / total) * 100) : null;
 
   const allActive = await db.member.findMany({
-    where: { status: "ACTIVE" },
+    where: { status: "ACTIVE", establishmentId: session.user.establishmentId },
     include: { attendances: { select: { status: true } } },
   });
 

@@ -1,8 +1,7 @@
-import type { NextAuthConfig } from "next-auth";
+import type { NextAuthConfig, Session } from "next-auth";
 import Google from "next-auth/providers/google";
 
 // Edge-safe config — sem imports de Node.js (Prisma, db, etc.)
-// Usado pelo middleware para verificar autenticação
 export const authConfig: NextAuthConfig = {
   providers: [
     Google({
@@ -18,17 +17,40 @@ export const authConfig: NextAuthConfig = {
   },
   callbacks: {
     authorized({ auth, request: { nextUrl } }) {
-      const isLoggedIn = !!auth?.user;
-      const isLoginPage = nextUrl.pathname === "/login";
-      const isApiAuth = nextUrl.pathname.startsWith("/api/auth");
+      const session = auth as Session | null;
+      const isLoggedIn = !!session?.user;
+      const { pathname } = nextUrl;
 
-      if (isApiAuth) return true;
+      const isLoginPage = pathname === "/login";
+      const isLandingPage = pathname === "/";
+      const isSelectChurch = pathname === "/select-church";
+      const isCadastro = pathname.startsWith("/cadastro");
+      const isApiAuth = pathname.startsWith("/api/auth");
+      const isApiUserEstablishments = pathname === "/api/user/establishments";
+
+      // Rotas sempre públicas
+      if (isApiAuth || isLandingPage || isCadastro) return true;
+
+      // Não logado: redireciona para login
       if (!isLoggedIn && !isLoginPage) {
         return Response.redirect(new URL("/login", nextUrl));
       }
+
+      // Logado na página de login: redireciona para destino correto
       if (isLoggedIn && isLoginPage) {
-        return Response.redirect(new URL("/", nextUrl));
+        const needsSelection = session?.user?.needsEstablishmentSelection;
+        return Response.redirect(
+          new URL(needsSelection ? "/select-church" : "/dashboard", nextUrl)
+        );
       }
+
+      // Logado mas precisa selecionar congregação
+      if (isLoggedIn && !isSelectChurch && !isApiUserEstablishments) {
+        if (session?.user?.needsEstablishmentSelection) {
+          return Response.redirect(new URL("/select-church", nextUrl));
+        }
+      }
+
       return true;
     },
   },

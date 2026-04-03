@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
@@ -11,9 +11,13 @@ import {
   Shirt,
   Phone,
   Cake,
+  CalendarCheck2,
+  Loader2,
+  Camera,
 } from "lucide-react";
 import { StatCard } from "@/components/shared/stat-card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -95,22 +99,71 @@ const SHIRT_STATUS_STYLES: Record<ShirtOrderStatus, string> = {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
+type UpcomingEvent = {
+  id: string;
+  title: string;
+  type: string;
+  date: string;
+  location: string | null;
+  rsvpCount: number;
+  myRsvp: boolean;
+};
+
 export default function PortalPage() {
   const [data, setData] = useState<PortalData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [upcomingEvents, setUpcomingEvents] = useState<UpcomingEvent[]>([]);
+  const [rsvpLoading, setRsvpLoading] = useState<string | null>(null);
+  const [photoUrl, setPhotoUrl] = useState<string | null | undefined>(undefined);
+
+  const fetchUpcoming = useCallback(async () => {
+    const res = await fetch("/api/events/rsvp");
+    if (res.ok) setUpcomingEvents(await res.json());
+  }, []);
 
   useEffect(() => {
-    fetch("/api/portal/me")
-      .then((r) => r.json())
-      .then((d) => { setData(d); setLoading(false); })
+    Promise.all([
+      fetch("/api/portal/me").then((r) => r.json()),
+      fetchUpcoming(),
+    ])
+      .then(([portalData]) => { setData(portalData); setLoading(false); })
       .catch(() => setLoading(false));
-  }, []);
+  }, [fetchUpcoming]);
+
+  async function handleRsvp(event: UpcomingEvent) {
+    setRsvpLoading(event.id);
+    try {
+      if (event.myRsvp) {
+        const res = await fetch(`/api/events/rsvp?eventId=${event.id}`, { method: "DELETE" });
+        if (res.ok) {
+          toast.success("Confirmação cancelada");
+          fetchUpcoming();
+        }
+      } else {
+        const res = await fetch("/api/events/rsvp", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ eventId: event.id }),
+        });
+        if (res.ok) {
+          toast.success("Presença confirmada!");
+          fetchUpcoming();
+        } else {
+          const err = await res.json();
+          toast.error(err.error ?? "Erro ao confirmar");
+        }
+      }
+    } finally {
+      setRsvpLoading(null);
+    }
+  }
 
   if (loading) return <PortalSkeleton />;
 
   if (!data || !data.linked) return <UnlinkedState />;
 
-  const { member, stats, attendances, shirtOrders } = data;
+  const { stats, attendances, shirtOrders } = data;
+  const member = { ...data.member, photoUrl: photoUrl !== undefined ? photoUrl : data.member.photoUrl };
   const activeOrders = shirtOrders.filter((o) => o.status !== "CANCELLED");
 
   return (
@@ -122,7 +175,10 @@ export default function PortalPage() {
       </div>
 
       {/* Profile Card */}
-      <ProfileCard member={member} />
+      <ProfileCard
+        member={member}
+        onPhotoUpdate={(url) => setPhotoUrl(url)}
+      />
 
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -158,6 +214,16 @@ export default function PortalPage() {
         />
       </div>
 
+      {/* Upcoming Events RSVP */}
+      {upcomingEvents.length > 0 && (
+        <UpcomingEventsSection
+          events={upcomingEvents}
+          rsvpLoading={rsvpLoading}
+          onRsvp={handleRsvp}
+          memberLinked={data.linked}
+        />
+      )}
+
       {/* Attendance History */}
       <AttendanceHistory attendances={attendances} />
 
@@ -171,9 +237,14 @@ export default function PortalPage() {
 
 function ProfileCard({
   member,
+  onPhotoUpdate,
 }: {
   member: Extract<PortalData, { linked: true }>["member"];
+  onPhotoUpdate: (url: string | null) => void;
 }) {
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+
   const initials = member.name
     .split(" ")
     .slice(0, 2)
@@ -181,20 +252,54 @@ function ProfileCard({
     .join("")
     .toUpperCase();
 
+  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    const form = new FormData();
+    form.append("file", file);
+    const res = await fetch("/api/portal/photo", { method: "POST", body: form });
+    if (res.ok) {
+      const { photoUrl } = await res.json();
+      onPhotoUpdate(photoUrl);
+      toast.success("Foto atualizada!");
+    } else {
+      toast.error("Erro ao enviar foto");
+    }
+    setUploading(false);
+    e.target.value = "";
+  }
+
+  async function handleRemove() {
+    const res = await fetch("/api/portal/photo", { method: "DELETE" });
+    if (res.ok) { onPhotoUpdate(null); toast.success("Foto removida"); }
+  }
+
   return (
     <div className="glass-card p-6 flex items-center gap-5">
-      {member.photoUrl ? (
-        <img
-          src={member.photoUrl}
-          alt={member.name}
-          className="w-16 h-16 rounded-full object-cover border border-primary/20 flex-shrink-0"
-        />
-      ) : (
-        <div className="w-16 h-16 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-bold text-xl flex-shrink-0">
-          {initials}
-        </div>
-      )}
-      <div>
+      <div className="relative flex-shrink-0 group">
+        {member.photoUrl ? (
+          <img
+            src={member.photoUrl}
+            alt={member.name}
+            className="w-16 h-16 rounded-full object-cover border border-primary/20"
+          />
+        ) : (
+          <div className="w-16 h-16 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-bold text-xl">
+            {initials}
+          </div>
+        )}
+        <button
+          onClick={() => fileRef.current?.click()}
+          disabled={uploading}
+          className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+          title="Alterar foto"
+        >
+          {uploading ? <Loader2 className="w-4 h-4 text-white animate-spin" /> : <Camera className="w-4 h-4 text-white" />}
+        </button>
+        <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
+      </div>
+      <div className="flex-1">
         <h2 className="text-xl font-bold text-foreground">{member.name}</h2>
         {member.phone && (
           <p className="text-sm text-muted-foreground mt-1 flex items-center gap-1.5">
@@ -207,6 +312,11 @@ function ProfileCard({
             <Cake className="w-3.5 h-3.5" />
             Aniversário: {member.birthday}
           </p>
+        )}
+        {member.photoUrl && (
+          <button onClick={handleRemove} className="text-xs text-muted-foreground hover:text-destructive mt-1 transition-colors">
+            Remover foto
+          </button>
         )}
       </div>
     </div>
@@ -377,6 +487,73 @@ function PortalSkeleton() {
             <Skeleton key={i} className="h-8 w-full" />
           ))}
         </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Upcoming Events RSVP ─────────────────────────────────────────────────────
+
+function UpcomingEventsSection({
+  events, rsvpLoading, onRsvp, memberLinked,
+}: {
+  events: UpcomingEvent[];
+  rsvpLoading: string | null;
+  onRsvp: (e: UpcomingEvent) => void;
+  memberLinked: boolean;
+}) {
+  return (
+    <div>
+      <div className="flex items-center gap-3 mb-4">
+        <CalendarCheck2 className="w-4 h-4 text-primary" />
+        <span className="text-sm font-semibold text-foreground">Próximos Eventos</span>
+        {memberLinked && (
+          <span className="text-xs text-muted-foreground">· confirme sua presença antecipadamente</span>
+        )}
+      </div>
+      <div className="space-y-3">
+        {events.map((ev) => (
+          <div
+            key={ev.id}
+            className="bg-card border border-border rounded-xl px-5 py-4 flex items-center gap-4"
+          >
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-foreground">{ev.title}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {format(new Date(ev.date), "EEEE, dd 'de' MMMM · HH:mm", { locale: ptBR })}
+                {ev.location && ` · ${ev.location}`}
+              </p>
+              <p className="text-xs text-primary/70 mt-1">
+                {ev.rsvpCount} confirmado{ev.rsvpCount !== 1 ? "s" : ""}
+              </p>
+            </div>
+            {memberLinked && (
+              <button
+                onClick={() => onRsvp(ev)}
+                disabled={rsvpLoading === ev.id}
+                className={`flex items-center gap-1.5 text-xs font-medium px-3 py-2 rounded-lg transition-all flex-shrink-0 ${
+                  ev.myRsvp
+                    ? "bg-emerald-500/15 text-emerald-400 hover:bg-destructive/10 hover:text-destructive"
+                    : "bg-primary/10 text-primary hover:bg-primary/20"
+                }`}
+              >
+                {rsvpLoading === ev.id ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : ev.myRsvp ? (
+                  <>
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    Confirmado
+                  </>
+                ) : (
+                  <>
+                    <CalendarCheck2 className="w-3.5 h-3.5" />
+                    Quero ir
+                  </>
+                )}
+              </button>
+            )}
+          </div>
+        ))}
       </div>
     </div>
   );
