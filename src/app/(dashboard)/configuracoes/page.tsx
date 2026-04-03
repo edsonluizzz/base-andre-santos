@@ -58,7 +58,7 @@ export default function ConfiguracoesPage() {
   const [switching, setSwitching] = useState(false);
   const isAdmin = session?.user?.role === "ADMIN";
 
-  const [churchName, setChurchName] = useState("Porto Belo");
+  const [churchName, setChurchName] = useState("");
   const [churchLogoUrl, setChurchLogoUrl] = useState("");
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -233,7 +233,7 @@ export default function ConfiguracoesPage() {
                 <Input
                   value={churchName}
                   onChange={(e) => setChurchName(e.target.value)}
-                  placeholder="Ex: Porto Belo"
+                  placeholder="Ex: Igreja Central"
                   className="bg-background border-border text-foreground focus-visible:ring-primary"
                 />
                 <p className="text-[11px] text-muted-foreground/50">Exibido no cabeçalho da barra lateral</p>
@@ -309,9 +309,9 @@ export default function ConfiguracoesPage() {
                   </div>
                 )}
                 <div>
-                  <p className="text-[10px] tracking-[3px] uppercase text-primary/70">UMADC</p>
+                  <p className="text-[10px] tracking-[3px] uppercase text-primary/70">Ovile Gestão</p>
                   <p className="text-sm font-bold text-foreground">
-                    {churchName || "Porto Belo"}
+                    {churchName || "Minha Igreja"}
                   </p>
                 </div>
               </div>

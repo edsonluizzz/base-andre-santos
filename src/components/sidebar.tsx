@@ -51,7 +51,7 @@ export function Sidebar() {
   const { data: session } = useSession();
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const [churchName, setChurchName] = useState("Porto Belo");
+  const [churchName, setChurchName] = useState("");
   const [churchLogoUrl, setChurchLogoUrl] = useState("");
   const [logoError, setLogoError] = useState(false);
 
@@ -150,10 +150,10 @@ export function Sidebar() {
             )}
             <div>
               <p className="text-[10px] tracking-[3px] uppercase text-primary/70">
-                UMADC
+                Ovile Gestão
               </p>
               <p className="text-sm font-bold text-foreground">
-                {churchName}
+                {churchName || "Minha Igreja"}
               </p>
             </div>
           </div>

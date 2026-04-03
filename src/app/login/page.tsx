@@ -37,10 +37,10 @@ export default function LoginPage() {
             className="text-3xl font-bold text-white"
             style={{ fontFamily: "var(--font-heading)" }}
           >
-            Porto Belo
+            Ovile Gestão
           </h1>
           <p className="text-slate-500 text-sm mt-2">
-            Sistema de gestão da mocidade
+            Gestão inteligente para igrejas
           </p>
         </div>
 
@@ -92,7 +92,7 @@ export default function LoginPage() {
           <Link href="/" className="hover:text-slate-500 transition-colors">
             Ovile Gestão
           </Link>
-          {" · "}UMADC Porto Belo
+          {" · "}ovile.com.br
         </p>
       </div>
     </div>

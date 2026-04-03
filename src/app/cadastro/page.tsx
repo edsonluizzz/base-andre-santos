@@ -133,7 +133,7 @@ export default function CadastroPage() {
                   type="text"
                   value={churchName}
                   onChange={(e) => setChurchName(e.target.value)}
-                  placeholder="Ex: UMADC Balneário Camboriú"
+                  placeholder="Ex: Igreja Central de Florianópolis"
                   required
                   className="w-full rounded-xl px-4 py-3 text-sm bg-white/[0.04] border border-white/[0.08] text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500/50 focus:bg-indigo-500/5 transition-all"
                 />

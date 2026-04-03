@@ -9,7 +9,7 @@ export async function GET() {
 
     const settings = await db.settings.findUnique({ where: { id: "singleton" } });
     return NextResponse.json({
-      churchName: settings?.churchName ?? "Porto Belo",
+      churchName: settings?.churchName ?? "Minha Igreja",
       logoBase64: settings?.logoBase64 ?? null,
     });
   } catch {
@@ -33,7 +33,7 @@ export async function PATCH(req: NextRequest) {
       },
       create: {
         id: "singleton",
-        churchName: body.churchName ?? "Porto Belo",
+        churchName: body.churchName ?? "Minha Igreja",
         logoBase64: body.logoBase64 ?? null,
       },
     });

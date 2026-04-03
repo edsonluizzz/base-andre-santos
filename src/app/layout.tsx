@@ -18,8 +18,8 @@ const playfair = Playfair_Display({
 });
 
 export const metadata: Metadata = {
-  title: "UMADC Porto Belo",
-  description: "Sistema de gestão da mocidade IEADC Porto Belo",
+  title: "Ovile Gestão",
+  description: "Sistema de gestão para igrejas e ministérios",
 };
 
 export default async function RootLayout({

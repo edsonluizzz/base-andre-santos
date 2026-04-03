@@ -154,7 +154,7 @@ function DemoModal({ onClose }: { onClose: () => void }) {
                 <input
                   value={form.churchName}
                   onChange={(e) => set("churchName", e.target.value)}
-                  placeholder="Ex: UMADC São Paulo"
+                  placeholder="Ex: Igreja Central de São Paulo"
                   required
                   className="w-full bg-white/[0.04] border border-white/[0.08] rounded-lg px-3 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 transition-colors"
                 />
@@ -436,7 +436,7 @@ export default function LandingPage() {
             </span>
           </div>
           <p className="text-xs text-slate-600">
-            Desenvolvido pela UMADC Porto Belo · {new Date().getFullYear()}
+            ovile.com.br · {new Date().getFullYear()}
           </p>
           <Link href="/login" className="text-xs text-slate-500 hover:text-slate-300 transition-colors">
             Acesso ao sistema →

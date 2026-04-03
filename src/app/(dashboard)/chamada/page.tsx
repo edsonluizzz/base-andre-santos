@@ -552,7 +552,7 @@ function EditEventDialog({
           <div className="space-y-1.5">
             <Label className="text-muted-foreground text-xs">Local</Label>
             <Input value={form.location} onChange={(e) => set("location", e.target.value)}
-              placeholder="Ex: Igreja IEADC Porto Belo"
+              placeholder="Ex: Igreja Central"
               className="bg-background border-border text-foreground focus-visible:ring-primary" />
           </div>
           <div className="flex gap-3 pt-2">
@@ -648,7 +648,7 @@ function NewEventDialog({
           <div className="space-y-1.5">
             <Label className="text-muted-foreground text-xs">Local</Label>
             <Input value={form.location} onChange={(e) => set("location", e.target.value)}
-              placeholder="Ex: Igreja IEADC Porto Belo"
+              placeholder="Ex: Igreja Central"
               className="bg-background border-border text-foreground focus-visible:ring-primary" />
           </div>
           <div className="flex gap-3 pt-2">
