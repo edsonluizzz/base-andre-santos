@@ -14,6 +14,8 @@ import {
   X,
   ArrowRight,
   Cross,
+  Loader2,
+  PartyPopper,
 } from "lucide-react";
 
 const FEATURES = [
@@ -52,13 +54,13 @@ const FEATURES = [
 const STEPS = [
   {
     n: "01",
-    title: "Solicite acesso",
-    desc: "Entre em contato pelo WhatsApp. Vamos entender as necessidades da sua congregação.",
+    title: "Solicite sua demo",
+    desc: "Preencha um formulário rápido com o nome da congregação e seu e-mail. Pronto em segundos.",
   },
   {
     n: "02",
-    title: "Configuramos tudo",
-    desc: "Adicionamos o nome, logo e e-mails da liderança. Pronto em minutos.",
+    title: "Acesso imediato",
+    desc: "Seu ambiente é criado automaticamente. Você recebe um e-mail de confirmação.",
   },
   {
     n: "03",
@@ -67,8 +69,156 @@ const STEPS = [
   },
 ];
 
+// ─── Demo Modal ────────────────────────────────────────────────────────────────
+
+function DemoModal({ onClose }: { onClose: () => void }) {
+  const [form, setForm] = useState({ churchName: "", adminName: "", adminEmail: "" });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
+
+  function set(field: string, value: string) {
+    setForm((p) => ({ ...p, [field]: value }));
+    setError("");
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!form.churchName.trim() || !form.adminEmail.trim()) {
+      setError("Nome da congregação e e-mail são obrigatórios.");
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await fetch("/api/onboarding", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error ?? "Erro ao criar congregação.");
+      } else {
+        setSuccess(true);
+      }
+    } catch {
+      setError("Erro de conexão. Tente novamente.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+      <div
+        className="w-full max-w-md rounded-2xl border border-white/[0.08] p-8 relative"
+        style={{ background: "#0d1117" }}
+      >
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 text-slate-500 hover:text-white transition-colors"
+        >
+          <X className="w-5 h-5" />
+        </button>
+
+        {success ? (
+          <div className="text-center py-4">
+            <div className="w-14 h-14 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mx-auto mb-4">
+              <PartyPopper className="w-7 h-7 text-emerald-400" />
+            </div>
+            <h3 className="text-xl font-bold text-white mb-2">Tudo pronto!</h3>
+            <p className="text-slate-400 text-sm mb-6 leading-relaxed">
+              A congregação <strong className="text-white">{form.churchName}</strong> foi criada.
+              Faça login com o Google usando o e-mail <strong className="text-white">{form.adminEmail}</strong>.
+            </p>
+            <Link
+              href="/login"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm transition-all"
+            >
+              Acessar o sistema
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+        ) : (
+          <>
+            <div className="mb-6">
+              <h3 className="text-xl font-bold text-white mb-1">Solicitar demo gratuita</h3>
+              <p className="text-slate-400 text-sm">Seu ambiente é criado em segundos, sem burocracia.</p>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-xs text-slate-400 mb-1.5 uppercase tracking-wide">
+                  Nome da congregação *
+                </label>
+                <input
+                  value={form.churchName}
+                  onChange={(e) => set("churchName", e.target.value)}
+                  placeholder="Ex: UMADC São Paulo"
+                  required
+                  className="w-full bg-white/[0.04] border border-white/[0.08] rounded-lg px-3 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 transition-colors"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs text-slate-400 mb-1.5 uppercase tracking-wide">
+                  Seu nome
+                </label>
+                <input
+                  value={form.adminName}
+                  onChange={(e) => set("adminName", e.target.value)}
+                  placeholder="Ex: João Silva"
+                  className="w-full bg-white/[0.04] border border-white/[0.08] rounded-lg px-3 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 transition-colors"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs text-slate-400 mb-1.5 uppercase tracking-wide">
+                  E-mail (Google) *
+                </label>
+                <input
+                  type="email"
+                  value={form.adminEmail}
+                  onChange={(e) => set("adminEmail", e.target.value)}
+                  placeholder="Ex: joao@gmail.com"
+                  required
+                  className="w-full bg-white/[0.04] border border-white/[0.08] rounded-lg px-3 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 transition-colors"
+                />
+                <p className="text-xs text-slate-500 mt-1">
+                  Use o mesmo e-mail da sua conta Google para fazer login.
+                </p>
+              </div>
+
+              {error && (
+                <p className="text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
+                  {error}
+                </p>
+              )}
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 text-white font-semibold text-sm transition-all mt-2"
+              >
+                {loading ? (
+                  <><Loader2 className="w-4 h-4 animate-spin" /> Criando seu acesso...</>
+                ) : (
+                  <>Criar meu acesso gratuitamente <ArrowRight className="w-4 h-4" /></>
+                )}
+              </button>
+            </form>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Landing Page ──────────────────────────────────────────────────────────────
+
 export default function LandingPage() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [demoOpen, setDemoOpen] = useState(false);
 
   return (
     <div className="min-h-screen" style={{ background: "#06080F" }}>
@@ -81,11 +231,12 @@ export default function LandingPage() {
         }}
       />
 
+      {demoOpen && <DemoModal onClose={() => setDemoOpen(false)} />}
+
       {/* NAVBAR */}
       <header className="relative z-20 border-b border-white/[0.06]"
         style={{ backdropFilter: "blur(20px)", background: "rgba(6,8,15,0.8)" }}>
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          {/* Logo */}
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/25 flex items-center justify-center">
               <Cross className="w-4 h-4 text-indigo-400" />
@@ -95,7 +246,6 @@ export default function LandingPage() {
             </span>
           </div>
 
-          {/* Desktop nav */}
           <nav className="hidden md:flex items-center gap-6">
             <a href="#recursos" className="text-sm text-slate-400 hover:text-white transition-colors">
               Recursos
@@ -103,6 +253,12 @@ export default function LandingPage() {
             <a href="#como-funciona" className="text-sm text-slate-400 hover:text-white transition-colors">
               Como funciona
             </a>
+            <button
+              onClick={() => setDemoOpen(true)}
+              className="text-sm px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-medium transition-all"
+            >
+              Solicitar demo
+            </button>
             <Link
               href="/login"
               className="text-sm px-4 py-2 rounded-lg border border-white/[0.08] text-slate-300 hover:text-white hover:border-indigo-500/40 transition-all"
@@ -111,7 +267,6 @@ export default function LandingPage() {
             </Link>
           </nav>
 
-          {/* Mobile toggle */}
           <button
             className="md:hidden text-slate-400 hover:text-white"
             onClick={() => setMobileOpen(!mobileOpen)}
@@ -120,11 +275,13 @@ export default function LandingPage() {
           </button>
         </div>
 
-        {/* Mobile menu */}
         {mobileOpen && (
           <div className="md:hidden border-t border-white/[0.06] px-6 py-4 space-y-3">
             <a href="#recursos" onClick={() => setMobileOpen(false)} className="block text-sm text-slate-400 hover:text-white">Recursos</a>
             <a href="#como-funciona" onClick={() => setMobileOpen(false)} className="block text-sm text-slate-400 hover:text-white">Como funciona</a>
+            <button onClick={() => { setMobileOpen(false); setDemoOpen(true); }} className="block text-sm text-indigo-400 hover:text-indigo-300">
+              Solicitar demo
+            </button>
             <Link href="/login" className="block text-sm text-slate-300 hover:text-white">Entrar</Link>
           </div>
         )}
@@ -151,15 +308,13 @@ export default function LandingPage() {
         </p>
 
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <a
-            href="https://wa.me/5547999999999?text=Olá!%20Quero%20conhecer%20o%20Ovile%20Gestão."
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white font-semibold text-sm transition-all hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(16,185,129,0.3)]"
+          <button
+            onClick={() => setDemoOpen(true)}
+            className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm transition-all hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(99,102,241,0.35)]"
           >
-            Solicitar acesso
+            Solicitar demo gratuita
             <ArrowRight className="w-4 h-4" />
-          </a>
+          </button>
           <a
             href="#recursos"
             className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl border border-white/[0.08] text-slate-300 hover:text-white hover:border-white/20 font-medium text-sm transition-all"
@@ -168,7 +323,6 @@ export default function LandingPage() {
           </a>
         </div>
 
-        {/* Social proof */}
         <div className="mt-14 flex flex-col sm:flex-row items-center justify-center gap-6 text-sm text-slate-500">
           {[
             "Login com Google",
@@ -258,18 +412,15 @@ export default function LandingPage() {
             Pronto para começar?
           </h2>
           <p className="text-slate-400 mb-8 max-w-lg mx-auto">
-            Entre em contato e vamos configurar o sistema para sua congregação.
-            Sem burocracia.
+            Crie seu acesso agora. Sem burocracia, sem precisar falar com ninguém.
           </p>
-          <a
-            href="https://wa.me/5547999999999?text=Olá!%20Quero%20conhecer%20o%20Ovile%20Gestão."
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white font-semibold transition-all hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(16,185,129,0.3)]"
+          <button
+            onClick={() => setDemoOpen(true)}
+            className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold transition-all hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(99,102,241,0.35)]"
           >
-            Falar no WhatsApp
+            Criar meu acesso gratuitamente
             <ArrowRight className="w-4 h-4" />
-          </a>
+          </button>
         </div>
       </section>
 
