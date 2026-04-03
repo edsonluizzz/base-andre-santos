@@ -182,11 +182,11 @@ export default function FinanceiroPage() {
           </Button>
           <Button
             onClick={() => setOfferingDialogOpen(true)}
-            className="bg-gold hover:bg-gold-light text-black font-semibold"
+            className="bg-gold hover:bg-gold-light text-black font-semibold gap-2"
           >
-            <Plus className="w-4 h-4 mr-2" />
-            <span className="hidden sm:inline">Registrar Oferta</span>
-            <span className="sm:hidden">Oferta</span>
+            <Plus className="w-4 h-4" />
+            <span className="hidden sm:inline">Nova Entrada</span>
+            <span className="sm:hidden">Entrada</span>
           </Button>
         </div>
       </div>
@@ -323,6 +323,13 @@ export default function FinanceiroPage() {
             <div className="flex items-center gap-3 mb-4">
               <span className="text-[11px] tracking-[3px] uppercase text-gold">Lançamentos</span>
               <div className="flex-1 h-px bg-border" />
+              <button
+                onClick={() => setOfferingDialogOpen(true)}
+                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-gold transition-colors"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                Adicionar
+              </button>
             </div>
             <div className="space-y-2">
               {offerings.length === 0 && (
