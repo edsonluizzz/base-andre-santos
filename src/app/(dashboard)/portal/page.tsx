@@ -114,6 +114,7 @@ export default function PortalPage() {
   const [loading, setLoading] = useState(true);
   const [upcomingEvents, setUpcomingEvents] = useState<UpcomingEvent[]>([]);
   const [rsvpLoading, setRsvpLoading] = useState<string | null>(null);
+  const [photoUrl, setPhotoUrl] = useState<string | null | undefined>(undefined);
 
   const fetchUpcoming = useCallback(async () => {
     const res = await fetch("/api/events/rsvp");
@@ -162,7 +163,7 @@ export default function PortalPage() {
   if (!data || !data.linked) return <UnlinkedState />;
 
   const { stats, attendances, shirtOrders } = data;
-  const [member, setMember] = useState(data.member);
+  const member = { ...data.member, photoUrl: photoUrl !== undefined ? photoUrl : data.member.photoUrl };
   const activeOrders = shirtOrders.filter((o) => o.status !== "CANCELLED");
 
   return (
@@ -176,7 +177,7 @@ export default function PortalPage() {
       {/* Profile Card */}
       <ProfileCard
         member={member}
-        onPhotoUpdate={(url) => setMember((m) => ({ ...m, photoUrl: url }))}
+        onPhotoUpdate={(url) => setPhotoUrl(url)}
       />
 
       {/* Stats */}
