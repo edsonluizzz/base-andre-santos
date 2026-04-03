@@ -46,12 +46,12 @@ function useFadeIn(threshold = 0.12) {
 // ── Data ──────────────────────────────────────────────────────────────────────
 
 const FEATURES = [
-  { icon: Users,       title: "Membros",      color: "#818cf8", bg: "rgba(99,102,241,0.08)",  border: "rgba(99,102,241,0.2)",  desc: "Cadastro completo com foto, telefone e vinculação de conta Google para cada membro." },
-  { icon: ClipboardList,title: "Chamada",     color: "#a78bfa", bg: "rgba(139,92,246,0.08)", border: "rgba(139,92,246,0.2)",  desc: "Registro de presença por evento com insights automáticos de frequência e ranking." },
-  { icon: DollarSign,  title: "Financeiro",   color: "#34d399", bg: "rgba(52,211,153,0.08)",  border: "rgba(52,211,153,0.2)", desc: "Controle de ofertas e despesas com DRE mensal automático e exportação em PDF." },
-  { icon: Shirt,       title: "Congressos",   color: "#fbbf24", bg: "rgba(251,191,36,0.08)",  border: "rgba(251,191,36,0.2)", desc: "Pedidos de camisetas, controle de pagamentos e entregas do início ao fim." },
-  { icon: Cake,        title: "Aniversários", color: "#fb7185", bg: "rgba(251,113,133,0.08)", border: "rgba(251,113,133,0.2)",desc: "Calendário mensal com atalho direto para enviar mensagem no WhatsApp." },
-  { icon: BarChart2,   title: "Relatórios",   color: "#38bdf8", bg: "rgba(56,189,248,0.08)",  border: "rgba(56,189,248,0.2)", desc: "Exportação em PDF direto do navegador. Sem dependências externas." },
+  { icon: Users,       title: "Membros",      color: "#a5b4fc", bg: "rgba(99,102,241,0.15)",  border: "rgba(99,102,241,0.3)",  desc: "Cadastro completo com foto, telefone e vinculação de conta Google para cada membro." },
+  { icon: ClipboardList,title: "Chamada",     color: "#c4b5fd", bg: "rgba(139,92,246,0.15)", border: "rgba(139,92,246,0.3)",  desc: "Registro de presença por evento com insights automáticos de frequência e ranking." },
+  { icon: DollarSign,  title: "Financeiro",   color: "#6ee7b7", bg: "rgba(52,211,153,0.15)",  border: "rgba(52,211,153,0.3)", desc: "Controle de ofertas e despesas com DRE mensal automático e exportação em PDF." },
+  { icon: Shirt,       title: "Congressos",   color: "#fcd34d", bg: "rgba(251,191,36,0.15)",  border: "rgba(251,191,36,0.3)", desc: "Pedidos de camisetas, controle de pagamentos e entregas do início ao fim." },
+  { icon: Cake,        title: "Aniversários", color: "#fda4af", bg: "rgba(251,113,133,0.15)", border: "rgba(251,113,133,0.3)",desc: "Calendário mensal com atalho direto para enviar mensagem no WhatsApp." },
+  { icon: BarChart2,   title: "Relatórios",   color: "#7dd3fc", bg: "rgba(56,189,248,0.15)",  border: "rgba(56,189,248,0.3)", desc: "Exportação em PDF direto do navegador. Sem dependências externas." },
 ];
 
 const PLANS = [
@@ -123,15 +123,15 @@ function DashboardMockup() {
               <div style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#252535" }} />
             </div>
             {/* App */}
-            <div className="flex" style={{ height: "340px", background: "#06080F" }}>
+            <div className="flex" style={{ height: "340px", background: "#0d1128" }}>
               {/* Sidebar */}
-              <div className="flex flex-col items-center gap-2 py-3" style={{ width: "44px", background: "rgba(15,20,40,0.9)", borderRight: "1px solid rgba(255,255,255,0.04)" }}>
-                <div className="flex items-center justify-center rounded-lg mb-2" style={{ width: "28px", height: "28px", background: "rgba(99,102,241,0.15)", border: "1px solid rgba(99,102,241,0.3)" }}>
-                  <Cross style={{ width: "11px", height: "11px", color: "#818cf8" }} />
+              <div className="flex flex-col items-center gap-2 py-3" style={{ width: "44px", background: "rgba(10,14,36,0.95)", borderRight: "1px solid rgba(255,255,255,0.08)" }}>
+                <div className="flex items-center justify-center rounded-lg mb-2" style={{ width: "28px", height: "28px", background: "rgba(99,102,241,0.25)", border: "1px solid rgba(99,102,241,0.45)" }}>
+                  <Cross style={{ width: "11px", height: "11px", color: "#a5b4fc" }} />
                 </div>
                 {[LayoutDashboard, Users, ClipboardList, DollarSign, BarChart2, Music2].map((Icon, i) => (
-                  <div key={i} className="flex items-center justify-center rounded-lg" style={{ width: "30px", height: "30px", background: i === 0 ? "rgba(99,102,241,0.12)" : "transparent", border: i === 0 ? "1px solid rgba(99,102,241,0.2)" : "1px solid transparent" }}>
-                    <Icon style={{ width: "13px", height: "13px", color: i === 0 ? "#818cf8" : "#334155" }} />
+                  <div key={i} className="flex items-center justify-center rounded-lg" style={{ width: "30px", height: "30px", background: i === 0 ? "rgba(99,102,241,0.2)" : "transparent", border: i === 0 ? "1px solid rgba(99,102,241,0.35)" : "1px solid transparent" }}>
+                    <Icon style={{ width: "13px", height: "13px", color: i === 0 ? "#a5b4fc" : "#4b6280" }} />
                   </div>
                 ))}
               </div>
@@ -150,34 +150,34 @@ function DashboardMockup() {
                 {/* Stats */}
                 <div className="grid grid-cols-4 gap-1.5" style={{ marginBottom: "10px" }}>
                   {[
-                    { label: "Membros",   value: "48",     color: "#818cf8" },
-                    { label: "Presença",  value: "87%",    color: "#34d399" },
-                    { label: "Ofertas",   value: "R$3.2k", color: "#fbbf24" },
-                    { label: "Eventos",   value: "12",     color: "#a78bfa" },
+                    { label: "Membros",   value: "48",     color: "#a5b4fc" },
+                    { label: "Presença",  value: "87%",    color: "#6ee7b7" },
+                    { label: "Ofertas",   value: "R$3.2k", color: "#fcd34d" },
+                    { label: "Eventos",   value: "12",     color: "#c4b5fd" },
                   ].map((s) => (
-                    <div key={s.label} style={{ borderRadius: "8px", padding: "8px", background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.05)" }}>
-                      <p style={{ fontSize: "7px", color: "#475569", marginBottom: "3px" }}>{s.label}</p>
+                    <div key={s.label} style={{ borderRadius: "8px", padding: "8px", background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)" }}>
+                      <p style={{ fontSize: "7px", color: "#94a3b8", marginBottom: "3px" }}>{s.label}</p>
                       <p style={{ fontSize: "11px", fontWeight: 700, color: s.color }}>{s.value}</p>
                     </div>
                   ))}
                 </div>
                 {/* Chart */}
-                <div style={{ borderRadius: "8px", padding: "10px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)", marginBottom: "8px" }}>
-                  <p style={{ fontSize: "7px", color: "#334155", marginBottom: "6px" }}>Presença — últimos 6 meses</p>
+                <div style={{ borderRadius: "8px", padding: "10px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.09)", marginBottom: "8px" }}>
+                  <p style={{ fontSize: "7px", color: "#94a3b8", marginBottom: "6px" }}>Presença — últimos 6 meses</p>
                   <div className="flex items-end gap-1" style={{ height: "44px" }}>
                     {[62, 78, 52, 90, 68, 85].map((h, i) => (
-                      <div key={i} className="flex-1 rounded-sm" style={{ height: `${h}%`, background: i === 5 ? "rgba(99,102,241,0.55)" : "rgba(99,102,241,0.2)" }} />
+                      <div key={i} className="flex-1 rounded-sm" style={{ height: `${h}%`, background: i === 5 ? "rgba(99,102,241,0.9)" : "rgba(99,102,241,0.45)" }} />
                     ))}
                   </div>
                 </div>
                 {/* Members */}
                 <div className="grid grid-cols-3 gap-1.5">
                   {[{ name: "João Silva", role: "Líder" }, { name: "Maria Lima", role: "Membro" }, { name: "Pedro Ramos", role: "Líder" }].map((m) => (
-                    <div key={m.name} className="flex items-center gap-1.5" style={{ borderRadius: "8px", padding: "6px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)" }}>
-                      <div style={{ width: "16px", height: "16px", borderRadius: "50%", background: "rgba(99,102,241,0.2)", border: "1px solid rgba(99,102,241,0.3)", flexShrink: 0 }} />
+                    <div key={m.name} className="flex items-center gap-1.5" style={{ borderRadius: "8px", padding: "6px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.09)" }}>
+                      <div style={{ width: "16px", height: "16px", borderRadius: "50%", background: "rgba(99,102,241,0.35)", border: "1px solid rgba(99,102,241,0.5)", flexShrink: 0 }} />
                       <div style={{ overflow: "hidden" }}>
-                        <p style={{ fontSize: "7px", color: "#cbd5e1", fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{m.name}</p>
-                        <p style={{ fontSize: "6px", color: "#334155" }}>{m.role}</p>
+                        <p style={{ fontSize: "7px", color: "#e2e8f0", fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{m.name}</p>
+                        <p style={{ fontSize: "6px", color: "#64748b" }}>{m.role}</p>
                       </div>
                     </div>
                   ))}
@@ -203,29 +203,29 @@ function PhoneMockup() {
         <div className="flex justify-center items-center" style={{ height: "20px", background: "#0c0d18" }}>
           <div style={{ width: "36px", height: "4px", borderRadius: "4px", background: "#1e1e30" }} />
         </div>
-        <div style={{ background: "#06080F", padding: "10px", minHeight: "240px" }}>
+        <div style={{ background: "#0d1128", padding: "10px", minHeight: "240px" }}>
           <div className="flex items-center gap-2" style={{ marginBottom: "10px" }}>
-            <div style={{ width: "22px", height: "22px", borderRadius: "50%", background: "rgba(99,102,241,0.2)", border: "1px solid rgba(99,102,241,0.3)" }} />
+            <div style={{ width: "22px", height: "22px", borderRadius: "50%", background: "rgba(99,102,241,0.35)", border: "1px solid rgba(99,102,241,0.5)" }} />
             <div>
-              <p style={{ fontSize: "8px", color: "#e2e8f0", fontWeight: 600 }}>Meu Portal</p>
-              <p style={{ fontSize: "6px", color: "#475569" }}>João Silva</p>
+              <p style={{ fontSize: "8px", color: "#f1f5f9", fontWeight: 600 }}>Meu Portal</p>
+              <p style={{ fontSize: "6px", color: "#64748b" }}>João Silva</p>
             </div>
           </div>
-          <div style={{ borderRadius: "10px", padding: "8px", background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.15)", marginBottom: "8px" }}>
-            <p style={{ fontSize: "6px", color: "#818cf8", marginBottom: "2px" }}>SEU RANKING</p>
+          <div style={{ borderRadius: "10px", padding: "8px", background: "rgba(99,102,241,0.18)", border: "1px solid rgba(99,102,241,0.35)", marginBottom: "8px" }}>
+            <p style={{ fontSize: "6px", color: "#a5b4fc", marginBottom: "2px" }}>SEU RANKING</p>
             <p style={{ fontSize: "20px", fontWeight: 700, color: "white", lineHeight: 1 }}>3º</p>
-            <p style={{ fontSize: "6px", color: "#475569" }}>de 48 membros</p>
+            <p style={{ fontSize: "6px", color: "#94a3b8" }}>de 48 membros</p>
           </div>
-          {[{ label: "Presenças", value: "28", color: "#34d399" }, { label: "Ausências", value: "4", color: "#f87171" }].map((s) => (
-            <div key={s.label} className="flex items-center justify-between" style={{ borderRadius: "8px", padding: "6px 8px", background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.05)", marginBottom: "4px" }}>
-              <span style={{ fontSize: "7px", color: "#64748b" }}>{s.label}</span>
+          {[{ label: "Presenças", value: "28", color: "#6ee7b7" }, { label: "Ausências", value: "4", color: "#fca5a5" }].map((s) => (
+            <div key={s.label} className="flex items-center justify-between" style={{ borderRadius: "8px", padding: "6px 8px", background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)", marginBottom: "4px" }}>
+              <span style={{ fontSize: "7px", color: "#94a3b8" }}>{s.label}</span>
               <span style={{ fontSize: "10px", fontWeight: 700, color: s.color }}>{s.value}</span>
             </div>
           ))}
-          <p style={{ fontSize: "6px", color: "#334155", margin: "8px 0 4px" }}>PRÓXIMOS EVENTOS</p>
+          <p style={{ fontSize: "6px", color: "#64748b", margin: "8px 0 4px" }}>PRÓXIMOS EVENTOS</p>
           {["Culto — Sex 18/04", "Ensaio — Sáb 19/04"].map((e) => (
-            <div key={e} style={{ borderRadius: "6px", padding: "5px 8px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)", marginBottom: "3px" }}>
-              <span style={{ fontSize: "6px", color: "#64748b" }}>{e}</span>
+            <div key={e} style={{ borderRadius: "6px", padding: "5px 8px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", marginBottom: "3px" }}>
+              <span style={{ fontSize: "6px", color: "#94a3b8" }}>{e}</span>
             </div>
           ))}
         </div>
@@ -380,7 +380,7 @@ export default function LandingPage() {
   const [demoOpen, setDemoOpen] = useState(false);
 
   return (
-    <div className="min-h-screen" style={{ background: "#06080F" }}>
+    <div className="min-h-screen" style={{ background: "#0c0f1d" }}>
       <style dangerouslySetInnerHTML={{ __html: `
         @keyframes heroFade { from { opacity:0; transform:translateY(32px); } to { opacity:1; transform:translateY(0); } }
         @keyframes pulse-glow { 0%,100% { opacity:.15; } 50% { opacity:.25; } }
@@ -396,8 +396,8 @@ export default function LandingPage() {
       ` }} />
 
       {/* Background radial */}
-      <div className="fixed inset-0 pointer-events-none" style={{ backgroundImage: "radial-gradient(ellipse 80% 50% at 50% -10%, rgba(30,36,86,0.7) 0%, transparent 65%)" }} />
-      <div className="glow-pulse fixed pointer-events-none" style={{ top: "-20%", left: "30%", width: "600px", height: "600px", borderRadius: "50%", background: "radial-gradient(circle, rgba(99,102,241,0.15), transparent 70%)", zIndex: 0 }} />
+      <div className="fixed inset-0 pointer-events-none" style={{ backgroundImage: "radial-gradient(ellipse 90% 55% at 50% -5%, rgba(60,70,160,0.55) 0%, transparent 65%)" }} />
+      <div className="glow-pulse fixed pointer-events-none" style={{ top: "-20%", left: "30%", width: "600px", height: "600px", borderRadius: "50%", background: "radial-gradient(circle, rgba(99,102,241,0.22), transparent 70%)", zIndex: 0 }} />
 
       {demoOpen && <DemoModal onClose={() => setDemoOpen(false)} />}
 
@@ -521,7 +521,7 @@ export default function LandingPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {FEATURES.map((f, i) => (
             <FadeIn key={f.title} delay={i * 80}>
-              <div className="card-hover h-full rounded-2xl p-6" style={{ background: "rgba(15,23,42,0.5)", border: "1px solid rgba(255,255,255,0.06)", boxShadow: "0 1px 1px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.03)" }}>
+              <div className="card-hover h-full rounded-2xl p-6" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 1px 1px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05)" }}>
                 <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-4" style={{ background: f.bg, border: `1px solid ${f.border}` }}>
                   <f.icon className="w-5 h-5" style={{ color: f.color }} />
                 </div>
@@ -535,7 +535,7 @@ export default function LandingPage() {
 
       {/* ── DEVICES ── */}
       <section className="relative z-10 max-w-6xl mx-auto px-6 py-12">
-        <div className="rounded-3xl overflow-hidden flex flex-col lg:flex-row" style={{ background: "rgba(15,20,40,0.6)", border: "1px solid rgba(255,255,255,0.06)" }}>
+        <div className="rounded-3xl overflow-hidden flex flex-col lg:flex-row" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)" }}>
           {/* Left */}
           <div className="lg:w-1/2 p-10 lg:p-14 flex flex-col justify-center">
             <FadeIn>
@@ -577,8 +577,8 @@ export default function LandingPage() {
                     <div className="flex justify-center items-center" style={{ height: "16px", background: "#0c0d18" }}>
                       <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#1e1e30" }} />
                     </div>
-                    <div style={{ background: "#06080F", padding: "10px", minHeight: "230px" }}>
-                      <p style={{ fontSize: "8px", fontWeight: 700, color: "#e2e8f0", marginBottom: "8px" }}>Chamada — Culto 15/04</p>
+                    <div style={{ background: "#0d1128", padding: "10px", minHeight: "230px" }}>
+                      <p style={{ fontSize: "8px", fontWeight: 700, color: "#f1f5f9", marginBottom: "8px" }}>Chamada — Culto 15/04</p>
                       {[
                         { name: "João Silva",  status: "P" },
                         { name: "Maria Lima",  status: "P" },
@@ -586,17 +586,17 @@ export default function LandingPage() {
                         { name: "Ana Costa",   status: "P" },
                         { name: "Lucas Melo",  status: "J" },
                       ].map((m) => (
-                        <div key={m.name} className="flex items-center justify-between" style={{ borderRadius: "8px", padding: "5px 8px", background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.05)", marginBottom: "4px" }}>
+                        <div key={m.name} className="flex items-center justify-between" style={{ borderRadius: "8px", padding: "5px 8px", background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)", marginBottom: "4px" }}>
                           <div className="flex items-center gap-2">
-                            <div style={{ width: "16px", height: "16px", borderRadius: "50%", background: "rgba(99,102,241,0.2)", border: "1px solid rgba(99,102,241,0.3)" }} />
-                            <span style={{ fontSize: "7px", color: "#94a3b8" }}>{m.name}</span>
+                            <div style={{ width: "16px", height: "16px", borderRadius: "50%", background: "rgba(99,102,241,0.35)", border: "1px solid rgba(99,102,241,0.5)" }} />
+                            <span style={{ fontSize: "7px", color: "#cbd5e1" }}>{m.name}</span>
                           </div>
-                          <span style={{ fontSize: "7px", fontWeight: 700, color: m.status === "P" ? "#34d399" : m.status === "F" ? "#f87171" : "#fbbf24", background: m.status === "P" ? "rgba(52,211,153,0.1)" : m.status === "F" ? "rgba(248,113,113,0.1)" : "rgba(251,191,36,0.1)", padding: "2px 6px", borderRadius: "4px" }}>{m.status === "P" ? "Presente" : m.status === "F" ? "Faltou" : "Justific."}</span>
+                          <span style={{ fontSize: "7px", fontWeight: 700, color: m.status === "P" ? "#6ee7b7" : m.status === "F" ? "#fca5a5" : "#fcd34d", background: m.status === "P" ? "rgba(52,211,153,0.15)" : m.status === "F" ? "rgba(248,113,113,0.15)" : "rgba(251,191,36,0.15)", padding: "2px 6px", borderRadius: "4px" }}>{m.status === "P" ? "Presente" : m.status === "F" ? "Faltou" : "Justific."}</span>
                         </div>
                       ))}
-                      <div className="flex items-center justify-between" style={{ marginTop: "8px", padding: "5px 8px", borderRadius: "8px", background: "rgba(99,102,241,0.06)", border: "1px solid rgba(99,102,241,0.12)" }}>
-                        <span style={{ fontSize: "7px", color: "#64748b" }}>Frequência geral</span>
-                        <span style={{ fontSize: "9px", fontWeight: 700, color: "#818cf8" }}>80%</span>
+                      <div className="flex items-center justify-between" style={{ marginTop: "8px", padding: "5px 8px", borderRadius: "8px", background: "rgba(99,102,241,0.15)", border: "1px solid rgba(99,102,241,0.28)" }}>
+                        <span style={{ fontSize: "7px", color: "#a5b4fc" }}>Frequência geral</span>
+                        <span style={{ fontSize: "9px", fontWeight: 700, color: "#a5b4fc" }}>80%</span>
                       </div>
                     </div>
                   </div>
@@ -619,7 +619,7 @@ export default function LandingPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {STEPS.map((step, i) => (
             <FadeIn key={step.n} delay={i * 100}>
-              <div className="h-full rounded-2xl p-7" style={{ background: "rgba(15,23,42,0.5)", border: "1px solid rgba(255,255,255,0.06)" }}>
+              <div className="h-full rounded-2xl p-7" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)" }}>
                 <p className="text-5xl font-bold mb-5 font-mono" style={{ color: "rgba(99,102,241,0.18)" }}>{step.n}</p>
                 <h3 className="font-semibold text-white mb-2">{step.title}</h3>
                 <p className="text-sm text-slate-500 leading-relaxed">{step.desc}</p>
@@ -644,8 +644,8 @@ export default function LandingPage() {
             <FadeIn key={plan.name} delay={i * 100}>
               <div className={`h-full rounded-2xl flex flex-col ${plan.highlight ? "relative" : ""}`}
                 style={{
-                  background: plan.highlight ? "rgba(99,102,241,0.07)" : "rgba(15,23,42,0.5)",
-                  border: plan.highlight ? "1px solid rgba(99,102,241,0.35)" : "1px solid rgba(255,255,255,0.06)",
+                  background: plan.highlight ? "rgba(99,102,241,0.12)" : "rgba(255,255,255,0.04)",
+                  border: plan.highlight ? "1px solid rgba(99,102,241,0.45)" : "1px solid rgba(255,255,255,0.1)",
                   boxShadow: plan.highlight ? "0 0 48px rgba(99,102,241,0.12)" : "none",
                 }}>
                 {plan.highlight && (
