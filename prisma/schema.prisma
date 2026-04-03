@@ -358,6 +358,8 @@ enum EventType {
   ENSAIO
   REUNIAO
   RETIRO
+  CELULA
+  CONGRESSO
   OUTRO
 }
 

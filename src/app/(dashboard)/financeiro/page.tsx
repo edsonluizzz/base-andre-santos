@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { toast } from "sonner";
-import { Plus, Trash2, TrendingUp, TrendingDown, Minus, Lock, Landmark, Settings2 } from "lucide-react";
+import { Plus, Trash2, TrendingUp, TrendingDown, Minus, Lock, Landmark, Settings2, X, Printer } from "lucide-react";
 import { usePermissions } from "@/context/permissions-context";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -72,6 +72,7 @@ export default function FinanceiroPage() {
   const [bankAccountDialogOpen, setBankAccountDialogOpen] = useState(false);
   const [offeringDialogOpen, setOfferingDialogOpen] = useState(false);
   const [expenseDialogOpen, setExpenseDialogOpen] = useState(false);
+  const [analyticModal, setAnalyticModal] = useState<"offerings" | "expenses" | null>(null);
   const [pageLoading, setPageLoading] = useState(true);
 
   const fetchOfferings = useCallback(async () => {
@@ -242,7 +243,10 @@ export default function FinanceiroPage() {
 
       {!pageLoading && (<>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <div className="bg-card border border-border rounded-xl p-5">
+        <button
+          onClick={() => setAnalyticModal("offerings")}
+          className="bg-card border border-border rounded-xl p-5 text-left hover:border-success/40 hover:bg-success/5 transition-all group"
+        >
           <div className="flex items-center gap-2 mb-2">
             <TrendingUp className="w-3.5 h-3.5 text-success" />
             <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Entradas</p>
@@ -250,8 +254,12 @@ export default function FinanceiroPage() {
           <p className="text-2xl font-bold text-success" style={{ fontFamily: "var(--font-heading)" }}>
             R$ {offeringsTotal.toFixed(2).replace(".", ",")}
           </p>
-        </div>
-        <div className="bg-card border border-border rounded-xl p-5">
+          <p className="text-[10px] text-muted-foreground/50 mt-1 group-hover:text-success/60 transition-colors">clique para ver detalhes</p>
+        </button>
+        <button
+          onClick={() => setAnalyticModal("expenses")}
+          className="bg-card border border-border rounded-xl p-5 text-left hover:border-destructive/40 hover:bg-destructive/5 transition-all group"
+        >
           <div className="flex items-center gap-2 mb-2">
             <TrendingDown className="w-3.5 h-3.5 text-destructive" />
             <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Saídas</p>
@@ -259,7 +267,8 @@ export default function FinanceiroPage() {
           <p className="text-2xl font-bold text-destructive" style={{ fontFamily: "var(--font-heading)" }}>
             R$ {expensesTotal.toFixed(2).replace(".", ",")}
           </p>
-        </div>
+          <p className="text-[10px] text-muted-foreground/50 mt-1 group-hover:text-destructive/60 transition-colors">clique para ver detalhes</p>
+        </button>
         <div className="bg-card border border-border rounded-xl p-5">
           <div className="flex items-center gap-2 mb-2">
             <Minus className="w-3.5 h-3.5 text-gold" />
@@ -390,6 +399,73 @@ export default function FinanceiroPage() {
         </div>
       </div>
       </>)}
+
+      {/* Analytic Modal */}
+      {analyticModal && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-card border border-border rounded-2xl w-full max-w-2xl max-h-[80vh] flex flex-col shadow-2xl">
+            <div className="flex items-center justify-between p-5 border-b border-border">
+              <div>
+                <p className="font-semibold text-foreground">
+                  {analyticModal === "offerings" ? "Entradas do mês" : "Saídas do mês"}
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {analyticModal === "offerings"
+                    ? `Total: R$ ${offeringsTotal.toFixed(2).replace(".", ",")}`
+                    : `Total: R$ ${expensesTotal.toFixed(2).replace(".", ",")}`}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => window.print()}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-muted-foreground hover:text-foreground text-xs transition-colors"
+                >
+                  <Printer className="w-3.5 h-3.5" />
+                  Imprimir
+                </button>
+                <button onClick={() => setAnalyticModal(null)} className="p-1.5 rounded-lg hover:bg-secondary transition-colors">
+                  <X className="w-4 h-4 text-muted-foreground" />
+                </button>
+              </div>
+            </div>
+            <div className="overflow-y-auto flex-1 p-4 space-y-2">
+              {analyticModal === "offerings" && (
+                offerings.length === 0
+                  ? <p className="text-center text-muted-foreground text-sm py-8">Nenhum lançamento neste mês</p>
+                  : offerings.map((o) => (
+                    <div key={o.id} className="flex items-center gap-3 p-3 bg-background rounded-xl border border-border">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">{o.member.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {format(new Date(o.date), "dd/MM/yyyy")}
+                          {o.event && ` · ${o.event.title}`}
+                          {" · "}{o.method === "PIX" ? "PIX" : "Dinheiro"}
+                        </p>
+                      </div>
+                      <p className="text-sm font-bold text-success">R$ {o.amount.toFixed(2).replace(".", ",")}</p>
+                    </div>
+                  ))
+              )}
+              {analyticModal === "expenses" && (
+                expenses.length === 0
+                  ? <p className="text-center text-muted-foreground text-sm py-8">Nenhuma despesa neste mês</p>
+                  : expenses.map((e) => (
+                    <div key={e.id} className="flex items-center gap-3 p-3 bg-background rounded-xl border border-border">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">{e.description}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {format(new Date(e.date), "dd/MM/yyyy")}
+                          {" · "}{CATEGORY_LABELS[e.category] ?? e.category}
+                        </p>
+                      </div>
+                      <p className="text-sm font-bold text-destructive">− R$ {e.amount.toFixed(2).replace(".", ",")}</p>
+                    </div>
+                  ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       <AddOfferingDialog
         open={offeringDialogOpen}

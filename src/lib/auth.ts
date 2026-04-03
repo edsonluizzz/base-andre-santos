@@ -112,6 +112,21 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           }).catch(() => {});
         }
       }
+
+      // Sincroniza foto do Google com o cadastro do membro vinculado (só se ainda não tiver foto)
+      if (user.email && user.image) {
+        const dbUser = await db.user.findUnique({
+          where: { email: user.email },
+          select: { id: true },
+        }).catch(() => null);
+        if (dbUser) {
+          await db.member.updateMany({
+            where: { userId: dbUser.id, photoUrl: null },
+            data: { photoUrl: user.image },
+          }).catch(() => {});
+        }
+      }
+
       return true;
     },
   },

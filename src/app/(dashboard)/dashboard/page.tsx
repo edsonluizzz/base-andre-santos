@@ -59,7 +59,19 @@ const EVENT_TYPE_LABELS: Record<string, string> = {
   ENSAIO: "Ensaio",
   REUNIAO: "Reunião",
   RETIRO: "Retiro",
+  CELULA: "Célula",
+  CONGRESSO: "Congresso",
   OUTRO: "Outro",
+};
+
+const EVENT_TYPE_BADGE: Record<string, string> = {
+  CULTO:     "bg-primary/15 text-primary",
+  ENSAIO:    "bg-blue-500/15 text-blue-400",
+  REUNIAO:   "bg-amber-500/15 text-amber-400",
+  RETIRO:    "bg-emerald-500/15 text-emerald-400",
+  CELULA:    "bg-cyan-500/15 text-cyan-400",
+  CONGRESSO: "bg-orange-500/15 text-orange-400",
+  OUTRO:     "bg-secondary text-muted-foreground",
 };
 
 export default function DashboardPage() {
@@ -249,8 +261,11 @@ export default function DashboardPage() {
                   </div>
                   <div className="flex-1">
                     <p className="text-sm font-medium text-foreground">{ev.title}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {safeFormat(ev.date, "dd/MM HH:mm")} · {EVENT_TYPE_LABELS[ev.type]}
+                    <p className="text-xs text-muted-foreground flex items-center gap-1.5 flex-wrap">
+                      {safeFormat(ev.date, "dd/MM HH:mm")}
+                      <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${EVENT_TYPE_BADGE[ev.type] ?? "bg-secondary text-muted-foreground"}`}>
+                        {EVENT_TYPE_LABELS[ev.type] ?? ev.type}
+                      </span>
                     </p>
                   </div>
                 </div>

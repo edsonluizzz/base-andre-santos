@@ -24,7 +24,7 @@ import {
 import { format, isValid } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-type EventType = "CULTO" | "ENSAIO" | "REUNIAO" | "RETIRO" | "OUTRO";
+type EventType = "CULTO" | "ENSAIO" | "REUNIAO" | "RETIRO" | "CELULA" | "CONGRESSO" | "OUTRO";
 type AttendanceStatus = "PRESENT" | "ABSENT" | "JUSTIFIED";
 
 type Member = { id: string; name: string; status: string; phone?: string | null };
@@ -50,7 +50,19 @@ const EVENT_LABELS: Record<EventType, string> = {
   ENSAIO: "Ensaio",
   REUNIAO: "Reunião",
   RETIRO: "Retiro",
+  CELULA: "Célula",
+  CONGRESSO: "Congresso",
   OUTRO: "Outro",
+};
+
+const EVENT_BADGE: Record<EventType, string> = {
+  CULTO:     "bg-primary/15 text-primary border border-primary/25",
+  ENSAIO:    "bg-blue-500/15 text-blue-400 border border-blue-500/25",
+  REUNIAO:   "bg-amber-500/15 text-amber-400 border border-amber-500/25",
+  RETIRO:    "bg-emerald-500/15 text-emerald-400 border border-emerald-500/25",
+  CELULA:    "bg-cyan-500/15 text-cyan-400 border border-cyan-500/25",
+  CONGRESSO: "bg-orange-500/15 text-orange-400 border border-orange-500/25",
+  OUTRO:     "bg-secondary text-muted-foreground",
 };
 
 const STATUS_LABELS: Record<AttendanceStatus, string> = {
@@ -300,7 +312,7 @@ export default function ChamadaPage() {
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
                     <p className="font-semibold text-foreground">{ev.title}</p>
-                    <span className="text-[10px] bg-secondary text-muted-foreground px-2 py-0.5 rounded-full">
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full ${EVENT_BADGE[ev.type]}`}>
                       {EVENT_LABELS[ev.type]}
                     </span>
                   </div>

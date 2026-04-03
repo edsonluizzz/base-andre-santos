@@ -34,7 +34,7 @@ type AttendanceByMember = {
   id: string; name: string;
   total: number; present: number; absent: number; justified: number; rate: number | null;
 };
-type FinancialByMonth = { month: string; total: number; cash: number; pix: number; count: number };
+type FinancialByMonth = { month: string; income: number; cash: number; pix: number; count: number; expenses: number; result: number };
 type FinancialByMember = { id: string; name: string; total: number; cash: number; pix: number; count: number };
 
 const EVENT_LABELS: Record<string, string> = {
@@ -127,7 +127,7 @@ type Tab = "freq-evento" | "freq-membro" | "fin-mes" | "fin-membro" | "membros";
 const TABS: { id: Tab; label: string }[] = [
   { id: "freq-evento", label: "Freq. por Evento" },
   { id: "freq-membro", label: "Freq. por Membro" },
-  { id: "fin-mes", label: "Fin. por Mês" },
+  { id: "fin-mes", label: "Extrato Mensal" },
   { id: "fin-membro", label: "Fin. por Membro" },
   { id: "membros", label: "Membros" },
 ];
@@ -425,16 +425,17 @@ function FreqMembroTab({ data }: { data: AttendanceByMember[] }) {
 // ─── Tab: Financeiro por Mês ──────────────────────────────────────────────────
 
 function FinMesTab({ data }: { data: FinancialByMonth[] }) {
-  const totalGeral = data.reduce((s, m) => s + Number(m.total), 0);
-  const melhorMes = data.length > 0 ? [...data].sort((a, b) => Number(b.total) - Number(a.total))[0] : null;
+  const totalIncome   = data.reduce((s, m) => s + Number(m.income), 0);
+  const totalExpenses = data.reduce((s, m) => s + Number(m.expenses), 0);
+  const totalResult   = totalIncome - totalExpenses;
 
   return (
     <>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-        <Card label="Total geral" value={fmt(totalGeral)} />
-        <Card label="Meses registrados" value={data.length} />
-        <Card label="Melhor mês" value={melhorMes ? fmt(melhorMes.total) : "—"} />
-        <Card label="Média/mês" value={data.length > 0 ? fmt(totalGeral / data.length) : "—"} />
+        <Card label="Total receitas" value={fmt(totalIncome)} />
+        <Card label="Total despesas" value={fmt(totalExpenses)} />
+        <Card label="Resultado geral" value={fmt(totalResult)} />
+        <Card label="Meses com movimento" value={data.length} />
       </div>
 
       <div className="bg-card border border-border rounded-xl overflow-hidden print:border-gray-300">
@@ -443,27 +444,32 @@ function FinMesTab({ data }: { data: FinancialByMonth[] }) {
             <thead>
               <tr className="border-b border-border print:border-gray-300">
                 <th className="text-left px-4 py-3 text-[10px] tracking-[2px] uppercase text-muted-foreground/60 font-medium print:text-gray-500">Mês</th>
-                <th className="text-right px-4 py-3 text-[10px] tracking-[2px] uppercase text-muted-foreground/60 font-medium print:text-gray-500">Total</th>
+                <th className="text-right px-4 py-3 text-[10px] tracking-[2px] uppercase text-success font-medium">Receitas</th>
+                <th className="text-right px-4 py-3 text-[10px] tracking-[2px] uppercase text-destructive font-medium">Despesas</th>
+                <th className="text-right px-4 py-3 text-[10px] tracking-[2px] uppercase text-muted-foreground/60 font-medium print:text-gray-500">Resultado</th>
                 <th className="text-right px-4 py-3 text-[10px] tracking-[2px] uppercase text-muted-foreground/60 font-medium hidden sm:table-cell print:text-gray-500">Dinheiro</th>
                 <th className="text-right px-4 py-3 text-[10px] tracking-[2px] uppercase text-muted-foreground/60 font-medium hidden sm:table-cell print:text-gray-500">PIX</th>
-                <th className="text-center px-3 py-3 text-[10px] tracking-[2px] uppercase text-muted-foreground/60 font-medium print:text-gray-500">Registros</th>
               </tr>
             </thead>
             <tbody>
               {data.map((m, i) => {
                 const label = safeFormat(`${m.month}-01`, "MMMM yyyy");
+                const result = Number(m.income) - Number(m.expenses);
                 return (
                   <tr key={m.month} className={i % 2 === 0 ? "bg-card print:bg-gray-50" : "print:bg-white"}>
                     <td className="px-4 py-3 text-foreground font-medium capitalize print:text-black">{label}</td>
-                    <td className="px-4 py-3 text-right text-gold font-bold print:text-black">{fmt(m.total)}</td>
+                    <td className="px-4 py-3 text-right text-success font-bold print:text-green-700">{fmt(m.income)}</td>
+                    <td className="px-4 py-3 text-right text-destructive font-medium print:text-red-700">{fmt(m.expenses)}</td>
+                    <td className={`px-4 py-3 text-right font-bold print:text-black ${result >= 0 ? "text-success" : "text-destructive"}`}>
+                      {result >= 0 ? "+" : ""}{fmt(result)}
+                    </td>
                     <td className="px-4 py-3 text-right text-muted-foreground hidden sm:table-cell print:text-gray-600">{fmt(m.cash)}</td>
                     <td className="px-4 py-3 text-right text-muted-foreground hidden sm:table-cell print:text-gray-600">{fmt(m.pix)}</td>
-                    <td className="px-3 py-3 text-center text-muted-foreground print:text-gray-600">{m.count}</td>
                   </tr>
                 );
               })}
               {data.length === 0 && (
-                <tr><td colSpan={5} className="px-4 py-10 text-center text-muted-foreground/60">Nenhuma oferta registrada</td></tr>
+                <tr><td colSpan={6} className="px-4 py-10 text-center text-muted-foreground/60">Nenhum movimento registrado</td></tr>
               )}
             </tbody>
           </table>
