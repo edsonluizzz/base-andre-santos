@@ -1,9 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { signOut } from "next-auth/react";
-import { useSession } from "next-auth/react";
+import { usePathname, useRouter } from "next/navigation";
+import { signOut, useSession } from "next-auth/react";
 import {
   Users,
   User,
@@ -20,6 +19,8 @@ import {
   Cross,
   Church,
   Shield,
+  ChevronsUpDown,
+  Check,
 } from "lucide-react";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { useState, useEffect } from "react";
@@ -36,7 +37,7 @@ const navItems: {
   adminOnly?: boolean;
   superAdminOnly?: boolean;
 }[] = [
-  { href: "/", icon: LayoutDashboard, label: "Dashboard" },
+  { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
   { href: "/portal", icon: User, label: "Meu Portal" },
   { href: "/membros", icon: Users, label: "Membros", module: "MEMBERS" },
   { href: "/ministerios", icon: Church, label: "Ministérios", module: "MINISTRIES" },
@@ -49,14 +50,22 @@ const navItems: {
   { href: "/super-admin", icon: Shield, label: "Super Admin", superAdminOnly: true },
 ];
 
+type EstablishmentOption = { establishmentId: string; name: string; logoBase64?: string | null; role: string };
+
 export function Sidebar() {
   const pathname = usePathname();
-  const { data: session } = useSession();
+  const router = useRouter();
+  const { data: session, update } = useSession();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const [churchName, setChurchName] = useState("Porto Belo");
   const [churchLogoUrl, setChurchLogoUrl] = useState("");
   const [logoError, setLogoError] = useState(false);
+
+  // Seletor de estabelecimento
+  const [establishments, setEstablishments] = useState<EstablishmentOption[]>([]);
+  const [switcherOpen, setSwitcherOpen] = useState(false);
+  const [switching, setSwitching] = useState(false);
 
   useEffect(() => {
     fetch("/api/settings")
@@ -77,6 +86,22 @@ export function Sidebar() {
     window.addEventListener("church-settings-updated", onSettingsUpdated);
     return () => window.removeEventListener("church-settings-updated", onSettingsUpdated);
   }, []);
+
+  useEffect(() => {
+    fetch("/api/user/establishments")
+      .then((r) => r.json())
+      .then((data) => { if (Array.isArray(data)) setEstablishments(data); })
+      .catch(() => {});
+  }, []);
+
+  async function switchEstablishment(eid: string) {
+    if (eid === session?.user?.establishmentId || switching) return;
+    setSwitching(true);
+    setSwitcherOpen(false);
+    await update({ selectedEstablishmentId: eid });
+    router.refresh();
+    setSwitching(false);
+  }
 
   const initials = session?.user?.name
     ?.split(" ")
@@ -138,39 +163,79 @@ export function Sidebar() {
           WebkitBackdropFilter: "blur(20px)",
         }}
       >
-        {/* Header */}
-        <div className="p-6 border-b border-white/[0.06]">
-          <div className="flex items-center gap-3">
+        {/* Header / Switcher */}
+        <div className="p-4 border-b border-white/[0.06] relative">
+          <button
+            onClick={() => establishments.length > 1 && setSwitcherOpen((o) => !o)}
+            disabled={switching}
+            className={cn(
+              "w-full flex items-center gap-3 rounded-xl px-2 py-2 transition-all",
+              establishments.length > 1
+                ? "hover:bg-white/[0.04] cursor-pointer"
+                : "cursor-default"
+            )}
+          >
             {churchLogoUrl && !logoError ? (
               <img
                 src={churchLogoUrl}
                 alt="Logo"
-                className="w-9 h-9 rounded-lg object-cover border border-primary/30"
+                className="w-9 h-9 rounded-lg object-cover border border-primary/30 flex-shrink-0"
                 onError={() => setLogoError(true)}
               />
             ) : (
-              <div className="w-9 h-9 rounded-lg bg-primary/10 border border-primary/25 flex items-center justify-center animate-glow-pulse">
+              <div className="w-9 h-9 rounded-lg bg-primary/10 border border-primary/25 flex items-center justify-center animate-glow-pulse flex-shrink-0">
                 <Cross className="w-4 h-4 text-primary" />
               </div>
             )}
-            <div>
-              <p className="text-[10px] tracking-[3px] uppercase text-primary/70">
-                UMADC
-              </p>
-              <p className="text-sm font-bold text-foreground">
-                {churchName}
+            <div className="flex-1 min-w-0 text-left">
+              <p className="text-[10px] tracking-[3px] uppercase text-primary/70">UMADC</p>
+              <p className="text-sm font-bold text-foreground truncate">
+                {switching ? "Trocando..." : churchName}
               </p>
             </div>
-          </div>
+            {establishments.length > 1 && (
+              <ChevronsUpDown className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+            )}
+          </button>
+
+          {/* Dropdown */}
+          {switcherOpen && establishments.length > 1 && (
+            <>
+              <div className="fixed inset-0 z-30" onClick={() => setSwitcherOpen(false)} />
+              <div className="absolute left-4 right-4 top-full mt-1 z-40 rounded-xl border border-white/[0.10] bg-slate-900 shadow-xl overflow-hidden">
+                {establishments.map((e) => {
+                  const active = e.establishmentId === session?.user?.establishmentId;
+                  return (
+                    <button
+                      key={e.establishmentId}
+                      onClick={() => switchEstablishment(e.establishmentId)}
+                      className={cn(
+                        "w-full flex items-center gap-3 px-4 py-3 text-left text-sm transition-colors",
+                        active
+                          ? "bg-primary/10 text-primary"
+                          : "text-muted-foreground hover:text-foreground hover:bg-white/[0.04]"
+                      )}
+                    >
+                      <div className="w-6 h-6 rounded-md bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                        {e.logoBase64
+                          ? <img src={e.logoBase64} alt="" className="w-full h-full object-cover" />
+                          : <Cross className="w-3 h-3 text-primary" />
+                        }
+                      </div>
+                      <span className="flex-1 truncate font-medium">{e.name}</span>
+                      {active && <Check className="w-3.5 h-3.5 flex-shrink-0" />}
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          )}
         </div>
 
         {/* Nav */}
         <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
           {visibleItems.map((item) => {
-            const active =
-              item.href === "/"
-                ? pathname === "/"
-                : pathname.startsWith(item.href);
+            const active = pathname.startsWith(item.href);
             return (
               <Link
                 key={item.href}

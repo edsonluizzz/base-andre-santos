@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
       },
       orderBy: { date: "desc" },
       include: {
-        _count: { select: { attendances: true, offerings: true } },
+        _count: { select: { attendances: true, offerings: true, rsvps: true } },
       },
     });
     return NextResponse.json(events);

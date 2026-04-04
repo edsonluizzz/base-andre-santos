@@ -34,7 +34,7 @@ type Event = {
   type: EventType;
   date: string;
   location: string | null;
-  _count: { attendances: number; offerings: number };
+  _count: { attendances: number; offerings: number; rsvps: number };
 };
 type AttendanceRecord = { memberId: string; status: AttendanceStatus };
 
@@ -322,6 +322,11 @@ export default function ChamadaPage() {
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
+                  {ev._count.rsvps > 0 && ev._count.attendances === 0 && (
+                    <p className="text-xs text-amber-400 font-medium hidden sm:block">
+                      {ev._count.rsvps} confirmado{ev._count.rsvps !== 1 ? "s" : ""}
+                    </p>
+                  )}
                   {ev._count.attendances > 0 && (
                     <p className="text-xs text-primary font-medium hidden sm:block">
                       {ev._count.attendances} registros

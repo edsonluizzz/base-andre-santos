@@ -192,6 +192,14 @@ export default function MembrosPage() {
             </button>
           </div>
           {isAdmin && (
+            <a href="/api/members/export" download>
+              <Button variant="outline" type="button">
+                <Download className="w-4 h-4 mr-2" />
+                Exportar
+              </Button>
+            </a>
+          )}
+          {isAdmin && (
             <Button variant="outline" onClick={() => { setImportResult(null); setImportOpen(true); }}>
               <Upload className="w-4 h-4 mr-2" />
               Importar
