@@ -14,14 +14,19 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "establishmentId obrigatório" }, { status: 400 });
   }
 
-  const exists = await db.establishment.findUnique({ where: { id: establishmentId } });
-  if (!exists) {
-    return NextResponse.json({ error: "Estabelecimento não encontrado" }, { status: 404 });
+  // Verifica se o usuário tem vínculo ativo com este estabelecimento
+  const link = await db.userEstablishment.findUnique({
+    where: {
+      userId_establishmentId: { userId: session.user.id, establishmentId },
+    },
+  });
+  if (!link) {
+    return NextResponse.json({ error: "Sem permissão para acessar este estabelecimento" }, { status: 403 });
   }
 
   await db.user.update({
     where: { id: session.user.id },
-    data: { establishmentId },
+    data: { establishmentId, role: link.role },
   });
 
   return NextResponse.json({ ok: true, establishmentId });

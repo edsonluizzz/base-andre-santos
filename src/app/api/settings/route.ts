@@ -7,7 +7,14 @@ export async function GET() {
     const session = await auth();
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const settings = await db.settings.findUnique({ where: { id: "singleton" } });
+    const eid = session.user?.establishmentId ?? "default-porto-belo";
+
+    // Busca settings da congregação; fallback para o singleton legado
+    let settings = await db.settings.findUnique({ where: { id: eid } });
+    if (!settings) {
+      settings = await db.settings.findUnique({ where: { id: "singleton" } });
+    }
+
     return NextResponse.json({
       churchName: settings?.churchName ?? "Minha Igreja",
       logoBase64: settings?.logoBase64 ?? null,
@@ -24,15 +31,17 @@ export async function PATCH(req: NextRequest) {
     if (session.user?.role !== "ADMIN")
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
+    const eid = session.user?.establishmentId ?? "default-porto-belo";
     const body = await req.json();
+
     const settings = await db.settings.upsert({
-      where: { id: "singleton" },
+      where: { id: eid },
       update: {
         ...(body.churchName !== undefined && { churchName: body.churchName }),
         ...(body.logoBase64 !== undefined && { logoBase64: body.logoBase64 }),
       },
       create: {
-        id: "singleton",
+        id: eid,
         churchName: body.churchName ?? "Minha Igreja",
         logoBase64: body.logoBase64 ?? null,
       },

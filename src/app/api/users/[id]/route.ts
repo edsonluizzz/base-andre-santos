@@ -19,7 +19,11 @@ export async function PATCH(
     const body = await req.json();
     const { role, memberId } = body;
 
+    const VALID_ROLES = ["ADMIN", "LEADER", "MEMBER"];
     if (role !== undefined) {
+      if (!VALID_ROLES.includes(role)) {
+        return NextResponse.json({ error: "Role inválido" }, { status: 400 });
+      }
       await db.user.update({
         where: { id: params.id },
         data: { role },
@@ -71,6 +75,10 @@ export async function DELETE(
     if (params.id === session.user?.id) {
       return NextResponse.json({ error: "Não é possível excluir sua própria conta" }, { status: 400 });
     }
+
+    const eid = session.user?.establishmentId ?? "default-porto-belo";
+    const target = await db.user.findFirst({ where: { id: params.id, establishmentId: eid } });
+    if (!target) return NextResponse.json({ error: "Usuário não encontrado" }, { status: 404 });
 
     await db.user.delete({ where: { id: params.id } });
 

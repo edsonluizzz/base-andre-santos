@@ -55,6 +55,37 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Nome da igreja e e-mail são obrigatórios" }, { status: 400 });
     }
 
+    // Validação básica de e-mail
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(adminEmail.trim())) {
+      return NextResponse.json({ error: "E-mail inválido" }, { status: 400 });
+    }
+
+    // Rate limiting: máximo 3 estabelecimentos criados na última hora pelo mesmo e-mail
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+    const recentByEmail = await db.userEstablishment.count({
+      where: {
+        pendingEmail: adminEmail.trim(),
+        invitedAt: { gte: oneHourAgo },
+      },
+    });
+    if (recentByEmail >= 3) {
+      return NextResponse.json(
+        { error: "Muitas tentativas. Aguarde alguns minutos e tente novamente." },
+        { status: 429 }
+      );
+    }
+
+    // Rate limiting: máximo 10 cadastros por hora no total (proteção global)
+    const recentTotal = await db.establishment.count({
+      where: { createdAt: { gte: oneHourAgo } },
+    });
+    if (recentTotal >= 10) {
+      return NextResponse.json(
+        { error: "Sistema temporariamente indisponível. Tente novamente em breve." },
+        { status: 429 }
+      );
+    }
+
     // Gerar ID único para o estabelecimento
     const baseId = slugify(churchName.trim());
     let eid = baseId;
