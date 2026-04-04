@@ -7,6 +7,7 @@ declare module "next-auth" {
       role: string;
       establishmentId: string;
       isSuperAdmin: boolean;
+      needsChurchSelection: boolean;
     } & DefaultSession["user"];
   }
 }
@@ -17,5 +18,6 @@ declare module "next-auth/jwt" {
     role?: string;
     establishmentId?: string;
     isSuperAdmin?: boolean;
+    needsChurchSelection?: boolean;
   }
 }

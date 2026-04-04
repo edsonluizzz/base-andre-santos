@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { toast } from "sonner";
-import { Shield, Users, UserCog, ImageIcon, Save, Upload, X, ShieldCog, Trash2, Link, Building2, RefreshCw } from "lucide-react";
+import { Shield, Users, UserCog, ImageIcon, Save, Upload, X, ShieldCog, Trash2, Link, Building2, RefreshCw, Mail, UserPlus, Send, Clock } from "lucide-react";
 import { PermissionsTable } from "@/components/shirts/permissions-table";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -36,6 +36,14 @@ type Establishment = {
   name: string;
 };
 
+type PendingInvite = {
+  id: string;
+  email: string;
+  name?: string | null;
+  role: string;
+  invitedAt: string;
+};
+
 const ROLE_LABELS: Record<string, string> = {
   ADMIN: "Administrador",
   LEADER: "Líder",
@@ -63,6 +71,54 @@ export default function ConfiguracoesPage() {
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Convites
+  const [pendingInvites, setPendingInvites] = useState<PendingInvite[]>([]);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteRole, setInviteRole] = useState("MEMBER");
+  const [inviteSending, setInviteSending] = useState(false);
+  const [cancelingId, setCancelingId] = useState<string | null>(null);
+
+  const fetchInvites = useCallback(async () => {
+    if (!isAdmin) return;
+    const res = await fetch("/api/invites");
+    if (res.ok) setPendingInvites(await res.json());
+  }, [isAdmin]);
+
+  async function sendInvite(e: React.FormEvent) {
+    e.preventDefault();
+    if (!inviteEmail.trim()) return;
+    setInviteSending(true);
+    try {
+      const res = await fetch("/api/invites", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: inviteEmail.trim(), role: inviteRole }),
+      });
+      const data = await res.json();
+      if (!res.ok) { toast.error(data.error ?? "Erro ao enviar convite"); return; }
+      toast.success("Convite enviado!");
+      setInviteEmail("");
+      fetchInvites();
+    } finally {
+      setInviteSending(false);
+    }
+  }
+
+  async function cancelInvite(id: string) {
+    setCancelingId(id);
+    try {
+      const res = await fetch(`/api/invites?id=${id}`, { method: "DELETE" });
+      if (res.ok) {
+        toast.success("Convite cancelado");
+        setPendingInvites((prev) => prev.filter((i) => i.id !== id));
+      } else {
+        toast.error("Erro ao cancelar");
+      }
+    } finally {
+      setCancelingId(null);
+    }
+  }
+
   useEffect(() => {
     if (isAdmin) {
       fetch("/api/users").then((r) => r.json()).then(setUsers);
@@ -71,6 +127,7 @@ export default function ConfiguracoesPage() {
         setEstablishments(Array.isArray(data) ? data : []);
         setSwitchingEid(session?.user?.establishmentId ?? "");
       });
+      fetchInvites();
     }
     fetch("/api/settings")
       .then((r) => r.json())
@@ -503,6 +560,76 @@ export default function ConfiguracoesPage() {
 
           <p className="text-[11px] text-muted-foreground/50 mt-4">
             Vincule cada usuário ao seu cadastro de membro para unificar presenças e dados.
+          </p>
+        </div>
+      )}
+
+      {/* Convites — admin only */}
+      {isAdmin && (
+        <div className="glass-card p-6 mb-6">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
+              <Mail className="w-4 h-4 text-primary" />
+            </div>
+            <p className="font-semibold text-foreground">Convidar Pessoas</p>
+          </div>
+
+          <form onSubmit={sendInvite} className="flex flex-col sm:flex-row gap-2 mb-5">
+            <input
+              type="email"
+              value={inviteEmail}
+              onChange={(e) => setInviteEmail(e.target.value)}
+              placeholder="email@exemplo.com"
+              required
+              className="flex-1 rounded-xl px-4 py-2.5 text-sm bg-background border border-border text-foreground placeholder-muted-foreground focus:outline-none focus:border-primary/50 transition-all"
+            />
+            <Select value={inviteRole} onValueChange={(v) => v && setInviteRole(v)}>
+              <SelectTrigger className="w-full sm:w-36 bg-background border-border text-foreground h-10 text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-card border-border">
+                <SelectItem value="ADMIN">Administrador</SelectItem>
+                <SelectItem value="LEADER">Líder</SelectItem>
+                <SelectItem value="MEMBER">Membro</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button type="submit" disabled={inviteSending} className="sm:w-auto">
+              <Send className="w-4 h-4 mr-2" />
+              {inviteSending ? "Enviando..." : "Convidar"}
+            </Button>
+          </form>
+
+          {pendingInvites.length > 0 && (
+            <div>
+              <p className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5" /> Convites pendentes ({pendingInvites.length})
+              </p>
+              <div className="space-y-2">
+                {pendingInvites.map((inv) => (
+                  <div key={inv.id} className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl border border-white/[0.06] bg-white/[0.02]">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <UserPlus className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-sm text-foreground truncate">{inv.email}</p>
+                        <p className="text-xs text-muted-foreground">{ROLE_LABELS[inv.role] ?? inv.role}</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => cancelInvite(inv.id)}
+                      disabled={cancelingId === inv.id}
+                      className="p-1.5 rounded-lg border border-destructive/20 bg-destructive/10 hover:bg-destructive/20 text-destructive transition-colors disabled:opacity-50 flex-shrink-0"
+                      title="Cancelar convite"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <p className="text-[11px] text-muted-foreground/50 mt-4">
+            A pessoa receberá um e-mail e terá acesso ao sistema ao fazer login com o Google.
           </p>
         </div>
       )}

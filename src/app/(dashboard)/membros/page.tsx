@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
-import { Plus, Search, Pencil, Trash2, Phone, LayoutGrid, List, Cake, Printer, Link2 } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, Phone, LayoutGrid, List, Cake, Printer, Link2, Upload, Download, CheckCircle2, AlertCircle, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -51,6 +51,32 @@ export default function MembrosPage() {
   const [editMember, setEditMember] = useState<Member | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"cards" | "list">("cards");
+
+  // Import state
+  const [importOpen, setImportOpen] = useState(false);
+  const [importLoading, setImportLoading] = useState(false);
+  const [importResult, setImportResult] = useState<{ created: number; skipped: number; errors: string[] } | null>(null);
+  const importFileRef = useCallback((node: HTMLInputElement | null) => { if (node) node.value = ""; }, []);
+
+  async function handleImport(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImportLoading(true);
+    setImportResult(null);
+    const form = new FormData();
+    form.append("file", file);
+    try {
+      const res = await fetch("/api/members/import", { method: "POST", body: form });
+      const data = await res.json();
+      if (!res.ok) { toast.error(data.error ?? "Erro ao importar"); return; }
+      setImportResult(data);
+      if (data.created > 0) fetchMembers();
+    } catch {
+      toast.error("Erro de conexão");
+    } finally {
+      setImportLoading(false);
+    }
+  }
 
   // Link dialog state
   const [linkDialogMemberId, setLinkDialogMemberId] = useState<string | null>(null);
@@ -165,6 +191,12 @@ export default function MembrosPage() {
               <List className="w-4 h-4" />
             </button>
           </div>
+          {isAdmin && (
+            <Button variant="outline" onClick={() => { setImportResult(null); setImportOpen(true); }}>
+              <Upload className="w-4 h-4 mr-2" />
+              Importar
+            </Button>
+          )}
           <Button onClick={openAdd}>
             <Plus className="w-4 h-4 mr-2" />
             Novo
@@ -288,6 +320,86 @@ export default function MembrosPage() {
               onClick={handleLink}
             >
               {linkLoading ? "Salvando..." : "Salvar"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Importação */}
+      <Dialog open={importOpen} onOpenChange={(o) => { if (!importLoading) setImportOpen(o); }}>
+        <DialogContent className="bg-card border-border text-foreground max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-foreground">Importar Membros</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {/* Download template */}
+            <div className="flex items-center justify-between p-3 rounded-xl border border-white/[0.07] bg-white/[0.02]">
+              <div>
+                <p className="text-sm font-medium text-foreground">1. Baixe a planilha modelo</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Preencha com os dados dos membros</p>
+              </div>
+              <a
+                href="/api/members/template"
+                download
+                className="flex items-center gap-2 text-xs font-medium text-primary hover:text-primary/80 transition-colors px-3 py-2 rounded-lg border border-primary/20 bg-primary/5 hover:bg-primary/10"
+              >
+                <Download className="w-3.5 h-3.5" />
+                Baixar
+              </a>
+            </div>
+
+            {/* Upload */}
+            <div>
+              <p className="text-sm font-medium text-foreground mb-2">2. Envie a planilha preenchida</p>
+              <label className="flex flex-col items-center justify-center gap-2 p-6 rounded-xl border-2 border-dashed border-white/[0.12] bg-white/[0.02] hover:border-primary/40 hover:bg-primary/5 transition-all cursor-pointer">
+                <Upload className="w-6 h-6 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">Clique para selecionar o arquivo</span>
+                <span className="text-xs text-muted-foreground/50">.xlsx, .xls ou .csv</span>
+                <input
+                  ref={importFileRef}
+                  type="file"
+                  accept=".xlsx,.xls,.csv"
+                  className="hidden"
+                  onChange={handleImport}
+                  disabled={importLoading}
+                />
+              </label>
+              {importLoading && (
+                <p className="text-xs text-muted-foreground mt-2 text-center">Processando...</p>
+              )}
+            </div>
+
+            {/* Resultado */}
+            {importResult && (
+              <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] p-4 space-y-2">
+                <div className="flex items-center gap-2 text-emerald-400">
+                  <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+                  <span className="text-sm font-medium">{importResult.created} membro{importResult.created !== 1 ? "s" : ""} importado{importResult.created !== 1 ? "s" : ""}</span>
+                </div>
+                {importResult.skipped > 0 && (
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <X className="w-4 h-4 flex-shrink-0" />
+                    <span className="text-sm">{importResult.skipped} ignorado{importResult.skipped !== 1 ? "s" : ""} (já existiam)</span>
+                  </div>
+                )}
+                {importResult.errors.length > 0 && (
+                  <div className="mt-2 space-y-1">
+                    <div className="flex items-center gap-2 text-yellow-400">
+                      <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                      <span className="text-xs font-medium">Avisos ({importResult.errors.length})</span>
+                    </div>
+                    <ul className="text-xs text-muted-foreground space-y-0.5 pl-6">
+                      {importResult.errors.slice(0, 5).map((e, i) => <li key={i}>{e}</li>)}
+                      {importResult.errors.length > 5 && <li>...e mais {importResult.errors.length - 5}</li>}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <Button variant="outline" className="w-full" onClick={() => setImportOpen(false)}>
+              Fechar
             </Button>
           </div>
         </DialogContent>

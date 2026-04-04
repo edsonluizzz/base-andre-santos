@@ -18,6 +18,28 @@ model Establishment {
   pixKey     String?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+
+  userEstablishments UserEstablishment[]
+}
+
+// ─── Multi-Tenant: Vínculo Usuário ↔ Congregação ─────────────────────────────
+
+model UserEstablishment {
+  id              String        @id @default(cuid())
+  userId          String?
+  pendingEmail    String?       // pre-autoriza e-mail antes do 1º login
+  establishmentId String
+  role            Role          @default(MEMBER)
+  inviteStatus    InviteStatus  @default(PENDING)
+  invitedBy       String?       // userId de quem convidou
+  invitedAt       DateTime      @default(now())
+  acceptedAt      DateTime?
+
+  user          User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  establishment Establishment @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, establishmentId])
+  @@index([pendingEmail])
 }
 
 // ─── Auth (NextAuth) ───────────────────────────────────────────────────────
@@ -59,10 +81,11 @@ model User {
   establishmentId String    @default("default-porto-belo")
   createdAt       DateTime  @default(now())
 
-  accounts      Account[]
-  sessions      Session[]
-  notifications Notification[]
-  member        Member?
+  accounts           Account[]
+  sessions           Session[]
+  notifications      Notification[]
+  member             Member?
+  userEstablishments UserEstablishment[]
 
   @@index([establishmentId])
 }
@@ -111,6 +134,7 @@ model Member {
   offerings        Offering[]
   shirtOrders      ShirtOrder[]
   ministryMembers  MinistryMember[]
+  rsvps            EventRsvp[]
 
   @@index([establishmentId])
 }
@@ -130,11 +154,26 @@ model Event {
 
   attendances Attendance[]
   offerings   Offering[]
+  rsvps       EventRsvp[]
   ministryId  String?
   ministry    Ministry? @relation(fields: [ministryId], references: [id], onDelete: SetNull)
 
   @@index([establishmentId])
   @@index([ministryId])
+}
+
+// ─── RSVP de Eventos ──────────────────────────────────────────────────────────
+
+model EventRsvp {
+  id        String   @id @default(cuid())
+  eventId   String
+  memberId  String
+  createdAt DateTime @default(now())
+
+  event  Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  member Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, memberId])
 }
 
 // ─── Chamada ──────────────────────────────────────────────────────────────
@@ -384,4 +423,9 @@ enum CongressStatus {
 enum MinistryRole {
   COORDINATOR
   MEMBER
+}
+
+enum InviteStatus {
+  PENDING
+  ACCEPTED
 }

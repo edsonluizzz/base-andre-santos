@@ -24,6 +24,20 @@ export async function GET() {
 
   if (!member) return NextResponse.json({ linked: false });
 
+  // Próximos eventos (30 dias) com status de RSVP do membro
+  const upcomingEvents = await db.event.findMany({
+    where: {
+      establishmentId: session.user.establishmentId,
+      date: { gte: new Date() },
+    },
+    orderBy: { date: "asc" },
+    take: 10,
+    include: {
+      rsvps: { where: { memberId: member.id }, select: { id: true } },
+      _count: { select: { rsvps: true } },
+    },
+  });
+
   const total = member.attendances.length;
   const present = member.attendances.filter((a) => a.status === "PRESENT").length;
   const attendanceRate = total > 0 ? Math.round((present / total) * 100) : null;
@@ -70,6 +84,14 @@ export async function GET() {
       rankPosition,
       totalActive: allActive.length,
     },
+    upcomingEvents: upcomingEvents.map((e) => ({
+      id: e.id,
+      title: e.title,
+      type: e.type,
+      date: e.date,
+      rsvpConfirmed: e.rsvps.length > 0,
+      rsvpCount: e._count.rsvps,
+    })),
     shirtOrders: member.shirtOrders.map((o) => ({
       id: o.id,
       size: o.size,

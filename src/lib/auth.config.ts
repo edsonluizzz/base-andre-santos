@@ -25,18 +25,24 @@ export const authConfig: NextAuthConfig = {
       const isLandingPage = pathname === "/";
       const isCadastro = pathname.startsWith("/cadastro");
       const isApiAuth = pathname.startsWith("/api/auth");
+      const isSelectChurch = pathname === "/select-church";
 
       // Rotas sempre públicas
       if (isApiAuth || isLandingPage || isCadastro) return true;
 
       // Não logado: redireciona para login
-      if (!isLoggedIn && !isLoginPage) {
+      if (!isLoggedIn && !isLoginPage && !isSelectChurch) {
         return Response.redirect(new URL("/login", nextUrl));
       }
 
       // Logado na página de login: redireciona para dashboard
       if (isLoggedIn && isLoginPage) {
         return Response.redirect(new URL("/dashboard", nextUrl));
+      }
+
+      // Precisa escolher congregação
+      if (isLoggedIn && session?.user?.needsChurchSelection && !isSelectChurch) {
+        return Response.redirect(new URL("/select-church", nextUrl));
       }
 
       return true;
