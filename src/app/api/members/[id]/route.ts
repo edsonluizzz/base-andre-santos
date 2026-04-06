@@ -51,7 +51,11 @@ export async function DELETE(
     const existing = await db.member.findFirst({ where: { id: params.id, establishmentId: eid } });
     if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-    await db.member.delete({ where: { id: params.id } });
+    // Soft-delete: preserva histórico de chamadas e financeiro
+    await db.member.update({
+      where: { id: params.id },
+      data: { deletedAt: new Date(), status: "INACTIVE" },
+    });
     return NextResponse.json({ ok: true });
   } catch {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

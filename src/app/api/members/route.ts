@@ -9,7 +9,7 @@ export async function GET() {
 
     const eid = session.user?.establishmentId ?? "default-porto-belo";
     const members = await db.member.findMany({
-      where: { establishmentId: eid },
+      where: { establishmentId: eid, deletedAt: null },
       orderBy: { name: "asc" },
     });
     return NextResponse.json(members);

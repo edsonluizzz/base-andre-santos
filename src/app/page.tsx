@@ -301,7 +301,7 @@ function DemoModal({ onClose }: { onClose: () => void }) {
                   <Sparkles className="w-4 h-4 text-indigo-400" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-white">Solicitar acesso gratuito</h3>
+                  <h3 className="text-lg font-bold text-white">Criar sua congregação</h3>
                   <p className="text-slate-500 text-sm">Ambiente criado em segundos</p>
                 </div>
               </div>
@@ -339,7 +339,7 @@ function DemoModal({ onClose }: { onClose: () => void }) {
                   className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-white font-semibold text-sm transition-all hover:-translate-y-0.5 disabled:opacity-60 disabled:translate-y-0"
                   style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)", boxShadow: loading ? "none" : "0 4px 16px rgba(99,102,241,0.3)" }}
                 >
-                  {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> Criando seu acesso...</> : <>Criar meu acesso gratuitamente <ArrowRight className="w-4 h-4" /></>}
+                  {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> Criando seu acesso...</> : <>Criar minha congregação <ArrowRight className="w-4 h-4" /></>}
                 </button>
 
                 <p className="text-center text-xs text-slate-600">
@@ -468,7 +468,7 @@ export default function LandingPage() {
 
         <div className="hero-anim-4 flex flex-col sm:flex-row gap-3 justify-center mb-8">
           <button onClick={() => setDemoOpen(true)} className="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl text-white font-semibold text-sm transition-all hover:-translate-y-0.5" style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)", boxShadow: "0 8px 24px rgba(99,102,241,0.35)" }}>
-            Solicitar demo gratuita <ArrowRight className="w-4 h-4" />
+            Começar agora <ArrowRight className="w-4 h-4" />
           </button>
           <a href="#recursos" className="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl text-slate-300 hover:text-white font-medium text-sm transition-all" style={{ border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.02)" }}>
             Ver recursos
@@ -722,7 +722,7 @@ export default function LandingPage() {
                 className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl text-white font-semibold text-sm transition-all hover:-translate-y-0.5"
                 style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)", boxShadow: "0 8px 24px rgba(99,102,241,0.4)" }}
               >
-                Criar meu acesso gratuitamente <ArrowRight className="w-4 h-4" />
+                Criar minha congregação <ArrowRight className="w-4 h-4" />
               </button>
               <p className="text-xs text-slate-600 mt-4">Sem compromisso · Cancele quando quiser</p>
             </div>

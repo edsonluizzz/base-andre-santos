@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
-import { Plus, Building2, Users, CalendarDays, Shield } from "lucide-react";
+import { Plus, Building2, Users, CalendarDays, Shield, Trash2, PauseCircle, PlayCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,6 +20,7 @@ type Establishment = {
   id: string;
   name: string;
   pixKey: string | null;
+  suspended: boolean;
   createdAt: string;
   memberCount: number;
   userCount: number;
@@ -32,6 +33,38 @@ export default function SuperAdminPage() {
   const [establishments, setEstablishments] = useState<Establishment[]>([]);
   const [loading, setLoading] = useState(true);
   const [createOpen, setCreateOpen] = useState(false);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+
+  async function handleSuspend(est: Establishment) {
+    setActionLoading(est.id);
+    const res = await fetch(`/api/super-admin/establishments/${est.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ suspended: !est.suspended }),
+    });
+    setActionLoading(null);
+    if (res.ok) {
+      toast.success(est.suspended ? "Acesso reativado" : "Estabelecimento suspenso");
+      fetchEstablishments();
+    } else {
+      const d = await res.json().catch(() => ({}));
+      toast.error(d.error ?? "Erro ao atualizar");
+    }
+  }
+
+  async function handleDelete(est: Establishment) {
+    if (!confirm(`Tem certeza que deseja EXCLUIR "${est.name}"? Esta ação apagará todos os dados e não pode ser desfeita.`)) return;
+    setActionLoading(est.id);
+    const res = await fetch(`/api/super-admin/establishments/${est.id}`, { method: "DELETE" });
+    setActionLoading(null);
+    if (res.ok) {
+      toast.success("Estabelecimento excluído");
+      fetchEstablishments();
+    } else {
+      const d = await res.json().catch(() => ({}));
+      toast.error(d.error ?? "Erro ao excluir");
+    }
+  }
 
   const isSuperAdmin = session?.user?.isSuperAdmin;
 
@@ -114,51 +147,75 @@ export default function SuperAdminPage() {
 
       {!loading && (
         <div className="space-y-3">
-          {establishments.map((est) => (
-            <div key={est.id} className="glass-card p-5">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0">
-                    <Building2 className="w-5 h-5 text-primary" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <p className="font-semibold text-foreground">{est.name}</p>
-                      {est.id === "default-porto-belo" && (
-                        <span className="text-[10px] bg-primary/10 text-primary border border-primary/20 px-2 py-0.5 rounded-full font-medium">
-                          Principal
-                        </span>
-                      )}
+          {establishments.map((est) => {
+            const isProtected = est.id === "default-porto-belo";
+            const isActioning = actionLoading === est.id;
+            return (
+              <div key={est.id} className={`glass-card p-5 transition-opacity ${est.suspended ? "opacity-60 border-destructive/30" : ""}`}>
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0">
+                      <Building2 className="w-5 h-5 text-primary" />
                     </div>
-                    <p className="text-xs text-muted-foreground font-mono mt-0.5">{est.id}</p>
-                    {est.pixKey && (
-                      <p className="text-xs text-muted-foreground mt-0.5">PIX: {est.pixKey}</p>
+                    <div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="font-semibold text-foreground">{est.name}</p>
+                        {isProtected && (
+                          <span className="text-[10px] bg-primary/10 text-primary border border-primary/20 px-2 py-0.5 rounded-full font-medium">Principal</span>
+                        )}
+                        {est.suspended && (
+                          <span className="text-[10px] bg-destructive/10 text-destructive border border-destructive/20 px-2 py-0.5 rounded-full font-medium">Suspenso</span>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground font-mono mt-0.5">{est.id}</p>
+                      {est.pixKey && <p className="text-xs text-muted-foreground mt-0.5">PIX: {est.pixKey}</p>}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    <div className="text-xs text-muted-foreground text-right mr-3">
+                      <p>Criado em</p>
+                      <p className="text-foreground font-medium">
+                        {format(new Date(est.createdAt), "dd/MM/yyyy", { locale: ptBR })}
+                      </p>
+                    </div>
+                    {!isProtected && (
+                      <>
+                        <button
+                          onClick={() => handleSuspend(est)}
+                          disabled={isActioning}
+                          aria-label={est.suspended ? `Reativar ${est.name}` : `Suspender ${est.name}`}
+                          className={`p-2 rounded-lg transition-colors cursor-pointer disabled:opacity-50 ${est.suspended ? "text-emerald-400 hover:bg-emerald-500/10" : "text-yellow-400 hover:bg-yellow-500/10"}`}
+                        >
+                          {est.suspended ? <PlayCircle className="w-4 h-4" /> : <PauseCircle className="w-4 h-4" />}
+                        </button>
+                        <button
+                          onClick={() => handleDelete(est)}
+                          disabled={isActioning}
+                          aria-label={`Excluir ${est.name}`}
+                          className="p-2 rounded-lg text-destructive hover:bg-destructive/10 transition-colors cursor-pointer disabled:opacity-50"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </>
                     )}
                   </div>
                 </div>
-                <div className="text-xs text-muted-foreground text-right flex-shrink-0">
-                  <p>Criado em</p>
-                  <p className="text-foreground font-medium">
-                    {format(new Date(est.createdAt), "dd/MM/yyyy", { locale: ptBR })}
-                  </p>
+                <div className="grid grid-cols-4 gap-3 mt-4 pt-4 border-t border-border/50">
+                  {[
+                    { label: "Membros", value: est.memberCount },
+                    { label: "Usuários", value: est.userCount },
+                    { label: "Eventos", value: est.eventCount },
+                    { label: "Ministérios", value: est.ministryCount },
+                  ].map((s) => (
+                    <div key={s.label} className="text-center">
+                      <p className="text-lg font-bold text-foreground">{s.value}</p>
+                      <p className="text-[10px] text-muted-foreground">{s.label}</p>
+                    </div>
+                  ))}
                 </div>
               </div>
-
-              <div className="grid grid-cols-4 gap-3 mt-4 pt-4 border-t border-border/50">
-                {[
-                  { label: "Membros", value: est.memberCount },
-                  { label: "Usuários", value: est.userCount },
-                  { label: "Eventos", value: est.eventCount },
-                  { label: "Ministérios", value: est.ministryCount },
-                ].map((s) => (
-                  <div key={s.label} className="text-center">
-                    <p className="text-lg font-bold text-foreground">{s.value}</p>
-                    <p className="text-[10px] text-muted-foreground">{s.label}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 

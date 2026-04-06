@@ -23,7 +23,7 @@ import {
   Check,
 } from "lucide-react";
 import { NotificationBell } from "@/components/notifications/notification-bell";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { usePermissions } from "@/context/permissions-context";
@@ -57,6 +57,7 @@ export function Sidebar() {
   const router = useRouter();
   const { data: session, update } = useSession();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
 
   const [churchName, setChurchName] = useState("");
   const [churchLogoUrl, setChurchLogoUrl] = useState("");
@@ -66,6 +67,11 @@ export function Sidebar() {
   const [establishments, setEstablishments] = useState<EstablishmentOption[]>([]);
   const [switcherOpen, setSwitcherOpen] = useState(false);
   const [switching, setSwitching] = useState(false);
+
+  // Retorna foco ao botão de menu quando o mobile sidebar fecha
+  useEffect(() => {
+    if (!mobileOpen) menuButtonRef.current?.focus();
+  }, [mobileOpen]);
 
   useEffect(() => {
     fetch("/api/settings")
@@ -131,10 +137,12 @@ export function Sidebar() {
     <>
       {/* Mobile toggle */}
       <button
+        ref={menuButtonRef}
         className="fixed top-4 left-4 z-50 lg:hidden glass-card border border-white/[0.07] p-2 rounded-lg cursor-pointer"
-        onClick={() => setMobileOpen(!mobileOpen)}
+        onClick={() => setMobileOpen((o) => !o)}
         aria-label={mobileOpen ? "Fechar menu" : "Abrir menu"}
         aria-expanded={mobileOpen}
+        aria-controls="mobile-sidebar"
       >
         {mobileOpen ? (
           <X className="w-5 h-5 text-primary" />
@@ -153,6 +161,7 @@ export function Sidebar() {
 
       {/* Sidebar */}
       <aside
+        id="mobile-sidebar"
         className={cn(
           "fixed top-0 left-0 h-full w-64 z-40 flex flex-col transition-transform duration-300",
           "border-r border-white/[0.06]",

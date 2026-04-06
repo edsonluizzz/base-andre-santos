@@ -58,6 +58,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           token.role = ues[0].role;
           token.establishmentId = ues[0].establishmentId;
           token.needsChurchSelection = false;
+          const est = await db.establishment.findUnique({ where: { id: ues[0].establishmentId }, select: { suspended: true } });
+          token.suspended = est?.suspended ?? false;
           // Sincronizar User.role e User.establishmentId para compatibilidade
           await db.user.update({
             where: { id: user.id },
@@ -132,6 +134,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.user.establishmentId = (token.establishmentId as string) ?? "default-porto-belo";
         session.user.isSuperAdmin = Boolean(token.isSuperAdmin);
         session.user.needsChurchSelection = Boolean(token.needsChurchSelection);
+        session.user.suspended = Boolean(token.suspended);
       }
       return session;
     },
