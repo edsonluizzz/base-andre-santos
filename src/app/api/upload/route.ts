@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
   const filename = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
 
   try {
-    const blob = await put(filename, buf, {
+    const blob = await put(filename, Buffer.from(buf), {
       access: "public",
       contentType: detectedMime,
     });
