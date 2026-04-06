@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Crown, Zap, AlertTriangle, CheckCircle2, ExternalLink, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { differenceInDays } from "date-fns";
+import { toast } from "sonner";
 
 type BillingData = {
   plan: string;
@@ -28,18 +29,36 @@ export function PlanCard({ isAdmin }: { isAdmin: boolean }) {
 
   async function handleUpgrade() {
     setActionLoading(true);
-    const res = await fetch("/api/stripe/checkout", { method: "POST" });
-    const data = await res.json();
-    if (data.url) window.location.href = data.url;
-    else setActionLoading(false);
+    try {
+      const res = await fetch("/api/stripe/checkout", { method: "POST" });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        toast.error(data.error ?? "Erro ao iniciar checkout");
+        setActionLoading(false);
+      }
+    } catch {
+      toast.error("Erro de conexão");
+      setActionLoading(false);
+    }
   }
 
   async function handlePortal() {
     setActionLoading(true);
-    const res = await fetch("/api/stripe/portal", { method: "POST" });
-    const data = await res.json();
-    if (data.url) window.location.href = data.url;
-    else setActionLoading(false);
+    try {
+      const res = await fetch("/api/stripe/portal", { method: "POST" });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        toast.error(data.error ?? "Erro ao acessar portal");
+        setActionLoading(false);
+      }
+    } catch {
+      toast.error("Erro de conexão");
+      setActionLoading(false);
+    }
   }
 
   if (loading) {
