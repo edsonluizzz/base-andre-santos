@@ -29,6 +29,9 @@ yarn-error.log*
 .env*.local
 .env
 
+# arquivos com chaves/segredos
+api resend.txt
+
 
 # vercel
 .vercel
