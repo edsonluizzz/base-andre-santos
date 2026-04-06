@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { stripe } from "@/lib/stripe";
+import { getStripe } from "@/lib/stripe";
 import { db } from "@/lib/db";
 
 const TRIAL_DAYS = 7;
@@ -28,7 +28,7 @@ export async function POST() {
     // Reutilizar ou criar customer no Stripe
     let customerId = est.stripeCustomerId;
     if (!customerId) {
-      const customer = await stripe.customers.create({
+      const customer = await getStripe().customers.create({
         name: est.name,
         email: user?.email ?? undefined,
         metadata: { establishmentId: eid },
@@ -39,7 +39,7 @@ export async function POST() {
 
     const baseUrl = process.env.NEXT_PUBLIC_URL ?? "https://ovile.com.br";
 
-    const checkoutSession = await stripe.checkout.sessions.create({
+    const checkoutSession = await getStripe().checkout.sessions.create({
       customer: customerId,
       mode: "subscription",
       line_items: [{ price: process.env.STRIPE_PRO_PRICE_ID!, quantity: 1 }],

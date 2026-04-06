@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { stripe } from "@/lib/stripe";
+import { getStripe } from "@/lib/stripe";
 import { db } from "@/lib/db";
 
 export async function POST() {
@@ -19,7 +19,7 @@ export async function POST() {
 
     const baseUrl = process.env.NEXT_PUBLIC_URL ?? "https://ovile.com.br";
 
-    const portalSession = await stripe.billingPortal.sessions.create({
+    const portalSession = await getStripe().billingPortal.sessions.create({
       customer: est.stripeCustomerId,
       return_url: `${baseUrl}/configuracoes`,
     });
