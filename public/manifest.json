@@ -1,7 +1,7 @@
 {
-  "name": "UMADC Porto Belo",
-  "short_name": "UMADC",
-  "description": "Sistema de gestão da mocidade IEADC Porto Belo",
+  "name": "Ovile",
+  "short_name": "Ovile",
+  "description": "Sistema de gestão para igrejas",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0c0f1d",
