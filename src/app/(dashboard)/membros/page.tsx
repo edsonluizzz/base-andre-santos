@@ -179,14 +179,16 @@ export default function MembrosPage() {
             <button
               onClick={() => setViewMode("cards")}
               className={`p-1.5 rounded-md transition-all cursor-pointer ${viewMode === "cards" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground"}`}
-              title="Visão em cards"
+              aria-label="Visão em cards"
+              aria-pressed={viewMode === "cards"}
             >
               <LayoutGrid className="w-4 h-4" />
             </button>
             <button
               onClick={() => setViewMode("list")}
               className={`p-1.5 rounded-md transition-all cursor-pointer ${viewMode === "list" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground"}`}
-              title="Visão em lista"
+              aria-label="Visão em lista"
+              aria-pressed={viewMode === "list"}
             >
               <List className="w-4 h-4" />
             </button>
@@ -495,6 +497,7 @@ function MemberList({
                       <div className="flex items-center gap-1 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
                         {whatsappUrl && (
                           <a href={whatsappUrl} target="_blank" rel="noopener noreferrer"
+                            aria-label={`Abrir WhatsApp de ${m.name}`}
                             className="p-1.5 rounded-lg text-muted-foreground hover:text-emerald-400 hover:bg-emerald-500/5 transition-colors">
                             <Phone className="w-3.5 h-3.5" />
                           </a>
@@ -502,15 +505,17 @@ function MemberList({
                         {onLink && (
                           <button onClick={() => onLink(m)}
                             className={`p-1.5 rounded-lg hover:bg-primary/5 transition-colors cursor-pointer ${m.userId ? "text-emerald-400" : "text-muted-foreground hover:text-primary"}`}
-                            title={m.userId ? "Alterar vínculo" : "Vincular conta"}>
+                            aria-label={m.userId ? `Alterar vínculo de ${m.name}` : `Vincular conta de ${m.name}`}>
                             <Link2 className="w-3.5 h-3.5" />
                           </button>
                         )}
                         <button onClick={() => onEdit(m)}
+                          aria-label={`Editar ${m.name}`}
                           className="p-1.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/5 transition-colors cursor-pointer">
                           <Pencil className="w-3.5 h-3.5" />
                         </button>
                         <button onClick={() => onDelete(m.id)}
+                          aria-label={`Remover ${m.name}`}
                           className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/5 transition-colors cursor-pointer">
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -587,8 +592,8 @@ function MemberCard({
               href={whatsappUrl}
               target="_blank"
               rel="noopener noreferrer"
+              aria-label={`Abrir WhatsApp de ${member.name}`}
               className="p-1.5 rounded-lg text-muted-foreground hover:text-emerald-400 hover:bg-emerald-500/5 transition-colors"
-              title="Abrir WhatsApp"
             >
               <Phone className="w-3.5 h-3.5" />
             </a>
@@ -596,20 +601,22 @@ function MemberCard({
           {onLink && (
             <button
               onClick={onLink}
+              aria-label={member.userId ? `Alterar vínculo de ${member.name}` : `Vincular conta de ${member.name}`}
               className={`p-1.5 rounded-lg hover:bg-primary/5 transition-colors cursor-pointer ${member.userId ? "text-emerald-400" : "text-muted-foreground hover:text-primary"}`}
-              title={member.userId ? "Alterar vínculo" : "Vincular conta"}
             >
               <Link2 className="w-3.5 h-3.5" />
             </button>
           )}
           <button
             onClick={onEdit}
+            aria-label={`Editar ${member.name}`}
             className="p-1.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/5 transition-colors cursor-pointer"
           >
             <Pencil className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={onDelete}
+            aria-label={`Remover ${member.name}`}
             className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/5 transition-colors cursor-pointer"
           >
             <Trash2 className="w-3.5 h-3.5" />

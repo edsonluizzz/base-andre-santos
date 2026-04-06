@@ -133,6 +133,8 @@ export function Sidebar() {
       <button
         className="fixed top-4 left-4 z-50 lg:hidden glass-card border border-white/[0.07] p-2 rounded-lg cursor-pointer"
         onClick={() => setMobileOpen(!mobileOpen)}
+        aria-label={mobileOpen ? "Fechar menu" : "Abrir menu"}
+        aria-expanded={mobileOpen}
       >
         {mobileOpen ? (
           <X className="w-5 h-5 text-primary" />
