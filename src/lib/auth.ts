@@ -73,6 +73,23 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
       // ── Troca de congregação via /select-church ─────────────────────────────
       if (trigger === "update" && session?.selectedEstablishmentId && token.id) {
+        // SuperAdmin pode trocar para qualquer estabelecimento sem vínculo
+        if (token.isSuperAdmin) {
+          const est = await db.establishment.findUnique({
+            where: { id: session.selectedEstablishmentId },
+          });
+          if (est) {
+            token.establishmentId = est.id;
+            token.role = "ADMIN";
+            token.needsChurchSelection = false;
+            await db.user.update({
+              where: { id: token.id as string },
+              data: { role: "ADMIN", establishmentId: est.id },
+            }).catch(() => {});
+          }
+          return token;
+        }
+
         const ue = await db.userEstablishment.findUnique({
           where: {
             userId_establishmentId: {

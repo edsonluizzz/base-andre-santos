@@ -123,8 +123,11 @@ export default function ConfiguracoesPage() {
     if (isAdmin) {
       fetch("/api/users").then((r) => r.json()).then(setUsers);
       fetch("/api/members").then((r) => r.json()).then(setMembers);
-      fetch("/api/establishments").then((r) => r.json()).then((data) => {
-        setEstablishments(Array.isArray(data) ? data : []);
+      fetch("/api/user/establishments").then((r) => r.json()).then((data) => {
+        const list = Array.isArray(data)
+          ? data.map((ue: { establishmentId: string; name: string }) => ({ id: ue.establishmentId, name: ue.name }))
+          : [];
+        setEstablishments(list);
         setSwitchingEid(session?.user?.establishmentId ?? "");
       });
       fetchInvites();
