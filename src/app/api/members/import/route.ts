@@ -30,14 +30,40 @@ export async function POST(req: NextRequest) {
 
   const results = { created: 0, skipped: 0, errors: [] as string[] };
 
+  // Verificar limite do plano gratuito
+  const currentCount = await db.member.count({ where: { establishmentId: eid, deletedAt: null } });
+  const FREE_LIMIT = 10;
+  const slots = FREE_LIMIT - currentCount;
+  if (slots <= 0) {
+    return NextResponse.json(
+      { error: "Limite de 10 membros atingido no plano gratuito. Faça upgrade para o plano Pro." },
+      { status: 403 }
+    );
+  }
+
+  // Buscar nomes existentes para checar duplicatas em memória (evita N queries)
+  const existingNames = await db.member.findMany({
+    where: { establishmentId: eid, deletedAt: null },
+    select: { name: true },
+  });
+  const existingSet = new Set(existingNames.map((m) => m.name.toLowerCase()));
+
+  // Parsear todas as linhas e montar lista de membros válidos
+  type NewMember = { name: string; birthday: string | null; phone: string | null; notes: string | null; status: "ACTIVE" | "INACTIVE"; establishmentId: string };
+  const toCreate: NewMember[] = [];
+
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i];
-    const lineNum = i + 2; // +2 pois linha 1 é cabeçalho
+    const lineNum = i + 2;
 
-    // Aceita variações de nome da coluna
     const name = (row["Nome *"] ?? row["Nome"] ?? "").toString().trim();
     if (!name) {
       results.errors.push(`Linha ${lineNum}: nome obrigatório`);
+      continue;
+    }
+
+    if (existingSet.has(name.toLowerCase())) {
+      results.skipped++;
       continue;
     }
 
@@ -46,13 +72,11 @@ export async function POST(req: NextRequest) {
     const statusRaw  = (row["Status"] ?? "ATIVO").toString().trim().toUpperCase();
     const notes      = (row["Observações"] ?? row["Obs"] ?? "").toString().trim() || null;
 
-    // Validar birthday
     let birthday: string | null = null;
     if (birthdayRaw) {
       if (/^\d{2}\/\d{2}\/\d{4}$/.test(birthdayRaw)) {
         birthday = birthdayRaw;
       } else if (/^\d{4}-\d{2}-\d{2}/.test(birthdayRaw)) {
-        // formato ISO → converter para DD/MM/AAAA
         const [y, m, d] = birthdayRaw.slice(0, 10).split("-");
         birthday = `${d}/${m}/${y}`;
       } else {
@@ -62,20 +86,20 @@ export async function POST(req: NextRequest) {
     }
 
     const status = statusRaw === "INATIVO" ? "INACTIVE" : "ACTIVE";
+    toCreate.push({ name, birthday, phone, notes, status, establishmentId: eid });
+  }
 
-    // Checar duplicata por nome + estabelecimento
-    const existing = await db.member.findFirst({
-      where: { name: { equals: name, mode: "insensitive" }, establishmentId: eid },
-    });
-    if (existing) {
-      results.skipped++;
-      continue;
-    }
+  // Respeitar limite do plano: só criar até o número de slots disponíveis
+  const allowed = toCreate.slice(0, slots);
+  const blocked = toCreate.length - allowed.length;
 
-    await db.member.create({
-      data: { name, birthday, phone, notes, status, establishmentId: eid },
-    });
-    results.created++;
+  if (allowed.length > 0) {
+    await db.$transaction(allowed.map((data) => db.member.create({ data })));
+    results.created = allowed.length;
+  }
+
+  if (blocked > 0) {
+    results.errors.push(`${blocked} membro(s) não importado(s): limite de ${FREE_LIMIT} membros atingido no plano gratuito.`);
   }
 
   return NextResponse.json(results);
