@@ -73,6 +73,8 @@ export function Sidebar() {
     if (!mobileOpen) menuButtonRef.current?.focus();
   }, [mobileOpen]);
 
+  const currentEstablishmentId = session?.user?.establishmentId;
+
   useEffect(() => {
     fetch("/api/settings")
       .then((r) => r.json())
@@ -82,7 +84,9 @@ export function Sidebar() {
         setLogoError(false);
       })
       .catch(() => {});
+  }, [currentEstablishmentId]); // re-busca quando troca de estabelecimento
 
+  useEffect(() => {
     function onSettingsUpdated(e: Event) {
       const detail = (e as CustomEvent).detail;
       if (detail.churchName) setChurchName(detail.churchName);
