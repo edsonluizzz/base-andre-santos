@@ -13,22 +13,31 @@ export async function PATCH(
     if (!session || !session.user?.isSuperAdmin)
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-    const { suspended } = await req.json();
-    if (typeof suspended !== "boolean")
-      return NextResponse.json({ error: "Campo 'suspended' é obrigatório (boolean)" }, { status: 400 });
+    const body = await req.json();
+    const { suspended, name, pixKey, plan, adminNote } = body;
 
-    if (params.id === PROTECTED_ID && suspended)
-      return NextResponse.json({ error: "O estabelecimento principal não pode ser suspenso" }, { status: 403 });
+    if (suspended !== undefined) {
+      if (typeof suspended !== "boolean")
+        return NextResponse.json({ error: "Campo 'suspended' deve ser boolean" }, { status: 400 });
+      if (params.id === PROTECTED_ID && suspended)
+        return NextResponse.json({ error: "O estabelecimento principal não pode ser suspenso" }, { status: 403 });
+    }
+
+    if (plan !== undefined && !["FREE", "PRO"].includes(plan))
+      return NextResponse.json({ error: "Plano inválido. Use FREE ou PRO." }, { status: 400 });
 
     const establishment = await db.establishment.findUnique({ where: { id: params.id } });
     if (!establishment)
       return NextResponse.json({ error: "Estabelecimento não encontrado" }, { status: 404 });
 
-    const updated = await db.establishment.update({
-      where: { id: params.id },
-      data: { suspended },
-    });
+    const data: Record<string, unknown> = {};
+    if (suspended !== undefined) data.suspended = suspended;
+    if (name?.trim()) data.name = name.trim();
+    if (pixKey !== undefined) data.pixKey = pixKey?.trim() || null;
+    if (plan !== undefined) data.plan = plan;
+    if (adminNote !== undefined) data.adminNote = adminNote?.trim() || null;
 
+    const updated = await db.establishment.update({ where: { id: params.id }, data });
     return NextResponse.json(updated);
   } catch {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

@@ -9,6 +9,8 @@ declare module "next-auth" {
       isSuperAdmin: boolean;
       needsChurchSelection: boolean;
       suspended: boolean;
+      isImpersonating: boolean;
+      originalEstablishmentId?: string;
     } & DefaultSession["user"];
   }
 }
@@ -21,5 +23,7 @@ declare module "next-auth/jwt" {
     isSuperAdmin?: boolean;
     needsChurchSelection?: boolean;
     suspended?: boolean;
+    isImpersonating?: boolean;
+    originalEstablishmentId?: string;
   }
 }

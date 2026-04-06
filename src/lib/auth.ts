@@ -73,6 +73,26 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         }
       }
 
+      // ── Impersonação de estabelecimento (super admin) ───────────────────────
+      if (trigger === "update" && session !== null && "impersonateId" in session && token.isSuperAdmin) {
+        if (session.impersonateId) {
+          const est = await db.establishment.findUnique({ where: { id: session.impersonateId as string } });
+          if (est) {
+            token.originalEstablishmentId = token.establishmentId;
+            token.establishmentId = est.id;
+            token.isImpersonating = true;
+            token.suspended = false; // super admin não é bloqueado por suspensão
+          }
+        } else {
+          // Sair da impersonação
+          token.establishmentId = token.originalEstablishmentId ?? token.establishmentId;
+          token.originalEstablishmentId = undefined;
+          token.isImpersonating = false;
+          token.suspended = false;
+        }
+        return token;
+      }
+
       // ── Troca de congregação via /select-church ─────────────────────────────
       if (trigger === "update" && session?.selectedEstablishmentId && token.id) {
         // SuperAdmin pode trocar para qualquer estabelecimento sem vínculo
@@ -135,6 +155,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.user.isSuperAdmin = Boolean(token.isSuperAdmin);
         session.user.needsChurchSelection = Boolean(token.needsChurchSelection);
         session.user.suspended = Boolean(token.suspended);
+        session.user.isImpersonating = Boolean(token.isImpersonating);
+        session.user.originalEstablishmentId = token.originalEstablishmentId as string | undefined;
       }
       return session;
     },
