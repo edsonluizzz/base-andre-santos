@@ -58,7 +58,7 @@ export function Sidebar() {
   const { data: session, update } = useSession();
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const [churchName, setChurchName] = useState("Porto Belo");
+  const [churchName, setChurchName] = useState("");
   const [churchLogoUrl, setChurchLogoUrl] = useState("");
   const [logoError, setLogoError] = useState(false);
 
@@ -188,9 +188,9 @@ export function Sidebar() {
               </div>
             )}
             <div className="flex-1 min-w-0 text-left">
-              <p className="text-[10px] tracking-[3px] uppercase text-primary/70">UMADC</p>
+              <p className="text-[10px] tracking-[3px] uppercase text-primary/70">Ovile</p>
               <p className="text-sm font-bold text-foreground truncate">
-                {switching ? "Trocando..." : churchName}
+                {switching ? "Trocando..." : (churchName || "...")}
               </p>
             </div>
             {establishments.length > 1 && (
