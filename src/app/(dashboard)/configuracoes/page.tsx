@@ -3,7 +3,8 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { toast } from "sonner";
-import { Shield, Users, UserCog, ImageIcon, Save, Upload, X, ShieldCog, Trash2, Link, Building2, RefreshCw, Mail, UserPlus, Send, Clock } from "lucide-react";
+import { Shield, Users, UserCog, ImageIcon, Save, Upload, X, ShieldCog, Trash2, Link, Building2, RefreshCw, Mail, UserPlus, Send, Clock, CreditCard } from "lucide-react";
+import { PlanCard } from "@/components/plan-card";
 import { PermissionsTable } from "@/components/shirts/permissions-table";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -274,6 +275,17 @@ export default function ConfiguracoesPage() {
           Configurações
         </h1>
         <p className="text-muted-foreground text-sm mt-1">Gerenciamento do sistema</p>
+      </div>
+
+      {/* Plan & Billing */}
+      <div className="mb-6">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
+            <CreditCard className="w-4 h-4 text-primary" />
+          </div>
+          <p className="font-semibold text-foreground">Plano e Cobrança</p>
+        </div>
+        <PlanCard isAdmin={isAdmin} />
       </div>
 
       {/* Church Appearance — admin only */}

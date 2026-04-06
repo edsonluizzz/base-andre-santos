@@ -26,11 +26,12 @@ export const authConfig: NextAuthConfig = {
       const isCadastro = pathname.startsWith("/cadastro");
       const isApiAuth = pathname.startsWith("/api/auth");
       const isApiOnboarding = pathname === "/api/onboarding";
+      const isApiStripeWebhook = pathname === "/api/stripe/webhook";
       const isSelectChurch = pathname === "/select-church";
       const isSuspendedPage = pathname === "/suspended";
 
       // Rotas sempre públicas
-      if (isApiAuth || isApiOnboarding || isLandingPage || isCadastro || isSuspendedPage) return true;
+      if (isApiAuth || isApiOnboarding || isApiStripeWebhook || isLandingPage || isCadastro || isSuspendedPage) return true;
 
       // Não logado: redireciona para login
       if (!isLoggedIn && !isLoginPage && !isSelectChurch) {
