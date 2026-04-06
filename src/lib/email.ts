@@ -78,7 +78,7 @@ export async function sendInviteEmail({
       <div style="font-family:sans-serif;max-width:520px;margin:0 auto;background:#06080F;color:#e2e8f0;border-radius:12px;padding:32px;">
         <p style="font-size:11px;letter-spacing:4px;text-transform:uppercase;color:#818cf8;margin-bottom:8px;">Ovile · Gestão</p>
         <h1 style="font-size:24px;font-weight:700;color:#fff;margin:0 0 16px;">Você foi convidado!</h1>
-        <p style="color:#94a3b8;line-height:1.6;">Olá, <strong style="color:#fff">${name}</strong>!</p>
+        <p style="color:#94a3b8;line-height:1.6;">${name && !name.includes("@") ? `Olá, <strong style="color:#fff">${name}</strong>!` : "Olá!"}</p>
         <p style="color:#94a3b8;line-height:1.6;">
           <strong style="color:#fff">${invitedBy}</strong> convidou você para acessar o sistema de gestão da
           <strong style="color:#fff">${churchName}</strong> no Ovile Gestão.
