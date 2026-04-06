@@ -25,10 +25,11 @@ export const authConfig: NextAuthConfig = {
       const isLandingPage = pathname === "/";
       const isCadastro = pathname.startsWith("/cadastro");
       const isApiAuth = pathname.startsWith("/api/auth");
+      const isApiOnboarding = pathname === "/api/onboarding";
       const isSelectChurch = pathname === "/select-church";
 
       // Rotas sempre públicas
-      if (isApiAuth || isLandingPage || isCadastro) return true;
+      if (isApiAuth || isApiOnboarding || isLandingPage || isCadastro) return true;
 
       // Não logado: redireciona para login
       if (!isLoggedIn && !isLoginPage && !isSelectChurch) {
