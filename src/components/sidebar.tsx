@@ -76,14 +76,24 @@ export function Sidebar() {
   const currentEstablishmentId = session?.user?.establishmentId;
 
   useEffect(() => {
+    // Aplica nome local imediatamente para evitar exibir o estabelecimento errado
+    if (currentEstablishmentId && establishments.length > 0) {
+      const local = establishments.find((e) => e.establishmentId === currentEstablishmentId);
+      if (local) {
+        setChurchName(local.name);
+        setChurchLogoUrl(local.logoBase64 ?? "");
+        setLogoError(false);
+      }
+    }
     fetch("/api/settings")
       .then((r) => r.json())
       .then((s) => {
         if (s.churchName) setChurchName(s.churchName);
-        setChurchLogoUrl(s.logoBase64 ?? "");
+        if (s.logoBase64 !== undefined) setChurchLogoUrl(s.logoBase64 ?? "");
         setLogoError(false);
       })
       .catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentEstablishmentId]); // re-busca quando troca de estabelecimento
 
   useEffect(() => {
@@ -108,6 +118,13 @@ export function Sidebar() {
     if (eid === session?.user?.establishmentId || switching) return;
     setSwitching(true);
     setSwitcherOpen(false);
+    // Atualiza nome/logo imediatamente sem esperar a sessão
+    const found = establishments.find((e) => e.establishmentId === eid);
+    if (found) {
+      setChurchName(found.name);
+      setChurchLogoUrl(found.logoBase64 ?? "");
+      setLogoError(false);
+    }
     await update({ selectedEstablishmentId: eid });
     router.refresh();
     setSwitching(false);
