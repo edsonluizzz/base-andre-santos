@@ -62,7 +62,7 @@ const PLANS = [
     desc: "Para conhecer o sistema",
     highlight: false,
     cta: "Começar grátis",
-    features: ["Até 30 membros", "Chamada e eventos", "Financeiro básico", "Aniversários"],
+    features: ["Até 10 membros", "Chamada e eventos", "Financeiro básico", "Aniversários"],
     missing: ["Relatórios PDF", "Módulo Ministérios", "Camisetas e Congressos", "Suporte prioritário"],
   },
   {
