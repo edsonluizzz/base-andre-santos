@@ -121,30 +121,32 @@ export async function POST(req: NextRequest) {
       }).catch(() => {});
     }
 
-    // Criar permissões padrão
-    for (const p of DEFAULT_PERMISSIONS) {
-      await db.rolePermission.upsert({
-        where: {
-          role_module_action_establishmentId: {
+    // Criar permissões padrão em paralelo dentro de uma transação
+    await db.$transaction(
+      DEFAULT_PERMISSIONS.map((p) =>
+        db.rolePermission.upsert({
+          where: {
+            role_module_action_establishmentId: {
+              role: p.role as "LEADER" | "MEMBER",
+              module: p.module as "MEMBERS" | "ATTENDANCE" | "FINANCIAL" | "REPORTS" | "EVENTS" | "BIRTHDAYS" | "SHIRTS" | "SETTINGS" | "USERS" | "MINISTRIES",
+              action: p.action as "VIEW" | "CREATE" | "EDIT" | "DELETE" | "EXPORT",
+              establishmentId: establishment.id,
+            },
+          },
+          update: {},
+          create: {
             role: p.role as "LEADER" | "MEMBER",
             module: p.module as "MEMBERS" | "ATTENDANCE" | "FINANCIAL" | "REPORTS" | "EVENTS" | "BIRTHDAYS" | "SHIRTS" | "SETTINGS" | "USERS" | "MINISTRIES",
             action: p.action as "VIEW" | "CREATE" | "EDIT" | "DELETE" | "EXPORT",
+            granted: p.granted,
             establishmentId: establishment.id,
           },
-        },
-        update: {},
-        create: {
-          role: p.role as "LEADER" | "MEMBER",
-          module: p.module as "MEMBERS" | "ATTENDANCE" | "FINANCIAL" | "REPORTS" | "EVENTS" | "BIRTHDAYS" | "SHIRTS" | "SETTINGS" | "USERS" | "MINISTRIES",
-          action: p.action as "VIEW" | "CREATE" | "EDIT" | "DELETE" | "EXPORT",
-          granted: p.granted,
-          establishmentId: establishment.id,
-        },
-      });
-    }
+        })
+      )
+    );
 
-    // Enviar e-mail de boas-vindas
-    await sendWelcomeEmail({
+    // Enviar e-mail de boas-vindas (não bloqueia a resposta)
+    sendWelcomeEmail({
       to: adminEmail.trim(),
       name: adminName?.trim() || "Pastor(a)",
       churchName: churchName.trim(),
