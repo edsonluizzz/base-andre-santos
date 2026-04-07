@@ -110,13 +110,33 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             token.establishmentId = est.id;
             token.isImpersonating = true;
             token.suspended = false; // super admin não é bloqueado por suspensão
+
+            // Audit log: início da impersonação
+            await db.auditLog.create({
+              data: {
+                action: "IMPERSONATE_START",
+                actorId: token.id as string,
+                targetId: est.id,
+                metadata: { establishmentName: est.name },
+              },
+            }).catch(() => {});
           }
         } else {
           // Sair da impersonação
+          const previousEstId = token.establishmentId;
           token.establishmentId = token.originalEstablishmentId ?? token.establishmentId;
           token.originalEstablishmentId = undefined;
           token.isImpersonating = false;
           token.suspended = false;
+
+          // Audit log: fim da impersonação
+          await db.auditLog.create({
+            data: {
+              action: "IMPERSONATE_END",
+              actorId: token.id as string,
+              targetId: previousEstId as string,
+            },
+          }).catch(() => {});
         }
         return token;
       }

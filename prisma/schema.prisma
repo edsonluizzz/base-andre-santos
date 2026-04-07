@@ -455,3 +455,17 @@ enum InviteStatus {
   PENDING
   ACCEPTED
 }
+
+// ─── Audit Log ────────────────────────────────────────────────────────────────
+
+model AuditLog {
+  id              String   @id @default(cuid())
+  action          String   // ex: "IMPERSONATE_START", "IMPERSONATE_END"
+  actorId         String   // userId de quem realizou a ação
+  targetId        String?  // userId ou establishmentId alvo
+  metadata        Json?    // dados adicionais (IP, etc.)
+  createdAt       DateTime @default(now())
+
+  @@index([actorId])
+  @@index([createdAt])
+}
