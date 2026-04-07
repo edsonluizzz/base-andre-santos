@@ -64,7 +64,7 @@ function RateBar({ rate }: { rate: number | null }) {
 function Card({ label, value }: { label: string; value: string | number }) {
   return (
     <div className="bg-card border border-border rounded-xl p-4 print:border-gray-300 print:bg-white">
-      <p className="text-[10px] tracking-[2px] uppercase text-gold mb-1 print:text-gray-500">{label}</p>
+      <p className="text-[10px] tracking-[2px] uppercase text-primary mb-1 print:text-gray-500">{label}</p>
       <p className="text-xl font-bold text-foreground print:text-black">{value}</p>
     </div>
   );
@@ -92,7 +92,7 @@ function FilterBar({
           onClick={() => onMode(fm)}
           className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
             mode === fm
-              ? "bg-gold/10 text-gold border border-gold/25"
+              ? "bg-primary/10 text-primary border border-primary/25"
               : "text-muted-foreground border border-border hover:text-foreground"
           }`}
         >
@@ -103,7 +103,7 @@ function FilterBar({
         <select
           value={year}
           onChange={(e) => onYear(e.target.value)}
-          className="bg-card border border-border text-foreground text-xs rounded-lg px-2 py-1.5 focus:outline-none focus:border-gold/25"
+          className="bg-card border border-border text-foreground text-xs rounded-lg px-2 py-1.5 focus:outline-none focus:border-primary/25"
         >
           {YEARS.map((y) => <option key={y} value={y}>{y}</option>)}
         </select>
@@ -113,7 +113,7 @@ function FilterBar({
           type="month"
           value={month}
           onChange={(e) => onMonth(e.target.value)}
-          className="bg-card border border-border text-foreground text-xs rounded-lg px-2 py-1.5 focus:outline-none focus:border-gold/25"
+          className="bg-card border border-border text-foreground text-xs rounded-lg px-2 py-1.5 focus:outline-none focus:border-primary/25"
         />
       )}
     </div>
@@ -233,7 +233,7 @@ export default function RelatoriosPage() {
           </div>
           <button
             onClick={() => window.print()}
-            className="no-print flex items-center gap-2 px-3 py-2 rounded-lg border border-border text-muted-foreground hover:text-foreground hover:border-gold-muted text-xs transition-colors"
+            className="no-print flex items-center gap-2 px-3 py-2 rounded-lg border border-border text-muted-foreground hover:text-foreground hover:border-primary/30 text-xs transition-colors"
           >
             <Printer className="w-3.5 h-3.5" />
             Exportar PDF
@@ -255,7 +255,7 @@ export default function RelatoriosPage() {
               onClick={() => setTab(t.id)}
               className={`flex-1 min-w-fit px-3 py-2 rounded-lg text-xs font-medium transition-all ${
                 tab === t.id
-                  ? "bg-gold/10 text-gold border border-gold/20"
+                  ? "bg-primary/10 text-primary border border-primary/20"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -335,7 +335,7 @@ function FreqEventoTab({ data }: { data: AttendanceByEvent[] }) {
                 <th className="text-left px-4 py-3 text-[10px] tracking-[2px] uppercase text-muted-foreground/60 font-medium hidden sm:table-cell print:text-gray-500">Data</th>
                 <th className="text-center px-3 py-3 text-[10px] tracking-[2px] uppercase text-success font-medium">Pres.</th>
                 <th className="text-center px-3 py-3 text-[10px] tracking-[2px] uppercase text-destructive font-medium">Aus.</th>
-                <th className="text-center px-3 py-3 text-[10px] tracking-[2px] uppercase text-gold font-medium">Just.</th>
+                <th className="text-center px-3 py-3 text-[10px] tracking-[2px] uppercase text-primary font-medium">Just.</th>
                 <th className="text-left px-4 py-3 text-[10px] tracking-[2px] uppercase text-muted-foreground/60 font-medium print:text-gray-500">Taxa</th>
               </tr>
             </thead>
@@ -351,7 +351,7 @@ function FreqEventoTab({ data }: { data: AttendanceByEvent[] }) {
                   </td>
                   <td className="px-3 py-3 text-center text-success font-medium print:text-green-700">{e.present}</td>
                   <td className="px-3 py-3 text-center text-destructive font-medium print:text-red-700">{e.absent}</td>
-                  <td className="px-3 py-3 text-center text-gold font-medium print:text-yellow-700">{e.justified}</td>
+                  <td className="px-3 py-3 text-center text-primary font-medium print:text-gray-700">{e.justified}</td>
                   <td className="px-4 py-3">
                     <span className="print:text-black">{e.rate !== null ? `${e.rate}%` : "—"}</span>
                     <span className="no-print"><RateBar rate={e.rate} /></span>
@@ -394,7 +394,7 @@ function FreqMembroTab({ data }: { data: AttendanceByMember[] }) {
                 <th className="text-left px-4 py-3 text-[10px] tracking-[2px] uppercase text-muted-foreground/60 font-medium print:text-gray-500">Membro</th>
                 <th className="text-center px-3 py-3 text-[10px] tracking-[2px] uppercase text-success font-medium">Pres.</th>
                 <th className="text-center px-3 py-3 text-[10px] tracking-[2px] uppercase text-destructive font-medium">Aus.</th>
-                <th className="text-center px-3 py-3 text-[10px] tracking-[2px] uppercase text-gold font-medium">Just.</th>
+                <th className="text-center px-3 py-3 text-[10px] tracking-[2px] uppercase text-primary font-medium">Just.</th>
                 <th className="text-left px-4 py-3 text-[10px] tracking-[2px] uppercase text-muted-foreground/60 font-medium print:text-gray-500">Taxa</th>
               </tr>
             </thead>
@@ -404,7 +404,7 @@ function FreqMembroTab({ data }: { data: AttendanceByMember[] }) {
                   <td className="px-4 py-3 text-foreground font-medium print:text-black">{m.name}</td>
                   <td className="px-3 py-3 text-center text-success font-medium print:text-green-700">{m.present}</td>
                   <td className="px-3 py-3 text-center text-destructive font-medium print:text-red-700">{m.absent}</td>
-                  <td className="px-3 py-3 text-center text-gold font-medium print:text-yellow-700">{m.justified}</td>
+                  <td className="px-3 py-3 text-center text-primary font-medium print:text-gray-700">{m.justified}</td>
                   <td className="px-4 py-3">
                     <span className="print:text-black">{m.rate !== null ? `${m.rate}%` : "—"}</span>
                     <span className="no-print"><RateBar rate={m.rate} /></span>
@@ -512,7 +512,7 @@ function FinMembroTab({ data }: { data: FinancialByMember[] }) {
                 <tr key={m.id} className={i % 2 === 0 ? "bg-card print:bg-gray-50" : "print:bg-white"}>
                   <td className="px-4 py-3 text-muted-foreground/60 text-xs print:text-gray-500">{i + 1}</td>
                   <td className="px-4 py-3 text-foreground font-medium print:text-black">{m.name}</td>
-                  <td className="px-4 py-3 text-right text-gold font-bold print:text-black">{fmt(m.total)}</td>
+                  <td className="px-4 py-3 text-right text-primary font-bold print:text-black">{fmt(m.total)}</td>
                   <td className="px-4 py-3 text-right text-muted-foreground hidden sm:table-cell print:text-gray-600">{fmt(m.cash)}</td>
                   <td className="px-4 py-3 text-right text-muted-foreground hidden sm:table-cell print:text-gray-600">{fmt(m.pix)}</td>
                   <td className="px-3 py-3 text-center text-muted-foreground print:text-gray-600">{m.count}</td>

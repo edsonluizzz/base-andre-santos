@@ -177,7 +177,7 @@ export default function FinanceiroPage() {
             variant="outline"
             size="sm"
             onClick={() => setBankAccountDialogOpen(true)}
-            className="border-border text-muted-foreground hover:text-gold hover:border-gold/30 gap-2"
+            className="border-border text-muted-foreground hover:text-foreground hover:border-primary/30 gap-2"
           >
             <Landmark className="w-4 h-4" />
             <span className="hidden sm:inline">Contas</span>
@@ -292,7 +292,7 @@ export default function FinanceiroPage() {
           type="month"
           value={month}
           onChange={(e) => setMonth(e.target.value)}
-          className="w-44 bg-card border-border text-foreground focus-visible:ring-gold-muted"
+          className="w-44 bg-card border-border text-foreground focus-visible:ring-primary/30"
         />
       </div>
 
@@ -345,7 +345,7 @@ export default function FinanceiroPage() {
             <TrendingUp className="w-3.5 h-3.5 text-success" />
             <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Entradas</p>
           </div>
-          <p className="text-2xl font-bold text-success" style={{ fontFamily: "var(--font-heading)" }}>
+          <p className="text-2xl font-bold text-success">
             R$ {offeringsTotal.toFixed(2).replace(".", ",")}
           </p>
           <p className="text-[10px] text-muted-foreground/50 mt-1 group-hover:text-success/60 transition-colors">clique para ver detalhes</p>
@@ -358,14 +358,14 @@ export default function FinanceiroPage() {
             <TrendingDown className="w-3.5 h-3.5 text-destructive" />
             <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Saídas</p>
           </div>
-          <p className="text-2xl font-bold text-destructive" style={{ fontFamily: "var(--font-heading)" }}>
+          <p className="text-2xl font-bold text-destructive">
             R$ {expensesTotal.toFixed(2).replace(".", ",")}
           </p>
           <p className="text-[10px] text-muted-foreground/50 mt-1 group-hover:text-destructive/60 transition-colors">clique para ver detalhes</p>
         </button>
         <div className="bg-card border border-border rounded-xl p-5">
           <div className="flex items-center gap-2 mb-2">
-            <Minus className="w-3.5 h-3.5 text-gold" />
+            <Minus className="w-3.5 h-3.5 text-primary" />
             <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Saldo</p>
           </div>
           <p
@@ -376,7 +376,7 @@ export default function FinanceiroPage() {
         </div>
         <div className="bg-card border border-border rounded-xl p-5">
           <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2">Contribuintes</p>
-          <p className="text-2xl font-bold text-gold" style={{ fontFamily: "var(--font-heading)" }}>
+          <p className="text-2xl font-bold text-primary">
             {Object.keys(perMember).length}
           </p>
         </div>
@@ -386,8 +386,8 @@ export default function FinanceiroPage() {
         {/* Per-member ranking */}
         <div>
           <div className="flex items-center gap-3 mb-4">
-            <TrendingUp className="w-4 h-4 text-gold" />
-            <span className="text-[11px] tracking-[3px] uppercase text-gold">Por participante</span>
+            <TrendingUp className="w-4 h-4 text-primary" />
+            <span className="text-[11px] tracking-[3px] uppercase text-primary">Por participante</span>
             <div className="flex-1 h-px bg-border" />
           </div>
           <div className="space-y-2">
@@ -401,7 +401,7 @@ export default function FinanceiroPage() {
                   <p className="text-sm font-medium text-foreground">{m.name}</p>
                   <p className="text-xs text-muted-foreground">{m.count} contribuição{m.count !== 1 ? "ões" : ""}</p>
                 </div>
-                <p className="text-sm font-bold text-gold">
+                <p className="text-sm font-bold text-primary">
                   R$ {m.total.toFixed(2).replace(".", ",")}
                 </p>
               </div>
@@ -414,13 +414,13 @@ export default function FinanceiroPage() {
           {/* Recent offerings */}
           <div>
             <div className="flex items-center gap-3 mb-4">
-              <span className="text-[11px] tracking-[3px] uppercase text-gold">Lançamentos</span>
+              <span className="text-[11px] tracking-[3px] uppercase text-primary">Lançamentos</span>
               <div className="flex-1 h-px bg-border" />
               {canCreate("FINANCIAL") && (
                 <button
                   onClick={() => setOfferingDialogOpen(true)}
-                  className="flex items-center gap-1 text-xs text-muted-foreground hover:text-gold transition-colors"
-                >
+                  className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+  >
                   <Plus className="w-3.5 h-3.5" />
                   Adicionar
                 </button>
@@ -438,7 +438,7 @@ export default function FinanceiroPage() {
                       {format(new Date(o.date), "dd/MM/yyyy")}
                       {o.event && ` · ${o.event.title}`}
                       {" · "}
-                      <span className={o.method === "PIX" ? "text-gold" : "text-muted-foreground"}>
+                      <span className={o.method === "PIX" ? "text-primary" : "text-muted-foreground"}>
                         {METHOD_LABELS[o.method]}
                       </span>
                     </p>
@@ -465,8 +465,8 @@ export default function FinanceiroPage() {
               <div className="flex-1 h-px bg-border" />
               <button
                 onClick={() => setExpenseDialogOpen(true)}
-                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-gold transition-colors"
-              >
+                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+>
                 <Plus className="w-3.5 h-3.5" />
                 Adicionar
               </button>
@@ -654,7 +654,7 @@ function AddOfferingDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-card border-border text-foreground max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-gold-light" style={{ fontFamily: "var(--font-heading)" }}>
+          <DialogTitle className="text-foreground">
             Registrar Oferta
           </DialogTitle>
         </DialogHeader>
@@ -677,7 +677,7 @@ function AddOfferingDialog({
               <Label className="text-muted-foreground text-xs">Valor (R$) *</Label>
               <Input type="number" min="0.01" step="0.01" value={form.amount}
                 onChange={(e) => set("amount", e.target.value)} placeholder="0,00"
-                className="bg-background border-border text-foreground focus-visible:ring-gold-muted" />
+                className="bg-background border-border text-foreground focus-visible:ring-primary/30" />
             </div>
             <div className="space-y-1.5">
               <Label className="text-muted-foreground text-xs">Método</Label>
@@ -696,7 +696,7 @@ function AddOfferingDialog({
             <div className="space-y-1.5">
               <Label className="text-muted-foreground text-xs">Data</Label>
               <Input type="date" value={form.date} onChange={(e) => set("date", e.target.value)}
-                className="bg-background border-border text-foreground focus-visible:ring-gold-muted" />
+                className="bg-background border-border text-foreground focus-visible:ring-primary/30" />
             </div>
             <div className="space-y-1.5">
               <Label className="text-muted-foreground text-xs">Evento (opcional)</Label>
@@ -735,7 +735,7 @@ function AddOfferingDialog({
               Cancelar
             </Button>
             <Button type="submit" disabled={loading}
-              className="flex-1 bg-gold hover:bg-gold-light text-black font-semibold">
+              className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold">
               {loading ? "Salvando..." : "Registrar"}
             </Button>
           </div>
@@ -802,7 +802,7 @@ function AddExpenseDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-card border-border text-foreground max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-gold-light" style={{ fontFamily: "var(--font-heading)" }}>
+          <DialogTitle className="text-foreground">
             Registrar Despesa
           </DialogTitle>
         </DialogHeader>
@@ -811,14 +811,14 @@ function AddExpenseDialog({
             <Label className="text-muted-foreground text-xs">Descrição *</Label>
             <Input value={form.description} onChange={(e) => set("description", e.target.value)}
               placeholder="Ex: Compra de material..."
-              className="bg-background border-border text-foreground focus-visible:ring-gold-muted" />
+              className="bg-background border-border text-foreground focus-visible:ring-primary/30" />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label className="text-muted-foreground text-xs">Valor (R$) *</Label>
               <Input type="number" min="0.01" step="0.01" value={form.amount}
                 onChange={(e) => set("amount", e.target.value)} placeholder="0,00"
-                className="bg-background border-border text-foreground focus-visible:ring-gold-muted" />
+                className="bg-background border-border text-foreground focus-visible:ring-primary/30" />
             </div>
             <div className="space-y-1.5">
               <Label className="text-muted-foreground text-xs">Categoria</Label>
@@ -839,7 +839,7 @@ function AddExpenseDialog({
           <div className="space-y-1.5">
             <Label className="text-muted-foreground text-xs">Data</Label>
             <Input type="date" value={form.date} onChange={(e) => set("date", e.target.value)}
-              className="bg-background border-border text-foreground focus-visible:ring-gold-muted" />
+              className="bg-background border-border text-foreground focus-visible:ring-primary/30" />
           </div>
           {bankAccounts.length > 0 && (
             <div className="space-y-1.5">
@@ -863,7 +863,7 @@ function AddExpenseDialog({
               Cancelar
             </Button>
             <Button type="submit" disabled={loading}
-              className="flex-1 bg-gold hover:bg-gold-light text-black font-semibold">
+              className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold">
               {loading ? "Salvando..." : "Registrar"}
             </Button>
           </div>
@@ -917,7 +917,7 @@ function BankAccountDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-card border-border text-foreground max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-gold-light flex items-center gap-2" style={{ fontFamily: "var(--font-heading)" }}>
+          <DialogTitle className="text-foreground flex items-center gap-2">
             <Landmark className="w-4 h-4" /> Contas Bancárias / Caixas
           </DialogTitle>
         </DialogHeader>
@@ -928,7 +928,7 @@ function BankAccountDialog({
               <div key={a.id} className="flex items-center gap-3 bg-background rounded-xl px-4 py-3 border border-border group">
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-foreground">
-                    {a.name}{a.isDefault && <span className="ml-2 text-[10px] text-gold uppercase tracking-wider">Padrão</span>}
+                    {a.name}{a.isDefault && <span className="ml-2 text-[10px] text-primary uppercase tracking-wider">Padrão</span>}
                   </p>
                   {a.description && <p className="text-xs text-muted-foreground truncate">{a.description}</p>}
                 </div>
@@ -950,10 +950,10 @@ function BankAccountDialog({
           <form onSubmit={handleCreate} className="space-y-3">
             <Input value={name} onChange={(e) => setName(e.target.value)}
               placeholder="Ex: Caixa Geral, Bradesco, Espécie..."
-              className="bg-background border-border text-foreground focus-visible:ring-gold-muted" />
+              className="bg-background border-border text-foreground focus-visible:ring-primary/30" />
             <Input value={description} onChange={(e) => setDescription(e.target.value)}
               placeholder="Descrição (opcional)"
-              className="bg-background border-border text-foreground focus-visible:ring-gold-muted" />
+              className="bg-background border-border text-foreground focus-visible:ring-primary/30" />
             <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer">
               <input
                 type="checkbox"
@@ -964,7 +964,7 @@ function BankAccountDialog({
               Definir como conta padrão
             </label>
             <Button type="submit" disabled={loading}
-              className="w-full bg-gold hover:bg-gold-light text-black font-semibold">
+              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold">
               {loading ? "Criando..." : "Criar Conta"}
             </Button>
           </form>

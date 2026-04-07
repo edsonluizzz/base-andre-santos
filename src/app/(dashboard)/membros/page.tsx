@@ -467,7 +467,7 @@ export default function MembrosPage() {
                   </div>
                 )}
                 {importResult.log.some((r) => r.resultado === "ERRO" || r.resultado === "BLOQUEADO") && (
-                  <div className="flex items-center gap-2 text-yellow-400">
+                  <div className="flex items-center gap-2 text-warning">
                     <AlertCircle className="w-4 h-4 flex-shrink-0" />
                     <span className="text-sm">{importResult.log.filter((r) => r.resultado === "ERRO" || r.resultado === "BLOQUEADO").length} linha(s) com problema</span>
                   </div>

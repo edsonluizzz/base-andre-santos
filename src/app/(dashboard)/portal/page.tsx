@@ -76,7 +76,7 @@ const ATTENDANCE_LABELS: Record<AttendanceStatus, string> = {
 const ATTENDANCE_STYLES: Record<AttendanceStatus, string> = {
   PRESENT: "text-emerald-400",
   ABSENT: "text-destructive",
-  JUSTIFIED: "text-yellow-400",
+  JUSTIFIED: "text-amber-400",
 };
 
 const SHIRT_STATUS_LABELS: Record<ShirtOrderStatus, string> = {
@@ -89,7 +89,7 @@ const SHIRT_STATUS_LABELS: Record<ShirtOrderStatus, string> = {
 };
 
 const SHIRT_STATUS_STYLES: Record<ShirtOrderStatus, string> = {
-  PENDING: "bg-yellow-500/10 text-yellow-400",
+  PENDING: "bg-amber-500/10 text-amber-400",
   PAID: "bg-emerald-500/10 text-emerald-400",
   PRODUCTION: "bg-blue-500/10 text-blue-400",
   READY: "bg-primary/10 text-accent-foreground",

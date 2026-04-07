@@ -412,7 +412,7 @@ export default function SuperAdminPage() {
                           disabled={isActioning}
                           aria-label={est.suspended ? `Reativar ${est.name}` : `Suspender ${est.name}`}
                           title={est.suspended ? "Reativar" : "Suspender"}
-                          className={`p-2 rounded-lg transition-colors cursor-pointer disabled:opacity-50 ${est.suspended ? "text-emerald-400 hover:bg-emerald-500/10" : "text-yellow-400 hover:bg-yellow-500/10"}`}
+                          className={`p-2 rounded-lg transition-colors cursor-pointer disabled:opacity-50 ${est.suspended ? "text-emerald-400 hover:bg-emerald-500/10" : "text-warning hover:bg-warning/10"}`}
                         >
                           {est.suspended ? <PlayCircle className="w-4 h-4" /> : <PauseCircle className="w-4 h-4" />}
                         </button>
