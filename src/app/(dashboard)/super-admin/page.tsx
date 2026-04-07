@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import {
   Plus, Building2, Users, CalendarDays, Shield, Trash2,
   PauseCircle, PlayCircle, Search, ArrowUpDown, Pencil,
-  Eye, StickyNote, Crown,
+  Eye, StickyNote, Crown, UserPlus, CheckCircle2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -63,6 +63,7 @@ export default function SuperAdminPage() {
   const [estUsers, setEstUsers] = useState<EstUser[]>([]);
   const [usersLoading, setUsersLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [linkedEstIds, setLinkedEstIds] = useState<Set<string>>(new Set());
 
   const isSuperAdmin = session?.user?.isSuperAdmin;
 
@@ -75,8 +76,18 @@ export default function SuperAdminPage() {
   }, []);
 
   useEffect(() => {
-    if (isSuperAdmin) fetchEstablishments();
-    else setLoading(false);
+    if (isSuperAdmin) {
+      fetchEstablishments();
+      fetch("/api/user/establishments")
+        .then((r) => r.json())
+        .then((data) => {
+          if (Array.isArray(data))
+            setLinkedEstIds(new Set(data.map((ue: { establishmentId: string }) => ue.establishmentId)));
+        })
+        .catch(() => {});
+    } else {
+      setLoading(false);
+    }
   }, [isSuperAdmin, fetchEstablishments]);
 
   async function handleSuspend(est: Establishment) {
@@ -107,6 +118,19 @@ export default function SuperAdminPage() {
     } else {
       const d = await res.json().catch(() => ({}));
       toast.error(d.error ?? "Erro ao excluir");
+    }
+  }
+
+  async function handleLinkSelf(est: Establishment) {
+    setActionLoading(est.id);
+    const res = await fetch(`/api/super-admin/establishments/${est.id}/link-self`, { method: "POST" });
+    setActionLoading(null);
+    if (res.ok) {
+      toast.success(`Vinculado a "${est.name}" com sucesso!`);
+      setLinkedEstIds((prev) => new Set([...prev, est.id]));
+    } else {
+      const d = await res.json().catch(() => ({}));
+      toast.error(d.error ?? "Erro ao vincular");
     }
   }
 
@@ -287,6 +311,25 @@ export default function SuperAdminPage() {
                         {format(new Date(est.createdAt), "dd/MM/yyyy", { locale: ptBR })}
                       </p>
                     </div>
+                    {/* Link self */}
+                    {linkedEstIds.has(est.id) ? (
+                      <span
+                        title="Você já está vinculado a este estabelecimento"
+                        className="p-2 rounded-lg text-emerald-400 cursor-default"
+                      >
+                        <CheckCircle2 className="w-4 h-4" />
+                      </span>
+                    ) : (
+                      <button
+                        onClick={() => handleLinkSelf(est)}
+                        disabled={isActioning}
+                        aria-label={`Vincular-me a ${est.name}`}
+                        title="Vincular-me a este estabelecimento"
+                        className="p-2 rounded-lg text-amber-400 hover:bg-amber-500/10 transition-colors cursor-pointer disabled:opacity-50"
+                      >
+                        <UserPlus className="w-4 h-4" />
+                      </button>
+                    )}
                     {/* Impersonate */}
                     <button
                       onClick={() => handleImpersonate(est)}
