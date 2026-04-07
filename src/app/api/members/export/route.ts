@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { hasPermission } from "@/lib/permissions";
+import { Role } from "@prisma/client";
 import * as XLSX from "xlsx";
 
 // GET /api/members/export — exportar lista de membros em xlsx
@@ -8,10 +10,11 @@ import * as XLSX from "xlsx";
 export async function GET() {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  if (!["ADMIN", "LEADER"].includes(session.user.role ?? ""))
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const eid = session.user.establishmentId;
+
+  const allowed = await hasPermission(session.user.role as Role, "REPORTS", "EXPORT", eid);
+  if (!allowed) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const members = await db.member.findMany({
     where: { establishmentId: eid, deletedAt: null },
