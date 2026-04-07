@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { MemberDialog } from "@/components/members/member-dialog";
 import { DeleteConfirm } from "@/components/members/delete-confirm";
 import { Skeleton } from "@/components/ui/skeleton";
+import * as XLSX from "xlsx";
 import {
   Dialog,
   DialogContent,
@@ -81,7 +82,6 @@ export default function MembrosPage() {
   }
 
   function downloadImportLog(log: ImportLogRow[]) {
-    const XLSX = require("xlsx");
     const rows = [
       ["Linha", "Nome", "Resultado", "Detalhe"],
       ...log.map((r) => [r.linha, r.nome, r.resultado, r.detalhe]),

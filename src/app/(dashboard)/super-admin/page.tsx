@@ -447,6 +447,14 @@ export default function SuperAdminPage() {
                       >
                         <RefreshCw className="w-3 h-3" />
                       </button>
+                      <button
+                        onClick={() => handleRemoveJoinCode(est)}
+                        disabled={isActioning}
+                        title="Remover código"
+                        className="p-1 rounded text-muted-foreground hover:text-destructive transition-colors disabled:opacity-50"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
                     </>
                   ) : (
                     <button
