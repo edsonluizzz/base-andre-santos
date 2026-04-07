@@ -65,6 +65,10 @@ export const authConfig: NextAuthConfig = {
         return Response.redirect(new URL("/dashboard", nextUrl));
       }
 
+      // Chamadas de API nunca devem ser redirecionadas para páginas
+      const isApiRoute = pathname.startsWith("/api/");
+      if (isApiRoute) return true;
+
       // Estabelecimento suspenso
       if (isLoggedIn && session?.user?.suspended && !session?.user?.isSuperAdmin) {
         return Response.redirect(new URL("/suspended", nextUrl));
