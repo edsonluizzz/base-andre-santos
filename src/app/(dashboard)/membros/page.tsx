@@ -48,10 +48,13 @@ export default function MembrosPage() {
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"ALL" | "ACTIVE" | "INACTIVE">("ALL");
+  const [page, setPage] = useState(1);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editMember, setEditMember] = useState<Member | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"cards" | "list">("cards");
+  const PAGE_SIZE = 24;
 
   // Import state
   const [importOpen, setImportOpen] = useState(false);
@@ -109,12 +112,17 @@ export default function MembrosPage() {
 
   useEffect(() => { fetchMembers(); }, [fetchMembers]);
 
-  const filtered = members.filter((m) =>
-    m.name.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = members.filter((m) => {
+    const matchSearch = m.name.toLowerCase().includes(search.toLowerCase());
+    const matchStatus = statusFilter === "ALL" || m.status === statusFilter;
+    return matchSearch && matchStatus;
+  });
 
-  const active = filtered.filter((m) => m.status === "ACTIVE");
-  const inactive = filtered.filter((m) => m.status === "INACTIVE");
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  const active = paginated.filter((m) => m.status === "ACTIVE");
+  const inactive = paginated.filter((m) => m.status === "INACTIVE");
 
   async function handleDelete(id: string) {
     const res = await fetch(`/api/members/${id}`, { method: "DELETE" });
@@ -229,15 +237,27 @@ export default function MembrosPage() {
         </div>
       </div>
 
-      {/* Search */}
-      <div className="relative mb-6">
+      {/* Search + Filtros */}
+      <div className="flex gap-3 mb-6 flex-wrap">
+        <div className="relative flex-1 min-w-[200px]">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <Input
           placeholder="Buscar por nome..."
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => { setSearch(e.target.value); setPage(1); }}
           className="pl-9 bg-card border-border text-foreground placeholder:text-muted-foreground"
         />
+        </div>
+        <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v as "ALL" | "ACTIVE" | "INACTIVE"); setPage(1); }}>
+          <SelectTrigger className="w-[160px] bg-card border-border text-foreground">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent className="bg-card border-border">
+            <SelectItem value="ALL">Todos</SelectItem>
+            <SelectItem value="ACTIVE">Ativos</SelectItem>
+            <SelectItem value="INACTIVE">Inativos</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {loading ? (
@@ -278,6 +298,36 @@ export default function MembrosPage() {
             <p className="text-center text-muted-foreground py-16">
               Nenhum resultado encontrado
             </p>
+          )}
+
+          {/* Paginação */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between mt-6 pt-4 border-t border-border">
+              <p className="text-sm text-muted-foreground">
+                {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} de {filtered.length}
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                >
+                  Anterior
+                </Button>
+                <span className="flex items-center px-3 text-sm text-muted-foreground">
+                  {page} / {totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={page === totalPages}
+                >
+                  Próxima
+                </Button>
+              </div>
+            </div>
           )}
         </>
       )}

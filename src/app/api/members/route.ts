@@ -34,13 +34,16 @@ export async function POST(req: NextRequest) {
 
     const eid = session.user?.establishmentId ?? "default-porto-belo";
 
-    // Enforce free plan limit of 10 members (Stripe integration pending)
-    const count = await db.member.count({ where: { establishmentId: eid, deletedAt: null } });
-    if (count >= 10) {
-      return NextResponse.json(
-        { error: "Limite de 10 membros atingido no plano gratuito. Faça upgrade para o plano Pro." },
-        { status: 403 }
-      );
+    // Enforce free plan limit of 10 members
+    const est = await db.establishment.findUnique({ where: { id: eid }, select: { plan: true } });
+    if (!est || est.plan === "FREE") {
+      const count = await db.member.count({ where: { establishmentId: eid, deletedAt: null } });
+      if (count >= 10) {
+        return NextResponse.json(
+          { error: "Limite de 10 membros atingido no plano gratuito. Faça upgrade para o plano Pro." },
+          { status: 403 }
+        );
+      }
     }
 
     const member = await db.member.create({

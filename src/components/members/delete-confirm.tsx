@@ -19,11 +19,11 @@ export function DeleteConfirm({
 }) {
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onCancel()}>
-      <DialogContent className="bg-[#1e1e1e] border-[#2a2a2a] text-[#f0ece4] max-w-sm">
+      <DialogContent className="bg-card border-border text-foreground max-w-sm">
         <DialogHeader>
-          <DialogTitle className="text-[#e8c97a]">Remover participante</DialogTitle>
+          <DialogTitle className="text-foreground">Remover participante</DialogTitle>
         </DialogHeader>
-        <p className="text-[#888] text-sm mt-1">
+        <p className="text-muted-foreground text-sm mt-1">
           Tem certeza? Esta ação também removerá o histórico de chamadas e
           ofertas vinculados a este participante.
         </p>
@@ -31,13 +31,13 @@ export function DeleteConfirm({
           <Button
             variant="outline"
             onClick={onCancel}
-            className="flex-1 border-[#2a2a2a] text-[#888] hover:bg-[#2a2a2a]"
+            className="flex-1"
           >
             Cancelar
           </Button>
           <Button
             onClick={onConfirm}
-            className="flex-1 bg-[#e74c3c] hover:bg-[#c0392b] text-white"
+            className="flex-1 bg-destructive hover:bg-destructive/90 text-destructive-foreground"
           >
             Remover
           </Button>
