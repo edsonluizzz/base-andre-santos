@@ -17,7 +17,7 @@ export async function POST() {
     if (!est?.stripeCustomerId)
       return NextResponse.json({ error: "Nenhuma assinatura encontrada" }, { status: 404 });
 
-    const baseUrl = process.env.NEXT_PUBLIC_URL ?? "https://ovile.com.br";
+    const baseUrl = process.env.APP_URL ?? "https://ovile.com.br";
 
     const portalSession = await getStripe().billingPortal.sessions.create({
       customer: est.stripeCustomerId,

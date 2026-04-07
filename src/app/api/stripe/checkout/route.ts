@@ -37,7 +37,7 @@ export async function POST() {
       await db.establishment.update({ where: { id: eid }, data: { stripeCustomerId: customerId } });
     }
 
-    const baseUrl = process.env.NEXT_PUBLIC_URL ?? "https://ovile.com.br";
+    const baseUrl = process.env.APP_URL ?? "https://ovile.com.br";
 
     const checkoutSession = await getStripe().checkout.sessions.create({
       customer: customerId,
