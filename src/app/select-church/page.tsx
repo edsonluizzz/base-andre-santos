@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import { Cross, ChevronRight, Loader2 } from "lucide-react";
 
 interface ChurchOption {
@@ -20,7 +19,6 @@ const ROLE_LABEL: Record<string, string> = {
 
 export default function SelectChurchPage() {
   const { data: session, update } = useSession({ required: true });
-  const router = useRouter();
 
   const [churches, setChurches] = useState<ChurchOption[]>([]);
   const [loading, setLoading] = useState(true);
