@@ -2,8 +2,30 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 
+// Rate limit: máximo de tentativas de lookup de código por IP por janela de tempo
+const JOIN_LOOKUP_WINDOW_MS = 60 * 1000; // 1 minuto
+const JOIN_LOOKUP_MAX = 20; // 20 lookups por minuto por IP
+
+// Cache em memória leve (por processo — suficiente para Vercel Fluid Compute)
+const ipLookupCache = new Map<string, { count: number; resetAt: number }>();
+
+function checkJoinRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const entry = ipLookupCache.get(ip);
+  if (!entry || now > entry.resetAt) {
+    ipLookupCache.set(ip, { count: 1, resetAt: now + JOIN_LOOKUP_WINDOW_MS });
+    return true;
+  }
+  entry.count += 1;
+  return entry.count <= JOIN_LOOKUP_MAX;
+}
+
 // GET /api/join?c=CODE — busca informações do estabelecimento pelo código (público)
 export async function GET(req: NextRequest) {
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+  if (!checkJoinRateLimit(ip))
+    return NextResponse.json({ error: "Muitas tentativas. Aguarde um momento." }, { status: 429 });
+
   const code = req.nextUrl.searchParams.get("c")?.trim().toUpperCase();
   if (!code) return NextResponse.json({ error: "Código inválido" }, { status: 400 });
 
