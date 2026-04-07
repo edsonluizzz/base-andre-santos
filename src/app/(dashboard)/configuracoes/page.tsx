@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useSession, signOut } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import { Shield, Users, UserCog, ImageIcon, Save, Upload, X, ShieldCog, Trash2, Link, Building2, RefreshCw, Mail, UserPlus, Send, Clock, CreditCard } from "lucide-react";
 import { PlanCard } from "@/components/plan-card";
@@ -58,7 +58,7 @@ const ROLE_COLORS: Record<string, string> = {
 };
 
 export default function ConfiguracoesPage() {
-  const { data: session } = useSession();
+  const { data: session, update } = useSession();
   const [users, setUsers] = useState<SystemUser[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -248,15 +248,14 @@ export default function ConfiguracoesPage() {
     if (!switchingEid || switchingEid === session?.user?.establishmentId) return;
     setSwitching(true);
     try {
-      const res = await fetch("/api/users/me", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ establishmentId: switchingEid }),
-      });
-      if (!res.ok) throw new Error();
+      const newSession = await update({ selectedEstablishmentId: switchingEid });
+      if (newSession?.user?.establishmentId !== switchingEid) {
+        toast.error("Não foi possível trocar o estabelecimento.");
+        setSwitching(false);
+        return;
+      }
       toast.success("Estabelecimento alterado. Redirecionando...");
-      // Força novo login para atualizar o JWT com o novo establishmentId
-      setTimeout(() => signOut({ callbackUrl: "/login" }), 1200);
+      setTimeout(() => { window.location.href = "/dashboard"; }, 800);
     } catch {
       toast.error("Erro ao trocar estabelecimento");
       setSwitching(false);
@@ -462,7 +461,7 @@ export default function ConfiguracoesPage() {
               </Button>
             </div>
             <p className="text-[11px] text-muted-foreground/50 mt-2">
-              Ao trocar, você será redirecionado para o login novamente.
+              Ao trocar, você será redirecionado para o dashboard do novo estabelecimento.
             </p>
           </div>
         )}

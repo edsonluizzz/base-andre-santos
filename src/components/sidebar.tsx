@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import {
   Users,
@@ -54,7 +54,6 @@ type EstablishmentOption = { establishmentId: string; name: string; logoBase64?:
 
 export function Sidebar() {
   const pathname = usePathname();
-  const router = useRouter();
   const { data: session, update } = useSession();
   const [mobileOpen, setMobileOpen] = useState(false);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
@@ -118,16 +117,14 @@ export function Sidebar() {
     if (eid === session?.user?.establishmentId || switching) return;
     setSwitching(true);
     setSwitcherOpen(false);
-    // Atualiza nome/logo imediatamente sem esperar a sessão
-    const found = establishments.find((e) => e.establishmentId === eid);
-    if (found) {
-      setChurchName(found.name);
-      setChurchLogoUrl(found.logoBase64 ?? "");
-      setLogoError(false);
+    const newSession = await update({ selectedEstablishmentId: eid });
+    // Verifica se a troca realmente aconteceu
+    if (newSession?.user?.establishmentId !== eid) {
+      setSwitching(false);
+      return;
     }
-    await update({ selectedEstablishmentId: eid });
-    router.refresh();
-    setSwitching(false);
+    // Reload completo garante que todos os dados (server + client) sejam do novo estabelecimento
+    window.location.href = "/dashboard";
   }
 
   const initials = session?.user?.name
