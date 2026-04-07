@@ -56,6 +56,10 @@ export async function POST(req: NextRequest) {
   if (!["xlsx", "xls", "csv"].includes(ext ?? ""))
     return NextResponse.json({ error: "Formato inválido. Use .xlsx, .xls ou .csv" }, { status: 400 });
 
+  const MAX_IMPORT_SIZE = 5 * 1024 * 1024; // 5MB
+  if (file.size > MAX_IMPORT_SIZE)
+    return NextResponse.json({ error: "Arquivo muito grande. Máximo 5MB." }, { status: 400 });
+
   const arrayBuffer = await file.arrayBuffer();
   const wb = XLSX.read(arrayBuffer, { type: "array" });
   const ws = wb.Sheets[wb.SheetNames[0]];
@@ -63,6 +67,10 @@ export async function POST(req: NextRequest) {
 
   if (rows.length === 0)
     return NextResponse.json({ error: "Planilha vazia ou sem dados" }, { status: 400 });
+
+  const MAX_ROWS = 5000;
+  if (rows.length > MAX_ROWS)
+    return NextResponse.json({ error: `Limite de ${MAX_ROWS} membros por importação.` }, { status: 400 });
 
   const result: ImportResult = { updated: 0, created: 0, skipped: 0, log: [] };
 
