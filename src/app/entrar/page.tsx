@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { useSession, signIn } from "next-auth/react";
+import { useSession, signIn, signOut } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Cross, Loader2, ArrowRight, LogIn } from "lucide-react";
+import { Cross, Loader2, ArrowRight, LogIn, LogOut } from "lucide-react";
 
 export default function EntrarPage() {
   const { data: session, status, update } = useSession();
@@ -99,6 +99,24 @@ export default function EntrarPage() {
             Digite o código que seu pastor ou líder enviou
           </p>
         </div>
+
+        {/* Banner de sessão ativa — permite trocar de conta */}
+        {isLoggedIn && session?.user?.email && (
+          <div className="mb-4 rounded-xl border border-white/[0.07] px-4 py-3 flex items-center justify-between gap-3"
+            style={{ background: "rgba(15,23,42,0.5)" }}>
+            <div className="min-w-0">
+              <p className="text-xs text-slate-500">Logado como</p>
+              <p className="text-sm text-slate-300 truncate">{session.user.email}</p>
+            </div>
+            <button
+              onClick={() => signOut({ callbackUrl: "/login" })}
+              className="flex-shrink-0 flex items-center gap-1.5 text-xs text-slate-400 hover:text-red-400 transition-colors"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              Sair
+            </button>
+          </div>
+        )}
 
         <div
           className="rounded-2xl border border-white/[0.07] p-6 space-y-5"
