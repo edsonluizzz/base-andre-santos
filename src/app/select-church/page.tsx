@@ -36,8 +36,7 @@ export default function SelectChurchPage() {
   async function handleSelect(establishmentId: string) {
     setSelecting(establishmentId);
     await update({ selectedEstablishmentId: establishmentId });
-    router.push("/dashboard");
-    router.refresh();
+    window.location.href = "/dashboard";
   }
 
   return (
