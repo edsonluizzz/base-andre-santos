@@ -244,6 +244,19 @@ model Expense {
   @@index([ministryId])
 }
 
+// ─── Contas Bancárias / Caixas ────────────────────────────────────────────
+
+model BankAccount {
+  id              String   @id @default(cuid())
+  name            String
+  description     String?
+  isDefault       Boolean  @default(false)
+  establishmentId String   @default("default-porto-belo")
+  createdAt       DateTime @default(now())
+
+  @@index([establishmentId])
+}
+
 // ─── Configurações globais ────────────────────────────────────────────────
 
 model Settings {

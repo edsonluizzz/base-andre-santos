@@ -65,7 +65,7 @@ function Card({ label, value }: { label: string; value: string | number }) {
   return (
     <div className="bg-card border border-border rounded-xl p-4 print:border-gray-300 print:bg-white">
       <p className="text-[10px] tracking-[2px] uppercase text-gold mb-1 print:text-gray-500">{label}</p>
-      <p className="text-xl font-bold text-foreground print:text-black" style={{ fontFamily: "var(--font-heading)" }}>{value}</p>
+      <p className="text-xl font-bold text-foreground print:text-black">{value}</p>
     </div>
   );
 }
@@ -226,7 +226,7 @@ export default function RelatoriosPage() {
       <div>
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-gold-light print:text-black" style={{ fontFamily: "var(--font-heading)" }}>
+            <h1 className="text-2xl font-bold text-foreground print:text-black">
               Relatórios
             </h1>
             <p className="text-muted-foreground text-sm mt-1 print:text-gray-500">Frequência e financeiro consolidados</p>

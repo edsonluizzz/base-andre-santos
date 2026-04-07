@@ -50,6 +50,11 @@ const config: Config = {
         },
         success: "var(--success)",
         warning: "var(--warning)",
+        gold: {
+          DEFAULT: "#d4a817",
+          light: "#e8c97a",
+          muted: "rgba(212,168,23,0.35)",
+        },
         // Sidebar tokens
         sidebar: {
           DEFAULT: "var(--sidebar)",

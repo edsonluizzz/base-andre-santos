@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { toast } from "sonner";
-import { Plus, Trash2, TrendingUp, TrendingDown, Minus, Lock, Landmark, Settings2, X, Printer } from "lucide-react";
+import { Plus, Trash2, TrendingUp, TrendingDown, Minus, Lock, Landmark, Settings2, X, Printer, ChevronLeft, ChevronRight } from "lucide-react";
 import { usePermissions } from "@/context/permissions-context";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -62,6 +62,10 @@ export default function FinanceiroPage() {
   const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 
   const [month, setMonth] = useState(currentMonth);
+  const [selectedYear, setSelectedYear] = useState(now.getFullYear());
+  const [yearData, setYearData] = useState<{ month: number; entradas: number; saidas: number }[]>([]);
+  const [yearTotals, setYearTotals] = useState({ entradas: 0, saidas: 0 });
+  const [yearLoading, setYearLoading] = useState(true);
   const [offerings, setOfferings] = useState<Offering[]>([]);
   const [offeringsTotal, setOfferingsTotal] = useState(0);
   const [expenses, setExpenses] = useState<Expense[]>([]);
@@ -95,6 +99,18 @@ export default function FinanceiroPage() {
       setPageLoading(false)
     );
   }, [fetchOfferings, fetchExpenses]);
+
+  useEffect(() => {
+    setYearLoading(true);
+    fetch(`/api/financeiro/anual?year=${selectedYear}`)
+      .then((r) => r.json())
+      .then((d) => {
+        setYearData(d.months ?? []);
+        setYearTotals({ entradas: d.totalEntradas ?? 0, saidas: d.totalSaidas ?? 0 });
+      })
+      .catch(() => {})
+      .finally(() => setYearLoading(false));
+  }, [selectedYear]);
 
   const fetchBankAccounts = useCallback(async () => {
     const res = await fetch("/api/bank-accounts");
@@ -153,12 +169,7 @@ export default function FinanceiroPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1
-            className="text-2xl lg:text-3xl font-bold text-gold-light"
-            style={{ fontFamily: "var(--font-heading)" }}
-          >
-            Financeiro
-          </h1>
+          <h1 className="text-2xl lg:text-3xl font-bold text-foreground">Financeiro</h1>
           <p className="text-muted-foreground text-sm mt-1">Entradas e despesas do mês</p>
         </div>
         <div className="flex items-center gap-2">
@@ -195,6 +206,84 @@ export default function FinanceiroPage() {
           )}
         </div>
       </div>
+
+      {/* DRE Anual */}
+      {(() => {
+        const MESES = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
+        const maxVal = Math.max(...yearData.map((m) => Math.max(m.entradas, m.saidas)), 1);
+        const fmt = (v: number) => `R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
+        const saldoAnual = yearTotals.entradas - yearTotals.saidas;
+        return (
+          <div className="bg-card border border-border rounded-2xl p-5 mb-6">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-5">
+              <div>
+                <h2 className="text-sm font-semibold text-foreground">DRE — Demonstrativo do Ano</h2>
+                <p className="text-xs text-muted-foreground mt-0.5">Entradas e saídas mês a mês</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button onClick={() => setSelectedYear((y) => y - 1)} className="p-1 rounded-lg hover:bg-secondary transition-colors">
+                  <ChevronLeft className="w-4 h-4 text-muted-foreground" />
+                </button>
+                <span className="text-sm font-bold text-foreground w-12 text-center">{selectedYear}</span>
+                <button onClick={() => setSelectedYear((y) => y + 1)} disabled={selectedYear >= now.getFullYear()} className="p-1 rounded-lg hover:bg-secondary transition-colors disabled:opacity-30">
+                  <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                </button>
+              </div>
+            </div>
+
+            {yearLoading ? (
+              <div className="h-24 flex items-center justify-center text-muted-foreground text-sm">Carregando...</div>
+            ) : (
+              <>
+                {/* Barras */}
+                <div className="grid grid-cols-12 gap-1 mb-3 items-end h-20">
+                  {yearData.map((m) => {
+                    const eH = maxVal > 0 ? (m.entradas / maxVal) * 100 : 0;
+                    const sH = maxVal > 0 ? (m.saidas / maxVal) * 100 : 0;
+                    const isCurrentMonth = selectedYear === now.getFullYear() && m.month === now.getMonth() + 1;
+                    return (
+                      <div key={m.month} className="flex flex-col items-center gap-0.5 h-full justify-end group relative">
+                        {/* Tooltip */}
+                        <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 hidden group-hover:flex flex-col items-center z-10 pointer-events-none">
+                          <div className="bg-popover border border-border rounded-lg px-2 py-1.5 text-[10px] whitespace-nowrap shadow-lg">
+                            <div className="text-success font-medium">↑ {fmt(m.entradas)}</div>
+                            <div className="text-destructive font-medium">↓ {fmt(m.saidas)}</div>
+                            <div className={`font-bold ${m.entradas - m.saidas >= 0 ? "text-success" : "text-destructive"}`}>
+                              = {fmt(m.entradas - m.saidas)}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="w-full flex gap-px justify-center items-end flex-1">
+                          <div className="w-[45%] rounded-t-sm bg-success/60 hover:bg-success/80 transition-colors" style={{ height: `${eH}%`, minHeight: eH > 0 ? 2 : 0 }} />
+                          <div className="w-[45%] rounded-t-sm bg-destructive/50 hover:bg-destructive/70 transition-colors" style={{ height: `${sH}%`, minHeight: sH > 0 ? 2 : 0 }} />
+                        </div>
+                        <span className={`text-[9px] ${isCurrentMonth ? "text-primary font-bold" : "text-muted-foreground"}`}>{MESES[m.month - 1]}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Totais */}
+                <div className="grid grid-cols-3 gap-3 pt-4 border-t border-border">
+                  <div className="text-center">
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Total Entradas</p>
+                    <p className="text-sm font-bold text-success">{fmt(yearTotals.entradas)}</p>
+                  </div>
+                  <div className="text-center border-x border-border">
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Total Saídas</p>
+                    <p className="text-sm font-bold text-destructive">{fmt(yearTotals.saidas)}</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Saldo Anual</p>
+                    <p className={`text-sm font-bold ${saldoAnual >= 0 ? "text-success" : "text-destructive"}`}>{fmt(saldoAnual)}</p>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Month filter */}
       <div className="flex items-center gap-3 mb-6">
@@ -281,8 +370,7 @@ export default function FinanceiroPage() {
           </div>
           <p
             className={`text-2xl font-bold ${saldo >= 0 ? "text-success" : "text-destructive"}`}
-            style={{ fontFamily: "var(--font-heading)" }}
-          >
+                      >
             R$ {saldo.toFixed(2).replace(".", ",")}
           </p>
         </div>
