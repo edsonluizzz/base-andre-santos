@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
+import { hasPermission } from "@/lib/permissions";
+import { Role } from "@prisma/client";
 
 export async function GET(req: NextRequest) {
   try {
@@ -8,6 +10,14 @@ export async function GET(req: NextRequest) {
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const eid = session.user?.establishmentId ?? "default-porto-belo";
+
+    const allowed = await hasPermission(
+      session.user.role as Role,
+      "FINANCIAL",
+      "VIEW",
+      eid
+    );
+    if (!allowed) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     const year = parseInt(new URL(req.url).searchParams.get("year") ?? String(new Date().getFullYear()));
 
     const start = new Date(year, 0, 1);
