@@ -127,7 +127,7 @@ export default function SuperAdminPage() {
     setActionLoading(null);
     if (res.ok) {
       toast.success(`Vinculado a "${est.name}" com sucesso!`);
-      setLinkedEstIds((prev) => new Set([...prev, est.id]));
+      setLinkedEstIds((prev) => { const next = new Set(prev); next.add(est.id); return next; });
     } else {
       const d = await res.json().catch(() => ({}));
       toast.error(d.error ?? "Erro ao vincular");
