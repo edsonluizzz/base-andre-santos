@@ -11,7 +11,6 @@ export async function GET() {
     const ues = await db.userEstablishment.findMany({
       where: {
         userId: session.user.id,
-        inviteStatus: "ACCEPTED",
       },
       include: {
         establishment: { select: { id: true, name: true } },
