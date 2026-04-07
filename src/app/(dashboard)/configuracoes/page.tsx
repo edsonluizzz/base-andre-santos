@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
-import { Shield, Users, UserCog, ImageIcon, Save, Upload, X, ShieldCog, Trash2, Link, Building2, RefreshCw, Mail, UserPlus, Send, Clock, CreditCard } from "lucide-react";
+import { Shield, Users, UserCog, ImageIcon, Save, Upload, X, ShieldCog, Trash2, Link, Building2, RefreshCw, Mail, UserPlus, Send, Clock, CreditCard, Copy, QrCode } from "lucide-react";
 import { PlanCard } from "@/components/plan-card";
 import { PermissionsTable } from "@/components/shirts/permissions-table";
 import { Input } from "@/components/ui/input";
@@ -68,6 +68,7 @@ export default function ConfiguracoesPage() {
   const isAdmin = session?.user?.role === "ADMIN";
 
   const [churchName, setChurchName] = useState("");
+  const [joinCode, setJoinCode] = useState<string | null>(null);
   const [churchLogoUrl, setChurchLogoUrl] = useState("");
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -138,6 +139,7 @@ export default function ConfiguracoesPage() {
       .then((s) => {
         if (s.churchName) setChurchName(s.churchName);
         if (s.logoBase64) setChurchLogoUrl(s.logoBase64);
+        setJoinCode(s.joinCode ?? null);
       })
       .catch(() => {});
   }, [isAdmin]);
@@ -388,6 +390,48 @@ export default function ConfiguracoesPage() {
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Link de acesso para membros — admin only */}
+      {isAdmin && (
+        <div className="glass-card p-6 mb-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
+              <QrCode className="w-4 h-4 text-primary" />
+            </div>
+            <p className="font-semibold text-foreground">Link de Acesso para Membros</p>
+          </div>
+          {joinCode ? (
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                Compartilhe este link no grupo da sua congregação. Qualquer pessoa que clicar e fazer login com Google entrará automaticamente como membro.
+              </p>
+              <div className="flex items-center gap-2 p-3 rounded-xl bg-background border border-border">
+                <code className="flex-1 text-sm text-primary font-mono break-all">
+                  {typeof window !== "undefined" ? `${window.location.origin}/entrar?c=${joinCode}` : `/entrar?c=${joinCode}`}
+                </code>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(`${window.location.origin}/entrar?c=${joinCode}`);
+                    toast.success("Link copiado!");
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-primary/20 bg-primary/5 hover:bg-primary/10 text-primary text-xs font-medium transition-colors flex-shrink-0"
+                >
+                  <Copy className="w-3.5 h-3.5" />
+                  Copiar
+                </button>
+              </div>
+              <p className="text-[11px] text-muted-foreground/50">
+                Código: <span className="font-mono font-bold tracking-widest text-foreground">{joinCode}</span>
+                {" · "}Para trocar o código, peça ao Super Admin.
+              </p>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Nenhum código de acesso gerado ainda. Peça ao Super Admin para gerar um na área de Super Admin.
+            </p>
+          )}
         </div>
       )}
 

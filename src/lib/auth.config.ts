@@ -16,6 +16,22 @@ export const authConfig: NextAuthConfig = {
     signIn: "/login",
   },
   callbacks: {
+    // Session callback edge-safe: mapeia campos do token para session.user
+    // Necessário para que o middleware consiga ler campos customizados
+    session({ session, token }) {
+      if (session.user) {
+        session.user.id = (token.id as string) ?? "";
+        session.user.role = (token.role as string) ?? "MEMBER";
+        session.user.establishmentId = (token.establishmentId as string) ?? "";
+        session.user.isSuperAdmin = Boolean(token.isSuperAdmin);
+        session.user.needsChurchSelection = Boolean(token.needsChurchSelection);
+        session.user.suspended = Boolean(token.suspended);
+        session.user.isImpersonating = Boolean(token.isImpersonating);
+        session.user.noEstablishment = Boolean(token.noEstablishment);
+      }
+      return session;
+    },
+
     authorized({ auth, request: { nextUrl } }) {
       const session = auth as Session | null;
       const isLoggedIn = !!session?.user;
@@ -27,13 +43,19 @@ export const authConfig: NextAuthConfig = {
       const isApiAuth = pathname.startsWith("/api/auth");
       const isApiOnboarding = pathname === "/api/onboarding";
       const isApiStripeWebhook = pathname === "/api/stripe/webhook";
+      const isApiJoin = pathname.startsWith("/api/join");
       const isSelectChurch = pathname === "/select-church";
       const isSuspendedPage = pathname === "/suspended";
+      const isEntrar = pathname.startsWith("/entrar");
+      const isSemAcesso = pathname === "/sem-acesso";
 
       // Rotas sempre públicas
-      if (isApiAuth || isApiOnboarding || isApiStripeWebhook || isLandingPage || isCadastro || isSuspendedPage) return true;
+      if (isApiAuth || isApiOnboarding || isApiStripeWebhook || isApiJoin ||
+          isLandingPage || isCadastro || isSuspendedPage || isEntrar || isSemAcesso) {
+        return true;
+      }
 
-      // Não logado: redireciona para login
+      // Não logado: redireciona para login (preserva ?c= do join code)
       if (!isLoggedIn && !isLoginPage && !isSelectChurch) {
         return Response.redirect(new URL("/login", nextUrl));
       }
@@ -48,7 +70,12 @@ export const authConfig: NextAuthConfig = {
         return Response.redirect(new URL("/suspended", nextUrl));
       }
 
-      // Precisa escolher congregação
+      // Sem nenhum estabelecimento vinculado → tela de entrada
+      if (isLoggedIn && session?.user?.noEstablishment && !isSelectChurch) {
+        return Response.redirect(new URL("/entrar", nextUrl));
+      }
+
+      // Precisa escolher congregação (múltiplos vínculos)
       if (isLoggedIn && session?.user?.needsChurchSelection && !isSelectChurch) {
         return Response.redirect(new URL("/select-church", nextUrl));
       }

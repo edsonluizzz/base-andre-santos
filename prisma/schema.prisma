@@ -19,6 +19,7 @@ model Establishment {
   suspended            Boolean   @default(false)
   plan                 String    @default("FREE")
   adminNote            String?
+  joinCode             String?   @unique  // código de acesso para membros entrarem
   // Stripe
   stripeCustomerId     String?   @unique
   stripeSubscriptionId String?   @unique

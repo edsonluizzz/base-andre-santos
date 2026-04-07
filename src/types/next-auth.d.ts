@@ -11,6 +11,7 @@ declare module "next-auth" {
       suspended: boolean;
       isImpersonating: boolean;
       originalEstablishmentId?: string;
+      noEstablishment?: boolean;
     } & DefaultSession["user"];
   }
 }
@@ -25,5 +26,6 @@ declare module "next-auth/jwt" {
     suspended?: boolean;
     isImpersonating?: boolean;
     originalEstablishmentId?: string;
+    noEstablishment?: boolean;
   }
 }

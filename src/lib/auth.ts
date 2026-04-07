@@ -33,12 +33,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         });
 
         if (ues.length === 0) {
-          // Usuário legado — criar UserEstablishment a partir do User.establishmentId
+          // Migração legada: se o usuário tinha estabelecimento não-padrão,
+          // cria o UserEstablishment. Novos usuários vão para /entrar.
+          const DEFAULT_EST = "default-porto-belo";
           const dbUser = await db.user.findUnique({
             where: { id: user.id },
             select: { role: true, establishmentId: true },
           });
-          if (dbUser) {
+          if (dbUser && dbUser.establishmentId && dbUser.establishmentId !== DEFAULT_EST) {
             await db.userEstablishment.upsert({
               where: { userId_establishmentId: { userId: user.id, establishmentId: dbUser.establishmentId } },
               update: { inviteStatus: "ACCEPTED" },
@@ -53,6 +55,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             token.role = dbUser.role;
             token.establishmentId = dbUser.establishmentId;
             token.needsChurchSelection = false;
+            token.noEstablishment = false;
+          } else {
+            // Novo usuário sem vínculo → redirecionar para /entrar
+            token.noEstablishment = true;
+            token.needsChurchSelection = false;
+            token.establishmentId = "";
+            token.role = "MEMBER";
           }
         } else if (ues.length === 1) {
           token.role = ues[0].role;
@@ -71,6 +80,25 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           token.establishmentId = ues[0].establishmentId;
           token.needsChurchSelection = true;
         }
+      }
+
+      // ── Entrou via código de acesso (/entrar?c=CODE) ───────────────────────
+      if (trigger === "update" && session !== null && "joinedEstablishmentId" in session && session.joinedEstablishmentId) {
+        const ue = await db.userEstablishment.findUnique({
+          where: {
+            userId_establishmentId: {
+              userId: token.id as string,
+              establishmentId: session.joinedEstablishmentId as string,
+            },
+          },
+        });
+        if (ue) {
+          token.establishmentId = ue.establishmentId;
+          token.role = ue.role;
+          token.needsChurchSelection = false;
+          token.noEstablishment = false;
+        }
+        return token;
       }
 
       // ── Impersonação de estabelecimento (super admin) ───────────────────────
@@ -156,12 +184,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (session.user) {
         session.user.id = token.id as string;
         session.user.role = token.role as string;
-        session.user.establishmentId = (token.establishmentId as string) ?? "default-porto-belo";
+        session.user.establishmentId = (token.establishmentId as string) ?? "";
         session.user.isSuperAdmin = Boolean(token.isSuperAdmin);
         session.user.needsChurchSelection = Boolean(token.needsChurchSelection);
         session.user.suspended = Boolean(token.suspended);
         session.user.isImpersonating = Boolean(token.isImpersonating);
         session.user.originalEstablishmentId = token.originalEstablishmentId as string | undefined;
+        session.user.noEstablishment = Boolean(token.noEstablishment);
       }
       return session;
     },

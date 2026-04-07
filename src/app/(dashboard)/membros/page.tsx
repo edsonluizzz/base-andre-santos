@@ -55,7 +55,9 @@ export default function MembrosPage() {
   // Import state
   const [importOpen, setImportOpen] = useState(false);
   const [importLoading, setImportLoading] = useState(false);
-  const [importResult, setImportResult] = useState<{ updated: number; created: number; skipped: number; errors: string[] } | null>(null);
+  type ImportLogRow = { linha: number; nome: string; resultado: string; detalhe: string };
+  type ImportResult = { updated: number; created: number; skipped: number; log: ImportLogRow[] };
+  const [importResult, setImportResult] = useState<ImportResult | null>(null);
   const importFileRef = useCallback((node: HTMLInputElement | null) => { if (node) node.value = ""; }, []);
 
   async function handleImport(e: React.ChangeEvent<HTMLInputElement>) {
@@ -76,6 +78,19 @@ export default function MembrosPage() {
     } finally {
       setImportLoading(false);
     }
+  }
+
+  function downloadImportLog(log: ImportLogRow[]) {
+    const XLSX = require("xlsx");
+    const rows = [
+      ["Linha", "Nome", "Resultado", "Detalhe"],
+      ...log.map((r) => [r.linha, r.nome, r.resultado, r.detalhe]),
+    ];
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    ws["!cols"] = [{ wch: 8 }, { wch: 35 }, { wch: 14 }, { wch: 55 }];
+    XLSX.utils.book_append_sheet(wb, ws, "Log");
+    XLSX.writeFile(wb, `log-importacao-${new Date().toISOString().slice(0, 10)}.xlsx`);
   }
 
   // Link dialog state
@@ -401,17 +416,20 @@ export default function MembrosPage() {
                     <span className="text-sm">{importResult.skipped} ignorado{importResult.skipped !== 1 ? "s" : ""} (nome duplicado)</span>
                   </div>
                 )}
-                {importResult.errors.length > 0 && (
-                  <div className="mt-2 space-y-1">
-                    <div className="flex items-center gap-2 text-yellow-400">
-                      <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                      <span className="text-xs font-medium">Avisos ({importResult.errors.length})</span>
-                    </div>
-                    <ul className="text-xs text-muted-foreground space-y-0.5 pl-6">
-                      {importResult.errors.slice(0, 5).map((e, i) => <li key={i}>{e}</li>)}
-                      {importResult.errors.length > 5 && <li>...e mais {importResult.errors.length - 5}</li>}
-                    </ul>
+                {importResult.log.some((r) => r.resultado === "ERRO" || r.resultado === "BLOQUEADO") && (
+                  <div className="flex items-center gap-2 text-yellow-400">
+                    <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                    <span className="text-sm">{importResult.log.filter((r) => r.resultado === "ERRO" || r.resultado === "BLOQUEADO").length} linha(s) com problema</span>
                   </div>
+                )}
+                {importResult.log.length > 0 && (
+                  <button
+                    onClick={() => downloadImportLog(importResult.log)}
+                    className="w-full flex items-center justify-center gap-2 mt-1 text-xs font-medium text-primary hover:text-primary/80 px-3 py-2 rounded-lg border border-primary/20 bg-primary/5 hover:bg-primary/10 transition-colors"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    Baixar log completo (.xlsx)
+                  </button>
                 )}
               </div>
             )}

@@ -3,10 +3,43 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import * as XLSX from "xlsx";
 
-// POST /api/members/import — importar/atualizar membros via planilha xlsx/csv
-// Lógica:
-//   - Linha com ID válido  → atualiza o membro existente
-//   - Linha sem ID         → cria novo membro (dedup por nome)
+// Normaliza data de aniversário para DD/MM (aceita DD/MM/AAAA, DD/MM, AAAA-MM-DD)
+function parseBirthday(raw: string): { value: string | null; error: string | null } {
+  const s = raw.trim();
+  if (!s) return { value: null, error: null };
+
+  // DD/MM/AAAA → DD/MM
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(s)) {
+    const [d, m] = s.split("/");
+    return { value: `${d}/${m}`, error: null };
+  }
+  // DD/MM (sem ano)
+  if (/^\d{2}\/\d{2}$/.test(s)) {
+    return { value: s, error: null };
+  }
+  // AAAA-MM-DD (ISO)
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) {
+    const [, m, d] = s.slice(0, 10).split("-");
+    return { value: `${d}/${m}`, error: null };
+  }
+  return { value: null, error: `data inválida "${s}" (use DD/MM ou DD/MM/AAAA)` };
+}
+
+export type ImportLogRow = {
+  linha: number;
+  nome: string;
+  resultado: string;
+  detalhe: string;
+};
+
+export type ImportResult = {
+  updated: number;
+  created: number;
+  skipped: number;
+  log: ImportLogRow[];
+};
+
+// POST /api/members/import
 export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -31,100 +64,110 @@ export async function POST(req: NextRequest) {
   if (rows.length === 0)
     return NextResponse.json({ error: "Planilha vazia ou sem dados" }, { status: 400 });
 
-  const results = { updated: 0, created: 0, skipped: 0, errors: [] as string[] };
+  const result: ImportResult = { updated: 0, created: 0, skipped: 0, log: [] };
 
-  // Verificar limite do plano gratuito (apenas para criações)
+  // Plano e limite
   const establishment = await db.establishment.findUnique({ where: { id: eid }, select: { plan: true } });
   const isPro = establishment?.plan === "PRO";
   const FREE_LIMIT = 50;
-
   const currentCount = await db.member.count({ where: { establishmentId: eid, deletedAt: null } });
 
-  // Carregar todos os IDs e nomes existentes para validação em memória
+  // Carregar membros existentes para validação em memória
   const existingMembers = await db.member.findMany({
     where: { establishmentId: eid, deletedAt: null },
     select: { id: true, name: true },
   });
-  const existingIdSet = new Set(existingMembers.map((m) => m.id));
+  const existingById = new Map(existingMembers.map((m) => [m.id, m.name]));
   const existingNameSet = new Set(existingMembers.map((m) => m.name.toLowerCase()));
 
   type UpdateOp = { id: string; data: { name: string; birthday: string | null; phone: string | null; notes: string | null; status: "ACTIVE" | "INACTIVE" } };
   type CreateOp = { name: string; birthday: string | null; phone: string | null; notes: string | null; status: "ACTIVE" | "INACTIVE"; establishmentId: string };
 
-  const toUpdate: UpdateOp[] = [];
-  const toCreate: CreateOp[] = [];
+  const toUpdate: (UpdateOp & { linha: number })[] = [];
+  const toCreate: (CreateOp & { linha: number; nome: string })[] = [];
 
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i];
     const lineNum = i + 2;
 
-    const rowId   = (row["ID (não editar)"] ?? row["ID"] ?? "").toString().trim();
-    const name    = (row["Nome"] ?? "").toString().trim();
-    const birthdayRaw = (row["Data de Nascimento (DD/MM/AAAA)"] ?? row["Data de Nascimento"] ?? row["Nascimento"] ?? "").toString().trim();
-    const phone   = (row["Telefone (com DDD)"] ?? row["Telefone"] ?? row["Celular"] ?? "").toString().trim() || null;
+    const rowId  = (row["ID (não editar)"] ?? row["ID"] ?? "").toString().trim();
+    const name   = (row["Nome"] ?? "").toString().trim();
+    const birthdayRaw = (row["Data de Nascimento (DD/MM/AAAA)"] ?? row["Data de Nascimento"] ?? row["Nascimento"] ?? row["Aniversário"] ?? "").toString().trim();
+    const phone  = (row["Telefone (com DDD)"] ?? row["Telefone"] ?? row["Celular"] ?? "").toString().trim() || null;
     const statusRaw = (row["Status"] ?? "ATIVO").toString().trim().toUpperCase();
-    const notes   = (row["Observações"] ?? row["Obs"] ?? "").toString().trim() || null;
+    const notes  = (row["Observações"] ?? row["Obs"] ?? "").toString().trim() || null;
 
     if (!name) {
-      results.errors.push(`Linha ${lineNum}: nome obrigatório`);
+      result.log.push({ linha: lineNum, nome: "", resultado: "ERRO", detalhe: "Nome obrigatório" });
       continue;
     }
 
-    let birthday: string | null = null;
-    if (birthdayRaw) {
-      if (/^\d{2}\/\d{2}\/\d{4}$/.test(birthdayRaw)) {
-        birthday = birthdayRaw;
-      } else if (/^\d{4}-\d{2}-\d{2}/.test(birthdayRaw)) {
-        const [y, m, d] = birthdayRaw.slice(0, 10).split("-");
-        birthday = `${d}/${m}/${y}`;
-      } else {
-        results.errors.push(`Linha ${lineNum}: data inválida "${birthdayRaw}" (use DD/MM/AAAA)`);
-        continue;
-      }
+    const { value: birthday, error: bdError } = parseBirthday(birthdayRaw);
+    if (bdError) {
+      result.log.push({ linha: lineNum, nome: name, resultado: "ERRO", detalhe: bdError });
+      continue;
     }
 
     const status = statusRaw === "INATIVO" ? "INACTIVE" : "ACTIVE";
 
-    // — ATUALIZAÇÃO: linha tem ID válido que existe no banco —
-    if (rowId && existingIdSet.has(rowId)) {
-      toUpdate.push({ id: rowId, data: { name, birthday, phone, notes, status } });
+    // ATUALIZAÇÃO: linha tem ID válido que existe no banco
+    if (rowId && existingById.has(rowId)) {
+      toUpdate.push({ id: rowId, data: { name, birthday, phone, notes, status }, linha: lineNum });
       continue;
     }
 
-    // — CRIAÇÃO: sem ID ou ID desconhecido —
+    // ID informado mas não encontrado — avisar
+    if (rowId && !existingById.has(rowId)) {
+      result.log.push({ linha: lineNum, nome: name, resultado: "ERRO", detalhe: `ID "${rowId}" não encontrado neste estabelecimento` });
+      continue;
+    }
+
+    // CRIAÇÃO: sem ID
     if (existingNameSet.has(name.toLowerCase())) {
-      results.skipped++;
+      result.skipped++;
+      result.log.push({ linha: lineNum, nome: name, resultado: "IGNORADO", detalhe: "Nome já existe no cadastro" });
       continue;
     }
 
-    toCreate.push({ name, birthday, phone, notes, status, establishmentId: eid });
+    toCreate.push({ name, birthday, phone, notes, status, establishmentId: eid, linha: lineNum, nome: name });
   }
 
   // Executar atualizações
   if (toUpdate.length > 0) {
     await db.$transaction(
-      toUpdate.map(({ id, data }) =>
-        db.member.update({ where: { id }, data })
-      )
+      toUpdate.map(({ id, data }) => db.member.update({ where: { id }, data }))
     );
-    results.updated = toUpdate.length;
+    result.updated = toUpdate.length;
+    for (const op of toUpdate) {
+      result.log.push({ linha: op.linha, nome: op.data.name, resultado: "ATUALIZADO", detalhe: "" });
+    }
   }
 
   // Executar criações respeitando limite do plano
   if (toCreate.length > 0) {
-    const slots = isPro ? Infinity : Math.max(0, FREE_LIMIT - currentCount);
-    const allowed = toCreate.slice(0, slots === Infinity ? undefined : slots);
-    const blocked = toCreate.length - allowed.length;
+    const slots = isPro ? toCreate.length : Math.max(0, FREE_LIMIT - currentCount - result.updated);
+    const allowed = toCreate.slice(0, slots);
+    const blocked = toCreate.slice(slots);
 
     if (allowed.length > 0) {
-      await db.$transaction(allowed.map((data) => db.member.create({ data })));
-      results.created = allowed.length;
+      await db.$transaction(
+        allowed.map(({ name, birthday, phone, notes, status, establishmentId }) =>
+          db.member.create({ data: { name, birthday, phone, notes, status, establishmentId } })
+        )
+      );
+      result.created = allowed.length;
+      for (const op of allowed) {
+        result.log.push({ linha: op.linha, nome: op.nome, resultado: "CRIADO", detalhe: "" });
+      }
     }
 
-    if (blocked > 0) {
-      results.errors.push(`${blocked} membro(s) não criado(s): limite de ${FREE_LIMIT} membros atingido no plano gratuito.`);
+    for (const op of blocked) {
+      result.log.push({ linha: op.linha, nome: op.nome, resultado: "BLOQUEADO", detalhe: `Limite de ${FREE_LIMIT} membros atingido (plano gratuito)` });
     }
   }
 
-  return NextResponse.json(results);
+  // Ordenar log por linha
+  result.log.sort((a, b) => a.linha - b.linha);
+
+  return NextResponse.json(result);
 }

@@ -11,6 +11,13 @@ export async function GET() {
 
     const establishments = await db.establishment.findMany({
       orderBy: { createdAt: "asc" },
+      select: {
+        id: true, name: true, pixKey: true, suspended: true, plan: true,
+        adminNote: true, joinCode: true, createdAt: true,
+        stripeCustomerId: true, stripeSubscriptionId: true, stripePriceId: true,
+        stripeStatus: true, trialEndsAt: true, currentPeriodEnd: true, cancelAtPeriodEnd: true,
+        updatedAt: true,
+      },
     });
 
     // Attach stats to each establishment

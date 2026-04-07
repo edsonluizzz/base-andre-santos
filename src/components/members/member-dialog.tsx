@@ -84,7 +84,7 @@ export function MemberDialog({ open, onOpenChange, member, onSuccess }: Props) {
     setLoading(false);
 
     if (res.ok) {
-      toast.success(member ? "Participante atualizado" : "Participante adicionado");
+      toast.success(member ? "Membro atualizado" : "Membro adicionado");
       onSuccess();
     } else {
       const err = await res.json();
@@ -94,57 +94,54 @@ export function MemberDialog({ open, onOpenChange, member, onSuccess }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-[#1e1e1e] border-[#2a2a2a] text-[#f0ece4] max-w-md">
+      <DialogContent className="bg-card border-border text-foreground max-w-md">
         <DialogHeader>
-          <DialogTitle
-            className="text-[#e8c97a]"
-            style={{ fontFamily: "var(--font-heading)" }}
-          >
-            {member ? "Editar Participante" : "Novo Participante"}
+          <DialogTitle className="text-foreground">
+            {member ? "Editar Membro" : "Novo Membro"}
           </DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 mt-2">
           <div className="space-y-1.5">
-            <Label className="text-[#888] text-xs">Nome *</Label>
+            <Label className="text-muted-foreground text-xs">Nome *</Label>
             <Input
               value={form.name}
               onChange={(e) => set("name", e.target.value)}
               placeholder="Nome completo"
-              className="bg-[#0d0d0d] border-[#2a2a2a] text-[#f0ece4] focus-visible:ring-[#7a6330]"
+              className="bg-background border-border text-foreground focus-visible:ring-primary"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label className="text-[#888] text-xs">Aniversário</Label>
+              <Label className="text-muted-foreground text-xs">Aniversário</Label>
               <Input
                 value={form.birthday}
                 onChange={(e) => set("birthday", e.target.value)}
                 placeholder="DD/MM"
-                maxLength={5}
-                className="bg-[#0d0d0d] border-[#2a2a2a] text-[#f0ece4] focus-visible:ring-[#7a6330]"
+                maxLength={10}
+                className="bg-background border-border text-foreground focus-visible:ring-primary"
               />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-[#888] text-xs">Telefone / WhatsApp</Label>
+              <Label className="text-muted-foreground text-xs">Telefone / WhatsApp</Label>
               <Input
                 value={form.phone}
                 onChange={(e) => set("phone", e.target.value)}
                 placeholder="47 9 9999-9999"
-                className="bg-[#0d0d0d] border-[#2a2a2a] text-[#f0ece4] focus-visible:ring-[#7a6330]"
+                className="bg-background border-border text-foreground focus-visible:ring-primary"
               />
             </div>
           </div>
 
           {member && (
             <div className="space-y-1.5">
-              <Label className="text-[#888] text-xs">Status</Label>
+              <Label className="text-muted-foreground text-xs">Status</Label>
               <Select value={form.status} onValueChange={(v: string | null) => v && set("status", v)}>
-                <SelectTrigger className="bg-[#0d0d0d] border-[#2a2a2a] text-[#f0ece4]">
+                <SelectTrigger className="bg-background border-border text-foreground">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-[#1e1e1e] border-[#2a2a2a]">
+                <SelectContent className="bg-card border-border">
                   <SelectItem value="ACTIVE">Ativo</SelectItem>
                   <SelectItem value="INACTIVE">Inativo</SelectItem>
                 </SelectContent>
@@ -153,13 +150,13 @@ export function MemberDialog({ open, onOpenChange, member, onSuccess }: Props) {
           )}
 
           <div className="space-y-1.5">
-            <Label className="text-[#888] text-xs">Observações</Label>
+            <Label className="text-muted-foreground text-xs">Observações</Label>
             <Textarea
               value={form.notes}
               onChange={(e) => set("notes", e.target.value)}
               placeholder="Notas opcionais..."
               rows={2}
-              className="bg-[#0d0d0d] border-[#2a2a2a] text-[#f0ece4] focus-visible:ring-[#7a6330] resize-none"
+              className="bg-background border-border text-foreground focus-visible:ring-primary resize-none"
             />
           </div>
 
@@ -168,15 +165,11 @@ export function MemberDialog({ open, onOpenChange, member, onSuccess }: Props) {
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
-              className="flex-1 border-[#2a2a2a] text-[#888] hover:bg-[#2a2a2a]"
+              className="flex-1"
             >
               Cancelar
             </Button>
-            <Button
-              type="submit"
-              disabled={loading}
-              className="flex-1 bg-[#c9a84c] hover:bg-[#e8c97a] text-black font-semibold"
-            >
+            <Button type="submit" disabled={loading} className="flex-1">
               {loading ? "Salvando..." : member ? "Salvar" : "Adicionar"}
             </Button>
           </div>

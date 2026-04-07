@@ -9,15 +9,17 @@ export async function GET() {
 
     const eid = session.user?.establishmentId ?? "default-porto-belo";
 
-    // Busca settings da congregação; fallback para o singleton legado
-    let settings = await db.settings.findUnique({ where: { id: eid } });
-    if (!settings) {
-      settings = await db.settings.findUnique({ where: { id: "singleton" } });
-    }
+    // Busca settings específicos do estabelecimento
+    const [settings, establishment] = await Promise.all([
+      db.settings.findUnique({ where: { id: eid } }),
+      db.establishment.findUnique({ where: { id: eid }, select: { name: true, joinCode: true } }),
+    ]);
 
+    // Usa o nome do Settings se configurado; caso contrário usa o nome do Establishment
     return NextResponse.json({
-      churchName: settings?.churchName ?? "Minha Igreja",
+      churchName: settings?.churchName ?? establishment?.name ?? "Minha Igreja",
       logoBase64: settings?.logoBase64 ?? null,
+      joinCode: establishment?.joinCode ?? null,
     });
   } catch {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

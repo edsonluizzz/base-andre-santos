@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import {
   Plus, Building2, Users, CalendarDays, Shield, Trash2,
   PauseCircle, PlayCircle, Search, ArrowUpDown, Pencil,
-  Eye, StickyNote, Crown, UserPlus, CheckCircle2,
+  Eye, StickyNote, Crown, UserPlus, CheckCircle2, Link2, RefreshCw, Copy,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,6 +29,7 @@ type Establishment = {
   plan: string;
   adminNote: string | null;
   suspended: boolean;
+  joinCode: string | null;
   createdAt: string;
   memberCount: number;
   userCount: number;
@@ -132,6 +133,33 @@ export default function SuperAdminPage() {
       const d = await res.json().catch(() => ({}));
       toast.error(d.error ?? "Erro ao vincular");
     }
+  }
+
+  async function handleGenerateJoinCode(est: Establishment) {
+    setActionLoading(est.id);
+    const res = await fetch(`/api/super-admin/establishments/${est.id}/join-code`, { method: "POST" });
+    setActionLoading(null);
+    if (res.ok) {
+      const data = await res.json();
+      setEstablishments((prev) => prev.map((e) => e.id === est.id ? { ...e, joinCode: data.joinCode } : e));
+    } else {
+      const d = await res.json().catch(() => ({}));
+      toast.error(d.error ?? "Erro ao gerar código");
+    }
+  }
+
+  async function handleRemoveJoinCode(est: Establishment) {
+    if (!confirm("Remover o link de acesso? Quem ainda não entrou não conseguirá usar o código antigo.")) return;
+    setActionLoading(est.id);
+    await fetch(`/api/super-admin/establishments/${est.id}/join-code`, { method: "DELETE" });
+    setActionLoading(null);
+    setEstablishments((prev) => prev.map((e) => e.id === est.id ? { ...e, joinCode: null } : e));
+  }
+
+  function copyJoinLink(code: string) {
+    const url = `${window.location.origin}/entrar?c=${code}`;
+    navigator.clipboard.writeText(url);
+    toast.success("Link copiado!");
   }
 
   async function handleImpersonate(est: Establishment) {
@@ -396,6 +424,39 @@ export default function SuperAdminPage() {
                       <p className="text-[10px] text-muted-foreground">{s.label}</p>
                     </div>
                   ))}
+                </div>
+
+                {/* Join code */}
+                <div className="mt-3 pt-3 border-t border-border/50 flex items-center gap-3">
+                  <Link2 className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+                  {est.joinCode ? (
+                    <>
+                      <span className="text-xs font-mono font-bold text-primary tracking-widest">{est.joinCode}</span>
+                      <button
+                        onClick={() => copyJoinLink(est.joinCode!)}
+                        title="Copiar link de acesso"
+                        className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        <Copy className="w-3 h-3" /> Copiar link
+                      </button>
+                      <button
+                        onClick={() => handleGenerateJoinCode(est)}
+                        disabled={isActioning}
+                        title="Regenerar código"
+                        className="ml-auto p-1 rounded text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+                      >
+                        <RefreshCw className="w-3 h-3" />
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      onClick={() => handleGenerateJoinCode(est)}
+                      disabled={isActioning}
+                      className="text-xs text-primary hover:text-primary/80 transition-colors disabled:opacity-50"
+                    >
+                      Gerar código de acesso
+                    </button>
+                  )}
                 </div>
               </div>
             );
