@@ -10,7 +10,7 @@ const PERMISSION_DEFAULTS: Partial<Record<PermissionKey, boolean>> = {
   "LEADER:MEMBERS:CREATE": true,
   "LEADER:MEMBERS:EDIT": true,
   "LEADER:MEMBERS:DELETE": false,
-  "MEMBER:MEMBERS:VIEW": false,
+  "MEMBER:MEMBERS:VIEW": true,
   "MEMBER:MEMBERS:CREATE": false,
   "MEMBER:MEMBERS:EDIT": false,
   "MEMBER:MEMBERS:DELETE": false,

@@ -39,6 +39,11 @@ export async function GET() {
   }
 }
 
+function generateJoinCode(): string {
+  const chars = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+  return Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
+}
+
 export async function POST(req: NextRequest) {
   try {
     const session = await auth();
@@ -49,8 +54,16 @@ export async function POST(req: NextRequest) {
     if (!id?.trim() || !name?.trim())
       return NextResponse.json({ error: "id e name são obrigatórios" }, { status: 400 });
 
+    // Gera join code único automaticamente
+    let joinCode = generateJoinCode();
+    for (let i = 0; i < 10; i++) {
+      const exists = await db.establishment.findUnique({ where: { joinCode } });
+      if (!exists) break;
+      joinCode = generateJoinCode();
+    }
+
     const establishment = await db.establishment.create({
-      data: { id: id.trim(), name: name.trim(), pixKey: pixKey?.trim() || null },
+      data: { id: id.trim(), name: name.trim(), pixKey: pixKey?.trim() || null, joinCode },
     });
     return NextResponse.json(establishment, { status: 201 });
   } catch (e: unknown) {

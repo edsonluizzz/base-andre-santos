@@ -135,6 +135,20 @@ export default function SuperAdminPage() {
     }
   }
 
+  async function handleUnlinkSelf(est: Establishment) {
+    if (!confirm(`Desvincular sua conta de "${est.name}"? Você perderá o acesso a este estabelecimento.`)) return;
+    setActionLoading(est.id);
+    const res = await fetch(`/api/super-admin/establishments/${est.id}/unlink-self`, { method: "DELETE" });
+    setActionLoading(null);
+    if (res.ok) {
+      toast.success(`Desvinculado de "${est.name}"`);
+      setLinkedEstIds((prev) => { const next = new Set(prev); next.delete(est.id); return next; });
+    } else {
+      const d = await res.json().catch(() => ({}));
+      toast.error(d.error ?? "Erro ao desvincular");
+    }
+  }
+
   async function handleGenerateJoinCode(est: Establishment) {
     setActionLoading(est.id);
     const res = await fetch(`/api/super-admin/establishments/${est.id}/join-code`, { method: "POST" });
@@ -339,14 +353,17 @@ export default function SuperAdminPage() {
                         {format(new Date(est.createdAt), "dd/MM/yyyy", { locale: ptBR })}
                       </p>
                     </div>
-                    {/* Link self */}
+                    {/* Link / Unlink self */}
                     {linkedEstIds.has(est.id) ? (
-                      <span
-                        title="Você já está vinculado a este estabelecimento"
-                        className="p-2 rounded-lg text-emerald-400 cursor-default"
+                      <button
+                        onClick={() => handleUnlinkSelf(est)}
+                        disabled={isActioning}
+                        aria-label={`Desvincular-me de ${est.name}`}
+                        title="Desvincular minha conta deste estabelecimento"
+                        className="p-2 rounded-lg text-emerald-400 hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer disabled:opacity-50"
                       >
                         <CheckCircle2 className="w-4 h-4" />
-                      </span>
+                      </button>
                     ) : (
                       <button
                         onClick={() => handleLinkSelf(est)}
