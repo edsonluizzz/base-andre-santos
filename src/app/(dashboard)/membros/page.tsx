@@ -55,7 +55,7 @@ export default function MembrosPage() {
   // Import state
   const [importOpen, setImportOpen] = useState(false);
   const [importLoading, setImportLoading] = useState(false);
-  const [importResult, setImportResult] = useState<{ created: number; skipped: number; errors: string[] } | null>(null);
+  const [importResult, setImportResult] = useState<{ updated: number; created: number; skipped: number; errors: string[] } | null>(null);
   const importFileRef = useCallback((node: HTMLInputElement | null) => { if (node) node.value = ""; }, []);
 
   async function handleImport(e: React.ChangeEvent<HTMLInputElement>) {
@@ -70,7 +70,7 @@ export default function MembrosPage() {
       const data = await res.json();
       if (!res.ok) { toast.error(data.error ?? "Erro ao importar"); return; }
       setImportResult(data);
-      if (data.created > 0) fetchMembers();
+      if (data.created > 0 || data.updated > 0) fetchMembers();
     } catch {
       toast.error("Erro de conexão");
     } finally {
@@ -339,18 +339,18 @@ export default function MembrosPage() {
       <Dialog open={importOpen} onOpenChange={(o) => { if (!importLoading) setImportOpen(o); }}>
         <DialogContent className="bg-card border-border text-foreground max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-foreground">Importar Membros</DialogTitle>
+            <DialogTitle className="text-foreground">Atualizar via Planilha</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4">
-            {/* Download template */}
+            {/* Download membros atuais */}
             <div className="flex items-center justify-between p-3 rounded-xl border border-white/[0.07] bg-white/[0.02]">
               <div>
-                <p className="text-sm font-medium text-foreground">1. Baixe a planilha modelo</p>
-                <p className="text-xs text-muted-foreground mt-0.5">Preencha com os dados dos membros</p>
+                <p className="text-sm font-medium text-foreground">1. Baixe a planilha atual</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Edite os cadastros e adicione novos</p>
               </div>
               <a
-                href="/api/members/template"
+                href="/api/members/export"
                 download
                 className="flex items-center gap-2 text-xs font-medium text-primary hover:text-primary/80 transition-colors px-3 py-2 rounded-lg border border-primary/20 bg-primary/5 hover:bg-primary/10"
               >
@@ -361,7 +361,7 @@ export default function MembrosPage() {
 
             {/* Upload */}
             <div>
-              <p className="text-sm font-medium text-foreground mb-2">2. Envie a planilha preenchida</p>
+              <p className="text-sm font-medium text-foreground mb-2">2. Envie a planilha atualizada</p>
               <label className="flex flex-col items-center justify-center gap-2 p-6 rounded-xl border-2 border-dashed border-white/[0.12] bg-white/[0.02] hover:border-primary/40 hover:bg-primary/5 transition-all cursor-pointer">
                 <Upload className="w-6 h-6 text-muted-foreground" />
                 <span className="text-sm text-muted-foreground">Clique para selecionar o arquivo</span>
@@ -383,14 +383,22 @@ export default function MembrosPage() {
             {/* Resultado */}
             {importResult && (
               <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] p-4 space-y-2">
-                <div className="flex items-center gap-2 text-emerald-400">
-                  <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
-                  <span className="text-sm font-medium">{importResult.created} membro{importResult.created !== 1 ? "s" : ""} importado{importResult.created !== 1 ? "s" : ""}</span>
-                </div>
+                {importResult.updated > 0 && (
+                  <div className="flex items-center gap-2 text-blue-400">
+                    <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+                    <span className="text-sm font-medium">{importResult.updated} membro{importResult.updated !== 1 ? "s" : ""} atualizado{importResult.updated !== 1 ? "s" : ""}</span>
+                  </div>
+                )}
+                {importResult.created > 0 && (
+                  <div className="flex items-center gap-2 text-emerald-400">
+                    <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+                    <span className="text-sm font-medium">{importResult.created} membro{importResult.created !== 1 ? "s" : ""} criado{importResult.created !== 1 ? "s" : ""}</span>
+                  </div>
+                )}
                 {importResult.skipped > 0 && (
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <X className="w-4 h-4 flex-shrink-0" />
-                    <span className="text-sm">{importResult.skipped} ignorado{importResult.skipped !== 1 ? "s" : ""} (já existiam)</span>
+                    <span className="text-sm">{importResult.skipped} ignorado{importResult.skipped !== 1 ? "s" : ""} (nome duplicado)</span>
                   </div>
                 )}
                 {importResult.errors.length > 0 && (

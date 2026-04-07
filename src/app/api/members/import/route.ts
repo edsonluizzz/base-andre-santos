@@ -3,7 +3,10 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import * as XLSX from "xlsx";
 
-// POST /api/members/import — importar membros via planilha xlsx/csv
+// POST /api/members/import — importar/atualizar membros via planilha xlsx/csv
+// Lógica:
+//   - Linha com ID válido  → atualiza o membro existente
+//   - Linha sem ID         → cria novo membro (dedup por nome)
 export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -28,49 +31,44 @@ export async function POST(req: NextRequest) {
   if (rows.length === 0)
     return NextResponse.json({ error: "Planilha vazia ou sem dados" }, { status: 400 });
 
-  const results = { created: 0, skipped: 0, errors: [] as string[] };
+  const results = { updated: 0, created: 0, skipped: 0, errors: [] as string[] };
 
-  // Verificar limite do plano gratuito
+  // Verificar limite do plano gratuito (apenas para criações)
+  const establishment = await db.establishment.findUnique({ where: { id: eid }, select: { plan: true } });
+  const isPro = establishment?.plan === "PRO";
+  const FREE_LIMIT = 50;
+
   const currentCount = await db.member.count({ where: { establishmentId: eid, deletedAt: null } });
-  const FREE_LIMIT = 10;
-  const slots = FREE_LIMIT - currentCount;
-  if (slots <= 0) {
-    return NextResponse.json(
-      { error: "Limite de 10 membros atingido no plano gratuito. Faça upgrade para o plano Pro." },
-      { status: 403 }
-    );
-  }
 
-  // Buscar nomes existentes para checar duplicatas em memória (evita N queries)
-  const existingNames = await db.member.findMany({
+  // Carregar todos os IDs e nomes existentes para validação em memória
+  const existingMembers = await db.member.findMany({
     where: { establishmentId: eid, deletedAt: null },
-    select: { name: true },
+    select: { id: true, name: true },
   });
-  const existingSet = new Set(existingNames.map((m) => m.name.toLowerCase()));
+  const existingIdSet = new Set(existingMembers.map((m) => m.id));
+  const existingNameSet = new Set(existingMembers.map((m) => m.name.toLowerCase()));
 
-  // Parsear todas as linhas e montar lista de membros válidos
-  type NewMember = { name: string; birthday: string | null; phone: string | null; notes: string | null; status: "ACTIVE" | "INACTIVE"; establishmentId: string };
-  const toCreate: NewMember[] = [];
+  type UpdateOp = { id: string; data: { name: string; birthday: string | null; phone: string | null; notes: string | null; status: "ACTIVE" | "INACTIVE" } };
+  type CreateOp = { name: string; birthday: string | null; phone: string | null; notes: string | null; status: "ACTIVE" | "INACTIVE"; establishmentId: string };
+
+  const toUpdate: UpdateOp[] = [];
+  const toCreate: CreateOp[] = [];
 
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i];
     const lineNum = i + 2;
 
-    const name = (row["Nome *"] ?? row["Nome"] ?? "").toString().trim();
+    const rowId   = (row["ID (não editar)"] ?? row["ID"] ?? "").toString().trim();
+    const name    = (row["Nome"] ?? "").toString().trim();
+    const birthdayRaw = (row["Data de Nascimento (DD/MM/AAAA)"] ?? row["Data de Nascimento"] ?? row["Nascimento"] ?? "").toString().trim();
+    const phone   = (row["Telefone (com DDD)"] ?? row["Telefone"] ?? row["Celular"] ?? "").toString().trim() || null;
+    const statusRaw = (row["Status"] ?? "ATIVO").toString().trim().toUpperCase();
+    const notes   = (row["Observações"] ?? row["Obs"] ?? "").toString().trim() || null;
+
     if (!name) {
       results.errors.push(`Linha ${lineNum}: nome obrigatório`);
       continue;
     }
-
-    if (existingSet.has(name.toLowerCase())) {
-      results.skipped++;
-      continue;
-    }
-
-    const birthdayRaw = (row["Data de Nascimento (DD/MM/AAAA)"] ?? row["Data de Nascimento"] ?? row["Nascimento"] ?? "").toString().trim();
-    const phone      = (row["Telefone (com DDD)"] ?? row["Telefone"] ?? row["Celular"] ?? "").toString().trim() || null;
-    const statusRaw  = (row["Status"] ?? "ATIVO").toString().trim().toUpperCase();
-    const notes      = (row["Observações"] ?? row["Obs"] ?? "").toString().trim() || null;
 
     let birthday: string | null = null;
     if (birthdayRaw) {
@@ -86,20 +84,46 @@ export async function POST(req: NextRequest) {
     }
 
     const status = statusRaw === "INATIVO" ? "INACTIVE" : "ACTIVE";
+
+    // — ATUALIZAÇÃO: linha tem ID válido que existe no banco —
+    if (rowId && existingIdSet.has(rowId)) {
+      toUpdate.push({ id: rowId, data: { name, birthday, phone, notes, status } });
+      continue;
+    }
+
+    // — CRIAÇÃO: sem ID ou ID desconhecido —
+    if (existingNameSet.has(name.toLowerCase())) {
+      results.skipped++;
+      continue;
+    }
+
     toCreate.push({ name, birthday, phone, notes, status, establishmentId: eid });
   }
 
-  // Respeitar limite do plano: só criar até o número de slots disponíveis
-  const allowed = toCreate.slice(0, slots);
-  const blocked = toCreate.length - allowed.length;
-
-  if (allowed.length > 0) {
-    await db.$transaction(allowed.map((data) => db.member.create({ data })));
-    results.created = allowed.length;
+  // Executar atualizações
+  if (toUpdate.length > 0) {
+    await db.$transaction(
+      toUpdate.map(({ id, data }) =>
+        db.member.update({ where: { id }, data })
+      )
+    );
+    results.updated = toUpdate.length;
   }
 
-  if (blocked > 0) {
-    results.errors.push(`${blocked} membro(s) não importado(s): limite de ${FREE_LIMIT} membros atingido no plano gratuito.`);
+  // Executar criações respeitando limite do plano
+  if (toCreate.length > 0) {
+    const slots = isPro ? Infinity : Math.max(0, FREE_LIMIT - currentCount);
+    const allowed = toCreate.slice(0, slots === Infinity ? undefined : slots);
+    const blocked = toCreate.length - allowed.length;
+
+    if (allowed.length > 0) {
+      await db.$transaction(allowed.map((data) => db.member.create({ data })));
+      results.created = allowed.length;
+    }
+
+    if (blocked > 0) {
+      results.errors.push(`${blocked} membro(s) não criado(s): limite de ${FREE_LIMIT} membros atingido no plano gratuito.`);
+    }
   }
 
   return NextResponse.json(results);
