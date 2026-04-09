@@ -22,7 +22,7 @@ const nextConfig = {
               "default-src 'self'",
               "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
               "style-src 'self' 'unsafe-inline'",
-              "img-src 'self' data: blob: https://storage.googleapis.com https://*.public.blob.vercel-storage.com",
+              "img-src 'self' data: blob: https://storage.googleapis.com https://*.public.blob.vercel-storage.com https://*.googleusercontent.com",
               "font-src 'self'",
               "connect-src 'self' https://*.neon.tech https://api.stripe.com",
               "frame-ancestors 'none'",

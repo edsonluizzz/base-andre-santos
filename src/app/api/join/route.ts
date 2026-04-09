@@ -70,5 +70,25 @@ export async function POST(req: NextRequest) {
     },
   });
 
+  // Cria registro de membro se ainda não existir para este usuário
+  // userId é @unique globalmente — checamos sem filtrar por establishment
+  const existingMember = await db.member.findUnique({
+    where: { userId: session.user.id },
+  });
+
+  if (!existingMember) {
+    const user = await db.user.findUnique({
+      where: { id: session.user.id },
+      select: { name: true, email: true },
+    });
+    await db.member.create({
+      data: {
+        name: user?.name ?? user?.email ?? "Membro",
+        establishmentId: est.id,
+        userId: session.user.id,
+      },
+    });
+  }
+
   return NextResponse.json({ establishmentId: est.id, name: est.name });
 }
