@@ -8,6 +8,11 @@ export async function GET() {
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const eid = session.user?.establishmentId ?? "default-porto-belo";
+
+    const est = await db.establishment.findUnique({ where: { id: eid }, select: { plan: true } });
+    if (est?.plan !== "PRO")
+      return NextResponse.json({ error: "Plano PRO necessário", upgrade: true }, { status: 403 });
+
     const congresses = await db.congress.findMany({
       where: { establishmentId: eid },
       orderBy: { date: "desc" },

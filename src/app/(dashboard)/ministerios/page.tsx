@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import Link from "next/link";
 import { usePermissions } from "@/context/permissions-context";
+import { PlanGate } from "@/components/plan-gate";
 
 const COLORS = [
   { label: "Índigo", value: "#6366f1" },
@@ -77,7 +78,8 @@ export default function MinisteriosPage() {
   }
 
   return (
-    <div>
+    <PlanGate feature="Módulo de Ministérios">
+      <div>
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl lg:text-3xl font-bold text-foreground">Ministérios</h1>
@@ -178,7 +180,8 @@ export default function MinisteriosPage() {
         editing={editing}
         onSuccess={() => { fetchMinistries(); setDialogOpen(false); }}
       />
-    </div>
+      </div>
+    </PlanGate>
   );
 }
 

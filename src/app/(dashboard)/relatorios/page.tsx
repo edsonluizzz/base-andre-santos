@@ -6,6 +6,7 @@ import { ptBR } from "date-fns/locale";
 import { Printer } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePermissions } from "@/context/permissions-context";
+import { PlanGate } from "@/components/plan-gate";
 
 // ─── Safe date format ─────────────────────────────────────────────────────────
 
@@ -199,6 +200,7 @@ export default function RelatoriosPage() {
   const currentTabLabel = TABS.find((t) => t.id === tab)?.label ?? "";
 
   return (
+    <PlanGate feature="Relatórios">
     <>
       {/* Print styles */}
       <style dangerouslySetInnerHTML={{ __html: `
@@ -305,6 +307,7 @@ export default function RelatoriosPage() {
         )}
       </div>
     </>
+    </PlanGate>
   );
 }
 

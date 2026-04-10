@@ -8,6 +8,7 @@ import {
   Plus, Building2, Users, CalendarDays, Shield, Trash2,
   PauseCircle, PlayCircle, Search, ArrowUpDown, Pencil,
   Eye, StickyNote, Crown, UserPlus, CheckCircle2, Link2, RefreshCw, Copy,
+  TrendingUp, DollarSign, Clock, AlertTriangle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,6 +36,10 @@ type Establishment = {
   userCount: number;
   eventCount: number;
   ministryCount: number;
+  stripeStatus: string | null;
+  trialEndsAt: string | null;
+  currentPeriodEnd: string | null;
+  cancelAtPeriodEnd: boolean;
 };
 
 type EstUser = {
@@ -224,6 +229,12 @@ export default function SuperAdminPage() {
   const totalMembers = establishments.reduce((s, e) => s + e.memberCount, 0);
   const totalUsers = establishments.reduce((s, e) => s + e.userCount, 0);
 
+  const PRO_PRICE = 29.99;
+  const proActive = establishments.filter((e) => e.plan === "PRO" && e.stripeStatus === "active");
+  const proTrialing = establishments.filter((e) => e.plan === "PRO" && e.stripeStatus === "trialing");
+  const proPastDue = establishments.filter((e) => e.stripeStatus === "past_due");
+  const mrr = proActive.length * PRO_PRICE;
+
   return (
     <div>
       {/* Header */}
@@ -242,7 +253,7 @@ export default function SuperAdminPage() {
       </div>
 
       {/* Global stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
         {[
           { label: "Estabelecimentos", value: establishments.length, icon: Building2 },
           { label: "Total de Membros", value: totalMembers, icon: Users },
@@ -260,6 +271,46 @@ export default function SuperAdminPage() {
             </div>
           );
         })}
+      </div>
+
+      {/* MRR stats */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+        <div className="glass-card p-4 border-emerald-500/20">
+          <div className="flex items-center gap-2 mb-2">
+            <DollarSign className="w-4 h-4 text-emerald-400" />
+            <p className="text-xs text-muted-foreground">MRR</p>
+          </div>
+          <p className="text-2xl font-bold text-emerald-400">
+            R$ {mrr.toFixed(2).replace(".", ",")}
+          </p>
+          <p className="text-[10px] text-muted-foreground/60 mt-1">{proActive.length} assinatura{proActive.length !== 1 ? "s" : ""} ativa{proActive.length !== 1 ? "s" : ""}</p>
+        </div>
+        <div className="glass-card p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <Crown className="w-4 h-4 text-amber-400" />
+            <p className="text-xs text-muted-foreground">Plano Pro</p>
+          </div>
+          <p className="text-2xl font-bold text-foreground">{proActive.length + proTrialing.length}</p>
+          <p className="text-[10px] text-muted-foreground/60 mt-1">{proTrialing.length} em trial</p>
+        </div>
+        <div className="glass-card p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <Clock className="w-4 h-4 text-indigo-400" />
+            <p className="text-xs text-muted-foreground">Em Trial</p>
+          </div>
+          <p className="text-2xl font-bold text-foreground">{proTrialing.length}</p>
+          <p className="text-[10px] text-muted-foreground/60 mt-1">convertendo em breve</p>
+        </div>
+        <div className="glass-card p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <AlertTriangle className="w-4 h-4 text-warning" />
+            <p className="text-xs text-muted-foreground">Pgto. Pendente</p>
+          </div>
+          <p className="text-2xl font-bold text-foreground">{proPastDue.length}</p>
+          <p className="text-[10px] text-muted-foreground/60 mt-1">
+            {proPastDue.length > 0 ? "requer atenção" : "tudo em dia"}
+          </p>
+        </div>
       </div>
 
       {/* Search + sort */}

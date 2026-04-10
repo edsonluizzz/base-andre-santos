@@ -22,6 +22,11 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
     const eid = session.user?.establishmentId ?? "default-porto-belo";
+
+    const est = await db.establishment.findUnique({ where: { id: eid }, select: { plan: true } });
+    if (est?.plan !== "PRO")
+      return NextResponse.json({ error: "Plano PRO necessário", upgrade: true }, { status: 403 });
+
     const type = req.nextUrl.searchParams.get("type");
     const year = req.nextUrl.searchParams.get("year");
     const month = req.nextUrl.searchParams.get("month");

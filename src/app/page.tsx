@@ -67,7 +67,7 @@ const PLANS = [
   },
   {
     name: "Pro",
-    price: "R$ 19,90",
+    price: "R$ 29,99",
     period: "/mês",
     desc: "Para congregações em crescimento",
     highlight: true,
@@ -1219,8 +1219,10 @@ export default function LandingPage() {
             ))}
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 flex-wrap justify-center">
             <p className="text-xs text-slate-700">ovile.com.br · {new Date().getFullYear()}</p>
+            <Link href="/termos" className="text-xs text-slate-600 hover:text-slate-400 transition-colors">Termos de Uso</Link>
+            <Link href="/privacidade" className="text-xs text-slate-600 hover:text-slate-400 transition-colors">Privacidade</Link>
             <Link href="/login" className="text-xs text-slate-600 hover:text-slate-400 transition-colors">
               Acesso ao sistema →
             </Link>

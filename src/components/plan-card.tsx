@@ -185,7 +185,7 @@ export function PlanCard({ isAdmin }: { isAdmin: boolean }) {
             ) : (
               <Crown className="w-4 h-4 mr-2" />
             )}
-            Fazer upgrade — R$ 19,90/mês
+            Fazer upgrade — R$ 29,99/mês
           </Button>
         )
       )}

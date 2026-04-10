@@ -8,6 +8,11 @@ export async function GET() {
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const eid = session.user?.establishmentId ?? "default-porto-belo";
+
+    const est = await db.establishment.findUnique({ where: { id: eid }, select: { plan: true } });
+    if (est?.plan !== "PRO")
+      return NextResponse.json({ error: "Plano PRO necessário", upgrade: true }, { status: 403 });
+
     const ministries = await db.ministry.findMany({
       where: { establishmentId: eid },
       orderBy: { name: "asc" },
@@ -33,6 +38,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Nome é obrigatório" }, { status: 400 });
 
     const eid = session.user?.establishmentId ?? "default-porto-belo";
+
+    const est = await db.establishment.findUnique({ where: { id: eid }, select: { plan: true } });
+    if (est?.plan !== "PRO")
+      return NextResponse.json({ error: "Plano PRO necessário", upgrade: true }, { status: 403 });
     const ministry = await db.ministry.create({
       data: { name: name.trim(), description: description?.trim() || null, color: color || null, establishmentId: eid },
     });

@@ -29,6 +29,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { CongressDialog } from "@/components/shirts/congress-dialog";
 import { OrderDialog } from "@/components/shirts/order-dialog";
+import { PlanGate } from "@/components/plan-gate";
 
 interface Congress {
   id: string;
@@ -278,6 +279,7 @@ export default function CamisetasPage() {
   if (loading) return <PageSkeleton />;
 
   return (
+    <PlanGate feature="Camisetas e Congressos">
     <>
     {/* Print styles */}
     <style dangerouslySetInnerHTML={{ __html: `
@@ -836,5 +838,6 @@ export default function CamisetasPage() {
       )}
     </div>
     </>
+    </PlanGate>
   );
 }

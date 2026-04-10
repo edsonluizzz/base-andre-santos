@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Cross, CheckCircle, Loader2, ChevronRight } from "lucide-react";
+import { Cross, CheckCircle, Loader2, ChevronRight, Square, SquareCheckBig } from "lucide-react";
 
 type Step = "form" | "success";
 
@@ -14,6 +14,7 @@ export default function CadastroPage() {
   const [churchName, setChurchName] = useState("");
   const [adminName, setAdminName] = useState("");
   const [adminEmail, setAdminEmail] = useState("");
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -166,6 +167,30 @@ export default function CadastroPage() {
                 />
               </div>
 
+              {/* Aceite dos termos */}
+              <button
+                type="button"
+                onClick={() => setTermsAccepted((v) => !v)}
+                className="flex items-start gap-2.5 text-left w-full group"
+              >
+                {termsAccepted ? (
+                  <SquareCheckBig className="w-4 h-4 text-indigo-400 flex-shrink-0 mt-0.5" />
+                ) : (
+                  <Square className="w-4 h-4 text-slate-600 flex-shrink-0 mt-0.5 group-hover:text-slate-500" />
+                )}
+                <span className="text-xs text-slate-500 leading-relaxed">
+                  Eu li e concordo com os{" "}
+                  <Link href="/termos" target="_blank" className="text-indigo-400 hover:text-indigo-300 underline" onClick={(e) => e.stopPropagation()}>
+                    Termos de Uso
+                  </Link>{" "}
+                  e a{" "}
+                  <Link href="/privacidade" target="_blank" className="text-indigo-400 hover:text-indigo-300 underline" onClick={(e) => e.stopPropagation()}>
+                    Política de Privacidade
+                  </Link>{" "}
+                  do Ovile Gestão.
+                </span>
+              </button>
+
               {error && (
                 <p className="text-red-400 text-xs bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
                   {error}
@@ -174,7 +199,7 @@ export default function CadastroPage() {
 
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || !termsAccepted}
                 className="w-full flex items-center justify-center gap-2 rounded-xl py-3 px-4 text-sm font-medium bg-indigo-600 hover:bg-indigo-500 text-white transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed mt-2"
               >
                 {loading ? (
