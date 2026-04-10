@@ -8,7 +8,7 @@ import {
   Plus, Building2, Users, CalendarDays, Shield, Trash2,
   PauseCircle, PlayCircle, Search, ArrowUpDown, Pencil,
   Eye, StickyNote, Crown, UserPlus, CheckCircle2, Link2, RefreshCw, Copy,
-  TrendingUp, DollarSign, Clock, AlertTriangle,
+  DollarSign, Clock, AlertTriangle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
