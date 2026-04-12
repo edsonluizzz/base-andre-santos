@@ -249,10 +249,10 @@ export default function MembrosPage() {
         />
         </div>
         <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v as "ALL" | "ACTIVE" | "INACTIVE"); setPage(1); }}>
-          <SelectTrigger className="w-[160px] bg-card border-border text-foreground">
+          <SelectTrigger className="w-[160px] bg-secondary border-border text-foreground">
             <SelectValue />
           </SelectTrigger>
-          <SelectContent className="bg-card border-border">
+          <SelectContent className="bg-secondary border-border">
             <SelectItem value="ALL">Todos</SelectItem>
             <SelectItem value="ACTIVE">Ativos</SelectItem>
             <SelectItem value="INACTIVE">Inativos</SelectItem>
@@ -350,7 +350,7 @@ export default function MembrosPage() {
         open={!!linkDialogMemberId}
         onOpenChange={(open) => !open && setLinkDialogMemberId(null)}
       >
-        <DialogContent className="bg-card border-border text-foreground max-w-sm">
+        <DialogContent className="bg-secondary border-border text-foreground max-w-sm">
           <DialogHeader>
             <DialogTitle className="text-foreground">Vincular Conta Google</DialogTitle>
           </DialogHeader>
@@ -365,7 +365,7 @@ export default function MembrosPage() {
             <SelectTrigger className="w-full bg-secondary border-border text-foreground">
               <SelectValue placeholder="Selecionar usuário..." />
             </SelectTrigger>
-            <SelectContent className="bg-card border-border">
+            <SelectContent className="bg-secondary border-border">
               {users.map((u) => (
                 <SelectItem key={u.id} value={u.id}>
                   {u.name ?? u.email ?? u.id}
@@ -402,7 +402,7 @@ export default function MembrosPage() {
 
       {/* Modal de Importação */}
       <Dialog open={importOpen} onOpenChange={(o) => { if (!importLoading) setImportOpen(o); }}>
-        <DialogContent className="bg-card border-border text-foreground max-w-md">
+        <DialogContent className="bg-secondary border-border text-foreground max-w-md">
           <DialogHeader>
             <DialogTitle className="text-foreground">Atualizar via Planilha</DialogTitle>
           </DialogHeader>

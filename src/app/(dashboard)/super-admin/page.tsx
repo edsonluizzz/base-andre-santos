@@ -558,7 +558,7 @@ export default function SuperAdminPage() {
 
       {/* Users modal */}
       <Dialog open={!!usersEst} onOpenChange={(v) => { if (!v) setUsersEst(null); }}>
-        <DialogContent className="bg-card border-border text-foreground max-w-lg">
+        <DialogContent className="bg-secondary border-border text-foreground max-w-lg">
           <DialogHeader>
             <DialogTitle>Usuários — {usersEst?.name}</DialogTitle>
           </DialogHeader>
@@ -642,7 +642,7 @@ function CreateEstablishmentDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-card border-border text-foreground max-w-md">
+      <DialogContent className="bg-secondary border-border text-foreground max-w-md">
         <DialogHeader><DialogTitle>Novo Estabelecimento</DialogTitle></DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 mt-2">
           <div className="space-y-1.5">
@@ -708,7 +708,7 @@ function EditEstablishmentDialog({
 
   return (
     <Dialog open onOpenChange={onOpenChange}>
-      <DialogContent className="bg-card border-border text-foreground max-w-md">
+      <DialogContent className="bg-secondary border-border text-foreground max-w-md">
         <DialogHeader><DialogTitle>Editar — {est.name}</DialogTitle></DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 mt-2">
           <div className="space-y-1.5">

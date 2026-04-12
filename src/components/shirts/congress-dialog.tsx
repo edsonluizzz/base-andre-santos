@@ -158,7 +158,7 @@ export function CongressDialog({ open, onClose, onSaved, congress }: CongressDia
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="bg-card border-border max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="bg-secondary border-border max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-foreground">
             {congress ? "Editar Congresso" : "Novo Congresso"}

@@ -28,6 +28,11 @@ export async function PATCH(
         where: { id: params.id },
         data: { role },
       });
+      // Sincronizar role no UserEstablishment para que o JWT ao relogar use o valor correto
+      await db.userEstablishment.updateMany({
+        where: { userId: params.id, establishmentId: eid },
+        data: { role: role as "ADMIN" | "LEADER" | "MEMBER" },
+      }).catch(() => {});
     }
 
     if (memberId !== undefined) {

@@ -309,7 +309,7 @@ function MembersTab({ ministryId, isLeaderOrAdmin, color }: { ministryId: string
 
       {/* Add Member Dialog */}
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
-        <DialogContent className="bg-card border-border text-foreground max-w-sm">
+        <DialogContent className="bg-secondary border-border text-foreground max-w-sm">
           <DialogHeader>
             <DialogTitle>Adicionar Membro</DialogTitle>
           </DialogHeader>
@@ -320,7 +320,7 @@ function MembersTab({ ministryId, isLeaderOrAdmin, color }: { ministryId: string
                 <SelectTrigger className="bg-background border-border text-foreground">
                   <SelectValue placeholder="Selecione um membro" />
                 </SelectTrigger>
-                <SelectContent className="bg-card border-border max-h-60">
+                <SelectContent className="bg-secondary border-border max-h-60">
                   {available.map((m) => (
                     <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
                   ))}
@@ -336,7 +336,7 @@ function MembersTab({ ministryId, isLeaderOrAdmin, color }: { ministryId: string
                 <SelectTrigger className="bg-background border-border text-foreground">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-card border-border">
+                <SelectContent className="bg-secondary border-border">
                   <SelectItem value="MEMBER">Membro</SelectItem>
                   <SelectItem value="COORDINATOR">Coordenador</SelectItem>
                 </SelectContent>
@@ -566,7 +566,7 @@ function NewMinistryEventDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-card border-border text-foreground max-w-md">
+      <DialogContent className="bg-secondary border-border text-foreground max-w-md">
         <DialogHeader>
           <DialogTitle>Novo Evento do Ministério</DialogTitle>
         </DialogHeader>
@@ -580,7 +580,7 @@ function NewMinistryEventDialog({
               <Label className="text-muted-foreground text-xs">Tipo</Label>
               <Select value={form.type} onValueChange={(v) => v && setForm((p) => ({ ...p, type: v }))}>
                 <SelectTrigger className="bg-background border-border text-foreground"><SelectValue /></SelectTrigger>
-                <SelectContent className="bg-card border-border">
+                <SelectContent className="bg-secondary border-border">
                   {Object.entries(EVENT_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
                 </SelectContent>
               </Select>
@@ -749,14 +749,14 @@ function AddOfferingDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-card border-border text-foreground max-w-sm">
+      <DialogContent className="bg-secondary border-border text-foreground max-w-sm">
         <DialogHeader><DialogTitle>Nova Entrada</DialogTitle></DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 mt-2">
           <div className="space-y-1.5">
             <Label className="text-muted-foreground text-xs">Membro *</Label>
             <Select value={form.memberId} onValueChange={(v) => v && setForm((p) => ({ ...p, memberId: v }))}>
               <SelectTrigger className="bg-background border-border text-foreground"><SelectValue placeholder="Selecione" /></SelectTrigger>
-              <SelectContent className="bg-card border-border max-h-60">
+              <SelectContent className="bg-secondary border-border max-h-60">
                 {allMembers.map((m) => <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>)}
               </SelectContent>
             </Select>
@@ -770,7 +770,7 @@ function AddOfferingDialog({
               <Label className="text-muted-foreground text-xs">Método</Label>
               <Select value={form.method} onValueChange={(v) => v && setForm((p) => ({ ...p, method: v }))}>
                 <SelectTrigger className="bg-background border-border text-foreground"><SelectValue /></SelectTrigger>
-                <SelectContent className="bg-card border-border">
+                <SelectContent className="bg-secondary border-border">
                   <SelectItem value="PIX">PIX</SelectItem>
                   <SelectItem value="CASH">Dinheiro</SelectItem>
                 </SelectContent>
@@ -814,7 +814,7 @@ function AddExpenseDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-card border-border text-foreground max-w-sm">
+      <DialogContent className="bg-secondary border-border text-foreground max-w-sm">
         <DialogHeader><DialogTitle>Nova Despesa</DialogTitle></DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 mt-2">
           <div className="space-y-1.5">
@@ -830,7 +830,7 @@ function AddExpenseDialog({
               <Label className="text-muted-foreground text-xs">Categoria</Label>
               <Select value={form.category} onValueChange={(v) => v && setForm((p) => ({ ...p, category: v }))}>
                 <SelectTrigger className="bg-background border-border text-foreground"><SelectValue /></SelectTrigger>
-                <SelectContent className="bg-card border-border">
+                <SelectContent className="bg-secondary border-border">
                   <SelectItem value="MATERIAL">Material</SelectItem>
                   <SelectItem value="TRANSPORTE">Transporte</SelectItem>
                   <SelectItem value="ALIMENTACAO">Alimentação</SelectItem>

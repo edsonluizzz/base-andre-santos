@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ovile — Checklist de Testes</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6fa; color: #1a1a2e; font-size: 14px; }
+
+  header {
+    background: linear-gradient(135deg, #3730a3, #6366f1);
+    color: white; padding: 24px 32px;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 12px;
+  }
+  header h1 { font-size: 22px; font-weight: 700; }
+  header p { font-size: 13px; opacity: .75; margin-top: 2px; }
+
+  .toolbar {
+    background: white; border-bottom: 1px solid #e2e8f0;
+    padding: 12px 32px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
+  }
+  .toolbar label { font-weight: 600; font-size: 13px; color: #475569; margin-right: 4px; }
+  .toolbar input[type=text] {
+    border: 1px solid #cbd5e1; border-radius: 6px; padding: 6px 10px;
+    font-size: 13px; width: 180px;
+  }
+  button {
+    padding: 7px 16px; border-radius: 6px; font-size: 13px; font-weight: 600;
+    cursor: pointer; border: none; transition: opacity .15s;
+  }
+  button:hover { opacity: .85; }
+  .btn-primary { background: #6366f1; color: white; }
+  .btn-success { background: #22c55e; color: white; }
+  .btn-outline { background: white; color: #475569; border: 1px solid #cbd5e1; }
+  .btn-danger  { background: #ef4444; color: white; }
+
+  .progress-bar-wrap {
+    background: white; padding: 10px 32px; border-bottom: 1px solid #e2e8f0;
+    display: flex; align-items: center; gap: 12px; font-size: 13px; color: #475569;
+  }
+  .progress-bar-bg { flex: 1; background: #e2e8f0; border-radius: 99px; height: 8px; }
+  .progress-bar-fill { height: 8px; border-radius: 99px; background: #6366f1; transition: width .3s; }
+
+  .main { padding: 24px 32px; max-width: 1100px; margin: 0 auto; }
+
+  .section { background: white; border-radius: 12px; margin-bottom: 20px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+  .section-header {
+    background: #f8fafc; border-bottom: 1px solid #e2e8f0;
+    padding: 14px 20px; display: flex; align-items: center; gap: 10px; cursor: pointer;
+  }
+  .section-header .num {
+    background: #6366f1; color: white; border-radius: 6px;
+    width: 26px; height: 26px; display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; flex-shrink: 0;
+  }
+  .section-header h2 { font-size: 15px; font-weight: 700; flex: 1; }
+  .section-header .toggle { color: #94a3b8; font-size: 18px; transition: transform .2s; }
+  .section-header.collapsed .toggle { transform: rotate(-90deg); }
+  .section-count { font-size: 12px; color: #94a3b8; }
+
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  thead th {
+    background: #f1f5f9; font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .05em; color: #64748b; padding: 10px 12px; text-align: left;
+    white-space: nowrap;
+  }
+  thead th.role-col { text-align: center; width: 80px; }
+  tbody tr { border-top: 1px solid #f1f5f9; }
+  tbody tr:hover { background: #fafbff; }
+  td { padding: 10px 12px; vertical-align: top; }
+  td.test-desc { font-size: 13px; line-height: 1.5; min-width: 260px; }
+  td.role-col { text-align: center; }
+
+  input[type=checkbox] { width: 16px; height: 16px; accent-color: #6366f1; cursor: pointer; }
+
+  select.status {
+    border: 1px solid #e2e8f0; border-radius: 5px; padding: 3px 6px;
+    font-size: 12px; cursor: pointer; background: white;
+  }
+  select.status.ok      { background: #dcfce7; border-color: #86efac; color: #15803d; }
+  select.status.fail    { background: #fee2e2; border-color: #fca5a5; color: #b91c1c; }
+  select.status.skip    { background: #fef9c3; border-color: #fde047; color: #854d0e; }
+  select.status.pending { background: white; color: #475569; }
+
+  input.obs {
+    border: 1px solid #e2e8f0; border-radius: 5px; padding: 4px 8px;
+    font-size: 12px; width: 100%; min-width: 150px; color: #374151;
+  }
+  input.obs:focus { outline: none; border-color: #6366f1; }
+
+  .badge-roles { display: flex; gap: 4px; flex-wrap: wrap; }
+  .badge {
+    font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;
+    text-transform: uppercase; letter-spacing: .04em;
+  }
+  .badge-sa  { background: #ede9fe; color: #6d28d9; }
+  .badge-adm { background: #dbeafe; color: #1d4ed8; }
+  .badge-lid { background: #d1fae5; color: #065f46; }
+  .badge-mem { background: #fce7f3; color: #9d174d; }
+
+  .summary-box {
+    background: white; border-radius: 12px; padding: 20px 24px; margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.08);
+    display: flex; gap: 16px; flex-wrap: wrap;
+  }
+  .stat { flex: 1; min-width: 100px; text-align: center; }
+  .stat .val { font-size: 28px; font-weight: 800; }
+  .stat .lbl { font-size: 11px; color: #94a3b8; font-weight: 600; text-transform: uppercase; }
+  .stat.ok .val  { color: #22c55e; }
+  .stat.fail .val { color: #ef4444; }
+  .stat.skip .val { color: #eab308; }
+  .stat.tot .val  { color: #6366f1; }
+
+  .tester-info { display: flex; gap: 20px; flex-wrap: wrap; }
+  .tester-info > div { display: flex; align-items: center; gap: 8px; }
+
+  @media print {
+    header, .toolbar, .progress-bar-wrap { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    button { display: none !important; }
+    .section { box-shadow: none; border: 1px solid #e2e8f0; }
+    body { background: white; }
+    .main { padding: 10px; max-width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>✝ Ovile Gestão — Checklist de Testes</h1>
+    <p>Versão 1.0 · Preencha por perfil: Super Admin / Admin / Líder / Membro</p>
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;">
+    <button class="btn-outline" onclick="exportCSV()">⬇ Exportar CSV</button>
+    <button class="btn-outline" onclick="window.print()">🖨 Imprimir / PDF</button>
+    <button class="btn-danger"  onclick="resetAll()">↺ Limpar tudo</button>
+  </div>
+</header>
+
+<div class="toolbar">
+  <div class="tester-info">
+    <div><label>Testador:</label><input type="text" id="tester" placeholder="Seu nome" /></div>
+    <div><label>Data:</label><input type="text" id="testdate" placeholder="dd/mm/aaaa" /></div>
+    <div><label>Versão/Commit:</label><input type="text" id="commit" placeholder="ex: 201cecf" /></div>
+  </div>
+  <button class="btn-success" onclick="markAllVisible('ok')" style="margin-left:auto">✓ Marcar todos OK</button>
+</div>
+
+<div class="progress-bar-wrap">
+  <span id="prog-text">0 / 0 testados</span>
+  <div class="progress-bar-bg"><div class="progress-bar-fill" id="prog-fill" style="width:0%"></div></div>
+  <span id="prog-pct">0%</span>
+</div>
+
+<div class="main">
+
+  <div class="summary-box">
+    <div class="stat tot"><div class="val" id="s-tot">0</div><div class="lbl">Total</div></div>
+    <div class="stat ok" ><div class="val" id="s-ok">0</div><div class="lbl">OK ✓</div></div>
+    <div class="stat fail"><div class="val" id="s-fail">0</div><div class="lbl">Falhou ✗</div></div>
+    <div class="stat skip"><div class="val" id="s-skip">0</div><div class="lbl">Ignorado</div></div>
+    <div class="stat"    ><div class="val" id="s-pend" style="color:#94a3b8">0</div><div class="lbl">Pendente</div></div>
+  </div>
+
+  <div id="sections-container"></div>
+</div>
+
+<script>
+// ─── DADOS ────────────────────────────────────────────────────────────────────
+const ROLES = { SA:'Super Admin', ADM:'Admin', LID:'Líder', MEM:'Membro' };
+
+const sections = [
+  {
+    id:'auth', num:1, title:'Auth & Login',
+    items:[
+      { id:'a1', desc:'Acessar /login sem estar logado → deve mostrar tela de login', roles:['SA','ADM','LID','MEM'] },
+      { id:'a2', desc:'Fazer login com Google → deve redirecionar para /dashboard', roles:['SA','ADM','LID','MEM'] },
+      { id:'a3', desc:'Acessar /dashboard sem estar logado → deve redirecionar para /login', roles:['SA','ADM','LID','MEM'] },
+      { id:'a4', desc:'Fazer logout → deve voltar para /login', roles:['SA','ADM','LID','MEM'] },
+    ]
+  },
+  {
+    id:'multicongreq', num:2, title:'Múltiplas Congregações (select-church)',
+    items:[
+      { id:'b1', desc:'Login com conta vinculada a 2+ congregações → redireciona para /select-church', roles:['SA','ADM'] },
+      { id:'b2', desc:'/select-church lista todas as congregações do usuário corretamente', roles:['SA','ADM'] },
+      { id:'b3', desc:'Selecionar Porto Belo → dashboard carrega com Porto Belo ativo no sidebar', roles:['SA','ADM'] },
+      { id:'b4', desc:'Selecionar UMADC CIC → dashboard carrega com UMADC CIC ativo no sidebar', roles:['SA'] },
+      { id:'b5', desc:'Trocar congregação pelo switcher no sidebar → recarrega com a correta', roles:['SA','ADM'] },
+    ]
+  },
+  {
+    id:'novo-usuario', num:3, title:'Usuário Novo (sem congregação)',
+    items:[
+      { id:'c1', desc:'Login com Google sem vínculo a congregação → redireciona para /entrar', roles:['MEM'] },
+      { id:'c2', desc:'Não acessa /dashboard diretamente enquanto sem congregação', roles:['MEM'] },
+    ]
+  },
+  {
+    id:'entrar', num:4, title:'Página /entrar (Join por Código)',
+    items:[
+      { id:'d1', desc:'Digitar código inválido (6 chars) → exibe mensagem de erro', roles:['SA','ADM','LID','MEM'] },
+      { id:'d2', desc:'Digitar código válido → exibe nome da congregação encontrada', roles:['SA','ADM','LID','MEM'] },
+      { id:'d3', desc:'Usuário não logado + código válido → exibe botão "Entrar com Google"', roles:['MEM'] },
+      { id:'d4', desc:'Acessar /entrar?c=CODIGO → pré-preenche e busca automaticamente', roles:['SA','ADM','LID','MEM'] },
+      { id:'d5', desc:'Usuário logado + código válido → exibe botão "Entrar em [nome]"', roles:['SA','ADM','LID','MEM'] },
+      { id:'d6', desc:'Clicar em entrar → redireciona para /dashboard com a congregação ativa', roles:['SA','ADM','LID','MEM'] },
+    ]
+  },
+  {
+    id:'dashboard', num:5, title:'Dashboard & Sidebar',
+    items:[
+      { id:'e1', desc:'Logo da congregação aparece no sidebar (se configurada)', roles:['SA','ADM','LID','MEM'] },
+      { id:'e2', desc:'Nome da congregação correto no sidebar', roles:['SA','ADM','LID','MEM'] },
+      { id:'e3', desc:'Navegação entre seções do menu lateral funciona', roles:['SA','ADM','LID','MEM'] },
+      { id:'e4', desc:'Sidebar exibe as seções corretas para cada perfil', roles:['SA','ADM','LID','MEM'] },
+    ]
+  },
+  {
+    id:'membros', num:6, title:'Membros',
+    items:[
+      { id:'f1',  desc:'Listar membros → carrega corretamente', roles:['SA','ADM','LID'] },
+      { id:'f2',  desc:'Paginação funciona (próxima / anterior)', roles:['SA','ADM','LID'] },
+      { id:'f3',  desc:'Busca por nome filtra corretamente', roles:['SA','ADM','LID'] },
+      { id:'f4',  desc:'Filtros (status, ministério etc.) funcionam', roles:['SA','ADM','LID'] },
+      { id:'f5',  desc:'Abrir diálogo de novo membro → visual correto (indigo/slate, sem amarelo)', roles:['SA','ADM'] },
+      { id:'f6',  desc:'Criar membro → aparece na lista imediatamente', roles:['SA','ADM'] },
+      { id:'f7',  desc:'Editar membro → salva e reflete na lista', roles:['SA','ADM'] },
+      { id:'f8',  desc:'Excluir membro → confirma antes, remove da lista', roles:['SA','ADM'] },
+      { id:'f9',  desc:'Export XLSX → baixa planilha com coluna "ID (não editar)"', roles:['SA','ADM'] },
+      { id:'f10', desc:'Import: baixar planilha, editar um campo, reimportar → atualiza sem duplicar', roles:['SA','ADM'] },
+      { id:'f11', desc:'Import com aniversário DD/MM (sem ano) → importa sem erro', roles:['SA','ADM'] },
+      { id:'f12', desc:'Import com dados inválidos → gera log de erros exportável', roles:['SA','ADM'] },
+      { id:'f13', desc:'Membro não consegue criar/editar/excluir (bloqueado)', roles:['MEM'] },
+    ]
+  },
+  {
+    id:'config', num:7, title:'Configurações',
+    items:[
+      { id:'g1', desc:'Abrir /configuracoes → exibe nome atual da congregação', roles:['SA','ADM'] },
+      { id:'g2', desc:'Alterar nome → salva e reflete no sidebar após reload', roles:['SA','ADM'] },
+      { id:'g3', desc:'Upload de logo → aparece no sidebar e na tela de seleção', roles:['SA','ADM'] },
+      { id:'g4', desc:'Link de acesso aparece (se código gerado) com botão copiar', roles:['SA','ADM'] },
+      { id:'g5', desc:'Trocar congregação nas configurações → recarrega com a correta', roles:['SA','ADM'] },
+      { id:'g6', desc:'Membro/Líder não acessa /configuracoes (bloqueado ou sem menu)', roles:['LID','MEM'] },
+    ]
+  },
+  {
+    id:'super-admin', num:8, title:'Painel Super Admin',
+    items:[
+      { id:'h1', desc:'Acessar /super-admin como Super Admin → lista todos os estabelecimentos com stats', roles:['SA'] },
+      { id:'h2', desc:'Usuário comum tentando acessar /super-admin → bloqueado (403/redirect)', roles:['ADM','LID','MEM'] },
+      { id:'h3', desc:'Gerar código de acesso para um estabelecimento → código aparece na lista', roles:['SA'] },
+      { id:'h4', desc:'Copiar link de acesso → copia para a área de transferência', roles:['SA'] },
+      { id:'h5', desc:'Regenerar código → gera novo código diferente', roles:['SA'] },
+      { id:'h6', desc:'Remover código (lixeira) → confirma e remove', roles:['SA'] },
+      { id:'h7', desc:'Link-self → Super Admin vincula conta a um estabelecimento → aparece no /select-church', roles:['SA'] },
+      { id:'h8', desc:'Criar novo estabelecimento → aparece na lista', roles:['SA'] },
+    ]
+  },
+  {
+    id:'seguranca', num:9, title:'Segurança & Isolamento de Dados',
+    items:[
+      { id:'i1', desc:'Membro de congregação A não vê membros da congregação B via API', roles:['SA','ADM'] },
+      { id:'i2', desc:'Usuário suspenso → redireciona para /suspended, não acessa o sistema', roles:['SA'] },
+      { id:'i3', desc:'Chamadas de API diretas sem autenticação retornam 401', roles:['SA','ADM'] },
+    ]
+  },
+];
+
+// ─── RENDER ───────────────────────────────────────────────────────────────────
+function buildTable() {
+  const container = document.getElementById('sections-container');
+  container.innerHTML = '';
+  sections.forEach(sec => {
+    const div = document.createElement('div');
+    div.className = 'section';
+    div.id = 'sec-' + sec.id;
+
+    const hdr = document.createElement('div');
+    hdr.className = 'section-header';
+    hdr.innerHTML = `
+      <span class="num">${sec.num}</span>
+      <h2>${sec.title}</h2>
+      <span class="section-count" id="cnt-${sec.id}"></span>
+      <span class="toggle">▾</span>
+    `;
+    hdr.onclick = () => {
+      hdr.classList.toggle('collapsed');
+      body.style.display = hdr.classList.contains('collapsed') ? 'none' : '';
+    };
+    div.appendChild(hdr);
+
+    const body = document.createElement('div');
+    body.className = 'table-wrap';
+
+    const allRoles = ['SA','ADM','LID','MEM'];
+    const roleLabels = { SA:'Super Admin', ADM:'Admin', LID:'Líder', MEM:'Membro' };
+
+    let html = `<table><thead><tr>
+      <th style="width:32px">#</th>
+      <th>Cenário de Teste</th>
+      <th>Perfis</th>`;
+    allRoles.forEach(r => {
+      html += `<th class="role-col" title="${roleLabels[r]}">${roleLabels[r].split(' ')[0]}<br><span style="color:#6366f1;font-size:9px">${r}</span></th>`;
+    });
+    html += `<th style="min-width:140px">Observação</th></tr></thead><tbody>`;
+
+    sec.items.forEach((item, idx) => {
+      html += `<tr id="row-${item.id}">
+        <td style="color:#94a3b8;font-size:12px">${idx+1}</td>
+        <td class="test-desc">${item.desc}</td>
+        <td><div class="badge-roles">`;
+      item.roles.forEach(r => {
+        const cls = r==='SA'?'badge-sa':r==='ADM'?'badge-adm':r==='LID'?'badge-lid':'badge-mem';
+        html += `<span class="badge ${cls}">${r}</span>`;
+      });
+      html += `</div></td>`;
+      allRoles.forEach(r => {
+        if (item.roles.includes(r)) {
+          html += `<td class="role-col">
+            <select class="status pending" id="st-${item.id}-${r}" onchange="onStatusChange(this,'${item.id}','${r}')">
+              <option value="pending">—</option>
+              <option value="ok">✓ OK</option>
+              <option value="fail">✗ Falhou</option>
+              <option value="skip">⊘ Ignorar</option>
+            </select></td>`;
+        } else {
+          html += `<td class="role-col" style="color:#e2e8f0;font-size:18px">·</td>`;
+        }
+      });
+      html += `<td><input class="obs" type="text" id="obs-${item.id}" placeholder="Anotação..." onchange="save()" /></td></tr>`;
+    });
+
+    html += '</tbody></table>';
+    body.innerHTML = html;
+    div.appendChild(body);
+    container.appendChild(div);
+  });
+
+  loadSaved();
+  updateStats();
+}
+
+// ─── ESTADO ───────────────────────────────────────────────────────────────────
+function onStatusChange(sel, itemId, role) {
+  sel.className = 'status ' + sel.value;
+  save();
+  updateStats();
+}
+
+function updateStats() {
+  let tot=0, ok=0, fail=0, skip=0;
+  sections.forEach(sec => {
+    let secOk=0, secTot=0;
+    sec.items.forEach(item => {
+      item.roles.forEach(r => {
+        const el = document.getElementById(`st-${item.id}-${r}`);
+        if (!el) return;
+        tot++;
+        secTot++;
+        if (el.value==='ok')   { ok++;   secOk++; }
+        if (el.value==='fail') fail++;
+        if (el.value==='skip') skip++;
+      });
+    });
+    const cntEl = document.getElementById('cnt-' + sec.id);
+    if (cntEl) cntEl.textContent = `${secOk}/${secTot}`;
+  });
+  const tested = ok + fail + skip;
+  const pct = tot ? Math.round(tested/tot*100) : 0;
+
+  document.getElementById('s-tot').textContent  = tot;
+  document.getElementById('s-ok').textContent   = ok;
+  document.getElementById('s-fail').textContent = fail;
+  document.getElementById('s-skip').textContent = skip;
+  document.getElementById('s-pend').textContent = tot - tested;
+  document.getElementById('prog-text').textContent = `${tested} / ${tot} testados`;
+  document.getElementById('prog-pct').textContent  = pct + '%';
+  document.getElementById('prog-fill').style.width = pct + '%';
+}
+
+// ─── PERSISTÊNCIA ─────────────────────────────────────────────────────────────
+function save() {
+  const data = {};
+  sections.forEach(sec => sec.items.forEach(item => {
+    ['SA','ADM','LID','MEM'].forEach(r => {
+      const el = document.getElementById(`st-${item.id}-${r}`);
+      if (el) data[`st-${item.id}-${r}`] = el.value;
+    });
+    const obs = document.getElementById(`obs-${item.id}`);
+    if (obs) data[`obs-${item.id}`] = obs.value;
+  }));
+  data['tester']   = document.getElementById('tester').value;
+  data['testdate'] = document.getElementById('testdate').value;
+  data['commit']   = document.getElementById('commit').value;
+  localStorage.setItem('ovile-checklist', JSON.stringify(data));
+}
+
+function loadSaved() {
+  const raw = localStorage.getItem('ovile-checklist');
+  if (!raw) return;
+  const data = JSON.parse(raw);
+  Object.entries(data).forEach(([k,v]) => {
+    const el = document.getElementById(k);
+    if (!el) return;
+    el.value = v;
+    if (el.classList.contains('status')) el.className = 'status ' + v;
+  });
+}
+
+function resetAll() {
+  if (!confirm('Limpar todos os resultados? Essa ação não pode ser desfeita.')) return;
+  localStorage.removeItem('ovile-checklist');
+  buildTable();
+}
+
+// ─── EXPORT CSV ───────────────────────────────────────────────────────────────
+function exportCSV() {
+  const tester   = document.getElementById('tester').value || '';
+  const testdate = document.getElementById('testdate').value || '';
+  const commit   = document.getElementById('commit').value || '';
+
+  const rows = [
+    ['Ovile Gestão — Checklist de Testes'],
+    [`Testador: ${tester}`, `Data: ${testdate}`, `Commit: ${commit}`],
+    [],
+    ['Seção','ID','Cenário','Perfis Aplicáveis','Super Admin','Admin','Líder','Membro','Observação'],
+  ];
+
+  sections.forEach(sec => {
+    sec.items.forEach(item => {
+      const getV = (r) => {
+        if (!item.roles.includes(r)) return 'N/A';
+        const el = document.getElementById(`st-${item.id}-${r}`);
+        const map = { pending:'Pendente', ok:'OK', fail:'Falhou', skip:'Ignorado' };
+        return el ? (map[el.value] || 'Pendente') : 'Pendente';
+      };
+      const obs = document.getElementById(`obs-${item.id}`)?.value || '';
+      rows.push([
+        sec.title,
+        item.id,
+        item.desc,
+        item.roles.join(', '),
+        getV('SA'), getV('ADM'), getV('LID'), getV('MEM'),
+        obs,
+      ]);
+    });
+  });
+
+  const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\r\n');
+  const blob = new Blob(['\uFEFF'+csv], { type:'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url;
+  a.download = `ovile-checklist-${testdate.replace(/\//g,'-') || 'testes'}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ─── HELPER ───────────────────────────────────────────────────────────────────
+function markAllVisible(status) {
+  sections.forEach(sec => sec.items.forEach(item => {
+    item.roles.forEach(r => {
+      const el = document.getElementById(`st-${item.id}-${r}`);
+      if (el && el.value === 'pending') {
+        el.value = status;
+        el.className = 'status ' + status;
+      }
+    });
+  }));
+  save();
+  updateStats();
+}
+
+['tester','testdate','commit'].forEach(id => {
+  document.getElementById(id).addEventListener('input', save);
+});
+
+buildTable();
+</script>
+</body>
+</html>

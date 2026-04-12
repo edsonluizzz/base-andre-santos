@@ -233,7 +233,7 @@ function MinistryDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-card border-border text-foreground max-w-md">
+      <DialogContent className="bg-secondary border-border text-foreground max-w-md">
         <DialogHeader>
           <DialogTitle>{editing ? "Editar Ministério" : "Novo Ministério"}</DialogTitle>
         </DialogHeader>

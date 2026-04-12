@@ -523,7 +523,7 @@ function EditEventDialog({
 
   return (
     <Dialog open={!!event} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-card border-border text-foreground max-w-md">
+      <DialogContent className="bg-secondary border-border text-foreground max-w-md">
         <DialogHeader>
           <DialogTitle className="text-foreground">Editar Evento</DialogTitle>
         </DialogHeader>
@@ -541,7 +541,7 @@ function EditEventDialog({
                 <SelectTrigger className="bg-background border-border text-foreground">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-card border-border">
+                <SelectContent className="bg-secondary border-border">
                   {Object.entries(EVENT_LABELS).map(([k, v]) => (
                     <SelectItem key={k} value={k}>{v}</SelectItem>
                   ))}
@@ -617,7 +617,7 @@ function NewEventDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-card border-border text-foreground max-w-md">
+      <DialogContent className="bg-secondary border-border text-foreground max-w-md">
         <DialogHeader>
           <DialogTitle className="text-foreground">
             Novo Evento
@@ -637,7 +637,7 @@ function NewEventDialog({
                 <SelectTrigger className="bg-background border-border text-foreground">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-card border-border">
+                <SelectContent className="bg-secondary border-border">
                   {Object.entries(EVENT_LABELS).map(([k, v]) => (
                     <SelectItem key={k} value={k}>{v}</SelectItem>
                   ))}

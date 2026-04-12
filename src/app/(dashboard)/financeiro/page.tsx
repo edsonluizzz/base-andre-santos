@@ -652,7 +652,7 @@ function AddOfferingDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-card border-border text-foreground max-w-md">
+      <DialogContent className="bg-secondary border-border text-foreground max-w-md">
         <DialogHeader>
           <DialogTitle className="text-foreground">
             Registrar Oferta
@@ -665,7 +665,7 @@ function AddOfferingDialog({
               <SelectTrigger className="bg-background border-border text-foreground">
                 <SelectValue placeholder="Selecione..." />
               </SelectTrigger>
-              <SelectContent className="bg-card border-border max-h-52">
+              <SelectContent className="bg-secondary border-border max-h-52">
                 {members.map((m) => (
                   <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
                 ))}
@@ -685,7 +685,7 @@ function AddOfferingDialog({
                 <SelectTrigger className="bg-background border-border text-foreground">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-card border-border">
+                <SelectContent className="bg-secondary border-border">
                   <SelectItem value="CASH">Dinheiro</SelectItem>
                   <SelectItem value="PIX">PIX</SelectItem>
                 </SelectContent>
@@ -704,7 +704,7 @@ function AddOfferingDialog({
                 <SelectTrigger className="bg-background border-border text-foreground">
                   <SelectValue placeholder="Nenhum" />
                 </SelectTrigger>
-                <SelectContent className="bg-card border-border max-h-48">
+                <SelectContent className="bg-secondary border-border max-h-48">
                   <SelectItem value="">Nenhum</SelectItem>
                   {events.map((ev) => (
                     <SelectItem key={ev.id} value={ev.id}>{ev.title}</SelectItem>
@@ -720,7 +720,7 @@ function AddOfferingDialog({
                 <SelectTrigger className="bg-background border-border text-foreground">
                   <SelectValue placeholder="Nenhuma" />
                 </SelectTrigger>
-                <SelectContent className="bg-card border-border">
+                <SelectContent className="bg-secondary border-border">
                   <SelectItem value="">Nenhuma</SelectItem>
                   {bankAccounts.map((b) => (
                     <SelectItem key={b.id} value={b.id}>{b.name}{b.isDefault ? " ★" : ""}</SelectItem>
@@ -800,7 +800,7 @@ function AddExpenseDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-card border-border text-foreground max-w-md">
+      <DialogContent className="bg-secondary border-border text-foreground max-w-md">
         <DialogHeader>
           <DialogTitle className="text-foreground">
             Registrar Despesa
@@ -826,7 +826,7 @@ function AddExpenseDialog({
                 <SelectTrigger className="bg-background border-border text-foreground">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-card border-border">
+                <SelectContent className="bg-secondary border-border">
                   <SelectItem value="MATERIAL">Material</SelectItem>
                   <SelectItem value="TRANSPORTE">Transporte</SelectItem>
                   <SelectItem value="ALIMENTACAO">Alimentação</SelectItem>
@@ -848,7 +848,7 @@ function AddExpenseDialog({
                 <SelectTrigger className="bg-background border-border text-foreground">
                   <SelectValue placeholder="Nenhuma" />
                 </SelectTrigger>
-                <SelectContent className="bg-card border-border">
+                <SelectContent className="bg-secondary border-border">
                   <SelectItem value="">Nenhuma</SelectItem>
                   {bankAccounts.map((b) => (
                     <SelectItem key={b.id} value={b.id}>{b.name}{b.isDefault ? " ★" : ""}</SelectItem>
@@ -915,7 +915,7 @@ function BankAccountDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-card border-border text-foreground max-w-md">
+      <DialogContent className="bg-secondary border-border text-foreground max-w-md">
         <DialogHeader>
           <DialogTitle className="text-foreground flex items-center gap-2">
             <Landmark className="w-4 h-4" /> Contas Bancárias / Caixas

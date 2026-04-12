@@ -25,6 +25,20 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             where: { id: p.id },
             data: { userId: user.id, pendingEmail: null, inviteStatus: "ACCEPTED", acceptedAt: new Date() },
           }).catch(() => {});
+
+          // Criar registro de membro se ainda não existir para este usuário
+          const existingMember = await db.member.findUnique({
+            where: { userId: user.id },
+          });
+          if (!existingMember) {
+            await db.member.create({
+              data: {
+                name: user.name ?? user.email ?? "Membro",
+                establishmentId: p.establishmentId,
+                userId: user.id,
+              },
+            }).catch(() => {});
+          }
         }
 
         // Buscar vínculos do usuário

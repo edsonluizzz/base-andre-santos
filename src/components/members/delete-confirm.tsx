@@ -19,7 +19,7 @@ export function DeleteConfirm({
 }) {
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onCancel()}>
-      <DialogContent className="bg-card border-border text-foreground max-w-sm">
+      <DialogContent className="bg-secondary border-border text-foreground max-w-sm">
         <DialogHeader>
           <DialogTitle className="text-foreground">Remover participante</DialogTitle>
         </DialogHeader>

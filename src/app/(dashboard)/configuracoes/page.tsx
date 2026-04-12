@@ -482,7 +482,7 @@ export default function ConfiguracoesPage() {
                 <SelectTrigger className="flex-1 bg-background border-border text-foreground h-9 text-sm">
                   <SelectValue placeholder="Selecionar estabelecimento..." />
                 </SelectTrigger>
-                <SelectContent className="bg-card border-border">
+                <SelectContent className="bg-secondary border-border">
                   {establishments.map((e) => (
                     <SelectItem key={e.id} value={e.id}>
                       {e.name}
@@ -566,7 +566,7 @@ export default function ConfiguracoesPage() {
                             <Link className="w-3 h-3 mr-1.5 text-muted-foreground flex-shrink-0" />
                             <SelectValue placeholder="Vincular membro..." />
                           </SelectTrigger>
-                          <SelectContent className="bg-card border-border">
+                          <SelectContent className="bg-secondary border-border">
                             <SelectItem value="__none__">
                               <span className="text-muted-foreground">Sem vínculo</span>
                             </SelectItem>
@@ -590,7 +590,7 @@ export default function ConfiguracoesPage() {
                           <SelectTrigger className="w-36 bg-background border-border text-foreground h-8 text-xs">
                             <SelectValue />
                           </SelectTrigger>
-                          <SelectContent className="bg-card border-border">
+                          <SelectContent className="bg-secondary border-border">
                             <SelectItem value="ADMIN">Administrador</SelectItem>
                             <SelectItem value="LEADER">Líder</SelectItem>
                             <SelectItem value="MEMBER">Membro</SelectItem>
@@ -645,7 +645,7 @@ export default function ConfiguracoesPage() {
               <SelectTrigger className="w-full sm:w-36 bg-background border-border text-foreground h-10 text-sm">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="bg-card border-border">
+              <SelectContent className="bg-secondary border-border">
                 <SelectItem value="ADMIN">Administrador</SelectItem>
                 <SelectItem value="LEADER">Líder</SelectItem>
                 <SelectItem value="MEMBER">Membro</SelectItem>

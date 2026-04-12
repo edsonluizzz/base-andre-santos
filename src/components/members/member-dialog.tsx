@@ -36,6 +36,22 @@ type Props = {
   onSuccess: () => void;
 };
 
+function formatBirthday(value: string): string {
+  const digits = value.replace(/\D/g, "").slice(0, 4);
+  if (digits.length <= 2) return digits;
+  return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+}
+
+function formatPhone(value: string): string {
+  const digits = value.replace(/\D/g, "").slice(0, 11);
+  if (digits.length === 0) return "";
+  if (digits.length <= 2) return `(${digits}`;
+  if (digits.length <= 7) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+  if (digits.length <= 11)
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 3)} ${digits.slice(3, 7)}-${digits.slice(7)}`;
+  return value;
+}
+
 export function MemberDialog({ open, onOpenChange, member, onSuccess }: Props) {
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
@@ -94,7 +110,7 @@ export function MemberDialog({ open, onOpenChange, member, onSuccess }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-card border-border text-foreground max-w-md">
+      <DialogContent className="bg-secondary border-border text-foreground max-w-md">
         <DialogHeader>
           <DialogTitle className="text-foreground">
             {member ? "Editar Membro" : "Novo Membro"}
@@ -117,9 +133,10 @@ export function MemberDialog({ open, onOpenChange, member, onSuccess }: Props) {
               <Label className="text-muted-foreground text-xs">Aniversário</Label>
               <Input
                 value={form.birthday}
-                onChange={(e) => set("birthday", e.target.value)}
+                onChange={(e) => set("birthday", formatBirthday(e.target.value))}
                 placeholder="DD/MM"
-                maxLength={10}
+                maxLength={5}
+                inputMode="numeric"
                 className="bg-background border-border text-foreground focus-visible:ring-primary"
               />
             </div>
@@ -127,8 +144,10 @@ export function MemberDialog({ open, onOpenChange, member, onSuccess }: Props) {
               <Label className="text-muted-foreground text-xs">Telefone / WhatsApp</Label>
               <Input
                 value={form.phone}
-                onChange={(e) => set("phone", e.target.value)}
-                placeholder="47 9 9999-9999"
+                onChange={(e) => set("phone", formatPhone(e.target.value))}
+                placeholder="(47) 9 9999-9999"
+                maxLength={17}
+                inputMode="numeric"
                 className="bg-background border-border text-foreground focus-visible:ring-primary"
               />
             </div>
@@ -141,7 +160,7 @@ export function MemberDialog({ open, onOpenChange, member, onSuccess }: Props) {
                 <SelectTrigger className="bg-background border-border text-foreground">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-card border-border">
+                <SelectContent className="bg-secondary border-border">
                   <SelectItem value="ACTIVE">Ativo</SelectItem>
                   <SelectItem value="INACTIVE">Inativo</SelectItem>
                 </SelectContent>
