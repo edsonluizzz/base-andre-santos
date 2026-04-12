@@ -44,13 +44,14 @@ export const authConfig: NextAuthConfig = {
       const isApiOnboarding = pathname === "/api/onboarding";
       const isApiStripeWebhook = pathname === "/api/stripe/webhook";
       const isApiJoin = pathname.startsWith("/api/join");
+      const isApiCron = pathname.startsWith("/api/cron/");
       const isSelectChurch = pathname === "/select-church";
       const isSuspendedPage = pathname === "/suspended";
       const isEntrar = pathname.startsWith("/entrar");
       const isSemAcesso = pathname === "/sem-acesso";
 
       // Rotas sempre públicas
-      if (isApiAuth || isApiOnboarding || isApiStripeWebhook || isApiJoin ||
+      if (isApiAuth || isApiOnboarding || isApiStripeWebhook || isApiJoin || isApiCron ||
           isLandingPage || isCadastro || isSuspendedPage || isEntrar || isSemAcesso) {
         return true;
       }
