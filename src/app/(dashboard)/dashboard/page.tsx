@@ -3,10 +3,12 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { usePermissions } from "@/context/permissions-context";
-import { Users, DollarSign, CalendarDays, Cake, TrendingUp, AlertTriangle, CheckCircle, Star } from "lucide-react";
+import { Users, DollarSign, CalendarDays, Cake, TrendingUp, AlertTriangle, CheckCircle, Star, Phone } from "lucide-react";
 import Link from "next/link";
 import { format, isValid } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { CalendarWidget } from "@/components/ui/calendar-widget";
+import { NewEventDialog } from "@/components/shared/event-dialogs";
 
 type Member = {
   id: string;
@@ -28,6 +30,13 @@ type AttendanceByMember = {
   total: number;
   present: number;
   rate: number | null;
+};
+
+type EvasionMember = {
+  id: string;
+  name: string;
+  phone: string | null;
+  lastEvents: string[];
 };
 
 function safeFormat(dateStr: string | Date, fmt: string): string {
@@ -82,13 +91,29 @@ export default function DashboardPage() {
   const [totalMonth, setTotalMonth] = useState(0);
   const [expensesTotal, setExpensesTotal] = useState(0);
   const [attendance, setAttendance] = useState<AttendanceByMember[]>([]);
+  const [evasionMembers, setEvasionMembers] = useState<EvasionMember[]>([]);
+  const [evasionLoading, setEvasionLoading] = useState(true);
+  const [newEventOpen, setNewEventOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>();
+
+  const fetchEvents = async () => {
+    const res = await fetch("/api/events");
+    setEvents(await res.json());
+  };
 
   useEffect(() => {
     fetch("/api/members").then((r) => r.json()).then(setMembers);
-    fetch("/api/events").then((r) => r.json()).then(setEvents);
+    fetchEvents();
     fetch("/api/reports?type=attendance-by-member")
       .then((r) => r.json())
       .then((d) => setAttendance(Array.isArray(d) ? d : []));
+
+    fetch("/api/insights/evasion")
+      .then((r) => r.json())
+      .then((d) => {
+        setEvasionMembers(Array.isArray(d.members) ? d.members : []);
+        setEvasionLoading(false);
+      });
 
     if (canView("FINANCIAL")) {
       const now = new Date();
@@ -193,144 +218,120 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        {/* Upcoming birthdays */}
-        <div
-          className="glass-card p-5 animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-both"
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        {/* Calendar widget — takes 2 cols on large screens */}
+        <div 
+          className="lg:col-span-2 animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-both"
           style={{ animationDelay: "200ms" }}
         >
-          <div className="flex items-center justify-between mb-4">
-            <p className="text-[11px] tracking-[3px] uppercase text-primary/70">
-              Próximos Aniversários
-            </p>
-            <Link href="/aniversarios" className="text-xs text-muted-foreground hover:text-primary transition-colors">
-              Ver todos →
-            </Link>
-          </div>
-          {upcomingBirthdays.length === 0 ? (
-            <p className="text-muted-foreground text-sm py-4 text-center">Nenhum nos próximos 30 dias</p>
-          ) : (
-            <div className="space-y-3">
-              {upcomingBirthdays.map((m) => {
-                const days = daysUntil(m.birthday!);
-                const today = isToday(m.birthday!);
-                return (
-                  <div key={m.id} className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary text-xs font-bold">
+          <CalendarWidget events={events} onDayClick={handleDayClick} />
+        </div>
+
+        <div className="space-y-6">
+          {/* Radar de Liderança (Insights) */}
+          <div
+            className="glass-card p-5 animate-in fade-in slide-in-from-right-4 duration-500 fill-mode-both"
+            style={{ animationDelay: "300ms" }}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <p className="text-[11px] tracking-[3px] uppercase text-primary/70">
+                  Radar de Liderança
+                </p>
+                <p className="text-[10px] text-muted-foreground mt-0.5 italic">Membros ausentes nos últimos 3 encontros</p>
+              </div>
+              <AlertTriangle className="w-4 h-4 text-amber-400" />
+            </div>
+
+            {evasionLoading ? (
+              <p className="text-muted-foreground text-xs py-4 text-center">Analisando frequência...</p>
+            ) : evasionMembers.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-6 text-center">
+                <CheckCircle className="w-8 h-8 text-emerald-500/20 mb-2" />
+                <p className="text-muted-foreground text-xs">Todos os membros ativos estão frequentes.</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {evasionMembers.slice(0, 4).map((m) => (
+                  <div key={m.id} className="flex items-center gap-3 p-2.5 rounded-xl bg-white/[0.02] border border-white/[0.05]">
+                    <div className="w-8 h-8 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500 text-xs font-bold">
                       {m.name.split(" ").slice(0, 2).map((n) => n[0]).join("").toUpperCase()}
                     </div>
                     <div className="flex-1">
                       <p className="text-sm font-medium text-foreground">{m.name}</p>
-                      <p className="text-xs text-muted-foreground">{m.birthday}</p>
+                      <p className="text-[10px] text-muted-foreground">3 faltas consecutivas</p>
                     </div>
-                    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
-                      today
-                        ? "bg-emerald-500 text-white"
-                        : "bg-emerald-500/10 text-emerald-400"
-                    }`}>
-                      {today ? "Hoje!" : `${days}d`}
-                    </span>
+                    {m.phone && (
+                      <a
+                        href={`https://wa.me/55${m.phone.replace(/\D/g, "")}?text=${encodeURIComponent(`Olá ${m.name.split(" ")[0]}, sentimos sua falta nos últimos encontros. Está tudo bem com você?`)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-colors"
+                        title="Enviar mensagem"
+                      >
+                        <Phone className="w-3.5 h-3.5" />
+                      </a>
+                    )}
                   </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-
-        {/* Upcoming events */}
-        <div
-          className="glass-card p-5 animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-both"
-          style={{ animationDelay: "300ms" }}
-        >
-          <div className="flex items-center justify-between mb-4">
-            <p className="text-[11px] tracking-[3px] uppercase text-primary/70">
-              Próximos Eventos
-            </p>
-            <Link href="/chamada" className="text-xs text-muted-foreground hover:text-primary transition-colors">
-              Ver todos →
-            </Link>
-          </div>
-          {upcomingEvents.length === 0 ? (
-            <p className="text-muted-foreground text-sm py-4 text-center">Nenhum evento futuro cadastrado</p>
-          ) : (
-            <div className="space-y-3">
-              {upcomingEvents.map((ev) => (
-                <div key={ev.id} className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
-                    <CalendarDays className="w-4 h-4 text-primary" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-foreground">{ev.title}</p>
-                    <p className="text-xs text-muted-foreground flex items-center gap-1.5 flex-wrap">
-                      {safeFormat(ev.date, "dd/MM HH:mm")}
-                      <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${EVENT_TYPE_BADGE[ev.type] ?? "bg-secondary text-muted-foreground"}`}>
-                        {EVENT_TYPE_LABELS[ev.type] ?? ev.type}
-                      </span>
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Insights — Alertas de Frequência */}
-      <div
-        className="glass-card p-5 animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-both"
-        style={{ animationDelay: "400ms" }}
-      >
-        <div className="flex items-center justify-between mb-4">
-          <p className="text-[11px] tracking-[3px] uppercase text-primary/70">
-            Insights de Frequência
-          </p>
-          <Link href="/relatorios" className="text-xs text-muted-foreground hover:text-primary transition-colors">
-            Ver relatório →
-          </Link>
-        </div>
-
-        {attendance.length === 0 ? (
-          <p className="text-muted-foreground text-sm py-2 text-center">Nenhuma chamada registrada ainda</p>
-        ) : (
-          <div className="space-y-3">
-            {lowAttendance.length > 0 ? (
-              <div className="flex items-start gap-3 p-3 bg-destructive/5 border border-destructive/20 rounded-xl">
-                <AlertTriangle className="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-sm font-medium text-destructive">
-                    {lowAttendance.length} membro{lowAttendance.length !== 1 ? "s" : ""} com frequência abaixo de 50%
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {lowAttendance.slice(0, 3).map((m) => `${m.name} (${m.rate ?? 0}%)`).join(", ")}
-                    {lowAttendance.length > 3 && ` e mais ${lowAttendance.length - 3}...`}
-                  </p>
-                </div>
+                ))}
+                {evasionMembers.length > 4 && (
+                  <p className="text-[10px] text-center text-muted-foreground">E mais {evasionMembers.length - 4} membros em risco</p>
+                )}
               </div>
+            )}
+          </div>
+
+          {/* Upcoming birthdays */}
+          <div
+            className="glass-card p-5 animate-in fade-in slide-in-from-right-4 duration-500 fill-mode-both"
+            style={{ animationDelay: "400ms" }}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-[11px] tracking-[3px] uppercase text-primary/70">
+                Aniversariantes do Mês
+              </p>
+              <Link href="/aniversarios" className="text-xs text-muted-foreground hover:text-primary transition-colors">
+                Ver todos
+              </Link>
+            </div>
+            {upcomingBirthdays.length === 0 ? (
+              <p className="text-muted-foreground text-xs py-4 text-center">Nenhum nos próximos 30 dias</p>
             ) : (
-              <div className="flex items-center gap-3 p-3 bg-emerald-500/5 border border-emerald-500/20 rounded-xl">
-                <CheckCircle className="w-4 h-4 text-emerald-400" />
-                <p className="text-sm text-emerald-400">Todos os membros com boa frequência</p>
-              </div>
-            )}
-
-            {topAttendee && (
-              <div className="flex items-center gap-3 p-3 border border-white/[0.07] rounded-xl">
-                <div className="w-8 h-8 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary text-xs font-bold">
-                  {topAttendee.name.split(" ").slice(0, 2).map((n: string) => n[0]).join("").toUpperCase()}
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-foreground">{topAttendee.name}</p>
-                  <p className="text-xs text-muted-foreground">Maior presença — {topAttendee.rate ?? 0}%</p>
-                </div>
-                <span className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1 bg-emerald-500/10 text-emerald-400 rounded-full">
-                  <Star className="w-3 h-3" />
-                  Destaque
-                </span>
+              <div className="space-y-3">
+                {upcomingBirthdays.slice(0, 3).map((m) => {
+                  const days = daysUntil(m.birthday!);
+                  const today = isToday(m.birthday!);
+                  return (
+                    <div key={m.id} className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary text-xs font-bold">
+                        {m.name.split(" ").slice(0, 2).map((n) => n[0]).join("").toUpperCase()}
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-foreground">{m.name}</p>
+                        <p className="text-xs text-muted-foreground">{m.birthday}</p>
+                      </div>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                        today
+                          ? "bg-emerald-500 text-white shadow-[0_0_10px_rgba(16,185,129,0.4)]"
+                          : "bg-emerald-500/10 text-emerald-400"
+                      }`}>
+                        {today ? "Hoje!" : `${days}d`}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
-        )}
+        </div>
       </div>
+
+      <NewEventDialog
+        open={newEventOpen}
+        onOpenChange={setNewEventOpen}
+        initialDate={selectedDate}
+        onSuccess={() => { fetchEvents(); setNewEventOpen(false); }}
+      />
     </div>
   );
 }

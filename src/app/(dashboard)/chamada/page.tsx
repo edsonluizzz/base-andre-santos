@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/select";
 import { format, isValid } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { NewEventDialog } from "@/components/shared/event-dialogs";
 
 type EventType = "CULTO" | "ENSAIO" | "REUNIAO" | "RETIRO" | "CELULA" | "CONGRESSO" | "OUTRO";
 type AttendanceStatus = "PRESENT" | "ABSENT" | "JUSTIFIED";
@@ -662,102 +663,6 @@ function EditEventDialog({
             </Button>
             <Button type="submit" disabled={loading} className="flex-1">
               {loading ? "Salvando..." : "Salvar"}
-            </Button>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function NewEventDialog({
-  open,
-  onOpenChange,
-  onSuccess,
-}: {
-  open: boolean;
-  onOpenChange: (v: boolean) => void;
-  onSuccess: () => void;
-}) {
-  const [form, setForm] = useState({
-    title: "",
-    type: "ENSAIO",
-    date: new Date().toISOString().slice(0, 16),
-    location: "",
-    notes: "",
-  });
-  const [loading, setLoading] = useState(false);
-
-  function set(field: string, value: string) {
-    setForm((p) => ({ ...p, [field]: value }));
-  }
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setLoading(true);
-    const res = await fetch("/api/events", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
-    });
-    setLoading(false);
-    if (res.ok) {
-      toast.success("Evento criado!");
-      setForm({ title: "", type: "ENSAIO", date: new Date().toISOString().slice(0, 16), location: "", notes: "" });
-      onSuccess();
-    } else {
-      toast.error("Erro ao criar evento");
-    }
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-secondary border-border text-foreground max-w-md">
-        <DialogHeader>
-          <DialogTitle className="text-foreground">
-            Novo Evento
-          </DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4 mt-2">
-          <div className="space-y-1.5">
-            <Label className="text-muted-foreground text-xs">Título *</Label>
-            <Input value={form.title} onChange={(e) => set("title", e.target.value)}
-              placeholder="Ex: Ensaio de louvor" required
-              className="bg-background border-border text-foreground focus-visible:ring-primary" />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label className="text-muted-foreground text-xs">Tipo *</Label>
-              <Select value={form.type} onValueChange={(v: string | null) => v && set("type", v)}>
-                <SelectTrigger className="bg-background border-border text-foreground">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-secondary border-border">
-                  {Object.entries(EVENT_LABELS).map(([k, v]) => (
-                    <SelectItem key={k} value={k}>{v}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-muted-foreground text-xs">Data e hora *</Label>
-              <Input type="datetime-local" value={form.date} onChange={(e) => set("date", e.target.value)}
-                className="bg-background border-border text-foreground focus-visible:ring-primary" />
-            </div>
-          </div>
-          <div className="space-y-1.5">
-            <Label className="text-muted-foreground text-xs">Local</Label>
-            <Input value={form.location} onChange={(e) => set("location", e.target.value)}
-              placeholder="Ex: Igreja Central"
-              className="bg-background border-border text-foreground focus-visible:ring-primary" />
-          </div>
-          <div className="flex gap-3 pt-2">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}
-              className="flex-1 border-border text-muted-foreground hover:bg-secondary">
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={loading} className="flex-1">
-              {loading ? "Criando..." : "Criar Evento"}
             </Button>
           </div>
         </form>
