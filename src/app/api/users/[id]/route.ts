@@ -14,7 +14,9 @@ export async function PATCH(
     }
 
     const eid = session.user?.establishmentId ?? "default-porto-belo";
-    const existing = await db.user.findFirst({ where: { id: params.id, establishmentId: eid } });
+    const existing = await db.userEstablishment.findUnique({
+      where: { userId_establishmentId: { userId: params.id, establishmentId: eid } },
+    });
     if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
     const body = await req.json();
@@ -101,7 +103,9 @@ export async function DELETE(
     }
 
     const eid = session.user?.establishmentId ?? "default-porto-belo";
-    const target = await db.user.findFirst({ where: { id: params.id, establishmentId: eid } });
+    const target = await db.userEstablishment.findUnique({
+      where: { userId_establishmentId: { userId: params.id, establishmentId: eid } },
+    });
     if (!target) return NextResponse.json({ error: "Usuário não encontrado" }, { status: 404 });
 
     await db.user.delete({ where: { id: params.id } });
