@@ -11,7 +11,11 @@ export async function GET() {
 
     const eid = session.user?.establishmentId ?? "default-porto-belo";
     const users = await db.user.findMany({
-      where: { establishmentId: eid },
+      where: {
+        userEstablishments: {
+          some: { establishmentId: eid, inviteStatus: "ACCEPTED" },
+        },
+      },
       orderBy: { createdAt: "asc" },
       select: {
         id: true,
