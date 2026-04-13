@@ -144,7 +144,11 @@ export async function POST(req: NextRequest) {
   // Executar atualizações (timeout generoso para lotes grandes)
   if (toUpdate.length > 0) {
     await db.$transaction(
-      toUpdate.map(({ id, data }) => db.member.update({ where: { id }, data })),
+      async (tx) => {
+        for (const { id, data } of toUpdate) {
+          await tx.member.update({ where: { id }, data });
+        }
+      },
       { timeout: 30000 }
     );
     result.updated = toUpdate.length;
