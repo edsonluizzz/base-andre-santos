@@ -66,6 +66,7 @@ export default function ConfiguracoesPage() {
   const [switchingEid, setSwitchingEid] = useState<string>("");
   const [switching, setSwitching] = useState(false);
   const isAdmin = session?.user?.role === "ADMIN";
+  const isAdminOrLeader = isAdmin || session?.user?.role === "LEADER";
 
   const [churchName, setChurchName] = useState("");
   const [joinCode, setJoinCode] = useState<string | null>(null);
@@ -393,8 +394,8 @@ export default function ConfiguracoesPage() {
         </div>
       )}
 
-      {/* Link de acesso para membros — admin only */}
-      {isAdmin && (
+      {/* Link de acesso para membros — admin e líder */}
+      {isAdminOrLeader && (
         <div className="glass-card p-6 mb-6">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
@@ -424,13 +425,52 @@ export default function ConfiguracoesPage() {
               </div>
               <p className="text-[11px] text-muted-foreground/50">
                 Código: <span className="font-mono font-bold tracking-widest text-foreground">{joinCode}</span>
-                {" · "}Para trocar o código, peça ao Super Admin.
               </p>
+              <div className="flex gap-2 pt-1">
+                <button
+                  onClick={async () => {
+                    const res = await fetch("/api/settings/join-code", { method: "POST" });
+                    const data = await res.json();
+                    if (data.joinCode) { setJoinCode(data.joinCode); toast.success("Novo código gerado!"); }
+                    else toast.error("Erro ao gerar código.");
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-background hover:bg-muted text-foreground text-xs font-medium transition-colors"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  Novo código
+                </button>
+                <button
+                  onClick={async () => {
+                    if (!confirm("Revogar o link de acesso? Quem tiver o link atual não conseguirá mais entrar.")) return;
+                    const res = await fetch("/api/settings/join-code", { method: "DELETE" });
+                    if (res.ok) { setJoinCode(null); toast.success("Link de acesso revogado."); }
+                    else toast.error("Erro ao revogar.");
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-destructive/30 bg-destructive/5 hover:bg-destructive/10 text-destructive text-xs font-medium transition-colors"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  Revogar
+                </button>
+              </div>
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">
-              Nenhum código de acesso gerado ainda. Peça ao Super Admin para gerar um na área de Super Admin.
-            </p>
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                Nenhum código de acesso ativo. Gere um para compartilhar com sua congregação.
+              </p>
+              <button
+                onClick={async () => {
+                  const res = await fetch("/api/settings/join-code", { method: "POST" });
+                  const data = await res.json();
+                  if (data.joinCode) { setJoinCode(data.joinCode); toast.success("Código gerado!"); }
+                  else toast.error("Erro ao gerar código.");
+                }}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+                Gerar código
+              </button>
+            </div>
           )}
         </div>
       )}

@@ -98,6 +98,54 @@ export async function sendInviteEmail({
   });
 }
 
+// ─── Notificação de mudança de papel (MEMBER → LEADER / ADMIN) ───────────────
+
+export async function sendRoleChangeEmail({
+  to,
+  memberName,
+  churchName,
+  newRole,
+}: {
+  to: string;
+  memberName: string;
+  churchName: string;
+  newRole: string;
+}): Promise<void> {
+  const resend = getResend();
+  if (!resend) {
+    console.warn("[email] RESEND_API_KEY não configurado — e-mail não enviado.");
+    return;
+  }
+
+  const roleLabel = newRole === "ADMIN" ? "Administrador" : "Líder";
+
+  await resend.emails.send({
+    from: FROM,
+    to,
+    subject: `Seu papel em ${churchName} foi atualizado — Ovile`,
+    html: `
+      <div style="font-family:sans-serif;max-width:520px;margin:0 auto;background:#06080F;color:#e2e8f0;border-radius:12px;padding:32px;">
+        <p style="font-size:11px;letter-spacing:4px;text-transform:uppercase;color:#818cf8;margin-bottom:8px;">Ovile · Gestão</p>
+        <h1 style="font-size:24px;font-weight:700;color:#fff;margin:0 0 16px;">Atualização de papel 🎉</h1>
+        <p style="color:#94a3b8;line-height:1.6;">
+          Olá, <strong style="color:#fff">${memberName}</strong>!<br/>
+          Seu papel em <strong style="color:#fff">${churchName}</strong> foi atualizado para
+          <strong style="color:#818cf8">${roleLabel}</strong>.
+        </p>
+        <div style="margin:24px 0;">
+          <a href="${process.env.NEXTAUTH_URL ?? "https://ovile.com.br"}/dashboard"
+             style="display:inline-block;background:#4f46e5;color:#fff;text-decoration:none;padding:12px 24px;border-radius:10px;font-size:14px;font-weight:600;">
+            Acessar o sistema →
+          </a>
+        </div>
+        <p style="color:#475569;font-size:12px;margin-top:32px;">
+          Este e-mail foi enviado automaticamente pelo Ovile Gestão.
+        </p>
+      </div>
+    `,
+  });
+}
+
 // ─── Notificação diária de aniversariantes ────────────────────────────────────
 
 export async function sendBirthdayNotificationEmail({

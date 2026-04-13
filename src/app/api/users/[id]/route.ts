@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
+import { sendRoleChangeEmail } from "@/lib/email";
 
 export async function PATCH(
   req: NextRequest,
@@ -33,6 +34,24 @@ export async function PATCH(
         where: { userId: params.id, establishmentId: eid },
         data: { role: role as "ADMIN" | "LEADER" | "MEMBER" },
       }).catch(() => {});
+
+      // E-mail de notificação quando promovido a LEADER ou ADMIN
+      if (["LEADER", "ADMIN"].includes(role)) {
+        const [targetUser, est] = await Promise.all([
+          db.user.findUnique({ where: { id: params.id }, select: { email: true, name: true } }),
+          db.establishment.findUnique({ where: { id: eid }, select: { name: true } }),
+        ]);
+        if (targetUser?.email && est?.name) {
+          sendRoleChangeEmail({
+            to: targetUser.email,
+            memberName: targetUser.name ?? "Membro",
+            churchName: est.name,
+            newRole: role,
+          }).catch((e) => console.error("[users/role] e-mail erro:", e));
+        }
+      }
+
+      console.log(`[users/${params.id}] PATCH role=${role} eid=${eid}`);
     }
 
     if (memberId !== undefined) {

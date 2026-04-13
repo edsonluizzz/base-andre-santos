@@ -117,6 +117,27 @@ export async function GET(req: Request) {
       );
 
       emailsSent += results.filter((r) => r.status === "fulfilled").length;
+
+      // Notificações in-app para aniversariantes de HOJE
+      if (todayBirthdays.length > 0) {
+        const adminUserIds = est.userEstablishments
+          .filter((ue) => ue.userId)
+          .map((ue) => ue.userId!);
+
+        if (adminUserIds.length > 0) {
+          const names = todayBirthdays.map((m) => m.name).join(", ");
+          await db.notification.createMany({
+            data: adminUserIds.map((uid) => ({
+              userId: uid,
+              title: `🎂 Aniversariantes hoje em ${est.name}`,
+              body: names,
+              type: "BIRTHDAY",
+              link: "/membros",
+            })),
+            skipDuplicates: true,
+          });
+        }
+      }
     }
 
     console.log(

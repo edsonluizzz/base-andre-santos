@@ -22,26 +22,32 @@ function checkJoinRateLimit(ip: string): boolean {
 
 // GET /api/join?c=CODE — busca informações do estabelecimento pelo código (público)
 export async function GET(req: NextRequest) {
-  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
-  if (!checkJoinRateLimit(ip))
-    return NextResponse.json({ error: "Muitas tentativas. Aguarde um momento." }, { status: 429 });
+  try {
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+    if (!checkJoinRateLimit(ip))
+      return NextResponse.json({ error: "Muitas tentativas. Aguarde um momento." }, { status: 429 });
 
-  const code = req.nextUrl.searchParams.get("c")?.trim().toUpperCase();
-  if (!code) return NextResponse.json({ error: "Código inválido" }, { status: 400 });
+    const code = req.nextUrl.searchParams.get("c")?.trim().toUpperCase();
+    if (!code) return NextResponse.json({ error: "Código inválido" }, { status: 400 });
 
-  const est = await db.establishment.findUnique({
-    where: { joinCode: code },
-    select: { id: true, name: true, suspended: true },
-  });
+    const est = await db.establishment.findUnique({
+      where: { joinCode: code },
+      select: { id: true, name: true, suspended: true },
+    });
 
-  if (!est) return NextResponse.json({ error: "Código não encontrado" }, { status: 404 });
-  if (est.suspended) return NextResponse.json({ error: "Esta congregação está suspensa" }, { status: 403 });
+    if (!est) return NextResponse.json({ error: "Código não encontrado" }, { status: 404 });
+    if (est.suspended) return NextResponse.json({ error: "Esta congregação está suspensa" }, { status: 403 });
 
-  return NextResponse.json({ id: est.id, name: est.name });
+    return NextResponse.json({ id: est.id, name: est.name });
+  } catch (err) {
+    console.error("[join] GET erro:", err);
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+  }
 }
 
 // POST /api/join — entra em um estabelecimento usando código (requer login)
 export async function POST(req: NextRequest) {
+  try {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -76,19 +82,51 @@ export async function POST(req: NextRequest) {
     where: { userId: session.user.id },
   });
 
+  let memberName = "Novo membro";
   if (!existingMember) {
     const user = await db.user.findUnique({
       where: { id: session.user.id },
       select: { name: true, email: true },
     });
+    memberName = user?.name ?? user?.email ?? "Novo membro";
     await db.member.create({
       data: {
-        name: user?.name ?? user?.email ?? "Membro",
+        name: memberName,
         establishmentId: est.id,
         userId: session.user.id,
       },
     });
+
+    // Notifica os admins do estabelecimento sobre o novo membro
+    const admins = await db.userEstablishment.findMany({
+      where: {
+        establishmentId: est.id,
+        role: "ADMIN",
+        inviteStatus: "ACCEPTED",
+        userId: { not: null },
+      },
+      select: { userId: true },
+    });
+
+    const notifyAdmins = admins.filter((a) => a.userId !== session.user.id);
+    if (notifyAdmins.length > 0) {
+      await db.notification.createMany({
+        data: notifyAdmins.map((a) => ({
+          userId: a.userId!,
+          title: "Novo membro cadastrado",
+          body: `${memberName} entrou em ${est.name} via link de convite.`,
+          type: "NEW_MEMBER",
+          link: "/membros",
+        })),
+        skipDuplicates: true,
+      });
+    }
   }
 
-  return NextResponse.json({ establishmentId: est.id, name: est.name });
+    console.log(`[join] POST userId=${session.user.id} est=${est.id} newMember=${!existingMember}`);
+    return NextResponse.json({ establishmentId: est.id, name: est.name });
+  } catch (err) {
+    console.error("[join] POST erro:", err);
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+  }
 }
