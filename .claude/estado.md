@@ -25,6 +25,10 @@
 - **Fluxo de membros via link** (2026-04-13):
   - Join via código → cria Member automaticamente → notifica admins → promoção → e-mail ao promovido
   - Admin e Líder geram/revogam join code direto nas Configurações (sem depender do Super Admin)
+- **Melhorias para Lançamento** (Gemini em 2026-04-13):
+  - Justificativa de Falta: Adicionado campo `justification` no banco, API e Interface (com Dialog automático).
+  - Landing Page Copy: Redesign completo dos textos focados em conversão (Framework PAS) e remoção de dados fictícios.
+  - Catálogo de Funções: Criado `.claude/funcionalidades_detalhadas.md` para suporte ao marketing.
 
 ## Infraestrutura
 

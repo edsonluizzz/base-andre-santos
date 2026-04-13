@@ -1,9 +1,15 @@
-# Ovile Gestão — Instruções para Claude
+# Ovile Gestão — Instruções para Agentes (Claude & Gemini)
 
-> Estado dinâmico do projeto (o que está feito, pendências, armadilhas): `.claude/estado.md`
+> **Estado dinâmico do projeto:** `.claude/estado.md` (Sempre ler ao iniciar e atualizar ao encerrar).
+> **Comando de saída:** Ao ouvir "encerre e atualize", o agente deve atualizar o `.claude/estado.md`, realizar commit/push e finalizar.
+
+## AI Preferences
+- **Idioma:** Português Brasil (PT-BR).
+- **Estilo:** Sênior, técnico, direto e conciso.
+- **Workflow:** Edson testa em produção — sempre commitar e fazer push após alterações.
 
 ## Stack
-
+...
 - **Framework:** Next.js 14 (App Router)
 - **Banco:** PostgreSQL via NeonDB + Prisma ORM
 - **Auth:** NextAuth v5 Beta (Google OAuth, JWT strategy)
