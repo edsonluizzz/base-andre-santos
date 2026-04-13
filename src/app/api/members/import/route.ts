@@ -141,10 +141,11 @@ export async function POST(req: NextRequest) {
     toCreate.push({ name, birthday, phone, notes, status, establishmentId: eid, linha: lineNum, nome: name });
   }
 
-  // Executar atualizações
+  // Executar atualizações (timeout generoso para lotes grandes)
   if (toUpdate.length > 0) {
     await db.$transaction(
-      toUpdate.map(({ id, data }) => db.member.update({ where: { id }, data }))
+      toUpdate.map(({ id, data }) => db.member.update({ where: { id }, data })),
+      { timeout: 30000 }
     );
     result.updated = toUpdate.length;
     for (const op of toUpdate) {
@@ -159,11 +160,12 @@ export async function POST(req: NextRequest) {
     const blocked = toCreate.slice(slots);
 
     if (allowed.length > 0) {
-      await db.$transaction(
-        allowed.map(({ name, birthday, phone, notes, status, establishmentId }) =>
-          db.member.create({ data: { name, birthday, phone, notes, status, establishmentId } })
-        )
-      );
+      // createMany é um único INSERT — muito mais rápido que N $transaction creates
+      await db.member.createMany({
+        data: allowed.map(({ name, birthday, phone, notes, status, establishmentId }) => ({
+          name, birthday, phone, notes, status, establishmentId,
+        })),
+      });
       result.created = allowed.length;
       for (const op of allowed) {
         result.log.push({ linha: op.linha, nome: op.nome, resultado: "CRIADO", detalhe: "" });
