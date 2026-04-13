@@ -41,12 +41,13 @@ export type ImportResult = {
 
 // POST /api/members/import
 export async function POST(req: NextRequest) {
+  try {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   if (!["ADMIN", "LEADER"].includes(session.user.role ?? ""))
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-  const eid = session.user.establishmentId;
+  const eid = session.user?.establishmentId ?? "default-porto-belo";
 
   const formData = await req.formData();
   const file = formData.get("file") as File | null;
@@ -178,4 +179,8 @@ export async function POST(req: NextRequest) {
   result.log.sort((a, b) => a.linha - b.linha);
 
   return NextResponse.json(result);
+  } catch (err) {
+    console.error("[members/import] erro:", err);
+    return NextResponse.json({ error: "Erro interno ao processar a planilha" }, { status: 500 });
+  }
 }
