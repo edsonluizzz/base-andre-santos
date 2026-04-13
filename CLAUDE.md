@@ -27,12 +27,21 @@ if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { st
 O Ovile é multi-tenant. **Nunca** buscar dados sem incluir `establishmentId` do token:
 
 ```typescript
-const eid = session.user.establishmentId;
+const eid = session.user?.establishmentId ?? "default-porto-belo";
 // ✅ Correto — inclui tenant no filtro
 const member = await db.member.findFirst({ where: { id: params.id, establishmentId: eid } });
 // ❌ Errado — pode retornar dados de outro tenant
 const member = await db.member.findUnique({ where: { id: params.id } });
 ```
+
+> ⚠️ **Atenção — campo legado `User.establishmentId`:** Este campo **não é atualizado** quando um usuário entra via link de convite (`/api/join`). Para queries sobre usuários do estabelecimento, filtrar sempre pela tabela `UserEstablishment`, nunca por `User.establishmentId` diretamente:
+> ```typescript
+> // ✅ Correto para listar/validar usuários de um tenant
+> db.user.findMany({ where: { userEstablishments: { some: { establishmentId: eid, inviteStatus: "ACCEPTED" } } } })
+> db.userEstablishment.findUnique({ where: { userId_establishmentId: { userId, establishmentId: eid } } })
+> // ❌ Errado — exclui usuários que entraram via link
+> db.user.findMany({ where: { establishmentId: eid } })
+> ```
 
 ### 3. Endpoints com dados sensíveis devem usar `hasPermission()`
 
@@ -57,6 +66,41 @@ Usar sempre o padrão de `/api/upload/route.ts` ou `/api/portal/photo/route.ts`:
 
 - Chaves secretas **nunca** com prefixo `NEXT_PUBLIC_`
 - Usar `APP_URL` (não `NEXT_PUBLIC_URL`) para URL base do servidor
+
+### 6. Transações Prisma com lotes grandes
+
+Nunca usar `$transaction([array])` com `{ timeout }` — a opção `timeout` **não existe** nessa sobrecarga.  
+Para lotes grandes, usar a forma callback com timeout explícito:
+
+```typescript
+// ✅ Correto — callback com timeout
+await db.$transaction(async (tx) => {
+  for (const item of items) await tx.model.update({ where: { id: item.id }, data: item.data });
+}, { timeout: 30000 });
+
+// ✅ Para criações em massa — createMany é um único INSERT, sem timeout
+await db.model.createMany({ data: items });
+
+// ❌ Errado — $transaction([array], { timeout }) não compila
+await db.$transaction(items.map(i => db.model.update(...)), { timeout: 30000 });
+```
+
+### 7. Sempre envolver handlers com try/catch
+
+Rotas sem try/catch retornam HTML 500 em caso de exceção. O frontend chama `res.json()` nesse HTML e lança erro de parse, exibindo "Erro de conexão" em vez da mensagem real.
+
+```typescript
+// ✅ Todo route.ts deve ter try/catch no handler principal
+export async function POST(req: NextRequest) {
+  try {
+    // ...lógica...
+    return NextResponse.json(result);
+  } catch (err) {
+    console.error("[rota] erro:", err);
+    return NextResponse.json({ error: "Erro interno" }, { status: 500 });
+  }
+}
+```
 
 ## Workflow de Deploy
 
