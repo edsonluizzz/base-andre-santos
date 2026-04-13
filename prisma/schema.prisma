@@ -192,11 +192,12 @@ model EventRsvp {
 // ─── Chamada ──────────────────────────────────────────────────────────────
 
 model Attendance {
-  id        String           @id @default(cuid())
-  eventId   String
-  memberId  String
-  status    AttendanceStatus @default(ABSENT)
-  createdAt DateTime         @default(now())
+  id            String           @id @default(cuid())
+  eventId       String
+  memberId      String
+  status        AttendanceStatus @default(ABSENT)
+  justification String?
+  createdAt     DateTime         @default(now())
 
   event  Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
   member Member @relation(fields: [memberId], references: [id], onDelete: Cascade)

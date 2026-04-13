@@ -46,12 +46,12 @@ function useFadeIn(threshold = 0.12) {
 // ── Data ──────────────────────────────────────────────────────────────────────
 
 const FEATURES = [
-  { icon: Users,        title: "Membros",      color: "#a5b4fc", bg: "rgba(99,102,241,0.15)",  border: "rgba(99,102,241,0.3)",  desc: "Cadastro completo com foto, telefone e vinculação de conta Google para cada membro." },
-  { icon: ClipboardList,title: "Chamada",      color: "#c4b5fd", bg: "rgba(139,92,246,0.15)",  border: "rgba(139,92,246,0.3)",  desc: "Registro de presença por evento com insights automáticos de frequência e ranking." },
-  { icon: DollarSign,   title: "Financeiro",   color: "#6ee7b7", bg: "rgba(52,211,153,0.15)",   border: "rgba(52,211,153,0.3)",  desc: "Controle de ofertas e despesas com DRE mensal automático e exportação em PDF." },
-  { icon: Shirt,        title: "Congressos",   color: "#fcd34d", bg: "rgba(251,191,36,0.15)",   border: "rgba(251,191,36,0.3)",  desc: "Pedidos de camisetas, controle de pagamentos e entregas do início ao fim." },
-  { icon: Cake,         title: "Aniversários", color: "#fda4af", bg: "rgba(251,113,133,0.15)",  border: "rgba(251,113,133,0.3)", desc: "Calendário mensal com atalho direto para enviar mensagem no WhatsApp." },
-  { icon: BarChart2,    title: "Relatórios",   color: "#7dd3fc", bg: "rgba(56,189,248,0.15)",   border: "rgba(56,189,248,0.3)",  desc: "Exportação em PDF direto do navegador. Sem dependências externas." },
+  { icon: Users,        title: "Membros",      color: "#a5b4fc", bg: "rgba(99,102,241,0.15)",  border: "rgba(99,102,241,0.3)",  desc: "Tenha todos os dados dos membros na palma da mão, com foto, contato rápido e histórico completo." },
+  { icon: ClipboardList,title: "Chamada",      color: "#c4b5fd", bg: "rgba(139,92,246,0.15)",  border: "rgba(139,92,246,0.3)",  desc: "Identifique membros ausentes e combata a evasão antes que aconteça, com um clique." },
+  { icon: DollarSign,   title: "Financeiro",   color: "#6ee7b7", bg: "rgba(52,211,153,0.15)",   border: "rgba(52,211,153,0.3)",  desc: "Transparência total. Gere relatórios financeiros claros e DRE automático para prestar contas em segundos." },
+  { icon: Shirt,        title: "Congressos",   color: "#fcd34d", bg: "rgba(251,191,36,0.15)",   border: "rgba(251,191,36,0.3)",  desc: "Fim da bagunça nos pedidos de camisetas. Controle tamanhos, pagamentos e entregas sem estresse." },
+  { icon: Cake,         title: "Aniversários", color: "#fda4af", bg: "rgba(251,113,133,0.15)",  border: "rgba(251,113,133,0.3)", desc: "Nunca mais esqueça um aniversário. Receba notificações e envie parabéns no WhatsApp com um toque." },
+  { icon: BarChart2,    title: "Relatórios",   color: "#7dd3fc", bg: "rgba(56,189,248,0.15)",   border: "rgba(56,189,248,0.3)",  desc: "Relatórios profissionais em PDF para prestar contas à liderança com agilidade e precisão." },
 ];
 
 const PLANS = [
@@ -69,7 +69,7 @@ const PLANS = [
     name: "Pro",
     price: "R$ 29,99",
     period: "/mês",
-    desc: "Para congregações em crescimento",
+    desc: "Tudo o que você precisa para automatizar sua rotina",
     highlight: true,
     cta: "Assinar agora",
     features: [
@@ -514,8 +514,8 @@ function DemoModal({ onClose }: { onClose: () => void }) {
                   <Sparkles className="w-4 h-4 text-indigo-400" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-white">Criar sua congregação</h3>
-                  <p className="text-slate-500 text-sm">Ambiente criado em segundos</p>
+                  <h3 className="text-lg font-bold text-white">Sua congregação organizada</h3>
+                  <p className="text-slate-500 text-sm">Em segundos, dê adeus às planilhas</p>
                 </div>
               </div>
 
@@ -869,15 +869,15 @@ export default function LandingPage() {
         </div>
 
         <h1 className="hero-anim-2 text-5xl md:text-7xl font-bold text-white mb-6 leading-[1.05]" style={{ fontFamily: "var(--font-heading)" }}>
-          Gerencie sua igreja{" "}
+          Organize sua igreja sem{" "}
           <span style={{ background: "linear-gradient(135deg, #818cf8, #a78bfa)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-            com inteligência
+            planilhas confusas
           </span>
         </h1>
 
         <p className="hero-anim-3 text-lg text-slate-400 max-w-2xl mx-auto mb-10 leading-relaxed">
-          Ovile Gestão centraliza membros, frequência, financeiro, ministérios e muito mais
-          em uma plataforma feita para a realidade da liderança evangélica brasileira.
+          Dê adeus à desorganização. Gestão financeira, chamada inteligente e portal de membros 
+          em um único sistema feito para lideranças modernas.
         </p>
 
         <div className="hero-anim-4 flex flex-col sm:flex-row gap-3 justify-center mb-8">
@@ -885,7 +885,7 @@ export default function LandingPage() {
             onClick={() => setDemoOpen(true)}
             className="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl text-white font-semibold text-sm skeu-btn"
           >
-            Começar agora <ArrowRight className="w-4 h-4" />
+            Começar a organizar agora <ArrowRight className="w-4 h-4" />
           </button>
           <a
             href="#recursos"

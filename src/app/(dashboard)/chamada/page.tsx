@@ -36,7 +36,7 @@ type Event = {
   location: string | null;
   _count: { attendances: number; offerings: number; rsvps: number };
 };
-type AttendanceRecord = { memberId: string; status: AttendanceStatus };
+type AttendanceRecord = { memberId: string; status: AttendanceStatus; justification?: string | null };
 
 type InsightRecord = {
   memberId: string;
@@ -94,10 +94,11 @@ export default function ChamadaPage() {
   const [newEventOpen, setNewEventOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   const [activeEvent, setActiveEvent] = useState<Event | null>(null);
-  const [attendances, setAttendances] = useState<Record<string, AttendanceStatus>>({});
+  const [attendances, setAttendances] = useState<Record<string, { status: AttendanceStatus; justification?: string }>>({});
   const [saving, setSaving] = useState(false);
   const [printInsights, setPrintInsights] = useState<InsightRecord[]>([]);
   const [printLoading, setPrintLoading] = useState(false);
+  const [justifyingMember, setJustifyingMember] = useState<{ id: string; name: string } | null>(null);
 
   const fetchEvents = useCallback(async () => {
     const res = await fetch("/api/events");
@@ -116,25 +117,47 @@ export default function ChamadaPage() {
     setPrintInsights([]);
     const res = await fetch(`/api/events/${ev.id}`);
     const data = await res.json();
-    const map: Record<string, AttendanceStatus> = {};
-    members.forEach((m) => (map[m.id] = "ABSENT"));
-    (data.attendances as AttendanceRecord[]).forEach((a) => (map[a.memberId] = a.status));
+    const map: Record<string, { status: AttendanceStatus; justification?: string }> = {};
+    members.forEach((m) => (map[m.id] = { status: "ABSENT" }));
+    (data.attendances as AttendanceRecord[]).forEach((a) => {
+      map[a.memberId] = { 
+        status: a.status, 
+        justification: a.justification ?? undefined 
+      };
+    });
     setAttendances(map);
   }
 
-  function cycleStatus(memberId: string) {
+  function cycleStatus(memberId: string, memberName: string) {
     const order: AttendanceStatus[] = ["ABSENT", "PRESENT", "JUSTIFIED"];
-    const current = attendances[memberId] ?? "ABSENT";
+    const current = attendances[memberId]?.status ?? "ABSENT";
     const next = order[(order.indexOf(current) + 1) % order.length];
-    setAttendances((prev) => ({ ...prev, [memberId]: next }));
+    
+    setAttendances((prev) => ({ 
+      ...prev, 
+      [memberId]: { ...prev[memberId], status: next } 
+    }));
+
+    if (next === "JUSTIFIED") {
+      setJustifyingMember({ id: memberId, name: memberName });
+    }
+  }
+
+  function handleJustification(memberId: string, text: string) {
+    setAttendances((prev) => ({
+      ...prev,
+      [memberId]: { ...prev[memberId], justification: text }
+    }));
+    setJustifyingMember(null);
   }
 
   async function saveAttendances() {
     if (!activeEvent) return;
     setSaving(true);
-    const list = Object.entries(attendances).map(([memberId, status]) => ({
+    const list = Object.entries(attendances).map(([memberId, data]) => ({
       memberId,
-      status,
+      status: data.status,
+      justification: data.justification,
     }));
     const res = await fetch("/api/attendances", {
       method: "POST",
@@ -175,7 +198,7 @@ export default function ChamadaPage() {
           (session?.user?.name || "").toLowerCase().trim()
       );
 
-  const present = Object.values(attendances).filter((s) => s === "PRESENT").length;
+  const present = Object.values(attendances).filter((d) => d.status === "PRESENT").length;
   const total = members.length;
   const presenceRate = total > 0 ? Math.round((present / total) * 100) : 0;
 
@@ -222,13 +245,20 @@ export default function ChamadaPage() {
               </thead>
               <tbody>
                 {members.map((m, i) => {
-                  const status = attendances[m.id] ?? "ABSENT";
+                  const data = attendances[m.id] || { status: "ABSENT" };
                   return (
                     <tr key={m.id} style={{ background: i % 2 === 0 ? "#fafafa" : "white" }}>
                       <td style={{ border: "1px solid #ccc", padding: "5px 10px", color: "#888" }}>{i + 1}</td>
-                      <td style={{ border: "1px solid #ccc", padding: "5px 10px" }}>{m.name}</td>
+                      <td style={{ border: "1px solid #ccc", padding: "5px 10px" }}>
+                        <div>{m.name}</div>
+                        {data.status === "JUSTIFIED" && data.justification && (
+                          <div style={{ fontSize: "10px", color: "#666", fontStyle: "italic" }}>
+                            Obs: {data.justification}
+                          </div>
+                        )}
+                      </td>
                       <td style={{ border: "1px solid #ccc", padding: "5px 10px", textAlign: "center" }}>
-                        {STATUS_LABELS[status]}
+                        {STATUS_LABELS[data.status]}
                       </td>
                     </tr>
                   );
@@ -402,7 +432,8 @@ export default function ChamadaPage() {
                 </p>
               )}
               {visibleMembers.map((m) => {
-                const status = attendances[m.id] ?? "ABSENT";
+                const data = attendances[m.id] || { status: "ABSENT" };
+                const status = data.status;
                 const cfg = STATUS_CONFIG[status];
                 const Icon = cfg.icon;
                 const inits = m.name
@@ -415,7 +446,7 @@ export default function ChamadaPage() {
                 return (
                   <div
                     key={m.id}
-                    onClick={() => { if (isLeaderOrAdmin) cycleStatus(m.id); }}
+                    onClick={() => { if (isLeaderOrAdmin) cycleStatus(m.id, m.name); }}
                     className={cn(
                       "flex items-center gap-3 p-3 bg-card border border-border rounded-xl transition-colors select-none",
                       isLeaderOrAdmin ? "cursor-pointer hover:border-primary/30" : "opacity-90"
@@ -424,7 +455,14 @@ export default function ChamadaPage() {
                     <div className="w-9 h-9 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary text-xs font-bold flex-shrink-0">
                       {inits}
                     </div>
-                    <p className="flex-1 text-sm font-medium text-foreground">{m.name}</p>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-foreground">{m.name}</p>
+                      {status === "JUSTIFIED" && data.justification && (
+                        <p className="text-[10px] text-muted-foreground italic truncate max-w-[200px]">
+                          {data.justification}
+                        </p>
+                      )}
+                    </div>
                     <span
                       className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full border ${cfg.color}`}
                     >
@@ -470,8 +508,65 @@ export default function ChamadaPage() {
           onOpenChange={(v) => { if (!v) setEditingEvent(null); }}
           onSuccess={() => { fetchEvents(); setEditingEvent(null); }}
         />
+        <JustificationDialog
+          member={justifyingMember}
+          onClose={() => setJustifyingMember(null)}
+          onConfirm={(text) => handleJustification(justifyingMember!.id, text)}
+          initialValue={attendances[justifyingMember?.id || ""]?.justification || ""}
+        />
       </div>
     </>
+  );
+}
+
+function JustificationDialog({
+  member,
+  onClose,
+  onConfirm,
+  initialValue,
+}: {
+  member: { id: string; name: string } | null;
+  onClose: () => void;
+  onConfirm: (text: string) => void;
+  initialValue: string;
+}) {
+  const [text, setText] = useState("");
+
+  useEffect(() => {
+    if (member) setText(initialValue);
+  }, [member, initialValue]);
+
+  return (
+    <Dialog open={!!member} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="bg-secondary border-border text-foreground max-w-sm">
+        <DialogHeader>
+          <DialogTitle className="text-foreground text-base">Motivo da Justificativa</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 mt-2">
+          <p className="text-xs text-muted-foreground">
+            Por que <strong>{member?.name}</strong> faltou a este evento?
+          </p>
+          <Input
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder="Ex: Viagem, Doença, Trabalho..."
+            autoFocus
+            className="bg-background border-border text-foreground focus-visible:ring-primary"
+            onKeyDown={(e) => {
+              if (e.key === "Enter") onConfirm(text);
+            }}
+          />
+          <div className="flex gap-2 pt-2">
+            <Button variant="outline" onClick={onClose} className="flex-1 border-border">
+              Pular
+            </Button>
+            <Button onClick={() => onConfirm(text)} className="flex-1">
+              Confirmar
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 

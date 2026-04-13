@@ -22,11 +22,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Lote muito grande" }, { status: 400 });
     }
 
-    const ops = attendances.map(({ memberId, status }: { memberId: string; status: string }) =>
+    const ops = attendances.map(({ memberId, status, justification }: { memberId: string; status: string; justification?: string }) =>
       db.attendance.upsert({
         where: { eventId_memberId: { eventId, memberId } },
-        update: { status: status as AttendanceStatus },
-        create: { eventId, memberId, status: status as AttendanceStatus },
+        update: { 
+          status: status as AttendanceStatus,
+          justification: justification ?? null,
+        },
+        create: { 
+          eventId, 
+          memberId, 
+          status: status as AttendanceStatus,
+          justification: justification ?? null,
+        },
       })
     );
 
