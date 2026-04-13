@@ -136,6 +136,11 @@ export default function DashboardPage() {
     .sort((a, b) => daysUntil(a.birthday!) - daysUntil(b.birthday!))
     .slice(0, 5);
 
+  function handleDayClick(date: Date) {
+    setSelectedDate(date);
+    setNewEventOpen(true);
+  }
+
   const upcomingEvents = events
     .filter((e) => new Date(e.date) >= now)
     .slice(0, 5);
