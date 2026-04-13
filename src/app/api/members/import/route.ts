@@ -180,7 +180,8 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json(result);
   } catch (err) {
-    console.error("[members/import] erro:", err);
+    const e = err as { code?: string; message?: string; meta?: unknown };
+    console.error("[members/import] code=%s message=%s meta=%j", e?.code, e?.message, e?.meta);
     return NextResponse.json({ error: "Erro interno ao processar a planilha" }, { status: 500 });
   }
 }
