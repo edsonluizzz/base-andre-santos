@@ -921,8 +921,8 @@ export default function LandingPage() {
       >
         <div className="max-w-4xl mx-auto px-6 flex flex-wrap items-center justify-center gap-8 text-center">
           {[
-            { value: "50+",    label: "Congregações ativas" },
-            { value: "5.000+", label: "Membros gerenciados" },
+            { value: "100%",   label: "Dados Protegidos" },
+            { value: "Suporte", label: "Em Português" },
             { value: "99.9%",  label: "Disponibilidade" },
             { value: "R$ 0",   label: "Para começar" },
           ].map((s) => (
