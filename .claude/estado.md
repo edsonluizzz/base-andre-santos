@@ -25,6 +25,10 @@
 - **Fluxo de membros via link** (2026-04-13):
   - Join via código → cria Member automaticamente → notifica admins → promoção → e-mail ao promovido
   - Admin e Líder geram/revogam join code direto nas Configurações (sem depender do Super Admin)
+- **Notificações de eventos** (2026-04-15):
+  - `lib/event-notifications.ts`: helper `notifyEventCreated` — busca membros (ministério ou todos os ativos), cria notificações in-app em lote, envia e-mail via Resend
+  - Novo template `sendEventCreatedEmail` em `lib/email.ts`
+  - `POST /api/events`: chama `notifyEventCreated` fire-and-forget após criar evento
 - **Melhorias para Lançamento** (Gemini em 2026-04-13):
   - Justificativa de Falta: Adicionado campo `justification` no banco, API e Interface (com Dialog automático).
   - Landing Page Copy: Redesign completo dos textos focados em conversão (Framework PAS) e remoção de dados fictícios.
@@ -43,13 +47,12 @@
 | 1 | Billing Portal (Stripe Customer Portal) | ✅ Já existia |
 | 2 | Banner de trial / upgrade | ✅ Já existia |
 | 3 | Campo `email` no Member + vinculação login | ✅ Concluído |
-| 4 | Notificações de eventos | 🔜 Próximo |
+| 4 | Notificações de eventos | ✅ Concluído |
 | 5 | Vincular Offering/Expense à BankAccount | Pendente |
 | 6 | PWA (manifest + ícones) | Pendente — `@ducanh2912/next-pwa` já instalado |
 
 ## Pendências
 
-- **Notificações de eventos** — **próximo item** (definir modelo: todos / só ministério / + e-mail Resend)
 - **Vincular Offering/Expense à BankAccount** — pendente
 - **PWA** — `@ducanh2912/next-pwa` já instalado, falta configurar manifest + ícones
 
