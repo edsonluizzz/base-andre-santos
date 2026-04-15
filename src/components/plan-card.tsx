@@ -150,7 +150,7 @@ export function PlanCard({ isAdmin }: { isAdmin: boolean }) {
           </>
         ) : (
           <>
-            <Feature ok>Até 10 membros</Feature>
+            <Feature ok>Até 50 membros</Feature>
             <Feature ok>Chamada e eventos</Feature>
             <Feature ok>Financeiro básico</Feature>
             <Feature ok>Aniversários</Feature>
