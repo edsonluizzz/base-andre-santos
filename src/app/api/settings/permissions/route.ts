@@ -72,15 +72,17 @@ export async function PATCH(req: NextRequest) {
     }
 
     const eid = session.user?.establishmentId ?? "default-porto-belo";
-    const ops = body.map(({ role, module, action, granted }) =>
-      db.rolePermission.upsert({
-        where: { role_module_action_establishmentId: { role, module, action, establishmentId: eid } },
-        update: { granted, updatedBy: session.user?.id },
-        create: { role, module, action, granted, establishmentId: eid, updatedBy: session.user?.id },
-      })
-    );
 
-    await db.$transaction(ops);
+    await db.$transaction(async (tx) => {
+      for (const { role, module, action, granted } of body) {
+        await tx.rolePermission.upsert({
+          where: { role_module_action_establishmentId: { role, module, action, establishmentId: eid } },
+          update: { granted, updatedBy: session.user?.id },
+          create: { role, module, action, granted, establishmentId: eid, updatedBy: session.user?.id },
+        });
+      }
+    }, { timeout: 30000 });
+
     return NextResponse.json({ ok: true });
   } catch {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

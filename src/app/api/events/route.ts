@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
     const events = await db.event.findMany({
       where: {
         establishmentId: eid,
-        ...(ministryId ? { ministryId } : { ministryId: null }),
+        ...(ministryId ? { ministryId } : {}),
       },
       orderBy: { date: "desc" },
       include: {
