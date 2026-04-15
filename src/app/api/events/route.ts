@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
+import { notifyEventCreated } from "@/lib/event-notifications";
 
 export async function GET(req: NextRequest) {
   try {
@@ -53,6 +54,15 @@ export async function POST(req: NextRequest) {
         ministryId: ministryId || null,
       },
     });
+
+    // Disparar notificações de forma assíncrona (fire-and-forget)
+    const establishment = await db.establishment.findUnique({
+      where: { id: eid },
+      select: { name: true },
+    });
+    notifyEventCreated(event, establishment?.name ?? "sua congregação").catch((err) =>
+      console.error("[events] erro ao notificar evento criado:", err)
+    );
 
     return NextResponse.json(event, { status: 201 });
   } catch {

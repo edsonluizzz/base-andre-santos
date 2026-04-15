@@ -146,6 +146,64 @@ export async function sendRoleChangeEmail({
   });
 }
 
+// ─── Notificação de novo evento ──────────────────────────────────────────────
+
+export async function sendEventCreatedEmail({
+  to,
+  memberName,
+  churchName,
+  eventTitle,
+  eventDate,
+  eventLocation,
+}: {
+  to: string;
+  memberName: string;
+  churchName: string;
+  eventTitle: string;
+  eventDate: string;
+  eventLocation?: string | null;
+}): Promise<void> {
+  const resend = getResend();
+  if (!resend) {
+    console.warn("[email] RESEND_API_KEY não configurado — e-mail não enviado.");
+    return;
+  }
+
+  const locationLine = eventLocation
+    ? `<p style="color:#94a3b8;line-height:1.6;">📍 <strong style="color:#fff">${eventLocation}</strong></p>`
+    : "";
+
+  await resend.emails.send({
+    from: FROM,
+    to,
+    subject: `📅 Novo evento: ${eventTitle} — ${churchName}`,
+    html: `
+      <div style="font-family:sans-serif;max-width:520px;margin:0 auto;background:#06080F;color:#e2e8f0;border-radius:12px;padding:32px;">
+        <p style="font-size:11px;letter-spacing:4px;text-transform:uppercase;color:#818cf8;margin-bottom:8px;">Ovile · Gestão</p>
+        <h1 style="font-size:24px;font-weight:700;color:#fff;margin:0 0 16px;">Novo evento 📅</h1>
+        <p style="color:#94a3b8;line-height:1.6;">
+          Olá${memberName ? `, <strong style="color:#fff">${memberName}</strong>` : ""}!<br/>
+          Um novo evento foi criado em <strong style="color:#fff">${churchName}</strong>:
+        </p>
+        <div style="background:#0f1629;border:1px solid #1e2a4a;border-radius:8px;padding:16px;margin:16px 0;">
+          <p style="font-size:18px;font-weight:700;color:#fff;margin:0 0 8px;">${eventTitle}</p>
+          <p style="color:#818cf8;line-height:1.6;margin:0;">🗓 ${eventDate}</p>
+          ${locationLine}
+        </div>
+        <div style="margin:24px 0;">
+          <a href="${process.env.NEXTAUTH_URL ?? "https://ovile.com.br"}/dashboard/events"
+             style="display:inline-block;background:#4f46e5;color:#fff;text-decoration:none;padding:12px 24px;border-radius:10px;font-size:14px;font-weight:600;">
+            Ver eventos →
+          </a>
+        </div>
+        <p style="color:#475569;font-size:12px;margin-top:32px;">
+          Você recebe este e-mail pois é membro de ${churchName} no Ovile Gestão.
+        </p>
+      </div>
+    `,
+  });
+}
+
 // ─── Notificação diária de aniversariantes ────────────────────────────────────
 
 export async function sendBirthdayNotificationEmail({
