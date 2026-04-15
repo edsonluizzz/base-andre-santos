@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
-import { Plus, Search, Pencil, Trash2, Phone, LayoutGrid, List, Cake, Printer, Link2, Upload, Download, CheckCircle2, AlertCircle, X } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, Phone, LayoutGrid, List, Cake, Printer, Link2, Upload, Download, CheckCircle2, AlertCircle, X, MessageCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -97,6 +97,10 @@ export default function MembrosPage() {
     XLSX.writeFile(wb, `log-importacao-${new Date().toISOString().slice(0, 10)}.xlsx`);
   }
 
+  // Settings (joinCode + churchName para convite WhatsApp)
+  const [joinCode, setJoinCode] = useState<string | null>(null);
+  const [churchName, setChurchName] = useState("");
+
   // Link dialog state
   const [linkDialogMemberId, setLinkDialogMemberId] = useState<string | null>(null);
   const [linkDialogMemberName, setLinkDialogMemberName] = useState("");
@@ -111,7 +115,13 @@ export default function MembrosPage() {
     setLoading(false);
   }, []);
 
-  useEffect(() => { fetchMembers(); }, [fetchMembers]);
+  useEffect(() => {
+    fetchMembers();
+    fetch("/api/settings").then((r) => r.json()).then((d) => {
+      setJoinCode(d.joinCode ?? null);
+      setChurchName(d.churchName ?? "");
+    }).catch(() => {});
+  }, [fetchMembers]);
 
   const filtered = members.filter((m) => {
     const matchSearch = m.name.toLowerCase().includes(search.toLowerCase());
@@ -284,6 +294,8 @@ export default function MembrosPage() {
             onEdit={openEdit}
             onDelete={setDeleteId}
             onLink={isAdmin ? openLinkDialog : undefined}
+            joinCode={joinCode}
+            churchName={churchName}
           />
           {inactive.length > 0 && (
             <MemberList
@@ -293,6 +305,8 @@ export default function MembrosPage() {
               onEdit={openEdit}
               onDelete={setDeleteId}
               onLink={isAdmin ? openLinkDialog : undefined}
+              joinCode={joinCode}
+              churchName={churchName}
             />
           )}
           {filtered.length === 0 && (
@@ -502,6 +516,8 @@ function MemberList({
   onEdit,
   onDelete,
   onLink,
+  joinCode,
+  churchName,
 }: {
   title: string;
   members: Member[];
@@ -509,6 +525,8 @@ function MemberList({
   onEdit: (m: Member) => void;
   onDelete: (id: string) => void;
   onLink?: (m: Member) => void;
+  joinCode?: string | null;
+  churchName?: string;
 }) {
   if (members.length === 0) return null;
 
@@ -535,6 +553,11 @@ function MemberList({
                 onEdit={() => onEdit(m)}
                 onDelete={() => onDelete(m.id)}
                 onLink={onLink ? () => onLink(m) : undefined}
+                inviteUrl={
+                  !m.userId && m.phone && joinCode
+                    ? `https://wa.me/55${m.phone.replace(/\D/g, "")}?text=${encodeURIComponent(`Olá ${m.name.split(" ")[0]}! Você foi cadastrado em ${churchName || "nossa congregação"}. Para acessar o sistema Ovile, clique no link e faça login com sua conta Google: ${typeof window !== "undefined" ? window.location.origin : "https://ovile.com.br"}/entrar?c=${joinCode}&mid=${m.id}`)}`
+                    : undefined
+                }
               />
             </div>
           ))}
@@ -555,6 +578,9 @@ function MemberList({
                 const whatsappUrl = m.phone
                   ? `https://wa.me/55${m.phone.replace(/\D/g, "")}`
                   : null;
+                const inviteUrl = !m.userId && m.phone && joinCode
+                  ? `https://wa.me/55${m.phone.replace(/\D/g, "")}?text=${encodeURIComponent(`Olá ${m.name.split(" ")[0]}! Você foi cadastrado em ${churchName || "nossa congregação"}. Para acessar o sistema Ovile, clique no link e faça login com sua conta Google: ${typeof window !== "undefined" ? window.location.origin : "https://ovile.com.br"}/entrar?c=${joinCode}&mid=${m.id}`)}`
+                  : null;
                 return (
                   <tr key={m.id} className={`group border-b border-white/[0.04] last:border-0 ${i % 2 === 0 ? "" : "bg-white/[0.01]"}`}>
                     <td className="px-4 py-2.5">
@@ -572,7 +598,15 @@ function MemberList({
                     </td>
                     <td className="px-3 py-2.5">
                       <div className="flex items-center gap-1 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
-                        {whatsappUrl && (
+                        {inviteUrl && (
+                          <a href={inviteUrl} target="_blank" rel="noopener noreferrer"
+                            aria-label={`Convidar ${m.name} via WhatsApp`}
+                            title="Convidar via WhatsApp"
+                            className="p-1.5 rounded-lg text-muted-foreground hover:text-emerald-400 hover:bg-emerald-500/5 transition-colors">
+                            <MessageCircle className="w-3.5 h-3.5" />
+                          </a>
+                        )}
+                        {!inviteUrl && whatsappUrl && (
                           <a href={whatsappUrl} target="_blank" rel="noopener noreferrer"
                             aria-label={`Abrir WhatsApp de ${m.name}`}
                             className="p-1.5 rounded-lg text-muted-foreground hover:text-emerald-400 hover:bg-emerald-500/5 transition-colors">
@@ -614,11 +648,13 @@ function MemberCard({
   onEdit,
   onDelete,
   onLink,
+  inviteUrl,
 }: {
   member: Member;
   onEdit: () => void;
   onDelete: () => void;
   onLink?: () => void;
+  inviteUrl?: string;
 }) {
   const initials = member.name
     .split(" ")
@@ -664,7 +700,19 @@ function MemberCard({
 
         {/* Actions */}
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-          {whatsappUrl && (
+          {inviteUrl && (
+            <a
+              href={inviteUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={`Convidar ${member.name} via WhatsApp`}
+              title="Convidar via WhatsApp"
+              className="p-1.5 rounded-lg text-muted-foreground hover:text-emerald-400 hover:bg-emerald-500/5 transition-colors"
+            >
+              <MessageCircle className="w-3.5 h-3.5" />
+            </a>
+          )}
+          {!inviteUrl && whatsappUrl && (
             <a
               href={whatsappUrl}
               target="_blank"

@@ -10,6 +10,7 @@ export default function EntrarPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialCode = searchParams.get("c")?.toUpperCase() ?? "";
+  const initialMid = searchParams.get("mid") ?? "";
 
   const [code, setCode] = useState(initialCode);
   const [estName, setEstName] = useState<string | null>(null);
@@ -60,7 +61,7 @@ export default function EntrarPage() {
       const res = await fetch("/api/join", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code }),
+        body: JSON.stringify({ code, ...(initialMid ? { memberId: initialMid } : {}) }),
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error ?? "Erro ao entrar"); setJoining(false); return; }
@@ -75,7 +76,8 @@ export default function EntrarPage() {
 
   async function handleLoginAndJoin() {
     // Salva o código na URL para recuperar após o login
-    await signIn("google", { callbackUrl: `/entrar?c=${code}` });
+    const midParam = initialMid ? `&mid=${initialMid}` : "";
+    await signIn("google", { callbackUrl: `/entrar?c=${code}${midParam}` });
   }
 
   const isLoggedIn = status === "authenticated";

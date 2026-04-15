@@ -1,26 +1,48 @@
-# PLAN — #4 Notificações de Eventos
+# PLAN — #7 Import + #8 Convite WhatsApp
 
-## Escopo
-- Evento **com ministryId** → notifica só membros daquele ministério (`MinistryMember`)
-- Evento **geral** (sem ministryId) → notifica todos os membros ATIVOS do estabelecimento
-- **In-app** (sino): apenas membros com `userId` (têm conta)
-- **E-mail Resend**: membros com `email` cadastrado
-- **Gatilho**: criação do evento (POST) — não na edição
+## #7 Import 100+ linhas
 
-## Passos
+**Causa raiz:** updates são feitos em loop sequencial dentro de `$transaction`.
+100 updates × ~150ms = 15s; 200 updates = 30s (limite da transação).
 
-### ✅ Passo 1 — `src/lib/email.ts`
-Adicionar `sendEventCreatedEmail(...)`.
+**Fix:** substituir loop sequencial por `Promise.all` em chunks de 50.
 
-### ✅ Passo 2 — `src/lib/event-notifications.ts` (novo)
-Helper `notifyEventCreated(event, churchName)`:
-- Busca membros afetados (ministério ou todos ativos)
-- `db.notification.createMany` para userIds não-nulos
-- `Promise.allSettled` de emails para membros com email
+### ✅ Passo 1 — `src/app/api/members/import/route.ts`
+Trocar:
+```typescript
+await db.$transaction(async (tx) => {
+  for (const { id, data } of toUpdate) await tx.member.update(...)
+}, { timeout: 30000 });
+```
+Por:
+```typescript
+const CHUNK = 50;
+for (let i = 0; i < toUpdate.length; i += CHUNK) {
+  await Promise.all(toUpdate.slice(i, i + CHUNK).map(({ id, data }) =>
+    db.member.update({ where: { id }, data })
+  ));
+}
+```
 
-### ✅ Passo 3 — `src/app/api/events/route.ts`
-No `POST`, após `db.event.create`:
-- Buscar `establishment.name`
-- Chamar `notifyEventCreated` (fire-and-forget com `.catch(console.error)`)
+---
 
-## Status: ✅ Concluído
+## #8 Convite via WhatsApp pelo card
+
+**Fluxo:**
+1. Admin/Líder clica no botão WhatsApp do card de um membro sem conta vinculada
+2. Abre WhatsApp com mensagem: `Olá [Nome]! Você foi cadastrado em [Igreja]. Acesse o sistema: [URL]/entrar?c=[CODE]&mid=[memberId]`
+3. Membro clica no link, faz login com Google
+4. `/api/join` reconhece o `mid` e vincula ao membro existente (sem criar duplicata)
+
+### ✅ Passo 2 — `src/app/api/join/route.ts`
+Aceitar `memberId` opcional no body do POST.
+Se fornecido: buscar o membro, validar que pertence ao establishment e não tem userId, então atualizar `member.userId` em vez de criar novo membro.
+
+### ✅ Passo 3 — `src/app/entrar/page.tsx`
+Ler `?mid` da URL e passar para `POST /api/join`. Incluir `mid` no callbackUrl do signIn.
+
+### ✅ Passo 4 — `src/app/(dashboard)/membros/page.tsx`
+- Buscar `joinCode` e `churchName` de `GET /api/settings` no mount
+- `MemberCard`: recebe `inviteUrl?: string`; renderiza botão WhatsApp (ícone MessageCircle) para membros sem userId com phone + joinCode ativo
+
+## Status: Em andamento

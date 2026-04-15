@@ -141,16 +141,16 @@ export async function POST(req: NextRequest) {
     toCreate.push({ name, birthday, phone, notes, status, establishmentId: eid, linha: lineNum, nome: name });
   }
 
-  // Executar atualizações (timeout generoso para lotes grandes)
+  // Executar atualizações em paralelo (chunks de 50 — evita flood de conexões)
   if (toUpdate.length > 0) {
-    await db.$transaction(
-      async (tx) => {
-        for (const { id, data } of toUpdate) {
-          await tx.member.update({ where: { id }, data });
-        }
-      },
-      { timeout: 30000 }
-    );
+    const CHUNK = 50;
+    for (let i = 0; i < toUpdate.length; i += CHUNK) {
+      await Promise.all(
+        toUpdate.slice(i, i + CHUNK).map(({ id, data }) =>
+          db.member.update({ where: { id }, data })
+        )
+      );
+    }
     result.updated = toUpdate.length;
     for (const op of toUpdate) {
       result.log.push({ linha: op.linha, nome: op.data.name, resultado: "ATUALIZADO", detalhe: "" });

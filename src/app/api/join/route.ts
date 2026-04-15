@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { code } = await req.json();
+  const { code, memberId } = await req.json();
   if (!code) return NextResponse.json({ error: "Código obrigatório" }, { status: 400 });
 
   const est = await db.establishment.findUnique({
@@ -75,6 +75,22 @@ export async function POST(req: NextRequest) {
       acceptedAt: new Date(),
     },
   });
+
+  // Se memberId fornecido, vincular ao membro existente (evita criar duplicata)
+  if (memberId) {
+    const targetMember = await db.member.findFirst({
+      where: { id: memberId, establishmentId: est.id, userId: null },
+    });
+    if (targetMember) {
+      await db.member.update({
+        where: { id: targetMember.id },
+        data: { userId: session.user.id },
+      });
+      console.log(`[join] POST userId=${session.user.id} est=${est.id} linked to member=${memberId}`);
+      return NextResponse.json({ establishmentId: est.id, name: est.name });
+    }
+    // memberId inválido ou já vinculado — cai no fluxo normal abaixo
+  }
 
   // Cria registro de membro se ainda não existir para este usuário
   // userId é @unique globalmente — checamos sem filtrar por establishment
