@@ -50,11 +50,19 @@
 | 4 | Notificações de eventos | ✅ Concluído |
 | 5 | Vincular Offering/Expense à BankAccount | Pendente |
 | 6 | PWA (manifest + ícones) | Pendente — `@ducanh2912/next-pwa` já instalado |
+| 7 | Import de membros: aumentar limite para 100+ linhas | Pendente |
+| 8 | Convite direto pelo card do membro (vincula ao membro específico) | Pendente |
+| 9 | Bug: erro ao salvar permissões no painel de configurações | ✅ Corrigido |
+| 10 | Bug: chamadas Porto Belo aparecem nos relatórios mas não estão preenchidas | ✅ Corrigido |
 
 ## Pendências
 
 - **Vincular Offering/Expense à BankAccount** — pendente
 - **PWA** — `@ducanh2912/next-pwa` já instalado, falta configurar manifest + ícones
+- **Import de membros** — limite atual insuficiente; subir para pelo menos 100 linhas (verificar onde está o cap atual no `api/members/import`)
+- **Convite pelo card do membro** — gerar link de convite/join que já associa ao `Member.id` específico, evitando criar registro duplicado
+- ~~**Bug permissões** — corrigido: `$transaction` array → callback form 30s~~
+- ~~**Bug chamadas Porto Belo** — corrigido: `GET /api/events` sem `ministryId` param agora retorna todos os eventos (antes filtrava `ministryId: null`)~~
 
 ---
 
