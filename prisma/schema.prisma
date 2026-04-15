@@ -219,14 +219,17 @@ model Offering {
   date            DateTime      @default(now())
   establishmentId String        @default("default-porto-belo")
   createdAt       DateTime      @default(now())
+  bankAccountId   String?
 
-  member     Member    @relation(fields: [memberId], references: [id], onDelete: Cascade)
-  event      Event?    @relation(fields: [eventId], references: [id], onDelete: SetNull)
-  ministryId String?
-  ministry   Ministry? @relation(fields: [ministryId], references: [id], onDelete: SetNull)
+  member      Member       @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  event       Event?       @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  ministryId  String?
+  ministry    Ministry?    @relation(fields: [ministryId], references: [id], onDelete: SetNull)
+  bankAccount BankAccount? @relation("OfferingBankAccount", fields: [bankAccountId], references: [id], onDelete: SetNull)
 
   @@index([establishmentId])
   @@index([ministryId])
+  @@index([bankAccountId])
 }
 
 // ─── Despesas ─────────────────────────────────────────────────────────────
@@ -242,9 +245,12 @@ model Expense {
   ministryId      String?
   ministry        Ministry?       @relation(fields: [ministryId], references: [id], onDelete: SetNull)
   createdAt       DateTime        @default(now())
+  bankAccountId   String?
+  bankAccount     BankAccount?    @relation("ExpenseBankAccount", fields: [bankAccountId], references: [id], onDelete: SetNull)
 
   @@index([establishmentId])
   @@index([ministryId])
+  @@index([bankAccountId])
 }
 
 // ─── Contas Bancárias / Caixas ────────────────────────────────────────────
@@ -256,6 +262,9 @@ model BankAccount {
   isDefault       Boolean  @default(false)
   establishmentId String   @default("default-porto-belo")
   createdAt       DateTime @default(now())
+
+  offerings Offering[] @relation("OfferingBankAccount")
+  expenses  Expense[]  @relation("ExpenseBankAccount")
 
   @@index([establishmentId])
 }

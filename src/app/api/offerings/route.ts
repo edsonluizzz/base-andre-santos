@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
     const body = await req.json();
-    const { memberId, eventId, amount, method, notes, date, ministryId } = body;
+    const { memberId, eventId, amount, method, notes, date, ministryId, bankAccountId } = body;
 
     if (!memberId || !amount || amount <= 0) {
       return NextResponse.json({ error: "Dados inválidos" }, { status: 400 });
@@ -61,6 +61,7 @@ export async function POST(req: NextRequest) {
         date: date ? new Date(date) : new Date(),
         establishmentId: eid,
         ministryId: ministryId || null,
+        bankAccountId: bankAccountId || null,
       },
       include: {
         member: { select: { id: true, name: true } },

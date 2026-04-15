@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
     const body = await req.json();
-    const { description, amount, category, notes, date, ministryId } = body;
+    const { description, amount, category, notes, date, ministryId, bankAccountId } = body;
 
     if (!description || !amount || amount <= 0) {
       return NextResponse.json({ error: "Dados inválidos" }, { status: 400 });
@@ -56,6 +56,7 @@ export async function POST(req: NextRequest) {
         date: date ? new Date(date) : new Date(),
         establishmentId: eid,
         ministryId: ministryId || null,
+        bankAccountId: bankAccountId || null,
       },
     });
 
