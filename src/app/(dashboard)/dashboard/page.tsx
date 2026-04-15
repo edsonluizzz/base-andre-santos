@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { usePermissions } from "@/context/permissions-context";
-import { Users, DollarSign, CalendarDays, Cake, TrendingUp, AlertTriangle, CheckCircle, Star, Phone } from "lucide-react";
+import { Users, DollarSign, CalendarDays, Cake, TrendingUp, AlertTriangle, CheckCircle, Phone } from "lucide-react";
 import Link from "next/link";
 import { format, isValid } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -63,25 +63,6 @@ function isToday(ddmm: string): boolean {
   return now.getDate() === d && now.getMonth() + 1 === m;
 }
 
-const EVENT_TYPE_LABELS: Record<string, string> = {
-  CULTO: "Culto",
-  ENSAIO: "Ensaio",
-  REUNIAO: "Reunião",
-  RETIRO: "Retiro",
-  CELULA: "Célula",
-  CONGRESSO: "Congresso",
-  OUTRO: "Outro",
-};
-
-const EVENT_TYPE_BADGE: Record<string, string> = {
-  CULTO:     "bg-primary/15 text-primary",
-  ENSAIO:    "bg-blue-500/15 text-blue-400",
-  REUNIAO:   "bg-amber-500/15 text-amber-400",
-  RETIRO:    "bg-emerald-500/15 text-emerald-400",
-  CELULA:    "bg-cyan-500/15 text-cyan-400",
-  CONGRESSO: "bg-orange-500/15 text-orange-400",
-  OUTRO:     "bg-secondary text-muted-foreground",
-};
 
 export default function DashboardPage() {
   const { data: session } = useSession();
@@ -140,15 +121,6 @@ export default function DashboardPage() {
     setSelectedDate(date);
     setNewEventOpen(true);
   }
-
-  const upcomingEvents = events
-    .filter((e) => new Date(e.date) >= now)
-    .slice(0, 5);
-
-  const lowAttendance = attendance.filter((m) => m.total > 0 && (m.rate ?? 100) < 50);
-  const topAttendee = attendance
-    .filter((m) => m.total > 0)
-    .sort((a, b) => (b.rate ?? 0) - (a.rate ?? 0))[0];
 
   const greeting = (() => {
     const h = now.getHours();
