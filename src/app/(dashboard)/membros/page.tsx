@@ -28,6 +28,7 @@ import {
 type Member = {
   id: string;
   name: string;
+  email: string | null;
   birthday: string | null;
   phone: string | null;
   status: "ACTIVE" | "INACTIVE";

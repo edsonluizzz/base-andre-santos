@@ -41,6 +41,17 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           }
         }
 
+        // Auto-vincular membros cadastrados com o mesmo e-mail
+        const membersByEmail = await db.member.findMany({
+          where: { email: user.email, userId: null },
+        });
+        for (const m of membersByEmail) {
+          await db.member.update({
+            where: { id: m.id },
+            data: { userId: user.id },
+          }).catch(() => {});
+        }
+
         // Buscar vínculos do usuário
         const ues = await db.userEstablishment.findMany({
           where: { userId: user.id },

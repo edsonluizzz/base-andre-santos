@@ -17,12 +17,13 @@ export async function PATCH(
     if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
     const body = await req.json();
-    const { name, birthday, phone, notes, status, userId } = body;
+    const { name, birthday, phone, notes, status, userId, email } = body;
 
     const member = await db.member.update({
       where: { id: params.id },
       data: {
         ...(name !== undefined && { name: name.trim() }),
+        ...(email !== undefined && { email: email?.trim().toLowerCase() || null }),
         ...(birthday !== undefined && { birthday: birthday?.trim() || null }),
         ...(phone !== undefined && { phone: phone?.trim() || null }),
         ...(notes !== undefined && { notes: notes?.trim() || null }),

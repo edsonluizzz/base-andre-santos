@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
     const body = await req.json();
-    const { name, birthday, phone, notes } = body;
+    const { name, birthday, phone, notes, email } = body;
 
     if (!name?.trim()) {
       return NextResponse.json({ error: "Nome é obrigatório" }, { status: 400 });
@@ -34,13 +34,13 @@ export async function POST(req: NextRequest) {
 
     const eid = session.user?.establishmentId ?? "default-porto-belo";
 
-    // Enforce free plan limit of 10 members
+    // Enforce free plan limit of 50 members
     const est = await db.establishment.findUnique({ where: { id: eid }, select: { plan: true } });
     if (!est || est.plan === "FREE") {
       const count = await db.member.count({ where: { establishmentId: eid, deletedAt: null } });
-      if (count >= 10) {
+      if (count >= 50) {
         return NextResponse.json(
-          { error: "Limite de 10 membros atingido no plano gratuito. Faça upgrade para o plano Pro." },
+          { error: "Limite de 50 membros atingido no plano gratuito. Faça upgrade para o plano Pro." },
           { status: 403 }
         );
       }
@@ -49,6 +49,7 @@ export async function POST(req: NextRequest) {
     const member = await db.member.create({
       data: {
         name: name.trim(),
+        email: email?.trim().toLowerCase() || null,
         birthday: birthday?.trim() || null,
         phone: phone?.trim() || null,
         notes: notes?.trim() || null,

@@ -130,6 +130,7 @@ model VerificationToken {
 model Member {
   id              String       @id @default(cuid())
   name            String
+  email           String?
   birthday        String?
   phone           String?
   photoUrl        String?
@@ -150,6 +151,7 @@ model Member {
   rsvps            EventRsvp[]
 
   @@index([establishmentId])
+  @@index([email])
 }
 
 // ─── Eventos ──────────────────────────────────────────────────────────────

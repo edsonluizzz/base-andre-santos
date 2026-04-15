@@ -23,6 +23,7 @@ import {
 type Member = {
   id: string;
   name: string;
+  email: string | null;
   birthday: string | null;
   phone: string | null;
   status: "ACTIVE" | "INACTIVE";
@@ -56,6 +57,7 @@ export function MemberDialog({ open, onOpenChange, member, onSuccess }: Props) {
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     name: "",
+    email: "",
     birthday: "",
     phone: "",
     notes: "",
@@ -66,13 +68,14 @@ export function MemberDialog({ open, onOpenChange, member, onSuccess }: Props) {
     if (member) {
       setForm({
         name: member.name,
+        email: member.email ?? "",
         birthday: member.birthday ?? "",
         phone: member.phone ?? "",
         notes: member.notes ?? "",
         status: member.status,
       });
     } else {
-      setForm({ name: "", birthday: "", phone: "", notes: "", status: "ACTIVE" });
+      setForm({ name: "", email: "", birthday: "", phone: "", notes: "", status: "ACTIVE" });
     }
   }, [member, open]);
 
@@ -126,6 +129,20 @@ export function MemberDialog({ open, onOpenChange, member, onSuccess }: Props) {
               placeholder="Nome completo"
               className="bg-background border-border text-foreground focus-visible:ring-primary"
             />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-muted-foreground text-xs">E-mail</Label>
+            <Input
+              type="email"
+              value={form.email}
+              onChange={(e) => set("email", e.target.value)}
+              placeholder="email@exemplo.com"
+              className="bg-background border-border text-foreground focus-visible:ring-primary"
+            />
+            <p className="text-[11px] text-muted-foreground/50">
+              Ao fazer login com esse e-mail, o membro será vinculado automaticamente.
+            </p>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
