@@ -33,6 +33,13 @@
   - Justificativa de Falta: Adicionado campo `justification` no banco, API e Interface (com Dialog automático).
   - Landing Page Copy: Redesign completo dos textos focados em conversão (Framework PAS) e remoção de dados fictícios.
   - Catálogo de Funções: Criado `.claude/funcionalidades_detalhadas.md` para suporte ao marketing.
+- **Sprint 2026-04-15 — Bugs + Features**:
+  - Bug #9: permissões — `$transaction` array → callback form 30s
+  - Bug #10: chamadas Porto Belo — `GET /api/events` remove filtro `ministryId:null` padrão
+  - Import membros: updates paralelos (Promise.all chunks de 50) — suporta 100+ linhas
+  - Convite WhatsApp pelo card: botão MessageCircle para membros sem userId; link `/entrar?c=CODE&mid=ID`; `POST /api/join` vincula ao membro existente
+  - Offering/Expense → BankAccount: campo `bankAccountId` adicionado, migration aplicada em produção
+  - PWA: `withPWA` em `next.config.mjs`, service worker gerado no build Vercel
 
 ## Infraestrutura
 
@@ -48,17 +55,17 @@
 | 2 | Banner de trial / upgrade | ✅ Já existia |
 | 3 | Campo `email` no Member + vinculação login | ✅ Concluído |
 | 4 | Notificações de eventos | ✅ Concluído |
-| 5 | Vincular Offering/Expense à BankAccount | Pendente |
-| 6 | PWA (manifest + ícones) | Pendente — `@ducanh2912/next-pwa` já instalado |
-| 7 | Import de membros: aumentar limite para 100+ linhas | Pendente |
-| 8 | Convite direto pelo card do membro (vincula ao membro específico) | Pendente |
+| 5 | Vincular Offering/Expense à BankAccount | ✅ Concluído |
+| 6 | PWA (manifest + ícones) | ✅ Concluído |
+| 7 | Import de membros: aumentar limite para 100+ linhas | ✅ Concluído |
+| 8 | Convite direto pelo card do membro (vincula ao membro específico) | ✅ Concluído |
 | 9 | Bug: erro ao salvar permissões no painel de configurações | ✅ Corrigido |
 | 10 | Bug: chamadas Porto Belo aparecem nos relatórios mas não estão preenchidas | ✅ Corrigido |
 
 ## Pendências
 
-- **Vincular Offering/Expense à BankAccount** — pendente
-- **PWA** — `@ducanh2912/next-pwa` já instalado, falta configurar manifest + ícones
+- ~~**Vincular Offering/Expense à BankAccount** — concluído (2026-04-15): bankAccountId em Offering e Expense, migration aplicada~~
+- ~~**PWA** — concluído (2026-04-15): withPWA em next.config.mjs, sw.js gerado no build~~
 - **Import de membros** — limite atual insuficiente; subir para pelo menos 100 linhas (verificar onde está o cap atual no `api/members/import`)
 - **Convite pelo card do membro** — gerar link de convite/join que já associa ao `Member.id` específico, evitando criar registro duplicado
 - ~~**Bug permissões** — corrigido: `$transaction` array → callback form 30s~~
