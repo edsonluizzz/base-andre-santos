@@ -1,0 +1,142 @@
+name: 🛡️ Deploy Guardian
+
+on:
+  push:
+  pull_request:
+
+concurrency:
+  group: deploy-guardian-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check-and-heal:
+    name: Check & Auto-Heal
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run lint, typecheck, build in parallel
+        id: checks
+        run: |
+          lint_out=$(npm run lint 2>&1); lint_code=$?
+          tsc_out=$(npx tsc --noEmit 2>&1); tsc_code=$?
+          build_out=$(npm run build 2>&1); build_code=$?
+
+          echo "lint_ok=$([ $lint_code -eq 0 ] && echo true || echo false)" >> $GITHUB_OUTPUT
+          echo "tsc_ok=$([ $tsc_code -eq 0 ] && echo true || echo false)" >> $GITHUB_OUTPUT
+          echo "build_ok=$([ $build_code -eq 0 ] && echo true || echo false)" >> $GITHUB_OUTPUT
+
+          has_errors=false
+          [ $lint_code -ne 0 ] && has_errors=true
+          [ $tsc_code -ne 0 ] && has_errors=true
+          [ $build_code -ne 0 ] && has_errors=true
+          echo "has_errors=$has_errors" >> $GITHUB_OUTPUT
+
+          # Store error output for Claude
+          {
+            echo "## Current Errors"
+            echo ""
+            echo "### Lint (exit code: $lint_code)"
+            echo '```'
+            echo "$lint_out" | tail -50
+            echo '```'
+            echo ""
+            echo "### TypeScript (exit code: $tsc_code)"
+            echo '```'
+            echo "$tsc_out" | tail -50
+            echo '```'
+            echo ""
+            echo "### Build (exit code: $build_code)"
+            echo '```'
+            echo "$build_out" | tail -80
+            echo '```'
+          } > /tmp/error-report.md
+
+      - name: Auto-heal with Claude
+        if: steps.checks.outputs.has_errors == 'true'
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          npm install -g @anthropic-ai/claude-code@latest
+
+          # Combine guardian prompt with actual errors
+          cat .github/deploy-guardian-prompt.md /tmp/error-report.md > /tmp/full-prompt.md
+
+          claude \
+            --print "$(cat /tmp/full-prompt.md)" \
+            --max-turns 20 \
+            --allowedTools "Edit,Bash,Read,Glob,Grep"
+
+          # Commit any fixes Claude made
+          git config user.name "Deploy Guardian"
+          git config user.email "deploy-guardian@github-actions"
+          git add -A
+          if ! git diff --staged --quiet; then
+            git commit -m "fix: deploy guardian auto-heal [skip ci]"
+            git push
+          fi
+
+      - name: Final verification
+        run: |
+          echo "▶ lint…"
+          npm run lint
+
+          echo "▶ typecheck…"
+          npx tsc --noEmit
+
+          echo "▶ build…"
+          npm run build
+
+      - name: Check for TODO/console.log in changed files
+        run: |
+          changed=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || git diff --name-only HEAD 2>/dev/null)
+          if [ -z "$changed" ]; then exit 0; fi
+
+          echo "Checking changed files for TODO and console.log..."
+          found=false
+          for f in $changed; do
+            [ -f "$f" ] || continue
+            matches=$(grep -n "TODO\|console\.log" "$f" 2>/dev/null || true)
+            if [ -n "$matches" ]; then
+              echo "⚠️  $f:"
+              echo "$matches"
+              found=true
+            fi
+          done
+          if [ "$found" = true ]; then
+            echo "::warning::TODO or console.log found in changed files (see above)"
+          else
+            echo "✅ No TODO or console.log found"
+          fi
+
+      - name: Check env var references in changed files
+        run: |
+          changed=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || git diff --name-only HEAD 2>/dev/null)
+          if [ -z "$changed" ]; then exit 0; fi
+
+          echo "Checking env vars referenced in changed files..."
+          for f in $changed; do
+            [ -f "$f" ] || continue
+            grep -oP 'process\.env\.\K[A-Z_]+' "$f" 2>/dev/null || true
+          done | sort -u | while read var; do
+            if [ -z "$var" ]; then continue; fi
+            # Note: can't check Vercel env in CI without vercel CLI + token
+            # Just list them so the developer is aware
+            echo "📋 process.env.$var (verify this exists in Vercel)"
+          done
