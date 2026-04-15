@@ -42,15 +42,16 @@
 |---|------|--------|
 | 1 | Billing Portal (Stripe Customer Portal) | ✅ Já existia |
 | 2 | Banner de trial / upgrade | ✅ Já existia |
-| 3 | Campo `email` no Member + vinculação login | 🔜 Próximo |
-| 4 | Notificações de eventos | Pendente |
+| 3 | Campo `email` no Member + vinculação login | ✅ Concluído |
+| 4 | Notificações de eventos | 🔜 Próximo |
 | 5 | Vincular Offering/Expense à BankAccount | Pendente |
 | 6 | PWA (manifest + ícones) | Pendente — `@ducanh2912/next-pwa` já instalado |
 
 ## Pendências
 
-- **Notificações de eventos** — deferred: modelo de notificação do módulo de eventos ainda não definido
-- **Vinculação membro manual → login por e-mail** — requer campo `email` no model `Member` (migration pendente) — **próximo item**
+- **Notificações de eventos** — **próximo item** (definir modelo: todos / só ministério / + e-mail Resend)
+- **Vincular Offering/Expense à BankAccount** — pendente
+- **PWA** — `@ducanh2912/next-pwa` já instalado, falta configurar manifest + ícones
 
 ---
 
