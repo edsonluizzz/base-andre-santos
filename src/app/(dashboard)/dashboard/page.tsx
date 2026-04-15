@@ -24,14 +24,6 @@ type Event = {
   date: string;
 };
 
-type AttendanceByMember = {
-  id: string;
-  name: string;
-  total: number;
-  present: number;
-  rate: number | null;
-};
-
 type EvasionMember = {
   id: string;
   name: string;
@@ -71,7 +63,6 @@ export default function DashboardPage() {
   const [events, setEvents] = useState<Event[]>([]);
   const [totalMonth, setTotalMonth] = useState(0);
   const [expensesTotal, setExpensesTotal] = useState(0);
-  const [attendance, setAttendance] = useState<AttendanceByMember[]>([]);
   const [evasionMembers, setEvasionMembers] = useState<EvasionMember[]>([]);
   const [evasionLoading, setEvasionLoading] = useState(true);
   const [newEventOpen, setNewEventOpen] = useState(false);
@@ -85,10 +76,6 @@ export default function DashboardPage() {
   useEffect(() => {
     fetch("/api/members").then((r) => r.json()).then(setMembers);
     fetchEvents();
-    fetch("/api/reports?type=attendance-by-member")
-      .then((r) => r.json())
-      .then((d) => setAttendance(Array.isArray(d) ? d : []));
-
     fetch("/api/insights/evasion")
       .then((r) => r.json())
       .then((d) => {
