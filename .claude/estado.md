@@ -36,10 +36,21 @@
 - **Resend** ✅ DNS propagado, domínio ovile.com.br verificado, API Key ativa no Vercel
 - **CRON_SECRET** ✅ configurado no Vercel
 
+## Backlog priorizado
+
+| # | Item | Status |
+|---|------|--------|
+| 1 | Billing Portal (Stripe Customer Portal) | ✅ Já existia |
+| 2 | Banner de trial / upgrade | ✅ Já existia |
+| 3 | Campo `email` no Member + vinculação login | 🔜 Próximo |
+| 4 | Notificações de eventos | Pendente |
+| 5 | Vincular Offering/Expense à BankAccount | Pendente |
+| 6 | PWA (manifest + ícones) | Pendente — `@ducanh2912/next-pwa` já instalado |
+
 ## Pendências
 
 - **Notificações de eventos** — deferred: modelo de notificação do módulo de eventos ainda não definido
-- **Vinculação membro manual → login por e-mail** — deferred: requer campo `email` no model `Member` (migration pendente)
+- **Vinculação membro manual → login por e-mail** — requer campo `email` no model `Member` (migration pendente) — **próximo item**
 
 ---
 
@@ -72,6 +83,20 @@ await db.model.createMany({ data: items });
 
 ### Rotas sem try/catch retornam HTML 500
 O frontend não consegue parsear como JSON → exibe "Erro de conexão". Todo handler deve ter try/catch.
+
+---
+
+## Fixes (2026-04-15)
+
+| Arquivo | Fix |
+|---------|-----|
+| `plan-card.tsx` | Limite FREE corrigido: 10 → 50 membros |
+| `dashboard/page.tsx` | Removidas variáveis nunca usadas: `attendance`, `upcomingEvents`, `lowAttendance`, `topAttendee`, `EVENT_TYPE_LABELS`, `EVENT_TYPE_BADGE`, import `Star` |
+| `api/insights/evasion/route.ts` | Removido parâmetro `req` não usado |
+| `.git/hooks/pre-push` | Bug crítico: `pass/fail/info` redirecionados para stderr; `rm -rf .next` antes do build (Windows/OneDrive symlinks) |
+
+### Armadilha: pre-push hook no Windows
+`errors=$(run_checks)` capturava stdout incluindo os `pass/fail/info` → nunca vazio → auto-heal sempre disparava. Fix: todos os status para `>&2`, build com `npm run build >&2 2>&1`, e `rm -rf .next` obrigatório antes do `next build`.
 
 ---
 
