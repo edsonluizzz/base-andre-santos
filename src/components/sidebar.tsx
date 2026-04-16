@@ -21,6 +21,7 @@ import {
   Shield,
   ChevronsUpDown,
   Check,
+  Megaphone,
 } from "lucide-react";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { useState, useEffect, useRef } from "react";
@@ -46,6 +47,7 @@ const navItems: {
   { href: "/relatorios", icon: BarChart2, label: "Relatórios", module: "REPORTS" },
   { href: "/financeiro", icon: DollarSign, label: "Financeiro", module: "FINANCIAL" },
   { href: "/camisetas", icon: Shirt, label: "Camisetas", module: "SHIRTS" },
+  { href: "/comunicados", icon: Megaphone, label: "Comunicados", adminOnly: true },
   { href: "/configuracoes", icon: Settings, label: "Configurações", adminOnly: true },
   { href: "/super-admin", icon: Shield, label: "Super Admin", superAdminOnly: true },
 ];

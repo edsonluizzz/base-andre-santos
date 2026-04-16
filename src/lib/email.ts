@@ -204,6 +204,205 @@ export async function sendEventCreatedEmail({
   });
 }
 
+// ─── Comunicado broadcast ─────────────────────────────────────────────────────
+
+export async function sendBroadcastEmail({
+  to,
+  memberName,
+  churchName,
+  title,
+  message,
+}: {
+  to: string;
+  memberName: string;
+  churchName: string;
+  title: string;
+  message: string;
+}): Promise<void> {
+  const resend = getResend();
+  if (!resend) return;
+
+  const messageHtml = message.replace(/\n/g, "<br/>");
+
+  await resend.emails.send({
+    from: FROM,
+    to,
+    subject: `📢 ${title} — ${churchName}`,
+    html: `
+      <div style="font-family:sans-serif;max-width:520px;margin:0 auto;background:#06080F;color:#e2e8f0;border-radius:12px;padding:32px;">
+        <p style="font-size:11px;letter-spacing:4px;text-transform:uppercase;color:#818cf8;margin-bottom:8px;">Ovile · Gestão · ${churchName}</p>
+        <h1 style="font-size:22px;font-weight:700;color:#fff;margin:0 0 16px;">${title}</h1>
+        <p style="color:#94a3b8;line-height:1.6;">
+          Olá${memberName ? `, <strong style="color:#fff">${memberName}</strong>` : ""}!
+        </p>
+        <div style="background:#0f1629;border:1px solid #1e2a4a;border-radius:8px;padding:16px;margin:16px 0;color:#e2e8f0;line-height:1.7;">
+          ${messageHtml}
+        </div>
+        <div style="margin:24px 0;">
+          <a href="${process.env.NEXTAUTH_URL ?? "https://ovile.com.br"}/portal"
+             style="display:inline-block;background:#4f46e5;color:#fff;text-decoration:none;padding:12px 24px;border-radius:10px;font-size:14px;font-weight:600;">
+            Acessar meu portal →
+          </a>
+        </div>
+        <p style="color:#475569;font-size:12px;margin-top:32px;">
+          Você recebe este comunicado pois é membro de ${churchName} no Ovile Gestão.
+        </p>
+      </div>
+    `,
+  });
+}
+
+// ─── Nurturing — Dia 1 ────────────────────────────────────────────────────────
+
+export async function sendNurturingDay1Email({
+  to,
+  name,
+  churchName,
+}: {
+  to: string;
+  name: string;
+  churchName: string;
+}): Promise<void> {
+  const resend = getResend();
+  if (!resend) return;
+  const appUrl = process.env.NEXTAUTH_URL ?? "https://ovile.com.br";
+  await resend.emails.send({
+    from: FROM,
+    to,
+    subject: `Próximo passo: adicione os membros de ${churchName}`,
+    html: `
+      <div style="font-family:sans-serif;max-width:520px;margin:0 auto;background:#06080F;color:#e2e8f0;border-radius:12px;padding:32px;">
+        <p style="font-size:11px;letter-spacing:4px;text-transform:uppercase;color:#818cf8;margin-bottom:8px;">Ovile · Gestão</p>
+        <h1 style="font-size:22px;font-weight:700;color:#fff;margin:0 0 16px;">Sua congregação está pronta 🚀</h1>
+        <p style="color:#94a3b8;line-height:1.6;">Olá, <strong style="color:#fff">${name}</strong>!</p>
+        <p style="color:#94a3b8;line-height:1.6;">
+          Você criou <strong style="color:#fff">${churchName}</strong> no Ovile Gestão. O próximo passo é
+          adicionar os membros da sua congregação para começar a fazer chamadas e registrar frequência.
+        </p>
+        <div style="background:#0f1629;border:1px solid #1e2a4a;border-radius:8px;padding:16px;margin:16px 0;">
+          <p style="font-weight:600;color:#fff;margin:0 0 8px;">O que você pode fazer agora:</p>
+          <ul style="color:#94a3b8;padding-left:16px;margin:0;line-height:2;">
+            <li>Adicionar membros manualmente ou importar por planilha</li>
+            <li>Gerar o link de convite para os membros entrarem sozinhos</li>
+            <li>Criar o primeiro evento e fazer a chamada</li>
+          </ul>
+        </div>
+        <div style="margin:24px 0;">
+          <a href="${appUrl}/membros"
+             style="display:inline-block;background:#4f46e5;color:#fff;text-decoration:none;padding:12px 24px;border-radius:10px;font-size:14px;font-weight:600;">
+            Adicionar membros →
+          </a>
+        </div>
+        <p style="color:#475569;font-size:12px;margin-top:32px;">
+          Você recebe este e-mail pois é administrador de ${churchName} no Ovile Gestão.
+        </p>
+      </div>
+    `,
+  });
+}
+
+// ─── Nurturing — Dia 3 ────────────────────────────────────────────────────────
+
+export async function sendNurturingDay3Email({
+  to,
+  name,
+  churchName,
+}: {
+  to: string;
+  name: string;
+  churchName: string;
+}): Promise<void> {
+  const resend = getResend();
+  if (!resend) return;
+  const appUrl = process.env.NEXTAUTH_URL ?? "https://ovile.com.br";
+  await resend.emails.send({
+    from: FROM,
+    to,
+    subject: `Faça a chamada diretamente pelo celular — ${churchName}`,
+    html: `
+      <div style="font-family:sans-serif;max-width:520px;margin:0 auto;background:#06080F;color:#e2e8f0;border-radius:12px;padding:32px;">
+        <p style="font-size:11px;letter-spacing:4px;text-transform:uppercase;color:#818cf8;margin-bottom:8px;">Ovile · Gestão</p>
+        <h1 style="font-size:22px;font-weight:700;color:#fff;margin:0 0 16px;">Você sabia? 📋</h1>
+        <p style="color:#94a3b8;line-height:1.6;">Olá, <strong style="color:#fff">${name}</strong>!</p>
+        <p style="color:#94a3b8;line-height:1.6;">
+          Com o Ovile você faz a <strong style="color:#fff">chamada de presença pelo celular</strong> — sem papel, sem planilha.
+          Toque em cada nome para marcar "Presente", "Ausente" ou "Justificado". Tudo salvo automaticamente.
+        </p>
+        <div style="background:#0f1629;border:1px solid #1e2a4a;border-radius:8px;padding:16px;margin:16px 0;">
+          <p style="font-weight:600;color:#fff;margin:0 0 8px;">Recursos da Chamada:</p>
+          <ul style="color:#94a3b8;padding-left:16px;margin:0;line-height:2;">
+            <li>Presença, Ausência ou Justificativa com um toque</li>
+            <li>Radar de liderança — veja quem faltou 3x seguidas</li>
+            <li>Contato direto pelo WhatsApp para ausentes</li>
+            <li>Exportar lista de presença em PDF</li>
+          </ul>
+        </div>
+        <div style="margin:24px 0;">
+          <a href="${appUrl}/chamada"
+             style="display:inline-block;background:#4f46e5;color:#fff;text-decoration:none;padding:12px 24px;border-radius:10px;font-size:14px;font-weight:600;">
+            Fazer chamada agora →
+          </a>
+        </div>
+        <p style="color:#475569;font-size:12px;margin-top:32px;">
+          Você recebe este e-mail pois é administrador de ${churchName} no Ovile Gestão.
+        </p>
+      </div>
+    `,
+  });
+}
+
+// ─── Nurturing — Dia 7 ────────────────────────────────────────────────────────
+
+export async function sendNurturingDay7Email({
+  to,
+  name,
+  churchName,
+}: {
+  to: string;
+  name: string;
+  churchName: string;
+}): Promise<void> {
+  const resend = getResend();
+  if (!resend) return;
+  const appUrl = process.env.NEXTAUTH_URL ?? "https://ovile.com.br";
+  await resend.emails.send({
+    from: FROM,
+    to,
+    subject: `${churchName} merece o plano PRO — R$ 29,99/mês`,
+    html: `
+      <div style="font-family:sans-serif;max-width:520px;margin:0 auto;background:#06080F;color:#e2e8f0;border-radius:12px;padding:32px;">
+        <p style="font-size:11px;letter-spacing:4px;text-transform:uppercase;color:#818cf8;margin-bottom:8px;">Ovile · Gestão</p>
+        <h1 style="font-size:22px;font-weight:700;color:#fff;margin:0 0 16px;">Desbloqueie todo o potencial 🏆</h1>
+        <p style="color:#94a3b8;line-height:1.6;">Olá, <strong style="color:#fff">${name}</strong>!</p>
+        <p style="color:#94a3b8;line-height:1.6;">
+          Você está usando o Ovile há uma semana. O plano gratuito já entrega muito,
+          mas o <strong style="color:#fff">PRO</strong> foi feito para congregações que querem crescer sem limites.
+        </p>
+        <div style="background:#0f1629;border:1px solid #4f46e5;border-radius:8px;padding:16px;margin:16px 0;">
+          <p style="font-weight:600;color:#818cf8;margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:2px;">Plano PRO — R$ 29,99/mês</p>
+          <ul style="color:#94a3b8;padding-left:16px;margin:0;line-height:2;">
+            <li><strong style="color:#fff">Membros ilimitados</strong> (FREE: 50)</li>
+            <li>Relatórios completos de frequência e financeiro</li>
+            <li>Gestão de ministérios e camisetas para eventos</li>
+            <li>Portal do membro com histórico e RSVP</li>
+            <li>Suporte prioritário</li>
+          </ul>
+        </div>
+        <div style="margin:24px 0;">
+          <a href="${appUrl}/configuracoes"
+             style="display:inline-block;background:#4f46e5;color:#fff;text-decoration:none;padding:12px 24px;border-radius:10px;font-size:14px;font-weight:600;">
+            Fazer upgrade para PRO →
+          </a>
+        </div>
+        <p style="color:#475569;font-size:12px;margin-top:32px;">
+          Você recebe este e-mail pois é administrador de ${churchName} no Ovile Gestão.
+          Para cancelar estes e-mails, acesse Configurações no sistema.
+        </p>
+      </div>
+    `,
+  });
+}
+
 // ─── Notificação diária de aniversariantes ────────────────────────────────────
 
 export async function sendBirthdayNotificationEmail({

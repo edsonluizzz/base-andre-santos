@@ -30,8 +30,28 @@ model Establishment {
   cancelAtPeriodEnd    Boolean   @default(false)
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
+  // Nurturing
+  nurturingStep        Int       @default(0) // 0=nenhum, 1=dia1, 2=dia3, 3=dia7
 
   userEstablishments UserEstablishment[]
+  broadcasts         Broadcast[]
+}
+
+// ─── Comunicados ──────────────────────────────────────────────────────────────
+
+model Broadcast {
+  id              String   @id @default(cuid())
+  establishmentId String
+  title           String
+  message         String   @db.Text
+  audience        String   // "ALL" | "MINISTRY:{id}"
+  sentCount       Int      @default(0)
+  createdBy       String?  // userId
+  createdAt       DateTime @default(now())
+
+  establishment Establishment @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
+
+  @@index([establishmentId])
 }
 
 // ─── Multi-Tenant: Vínculo Usuário ↔ Congregação ─────────────────────────────
