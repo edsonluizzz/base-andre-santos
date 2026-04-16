@@ -48,6 +48,15 @@
   - Onboarding admin: `SetupChecklist` no dashboard — 5 passos verificados em tempo real, barra de progresso, dismissível via localStorage
   - Onboarding membro: `PortalWelcomeTour` no portal — modal 3 steps na primeira visita, persistido por memberId
   - Pós-cadastro: tela de sucesso com lista visual de 4 próximos passos
+- **Sprint 2026-04-16 — Comunicados + Nurturing** (continuação):
+  - Modelo `Broadcast` no schema + migration `20260416100000_add_broadcast_and_nurturing`
+  - Campo `nurturingStep` em `Establishment` (0→3)
+  - `GET/POST /api/broadcasts`: lista comunicados e envia e-mail (Resend) + notificação in-app para membros
+  - Página `/comunicados`: lista de histórico + dialog de composição (título, mensagem, destinatários)
+  - Sidebar: item "Comunicados" com ícone `Megaphone` (adminOnly)
+  - Templates de e-mail: `sendBroadcastEmail`, `sendNurturingDay1/3/7Email`
+  - Cron `/api/cron/nurturing` (13h UTC diário) — sequência automática day1/day3/day7 por step
+  - `vercel.json` atualizado com o novo cron
 
 ## Infraestrutura
 
@@ -76,6 +85,8 @@
 | 15 | Onboarding admin (SetupChecklist) | ✅ Concluído |
 | 16 | Onboarding membro (PortalWelcomeTour) | ✅ Concluído |
 | 17 | Pós-cadastro com próximos passos | ✅ Concluído |
+| 18 | Comunicados (broadcasts + e-mail + notificação) | ✅ Concluído |
+| 19 | Nurturing emails (sequência day1/3/7 pós-cadastro) | ✅ Concluído |
 
 ## Pendências
 
