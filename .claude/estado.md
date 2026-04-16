@@ -40,6 +40,14 @@
   - Convite WhatsApp pelo card: botão MessageCircle para membros sem userId; link `/entrar?c=CODE&mid=ID`; `POST /api/join` vincula ao membro existente
   - Offering/Expense → BankAccount: campo `bankAccountId` adicionado, migration aplicada em produção
   - PWA: `withPWA` em `next.config.mjs`, service worker gerado no build Vercel
+- **Sprint 2026-04-16 — UX + Onboarding**:
+  - Calendário dashboard: clicar em data com evento → modal de detalhe (lista eventos + link chamada + botão novo evento); sem evento → NewEventDialog direto
+  - Radar de Liderança: expandível com botão "Ver todos / Recolher"
+  - Membros: seletor de itens por página (12/24/48/96)
+  - Chamada: loading state ao abrir evento (evita flash); CTA WhatsApp sempre visível para ausentes; auto-abrir via `?evento=id`; openEvent recebe members como argumento
+  - Onboarding admin: `SetupChecklist` no dashboard — 5 passos verificados em tempo real, barra de progresso, dismissível via localStorage
+  - Onboarding membro: `PortalWelcomeTour` no portal — modal 3 steps na primeira visita, persistido por memberId
+  - Pós-cadastro: tela de sucesso com lista visual de 4 próximos passos
 
 ## Infraestrutura
 
@@ -61,6 +69,13 @@
 | 8 | Convite direto pelo card do membro (vincula ao membro específico) | ✅ Concluído |
 | 9 | Bug: erro ao salvar permissões no painel de configurações | ✅ Corrigido |
 | 10 | Bug: chamadas Porto Belo aparecem nos relatórios mas não estão preenchidas | ✅ Corrigido |
+| 11 | Calendário com detalhe do dia ao clicar | ✅ Concluído |
+| 12 | Radar de liderança expansível | ✅ Concluído |
+| 13 | Membros: seletor de itens por página | ✅ Concluído |
+| 14 | Chamada: loading + CTA WhatsApp visível + auto-abrir por URL | ✅ Concluído |
+| 15 | Onboarding admin (SetupChecklist) | ✅ Concluído |
+| 16 | Onboarding membro (PortalWelcomeTour) | ✅ Concluído |
+| 17 | Pós-cadastro com próximos passos | ✅ Concluído |
 
 ## Pendências
 
