@@ -215,7 +215,7 @@ export default function ComunicadosPage() {
 
             <div className="space-y-1.5">
               <Label>Destinatários</Label>
-              <Select value={audience} onValueChange={setAudience}>
+              <Select value={audience} onValueChange={(v) => v && setAudience(v)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
