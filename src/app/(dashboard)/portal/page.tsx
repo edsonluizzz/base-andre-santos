@@ -18,6 +18,7 @@ import {
 import { StatCard } from "@/components/shared/stat-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+import { PortalWelcomeTour } from "@/components/onboarding/portal-welcome-tour";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -168,6 +169,9 @@ export default function PortalPage() {
 
   return (
     <div className="space-y-8">
+      {/* Tour de boas-vindas — primeira visita */}
+      <PortalWelcomeTour memberId={data.member.id} />
+
       {/* Header */}
       <div>
         <h1 className="text-2xl lg:text-3xl font-bold text-foreground">Meu Portal</h1>

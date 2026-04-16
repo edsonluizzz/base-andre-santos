@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Cross, CheckCircle, Loader2, ChevronRight, Square, SquareCheckBig } from "lucide-react";
+import { Cross, CheckCircle, Loader2, ChevronRight, Square, SquareCheckBig, Users, CalendarDays, Link2, LogIn } from "lucide-react";
 
 type Step = "form" | "success";
 
@@ -80,7 +80,7 @@ export default function CadastroPage() {
         {step === "success" ? (
           /* ── Tela de sucesso ── */
           <div
-            className="rounded-2xl border border-white/[0.07] p-8 text-center"
+            className="rounded-2xl border border-white/[0.07] p-8"
             style={{
               background: "rgba(15,23,42,0.6)",
               backdropFilter: "blur(12px)",
@@ -88,23 +88,72 @@ export default function CadastroPage() {
               boxShadow: "0 1px 1px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04)",
             }}
           >
-            <div className="flex justify-center mb-4">
-              <CheckCircle className="w-12 h-12 text-emerald-400" />
+            {/* Ícone + título */}
+            <div className="flex flex-col items-center text-center mb-6">
+              <div className="w-14 h-14 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mb-4">
+                <CheckCircle className="w-7 h-7 text-emerald-400" />
+              </div>
+              <h2 className="text-xl font-bold text-white mb-1">
+                Congregação criada!
+              </h2>
+              <p className="text-slate-400 text-sm leading-relaxed">
+                E-mail enviado para{" "}
+                <span className="text-white font-medium">{adminEmail}</span>.
+                <br />
+                Use-o para entrar no sistema pela primeira vez.
+              </p>
             </div>
-            <h2 className="text-xl font-semibold text-white mb-2">
-              Congregação criada!
-            </h2>
-            <p className="text-slate-400 text-sm mb-6">
-              Um e-mail de acesso foi enviado para{" "}
-              <span className="text-white font-medium">{adminEmail}</span>.
-              <br />
-              Use-o para entrar no sistema pela primeira vez.
-            </p>
+
+            {/* Próximos passos */}
+            <div className="border-t border-white/[0.06] pt-5 mb-6">
+              <p className="text-[10px] tracking-[3px] uppercase text-indigo-400/70 mb-4">
+                Seus próximos passos
+              </p>
+              <div className="space-y-4">
+                {[
+                  {
+                    icon: LogIn,
+                    label: "Faça login com sua conta Google",
+                    sub: "Use o mesmo e-mail que você informou acima",
+                  },
+                  {
+                    icon: Users,
+                    label: "Adicione seus membros",
+                    sub: "Cadastre os participantes da congregação",
+                  },
+                  {
+                    icon: CalendarDays,
+                    label: "Crie o primeiro evento",
+                    sub: "Registre um culto, ensaio ou reunião",
+                  },
+                  {
+                    icon: Link2,
+                    label: "Gere o link de convite",
+                    sub: "Compartilhe com sua equipe para que entrem no sistema",
+                  },
+                ].map((item, i) => {
+                  const Icon = item.icon;
+                  return (
+                    <div key={i} className="flex items-start gap-3">
+                      <div className="w-7 h-7 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <Icon className="w-3.5 h-3.5 text-indigo-400" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-white">{item.label}</p>
+                        <p className="text-xs text-slate-500 mt-0.5">{item.sub}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
             <Link
               href="/login"
-              className="inline-flex items-center gap-2 text-sm font-medium text-indigo-400 hover:text-indigo-300 transition-colors"
+              className="w-full flex items-center justify-center gap-2 rounded-xl py-3 px-4 text-sm font-medium bg-indigo-600 hover:bg-indigo-500 text-white transition-all duration-200"
             >
-              Ir para o login <ChevronRight className="w-4 h-4" />
+              Ir para o login
+              <ChevronRight className="w-4 h-4" />
             </Link>
           </div>
         ) : (

@@ -10,6 +10,7 @@ import { ptBR } from "date-fns/locale";
 import { CalendarWidget } from "@/components/ui/calendar-widget";
 import { NewEventDialog } from "@/components/shared/event-dialogs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { SetupChecklist } from "@/components/onboarding/setup-checklist";
 
 type Member = {
   id: string;
@@ -66,6 +67,7 @@ export default function DashboardPage() {
   const [expensesTotal, setExpensesTotal] = useState(0);
   const [evasionMembers, setEvasionMembers] = useState<EvasionMember[]>([]);
   const [evasionLoading, setEvasionLoading] = useState(true);
+  const [setupSettings, setSetupSettings] = useState<{ hasJoinCode: boolean; hasLogo: boolean }>({ hasJoinCode: false, hasLogo: false });
   const [newEventOpen, setNewEventOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [dayDetailOpen, setDayDetailOpen] = useState(false);
@@ -80,6 +82,10 @@ export default function DashboardPage() {
   useEffect(() => {
     fetch("/api/members").then((r) => r.json()).then(setMembers);
     fetchEvents();
+    fetch("/api/settings")
+      .then((r) => r.json())
+      .then((d) => setSetupSettings({ hasJoinCode: !!d.joinCode, hasLogo: !!d.logoBase64 }))
+      .catch(() => {});
     fetch("/api/insights/evasion")
       .then((r) => r.json())
       .then((d) => {
@@ -176,6 +182,17 @@ export default function DashboardPage() {
           {safeFormat(now, "EEEE, dd 'de' MMMM 'de' yyyy")}
         </p>
       </div>
+
+      {/* Setup checklist — apenas para ADMIN */}
+      {session?.user?.role === "ADMIN" && session?.user?.establishmentId && (
+        <SetupChecklist
+          establishmentId={session.user.establishmentId}
+          membersCount={members.filter((m) => m.status === "ACTIVE").length}
+          eventsCount={events.length}
+          hasJoinCode={setupSettings.hasJoinCode}
+          hasLogo={setupSettings.hasLogo}
+        />
+      )}
 
       {/* Stat cards — stagger */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
