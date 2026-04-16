@@ -3,12 +3,13 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { usePermissions } from "@/context/permissions-context";
-import { Users, DollarSign, CalendarDays, Cake, TrendingUp, AlertTriangle, CheckCircle, Phone } from "lucide-react";
+import { Users, DollarSign, CalendarDays, Cake, TrendingUp, AlertTriangle, CheckCircle, Phone, ChevronDown, ChevronUp, Plus } from "lucide-react";
 import Link from "next/link";
 import { format, isValid } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { CalendarWidget } from "@/components/ui/calendar-widget";
 import { NewEventDialog } from "@/components/shared/event-dialogs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 type Member = {
   id: string;
@@ -67,6 +68,9 @@ export default function DashboardPage() {
   const [evasionLoading, setEvasionLoading] = useState(true);
   const [newEventOpen, setNewEventOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
+  const [dayDetailOpen, setDayDetailOpen] = useState(false);
+  const [dayDetailDate, setDayDetailDate] = useState<Date | undefined>();
+  const [radarExpanded, setRadarExpanded] = useState(false);
 
   const fetchEvents = async () => {
     const res = await fetch("/api/events");
@@ -105,8 +109,19 @@ export default function DashboardPage() {
     .slice(0, 5);
 
   function handleDayClick(date: Date) {
-    setSelectedDate(date);
-    setNewEventOpen(true);
+    const dayEvents = events.filter((e) => {
+      const d = new Date(e.date);
+      return d.getFullYear() === date.getFullYear() &&
+             d.getMonth() === date.getMonth() &&
+             d.getDate() === date.getDate();
+    });
+    if (dayEvents.length > 0) {
+      setDayDetailDate(date);
+      setDayDetailOpen(true);
+    } else {
+      setSelectedDate(date);
+      setNewEventOpen(true);
+    }
   }
 
   const greeting = (() => {
@@ -216,7 +231,7 @@ export default function DashboardPage() {
               </div>
             ) : (
               <div className="space-y-3">
-                {evasionMembers.slice(0, 4).map((m) => (
+                {(radarExpanded ? evasionMembers : evasionMembers.slice(0, 4)).map((m) => (
                   <div key={m.id} className="flex items-center gap-3 p-2.5 rounded-xl bg-white/[0.02] border border-white/[0.05]">
                     <div className="w-8 h-8 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500 text-xs font-bold">
                       {m.name.split(" ").slice(0, 2).map((n) => n[0]).join("").toUpperCase()}
@@ -239,7 +254,16 @@ export default function DashboardPage() {
                   </div>
                 ))}
                 {evasionMembers.length > 4 && (
-                  <p className="text-[10px] text-center text-muted-foreground">E mais {evasionMembers.length - 4} membros em risco</p>
+                  <button
+                    onClick={() => setRadarExpanded((v) => !v)}
+                    className="w-full flex items-center justify-center gap-1.5 py-1.5 text-[10px] text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    {radarExpanded ? (
+                      <><ChevronUp className="w-3 h-3" /> Recolher</>
+                    ) : (
+                      <><ChevronDown className="w-3 h-3" /> Ver todos ({evasionMembers.length - 4} mais)</>
+                    )}
+                  </button>
                 )}
               </div>
             )}
@@ -289,6 +313,52 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* Modal detalhe do dia */}
+      <Dialog open={dayDetailOpen} onOpenChange={setDayDetailOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-base font-bold">
+              {dayDetailDate && safeFormat(dayDetailDate, "EEEE, dd 'de' MMMM")}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2 mt-2">
+            {dayDetailDate && events
+              .filter((e) => {
+                const d = new Date(e.date);
+                return d.getFullYear() === dayDetailDate.getFullYear() &&
+                       d.getMonth() === dayDetailDate.getMonth() &&
+                       d.getDate() === dayDetailDate.getDate();
+              })
+              .map((e) => (
+                <Link
+                  key={e.id}
+                  href={`/chamada?evento=${e.id}`}
+                  onClick={() => setDayDetailOpen(false)}
+                  className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.03] border border-white/[0.07] hover:border-primary/30 hover:bg-primary/5 transition-all group"
+                >
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">{e.title}</p>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider mt-0.5">{e.type}</p>
+                  </div>
+                  <CalendarDays className="w-3.5 h-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
+                </Link>
+              ))
+            }
+          </div>
+          <button
+            onClick={() => {
+              setDayDetailOpen(false);
+              setSelectedDate(dayDetailDate);
+              setNewEventOpen(true);
+            }}
+            className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-primary/30 text-primary text-sm font-medium hover:bg-primary/10 transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            Novo evento neste dia
+          </button>
+        </DialogContent>
+      </Dialog>
 
       <NewEventDialog
         open={newEventOpen}

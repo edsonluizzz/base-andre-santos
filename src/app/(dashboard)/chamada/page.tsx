@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
+import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { Plus, CalendarDays, ChevronRight, Check, X, Clock, Printer, Phone, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -90,12 +91,14 @@ function safeFormat(dateStr: string, fmt: string): string {
 
 export default function ChamadaPage() {
   const { data: session } = useSession();
+  const searchParams = useSearchParams();
   const [events, setEvents] = useState<Event[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
   const [newEventOpen, setNewEventOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   const [activeEvent, setActiveEvent] = useState<Event | null>(null);
   const [attendances, setAttendances] = useState<Record<string, { status: AttendanceStatus; justification?: string }>>({});
+  const [attendancesLoading, setAttendancesLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [printInsights, setPrintInsights] = useState<InsightRecord[]>([]);
   const [printLoading, setPrintLoading] = useState(false);
@@ -103,31 +106,59 @@ export default function ChamadaPage() {
 
   const fetchEvents = useCallback(async () => {
     const res = await fetch("/api/events");
-    setEvents(await res.json());
+    const data: Event[] = await res.json();
+    setEvents(data);
+    return data;
   }, []);
 
-  useEffect(() => {
-    fetchEvents();
-    fetch("/api/members").then((r) => r.json()).then((data) =>
-      setMembers((data as Member[]).filter((m) => m.status === "ACTIVE"))
-    );
-  }, [fetchEvents]);
-
-  async function openEvent(ev: Event) {
+  async function openEvent(ev: Event, currentMembers: Member[]) {
     setActiveEvent(ev);
+    setAttendances({});
+    setAttendancesLoading(true);
     setPrintInsights([]);
-    const res = await fetch(`/api/events/${ev.id}`);
-    const data = await res.json();
-    const map: Record<string, { status: AttendanceStatus; justification?: string }> = {};
-    members.forEach((m) => (map[m.id] = { status: "ABSENT" }));
-    (data.attendances as AttendanceRecord[]).forEach((a) => {
-      map[a.memberId] = { 
-        status: a.status, 
-        justification: a.justification ?? undefined 
-      };
-    });
-    setAttendances(map);
+    try {
+      const res = await fetch(`/api/events/${ev.id}`);
+      const data = await res.json();
+      const map: Record<string, { status: AttendanceStatus; justification?: string }> = {};
+      currentMembers.forEach((m) => (map[m.id] = { status: "ABSENT" }));
+      if (Array.isArray(data.attendances)) {
+        (data.attendances as AttendanceRecord[]).forEach((a) => {
+          map[a.memberId] = {
+            status: a.status,
+            justification: a.justification ?? undefined,
+          };
+        });
+      }
+      setAttendances(map);
+    } catch {
+      toast.error("Erro ao carregar chamada");
+    } finally {
+      setAttendancesLoading(false);
+    }
   }
+
+  useEffect(() => {
+    let eventsData: Event[] = [];
+    let membersData: Member[] = [];
+
+    Promise.all([
+      fetchEvents(),
+      fetch("/api/members").then((r) => r.json()),
+    ]).then(([evs, mems]) => {
+      eventsData = evs;
+      membersData = (mems as Member[]).filter((m) => m.status === "ACTIVE");
+      setEvents(eventsData);
+      setMembers(membersData);
+
+      // Se veio da URL (?evento=id), abre automaticamente
+      const eventoId = searchParams.get("evento");
+      if (eventoId) {
+        const ev = eventsData.find((e) => e.id === eventoId);
+        if (ev) openEvent(ev, membersData);
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fetchEvents]);
 
   function cycleStatus(memberId: string, memberName: string) {
     const order: AttendanceStatus[] = ["ABSENT", "PRESENT", "JUSTIFIED"];
@@ -334,7 +365,7 @@ export default function ChamadaPage() {
             {events.map((ev) => (
               <div
                 key={ev.id}
-                onClick={() => openEvent(ev)}
+                onClick={() => openEvent(ev, members)}
                 className="glass-card p-4 cursor-pointer flex items-center gap-4 group hover:border-primary/30"
               >
                 <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
@@ -426,8 +457,15 @@ export default function ChamadaPage() {
               <p className="text-xs text-muted-foreground ml-auto">Toque para alternar status</p>
             </div>
 
-            <div className="space-y-2 mb-6">
-              {visibleMembers.length === 0 && !isLeaderOrAdmin && (
+            {attendancesLoading && (
+              <div className="flex flex-col items-center justify-center py-16 gap-3">
+                <div className="w-6 h-6 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+                <p className="text-xs text-muted-foreground">Carregando chamada...</p>
+              </div>
+            )}
+
+            <div className={cn("space-y-2 mb-6", attendancesLoading && "hidden")}>
+              {visibleMembers.length === 0 && !isLeaderOrAdmin && !attendancesLoading && (
                 <p className="text-sm text-muted-foreground text-center py-8">
                   Nenhum registro encontrado no seu nome ({session?.user?.name}).
                 </p>
@@ -476,10 +514,11 @@ export default function ChamadaPage() {
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={(e) => e.stopPropagation()}
-                        className="p-1.5 rounded-lg text-muted-foreground hover:text-emerald-400 hover:bg-emerald-500/5 transition-colors flex-shrink-0"
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-colors flex-shrink-0 text-[11px] font-medium"
                         title="Enviar mensagem no WhatsApp"
                       >
-                        <Phone className="w-3.5 h-3.5" />
+                        <Phone className="w-3 h-3" />
+                        <span className="hidden sm:inline">Contatar</span>
                       </a>
                     )}
                   </div>

@@ -55,7 +55,7 @@ export default function MembrosPage() {
   const [editMember, setEditMember] = useState<Member | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"cards" | "list">("cards");
-  const PAGE_SIZE = 24;
+  const [pageSize, setPageSize] = useState(24);
 
   // Import state
   const [importOpen, setImportOpen] = useState(false);
@@ -129,8 +129,8 @@ export default function MembrosPage() {
     return matchSearch && matchStatus;
   });
 
-  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
-  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const totalPages = Math.ceil(filtered.length / pageSize);
+  const paginated = filtered.slice((page - 1) * pageSize, page * pageSize);
 
   const active = paginated.filter((m) => m.status === "ACTIVE");
   const inactive = paginated.filter((m) => m.status === "INACTIVE");
@@ -316,32 +316,50 @@ export default function MembrosPage() {
           )}
 
           {/* Paginação */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between mt-6 pt-4 border-t border-border">
-              <p className="text-sm text-muted-foreground">
-                {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} de {filtered.length}
-              </p>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={page === 1}
+          {filtered.length > 0 && (
+            <div className="flex items-center justify-between mt-6 pt-4 border-t border-border flex-wrap gap-3">
+              <div className="flex items-center gap-3">
+                <p className="text-sm text-muted-foreground">
+                  {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, filtered.length)} de {filtered.length}
+                </p>
+                <Select
+                  value={String(pageSize)}
+                  onValueChange={(v) => { setPageSize(Number(v)); setPage(1); }}
                 >
-                  Anterior
-                </Button>
-                <span className="flex items-center px-3 text-sm text-muted-foreground">
-                  {page} / {totalPages}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={page === totalPages}
-                >
-                  Próxima
-                </Button>
+                  <SelectTrigger className="h-8 w-[110px] bg-secondary border-border text-foreground text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-secondary border-border">
+                    <SelectItem value="12">12 por pág.</SelectItem>
+                    <SelectItem value="24">24 por pág.</SelectItem>
+                    <SelectItem value="48">48 por pág.</SelectItem>
+                    <SelectItem value="96">96 por pág.</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
+              {totalPages > 1 && (
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={page === 1}
+                  >
+                    Anterior
+                  </Button>
+                  <span className="flex items-center px-3 text-sm text-muted-foreground">
+                    {page} / {totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={page === totalPages}
+                  >
+                    Próxima
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </>
