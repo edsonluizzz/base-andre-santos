@@ -1,4 +1,5 @@
 import withPWA from "@ducanh2912/next-pwa";
+import { withSentryConfig } from "@sentry/nextjs";
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -26,7 +27,7 @@ const nextConfig = {
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: blob: https://storage.googleapis.com https://*.public.blob.vercel-storage.com https://*.googleusercontent.com",
               "font-src 'self'",
-              "connect-src 'self' https://*.neon.tech https://api.stripe.com",
+              "connect-src 'self' https://*.neon.tech https://api.stripe.com https://*.ingest.sentry.io",
               "frame-ancestors 'none'",
             ].join("; "),
           },
@@ -36,11 +37,20 @@ const nextConfig = {
   },
 };
 
-export default withPWA({
+const pwaConfig = withPWA({
   dest: "public",
   disable: process.env.NODE_ENV === "development",
   reloadOnOnline: true,
-  workboxOptions: {
-    disableDevLogs: true,
-  },
+  workboxOptions: { disableDevLogs: true },
 })(nextConfig);
+
+export default withSentryConfig(pwaConfig, {
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+  silent: true,
+  widenClientFileUpload: true,
+  hideSourceMaps: true,
+  disableLogger: true,
+  automaticVercelMonitors: false,
+});
