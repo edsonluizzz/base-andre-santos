@@ -49,6 +49,7 @@ export const authConfig: NextAuthConfig = {
       const isSuspendedPage = pathname === "/suspended";
       const isEntrar = pathname.startsWith("/entrar");
       const isSemAcesso = pathname === "/sem-acesso";
+      const isCheckin = pathname.startsWith("/checkin");
 
       // Rotas sempre públicas
       if (isApiAuth || isApiOnboarding || isApiStripeWebhook || isApiJoin || isApiCron ||
@@ -76,12 +77,13 @@ export const authConfig: NextAuthConfig = {
       }
 
       // Sem nenhum estabelecimento vinculado → tela de entrada
-      if (isLoggedIn && session?.user?.noEstablishment && !isSelectChurch) {
+      // Checkin não redireciona: a API trata o caso de membro não encontrado
+      if (isLoggedIn && session?.user?.noEstablishment && !isSelectChurch && !isCheckin) {
         return Response.redirect(new URL("/entrar", nextUrl));
       }
 
       // Precisa escolher congregação (múltiplos vínculos)
-      if (isLoggedIn && session?.user?.needsChurchSelection && !isSelectChurch) {
+      if (isLoggedIn && session?.user?.needsChurchSelection && !isSelectChurch && !isCheckin) {
         return Response.redirect(new URL("/select-church", nextUrl));
       }
 
