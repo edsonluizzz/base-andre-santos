@@ -52,6 +52,11 @@
   - Modelo `Broadcast` no schema + migration `20260416100000_add_broadcast_and_nurturing`
   - Campo `nurturingStep` em `Establishment` (0→3)
   - `GET/POST /api/broadcasts`: lista comunicados e envia e-mail (Resend) + notificação in-app para membros
+- **Sprint 2026-04-17 — Métricas + Bugs**:
+  - Painel de métricas super admin: `GET /api/super-admin/metrics` + `MetricsPanel` component
+    - MRR, ARR, conversão trial→PRO, churn, gráfico crescimento semanal (8 semanas), funil nurturing, funil conversão completo
+  - Fix: `POST /api/attendances` → `$transaction` array → callback form com `timeout: 30000` (evita timeout com turmas grandes)
+  - Fix: imagens Google OAuth quebradas → `referrerPolicy="no-referrer"` em `AvatarImage`, `<img>` super-admin e configurações
   - Página `/comunicados`: lista de histórico + dialog de composição (título, mensagem, destinatários)
   - Sidebar: item "Comunicados" com ícone `Megaphone` (adminOnly)
   - Templates de e-mail: `sendBroadcastEmail`, `sendNurturingDay1/3/7Email`
@@ -64,7 +69,18 @@
 - **Resend** ✅ DNS propagado, domínio ovile.com.br verificado, API Key ativa no Vercel
 - **CRON_SECRET** ✅ configurado no Vercel
 
-## Backlog priorizado
+## Backlog priorizado — Edson (2026-04-17)
+
+| # | Item | Status |
+|---|------|--------|
+| A | Painel métricas super admin | ✅ Concluído |
+| B | QR Code presença | 🔜 Próximo |
+| C | Sentry | Pendente |
+| D | Dízimo individual (oferta → membro) | Pendente |
+| E | Relatório semanal automático por email | Pendente |
+| F | Vercel Analytics / PostHog | Pendente |
+
+## Backlog histórico (concluído)
 
 | # | Item | Status |
 |---|------|--------|
@@ -90,12 +106,14 @@
 
 ## Pendências
 
-- ~~**Vincular Offering/Expense à BankAccount** — concluído (2026-04-15): bankAccountId em Offering e Expense, migration aplicada~~
-- ~~**PWA** — concluído (2026-04-15): withPWA em next.config.mjs, sw.js gerado no build~~
-- **Import de membros** — limite atual insuficiente; subir para pelo menos 100 linhas (verificar onde está o cap atual no `api/members/import`)
-- **Convite pelo card do membro** — gerar link de convite/join que já associa ao `Member.id` específico, evitando criar registro duplicado
+- ~~**Vincular Offering/Expense à BankAccount** — concluído (2026-04-15)~~
+- ~~**PWA** — concluído (2026-04-15)~~
+- ~~**Import de membros** — concluído (2026-04-15): Promise.all chunks de 50~~
+- ~~**Convite pelo card do membro** — concluído (2026-04-15)~~
 - ~~**Bug permissões** — corrigido: `$transaction` array → callback form 30s~~
-- ~~**Bug chamadas Porto Belo** — corrigido: `GET /api/events` sem `ministryId` param agora retorna todos os eventos (antes filtrava `ministryId: null`)~~
+- ~~**Bug chamadas Porto Belo** — corrigido (GET /api/events sem ministryId)~~
+- ~~**Bug chamada timeout** — corrigido (2026-04-17): attendances $transaction → callback 30s~~
+- ~~**Imagens Google OAuth** — corrigido (2026-04-17): referrerPolicy="no-referrer"~~
 
 ---
 
