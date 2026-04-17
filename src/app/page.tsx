@@ -204,7 +204,7 @@ function DashboardMockup() {
                 >
                   <Cross style={{ width: "11px", height: "11px", color: "#a5b4fc" }} />
                 </div>
-                {[LayoutDashboard, Users, ClipboardList, DollarSign, BarChart2, Music2].map((Icon, i) => (
+                {[LayoutDashboard, Users, ClipboardList, DollarSign, Megaphone, Music2].map((Icon, i) => (
                   <div
                     key={i}
                     className="flex items-center justify-center rounded-lg"
