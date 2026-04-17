@@ -52,6 +52,14 @@
   - Modelo `Broadcast` no schema + migration `20260416100000_add_broadcast_and_nurturing`
   - Campo `nurturingStep` em `Establishment` (0→3)
   - `GET/POST /api/broadcasts`: lista comunicados e envia e-mail (Resend) + notificação in-app para membros
+- **Sprint 2026-04-17 — Documentação + Landing Page**:
+  - Criado `.claude/funcionalidades_detalhadas.md` v2.0 (20 seções, estado completo do sistema, uso interno)
+  - Criado `.claude/funcionalidades_clientes.md` (versão de marketing, sem Super Admin)
+  - Landing page (`src/app/page.tsx`) atualizada:
+    - Badge hero: "Novo: QR Code de presença + Comunicados"
+    - 6 cards de recursos: Membros, Chamada & QR Code, Financeiro, Portal do Membro, Aniversários, Comunicados
+    - Plano FREE corrigido: 10 → 50 membros; adicionados QR Code, Portal, Comunicados ao FREE
+    - Instagram @ovilegestao: navbar desktop, menu mobile e footer
 - **Sprint 2026-04-17 — Métricas + Bugs**:
   - Painel de métricas super admin: `GET /api/super-admin/metrics` + `MetricsPanel` component
     - MRR, ARR, conversão trial→PRO, churn, gráfico crescimento semanal (8 semanas), funil nurturing, funil conversão completo
