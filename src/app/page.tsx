@@ -23,6 +23,8 @@ import {
   LayoutDashboard,
   ChevronRight,
   Sparkles,
+  Megaphone,
+  Instagram,
 } from "lucide-react";
 
 // ── Scroll animation hook ─────────────────────────────────────────────────────
@@ -46,12 +48,12 @@ function useFadeIn(threshold = 0.12) {
 // ── Data ──────────────────────────────────────────────────────────────────────
 
 const FEATURES = [
-  { icon: Users,        title: "Membros",      color: "#a5b4fc", bg: "rgba(99,102,241,0.15)",  border: "rgba(99,102,241,0.3)",  desc: "Tenha todos os dados dos membros na palma da mão, com foto, contato rápido e histórico completo." },
-  { icon: ClipboardList,title: "Chamada",      color: "#c4b5fd", bg: "rgba(139,92,246,0.15)",  border: "rgba(139,92,246,0.3)",  desc: "Identifique membros ausentes e combata a evasão antes que aconteça, com um clique." },
-  { icon: DollarSign,   title: "Financeiro",   color: "#6ee7b7", bg: "rgba(52,211,153,0.15)",   border: "rgba(52,211,153,0.3)",  desc: "Transparência total. Gere relatórios financeiros claros e DRE automático para prestar contas em segundos." },
-  { icon: Shirt,        title: "Congressos",   color: "#fcd34d", bg: "rgba(251,191,36,0.15)",   border: "rgba(251,191,36,0.3)",  desc: "Fim da bagunça nos pedidos de camisetas. Controle tamanhos, pagamentos e entregas sem estresse." },
-  { icon: Cake,         title: "Aniversários", color: "#fda4af", bg: "rgba(251,113,133,0.15)",  border: "rgba(251,113,133,0.3)", desc: "Nunca mais esqueça um aniversário. Receba notificações e envie parabéns no WhatsApp com um toque." },
-  { icon: BarChart2,    title: "Relatórios",   color: "#7dd3fc", bg: "rgba(56,189,248,0.15)",   border: "rgba(56,189,248,0.3)",  desc: "Relatórios profissionais em PDF para prestar contas à liderança com agilidade e precisão." },
+  { icon: Users,          title: "Membros",           color: "#a5b4fc", bg: "rgba(99,102,241,0.15)",  border: "rgba(99,102,241,0.3)",  desc: "Ficha completa com foto, contato e histórico. Importe centenas de membros por planilha e envie convites direto pelo WhatsApp." },
+  { icon: ClipboardList,  title: "Chamada & QR Code",  color: "#c4b5fd", bg: "rgba(139,92,246,0.15)",  border: "rgba(139,92,246,0.3)",  desc: "Registre presença com um clique ou projete o QR Code para os membros confirmarem sozinhos pelo celular — sem ninguém marcar por eles." },
+  { icon: DollarSign,     title: "Financeiro",          color: "#6ee7b7", bg: "rgba(52,211,153,0.15)",  border: "rgba(52,211,153,0.3)",  desc: "Ofertas, despesas, múltiplas contas bancárias e DRE mensal e anual. Transparência total para prestar contas." },
+  { icon: LayoutDashboard,title: "Portal do Membro",    color: "#fcd34d", bg: "rgba(251,191,36,0.15)",  border: "rgba(251,191,36,0.3)",  desc: "Cada membro tem sua própria área: histórico de presença, confirmação de eventos (RSVP) e notificações pessoais." },
+  { icon: Cake,           title: "Aniversários",        color: "#fda4af", bg: "rgba(251,113,133,0.15)", border: "rgba(251,113,133,0.3)", desc: "Todo dia às 8h o sistema detecta os aniversariantes e envia parabenização automática por e-mail e notificação. Nunca mais esqueça." },
+  { icon: Megaphone,      title: "Comunicados",         color: "#7dd3fc", bg: "rgba(56,189,248,0.15)",  border: "rgba(56,189,248,0.3)",  desc: "Envie mensagens para toda a congregação com um clique. Entrega simultânea por e-mail e notificação in-app, com histórico completo." },
 ];
 
 const PLANS = [
@@ -62,8 +64,8 @@ const PLANS = [
     desc: "Para conhecer o sistema",
     highlight: false,
     cta: "Começar grátis",
-    features: ["Até 10 membros", "Chamada e eventos", "Financeiro básico", "Aniversários"],
-    missing: ["Relatórios PDF", "Módulo Ministérios", "Camisetas e Congressos", "Suporte prioritário"],
+    features: ["Até 50 membros", "Chamada com QR Code", "Financeiro básico", "Aniversários automáticos", "Portal do membro", "Comunicados"],
+    missing: ["Relatórios PDF", "Camisetas e Congressos", "Suporte prioritário"],
   },
   {
     name: "Pro",
@@ -78,7 +80,6 @@ const PLANS = [
       "Relatórios e exportação PDF",
       "Módulo de Ministérios",
       "Camisetas e Congressos",
-      "Portal do membro",
       "Suporte prioritário",
     ],
     missing: [],
@@ -823,6 +824,15 @@ export default function LandingPage() {
             {[["#recursos", "Recursos"], ["#como-funciona", "Como funciona"], ["#planos", "Planos"]].map(([href, label]) => (
               <a key={href} href={href} className="px-4 py-2 rounded-lg text-sm text-slate-400 hover:text-white transition-colors hover:bg-white/[0.04]">{label}</a>
             ))}
+            <a
+              href="https://www.instagram.com/ovilegestao"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-3 py-2 rounded-lg text-slate-400 hover:text-pink-400 transition-colors hover:bg-white/[0.04]"
+              title="Instagram @ovilegestao"
+            >
+              <Instagram className="w-4 h-4" />
+            </a>
             <div className="w-px h-4 mx-2" style={{ background: "rgba(255,255,255,0.08)" }} />
             <button onClick={() => setDemoOpen(true)} className="px-4 py-2 rounded-lg text-sm font-medium text-white skeu-btn">
               Solicitar demo
@@ -842,6 +852,14 @@ export default function LandingPage() {
             {[["#recursos", "Recursos"], ["#como-funciona", "Como funciona"], ["#planos", "Planos"]].map(([href, label]) => (
               <a key={href} href={href} onClick={() => setMobileOpen(false)} className="block px-3 py-2 rounded-lg text-sm text-slate-400 hover:text-white">{label}</a>
             ))}
+            <a
+              href="https://www.instagram.com/ovilegestao"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-slate-400 hover:text-pink-400"
+            >
+              <Instagram className="w-4 h-4" /> @ovilegestao
+            </a>
             <button onClick={() => { setMobileOpen(false); setDemoOpen(true); }} className="w-full mt-2 py-2.5 rounded-xl text-sm font-medium text-white skeu-btn">
               Solicitar demo
             </button>
@@ -864,7 +882,7 @@ export default function LandingPage() {
           onClick={() => setDemoOpen(true)}
         >
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" style={{ boxShadow: "0 0 6px rgba(52,211,153,0.7)", animation: "liveBlip 2s ease-in-out infinite" }} />
-          <span className="text-xs text-indigo-300 tracking-wide">Novo: Módulo de Ministérios disponível</span>
+          <span className="text-xs text-indigo-300 tracking-wide">Novo: QR Code de presença + Comunicados</span>
           <ChevronRight className="w-3 h-3 text-indigo-400" />
         </div>
 
@@ -1223,6 +1241,15 @@ export default function LandingPage() {
             <p className="text-xs text-slate-700">ovile.com.br · {new Date().getFullYear()}</p>
             <Link href="/termos" className="text-xs text-slate-600 hover:text-slate-400 transition-colors">Termos de Uso</Link>
             <Link href="/privacidade" className="text-xs text-slate-600 hover:text-slate-400 transition-colors">Privacidade</Link>
+            <a
+              href="https://www.instagram.com/ovilegestao"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-slate-600 hover:text-pink-400 transition-colors"
+              title="Instagram @ovilegestao"
+            >
+              <Instagram className="w-3.5 h-3.5" />
+            </a>
             <Link href="/login" className="text-xs text-slate-600 hover:text-slate-400 transition-colors">
               Acesso ao sistema →
             </Link>
