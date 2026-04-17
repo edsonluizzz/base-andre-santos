@@ -105,6 +105,7 @@ export default function ChamadaPage() {
   const [printLoading, setPrintLoading] = useState(false);
   const [justifyingMember, setJustifyingMember] = useState<{ id: string; name: string } | null>(null);
   const [qrOpen, setQrOpen] = useState(false);
+  const [qrVisitaOpen, setQrVisitaOpen] = useState(false);
 
   const fetchEvents = useCallback(async () => {
     const res = await fetch("/api/events");
@@ -445,6 +446,14 @@ export default function ChamadaPage() {
                       QR
                     </button>
                     <button
+                      onClick={() => setQrVisitaOpen(true)}
+                      className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border text-muted-foreground hover:text-foreground hover:border-primary/30 text-xs transition-colors cursor-pointer"
+                      title="QR Code para visitantes"
+                    >
+                      <QrCode className="w-3.5 h-3.5" />
+                      Visita
+                    </button>
+                    <button
                       onClick={handleExportPDF}
                       disabled={printLoading}
                       className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border text-muted-foreground hover:text-foreground hover:border-primary/30 text-xs transition-colors cursor-pointer"
@@ -593,6 +602,44 @@ export default function ChamadaPage() {
                 <button
                   onClick={() => {
                     const url = `${window.location.origin}/checkin/${activeEvent.id}`;
+                    navigator.clipboard.writeText(url);
+                  }}
+                  className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <Copy className="w-3 h-3" /> Copiar link
+                </button>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* QR Visitantes */}
+        <Dialog open={qrVisitaOpen} onOpenChange={setQrVisitaOpen}>
+          <DialogContent className="bg-secondary border-border text-foreground max-w-sm">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <QrCode className="w-4 h-4 text-primary" />
+                QR Code · Visitantes
+              </DialogTitle>
+            </DialogHeader>
+            {activeEvent && (
+              <div className="flex flex-col items-center gap-4 py-2">
+                <p className="text-sm text-muted-foreground text-center">{activeEvent.title}</p>
+                <div className="bg-white p-4 rounded-2xl">
+                  <QRCodeSVG
+                    value={`${typeof window !== "undefined" ? window.location.origin : ""}/visita?e=${session?.user?.establishmentId ?? ""}&ev=${activeEvent.id}`}
+                    size={220}
+                    level="M"
+                    includeMargin={false}
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground text-center">
+                  Exiba para visitantes se cadastrarem.<br />
+                  Nome e contato, sem precisar de conta.
+                </p>
+                <button
+                  onClick={() => {
+                    const url = `${window.location.origin}/visita?e=${session?.user?.establishmentId ?? ""}&ev=${activeEvent.id}`;
                     navigator.clipboard.writeText(url);
                   }}
                   className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"

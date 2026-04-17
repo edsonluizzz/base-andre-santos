@@ -14,10 +14,20 @@ export async function GET(
     const congress = await db.congress.findFirst({ where: { id: params.id, establishmentId: eid } });
     if (!congress) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
+    // MEMBERs: filtrar pelo memberId (não por createdBy, que pode ser o admin)
+    let memberIdFilter: string | undefined;
+    if (session.user.role === "MEMBER") {
+      const member = await db.member.findUnique({
+        where: { userId: session.user.id },
+        select: { id: true },
+      });
+      memberIdFilter = member?.id;
+    }
+
     const orders = await db.shirtOrder.findMany({
       where: {
         congressId: params.id,
-        ...(session.user.role === "MEMBER" ? { createdBy: session.user.id } : {}),
+        ...(memberIdFilter !== undefined ? { memberId: memberIdFilter } : {}),
       },
       include: { member: { select: { id: true, name: true } } },
       orderBy: { createdAt: "asc" },

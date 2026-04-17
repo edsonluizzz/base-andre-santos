@@ -50,10 +50,13 @@ export const authConfig: NextAuthConfig = {
       const isEntrar = pathname.startsWith("/entrar");
       const isSemAcesso = pathname === "/sem-acesso";
       const isCheckin = pathname.startsWith("/checkin");
+      const isVisita = pathname.startsWith("/visita");
+      const isApiVisitors = pathname === "/api/visitors";
 
       // Rotas sempre públicas
       if (isApiAuth || isApiOnboarding || isApiStripeWebhook || isApiJoin || isApiCron ||
-          isLandingPage || isCadastro || isSuspendedPage || isEntrar || isSemAcesso) {
+          isLandingPage || isCadastro || isSuspendedPage || isEntrar || isSemAcesso ||
+          isVisita || isApiVisitors) {
         return true;
       }
 
@@ -78,12 +81,12 @@ export const authConfig: NextAuthConfig = {
 
       // Sem nenhum estabelecimento vinculado → tela de entrada
       // Checkin não redireciona: a API trata o caso de membro não encontrado
-      if (isLoggedIn && session?.user?.noEstablishment && !isSelectChurch && !isCheckin) {
+      if (isLoggedIn && session?.user?.noEstablishment && !isSelectChurch && !isCheckin && !isVisita) {
         return Response.redirect(new URL("/entrar", nextUrl));
       }
 
       // Precisa escolher congregação (múltiplos vínculos)
-      if (isLoggedIn && session?.user?.needsChurchSelection && !isSelectChurch && !isCheckin) {
+      if (isLoggedIn && session?.user?.needsChurchSelection && !isSelectChurch && !isCheckin && !isVisita) {
         return Response.redirect(new URL("/select-church", nextUrl));
       }
 

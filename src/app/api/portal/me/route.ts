@@ -99,11 +99,30 @@ export async function GET() {
       paidAmount: Number(o.paidAmount),
       totalAmount: Number(o.totalAmount),
       status: o.status,
+      paymentProofUrl: o.paymentProofUrl,
+      paymentProofUploadedAt: o.paymentProofUploadedAt,
       congress: {
         id: o.congress.id,
         name: o.congress.name,
         date: o.congress.date,
+        shirtArtUrl: o.congress.shirtArtUrl,
+        shirtPricing: o.congress.shirtPricing as Record<string, number> | null,
       },
     })),
+    openCongresses: await db.congress.findMany({
+      where: {
+        establishmentId: session.user.establishmentId,
+        status: "OPEN",
+        shirtOrders: { none: { memberId: member.id } },
+      },
+      select: {
+        id: true,
+        name: true,
+        date: true,
+        shirtArtUrl: true,
+        shirtPricing: true,
+      },
+      orderBy: { date: "asc" },
+    }),
   });
 }
