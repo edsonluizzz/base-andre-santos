@@ -488,6 +488,7 @@ export default function ConfiguracoesPage() {
             <img
               src={session.user.image}
               alt=""
+              referrerPolicy="no-referrer"
               className="w-12 h-12 rounded-full border border-border"
             />
           )}

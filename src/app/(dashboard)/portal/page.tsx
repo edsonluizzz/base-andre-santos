@@ -305,6 +305,7 @@ function ProfileCard({
           <img
             src={member.photoUrl}
             alt={member.name}
+            referrerPolicy="no-referrer"
             className="w-16 h-16 rounded-full object-cover border border-primary/20"
           />
         ) : (

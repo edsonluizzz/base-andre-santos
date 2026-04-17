@@ -298,7 +298,7 @@ export function Sidebar() {
         <div className="p-4 border-t border-white/[0.06]">
           <div className="flex items-center gap-3 mb-3">
             <Avatar className="w-8 h-8">
-              <AvatarImage src={session?.user?.image ?? ""} />
+              <AvatarImage src={session?.user?.image ?? ""} referrerPolicy="no-referrer" />
               <AvatarFallback className="bg-primary/10 text-primary text-xs">
                 {initials}
               </AvatarFallback>

@@ -990,6 +990,17 @@ export default function LandingPage() {
             </FadeIn>
           ))}
         </div>
+
+        <FadeIn delay={200} className="flex justify-center mt-10">
+          <Link
+            href="/recursos"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-medium text-indigo-300 border border-indigo-500/30 hover:border-indigo-400/60 hover:text-indigo-200 transition-all"
+            style={{ background: "rgba(99,102,241,0.08)" }}
+          >
+            Conheça todos os recursos
+            <ChevronRight className="w-4 h-4" />
+          </Link>
+        </FadeIn>
       </section>
 
       {/* ── DEVICES ── */}
