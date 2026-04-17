@@ -64,17 +64,9 @@ export async function GET(req: Request) {
       });
 
       // Novos visitantes da semana (se modelo existir)
-      let newVisitors = 0;
-      try {
-        newVisitors = await (db as any).visitor.count({
-          where: {
-            establishmentId: est.id,
-            createdAt: { gte: weekStart },
-          },
-        });
-      } catch {
-        // Visitor model may not exist yet
-      }
+      const newVisitors = await db.visitor.count({
+        where: { establishmentId: est.id, createdAt: { gte: weekStart } },
+      });
 
       const eventsData = events.map((e) => {
         const total = e.attendances.length;

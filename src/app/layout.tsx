@@ -3,6 +3,7 @@ import { DM_Sans, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { SessionProvider } from "@/components/session-provider";
+import { LgpdBanner } from "@/components/lgpd-banner";
 import { auth } from "@/lib/auth";
 
 const dmSans = DM_Sans({
@@ -49,6 +50,7 @@ export default async function RootLayout({
       <body className="antialiased">
         <SessionProvider session={session}>
           {children}
+          <LgpdBanner />
           <Toaster richColors theme="dark" />
         </SessionProvider>
       </body>

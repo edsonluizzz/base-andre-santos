@@ -92,8 +92,7 @@ export async function POST(req: NextRequest) {
     // memberId inválido ou já vinculado — cai no fluxo normal abaixo
   }
 
-  // Cria registro de membro se ainda não existir para este usuário
-  // userId é @unique globalmente — checamos sem filtrar por establishment
+  // Verifica se já existe membro vinculado a este userId
   const existingMember = await db.member.findUnique({
     where: { userId: session.user.id },
   });
@@ -105,6 +104,23 @@ export async function POST(req: NextRequest) {
       select: { name: true, email: true },
     });
     memberName = user?.name ?? user?.email ?? "Novo membro";
+
+    // Tenta vincular por email: se existe membro no mesmo establishment com o
+    // mesmo email e sem userId, associa ao invés de criar duplicata
+    if (user?.email) {
+      const memberByEmail = await db.member.findFirst({
+        where: { establishmentId: est.id, email: user.email, userId: null },
+      });
+      if (memberByEmail) {
+        await db.member.update({
+          where: { id: memberByEmail.id },
+          data: { userId: session.user.id },
+        });
+        console.log(`[join] POST userId=${session.user.id} linked by email to member=${memberByEmail.id}`);
+        return NextResponse.json({ establishmentId: est.id, name: est.name });
+      }
+    }
+
     await db.member.create({
       data: {
         name: memberName,
