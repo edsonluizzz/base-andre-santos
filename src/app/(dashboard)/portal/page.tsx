@@ -14,6 +14,9 @@ import {
   CalendarCheck2,
   Loader2,
   Camera,
+  Upload,
+  CheckCircle,
+  Clock,
 } from "lucide-react";
 import { StatCard } from "@/components/shared/stat-card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -62,7 +65,16 @@ type PortalData =
         paidAmount: number;
         totalAmount: number;
         status: ShirtOrderStatus;
-        congress: { id: string; name: string; date: string };
+        paymentProofUrl: string | null;
+        paymentProofUploadedAt: string | null;
+        congress: { id: string; name: string; date: string; shirtArtUrl: string | null; shirtPricing: Record<string, number> | null };
+      }>;
+      openCongresses: Array<{
+        id: string;
+        name: string;
+        date: string;
+        shirtArtUrl: string | null;
+        shirtPricing: Record<string, number> | null;
       }>;
     };
 
@@ -163,7 +175,7 @@ export default function PortalPage() {
 
   if (!data || !data.linked) return <UnlinkedState />;
 
-  const { stats, attendances, shirtOrders } = data;
+  const { stats, attendances, shirtOrders, openCongresses } = data;
   const member = { ...data.member, photoUrl: photoUrl !== undefined ? photoUrl : data.member.photoUrl };
   const activeOrders = shirtOrders.filter((o) => o.status !== "CANCELLED");
 
@@ -232,7 +244,14 @@ export default function PortalPage() {
       <AttendanceHistory attendances={attendances} />
 
       {/* Shirt Orders */}
-      <ShirtOrdersSection orders={activeOrders} />
+      <ShirtOrdersSection
+        orders={activeOrders}
+        openCongresses={openCongresses}
+        memberId={data.member.id}
+        onOrderCreated={() => {
+          fetch("/api/portal/me").then((r) => r.json()).then(setData);
+        }}
+      />
     </div>
   );
 }
@@ -378,58 +397,253 @@ function AttendanceHistory({
 
 function ShirtOrdersSection({
   orders,
+  openCongresses,
+  memberId,
+  onOrderCreated,
 }: {
   orders: Extract<PortalData, { linked: true }>["shirtOrders"];
+  openCongresses: Extract<PortalData, { linked: true }>["openCongresses"];
+  memberId: string;
+  onOrderCreated: () => void;
 }) {
+  type OrderForm = { size: string; quantity: number; submitting: boolean };
+  const [forms, setForms] = useState<Record<string, OrderForm>>({});
+  const [proofUploading, setProofUploading] = useState<Record<string, boolean>>({});
+  const proofRefs = useRef<Record<string, HTMLInputElement | null>>({});
+
+  function getForm(congress: { id: string; shirtPricing: Record<string, number> | null }): OrderForm {
+    if (forms[congress.id]) return forms[congress.id];
+    const sizes = congress.shirtPricing ? Object.keys(congress.shirtPricing) : [];
+    return { size: sizes[0] ?? "", quantity: 1, submitting: false };
+  }
+
+  function setFormField(congressId: string, pricing: Record<string, number> | null, field: keyof OrderForm, value: string | number | boolean) {
+    setForms(prev => ({
+      ...prev,
+      [congressId]: { ...((prev[congressId]) ?? { size: Object.keys(pricing ?? {})[0] ?? "", quantity: 1, submitting: false }), [field]: value },
+    }));
+  }
+
+  async function handleOrder(congress: typeof openCongresses[number]) {
+    const form = getForm(congress);
+    if (!form.size) { toast.error("Selecione um tamanho"); return; }
+    const pricePerUnit = congress.shirtPricing?.[form.size] ?? 0;
+    const totalAmount = pricePerUnit * form.quantity;
+    setFormField(congress.id, congress.shirtPricing, "submitting", true);
+    try {
+      const res = await fetch(`/api/congresses/${congress.id}/orders`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ memberId, size: form.size, quantity: form.quantity, totalAmount }),
+      });
+      if (res.ok) {
+        toast.success("Pedido realizado!");
+        onOrderCreated();
+      } else {
+        const err = await res.json();
+        toast.error(err.error ?? "Erro ao realizar pedido");
+        setFormField(congress.id, congress.shirtPricing, "submitting", false);
+      }
+    } catch {
+      toast.error("Erro ao realizar pedido");
+      setFormField(congress.id, congress.shirtPricing, "submitting", false);
+    }
+  }
+
+  async function handleProofUpload(orderId: string, file: File) {
+    setProofUploading(prev => ({ ...prev, [orderId]: true }));
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      form.append("orderId", orderId);
+      const res = await fetch("/api/portal/shirt-proof", { method: "POST", body: form });
+      if (res.ok) {
+        toast.success("Comprovante enviado!");
+        onOrderCreated();
+      } else {
+        const err = await res.json();
+        toast.error(err.error ?? "Erro ao enviar comprovante");
+      }
+    } catch {
+      toast.error("Erro ao enviar comprovante");
+    } finally {
+      setProofUploading(prev => ({ ...prev, [orderId]: false }));
+    }
+  }
+
+  const hasAnything = orders.length > 0 || openCongresses.length > 0;
+
   return (
     <div>
-      <h2 className="text-lg font-bold text-foreground mb-4">Pedidos de Camiseta</h2>
-      {orders.length === 0 ? (
+      <h2 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
+        <Shirt className="w-5 h-5" />
+        Camisetas
+      </h2>
+
+      {!hasAnything ? (
         <div className="glass-card p-10 text-center">
           <Shirt className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
-          <p className="text-muted-foreground text-sm">Nenhum pedido de camiseta encontrado.</p>
+          <p className="text-muted-foreground text-sm">Nenhum congresso aberto para pedidos.</p>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-4">
+          {/* Open congresses — new order form */}
+          {openCongresses.map((congress) => {
+            const form = getForm(congress);
+            const sizes = congress.shirtPricing ? Object.keys(congress.shirtPricing) : [];
+            const pricePerUnit = congress.shirtPricing?.[form.size] ?? 0;
+            const total = pricePerUnit * form.quantity;
+
+            return (
+              <div key={congress.id} className="glass-card p-5 border border-primary/20">
+                <div className="flex items-start gap-4">
+                  {congress.shirtArtUrl && (
+                    <img src={congress.shirtArtUrl} alt="" className="w-16 h-16 rounded-lg object-cover flex-shrink-0" />
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-2 mb-1">
+                      <p className="font-semibold text-foreground">{congress.name}</p>
+                      <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">Aberto para pedidos</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mb-4">
+                      {format(new Date(congress.date), "dd 'de' MMM yyyy", { locale: ptBR })}
+                    </p>
+
+                    {sizes.length > 0 ? (
+                      <div className="flex flex-wrap items-end gap-3">
+                        <div>
+                          <label className="text-xs text-muted-foreground block mb-1">Tamanho</label>
+                          <select
+                            value={form.size}
+                            onChange={e => setFormField(congress.id, congress.shirtPricing, "size", e.target.value)}
+                            className="bg-secondary border border-border rounded-lg px-3 py-1.5 text-sm text-foreground"
+                          >
+                            {sizes.map(s => (
+                              <option key={s} value={s}>
+                                {s} — R$ {(congress.shirtPricing![s]).toFixed(2)}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="text-xs text-muted-foreground block mb-1">Qtd</label>
+                          <input
+                            type="number"
+                            min={1}
+                            max={10}
+                            value={form.quantity}
+                            onChange={e => setFormField(congress.id, congress.shirtPricing, "quantity", Math.max(1, parseInt(e.target.value) || 1))}
+                            className="bg-secondary border border-border rounded-lg px-3 py-1.5 text-sm text-foreground w-16"
+                          />
+                        </div>
+                        <div className="flex items-center gap-2 ml-auto">
+                          {pricePerUnit > 0 && (
+                            <span className="text-sm font-semibold text-foreground">
+                              R$ {total.toFixed(2)}
+                            </span>
+                          )}
+                          <button
+                            onClick={() => handleOrder(congress)}
+                            disabled={form.submitting || !form.size}
+                            className="flex items-center gap-1.5 bg-primary text-primary-foreground text-sm font-medium px-4 py-1.5 rounded-lg hover:bg-primary/90 disabled:opacity-60 transition-all"
+                          >
+                            {form.submitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Shirt className="w-3.5 h-3.5" />}
+                            Fazer pedido
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">Nenhum tamanho cadastrado ainda.</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+
+          {/* Existing orders */}
           {orders.map((o) => {
-            const paidPercent =
-              o.totalAmount > 0
-                ? Math.min(100, Math.round((o.paidAmount / o.totalAmount) * 100))
-                : 0;
+            const paidPercent = o.totalAmount > 0
+              ? Math.min(100, Math.round((o.paidAmount / o.totalAmount) * 100))
+              : 0;
+            const isPending = o.status === "PENDING";
+            const uploading = proofUploading[o.id] ?? false;
 
             return (
               <div key={o.id} className="glass-card p-5">
                 <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="font-semibold text-foreground">{o.congress.name}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      {format(new Date(o.congress.date), "dd 'de' MMM yyyy", { locale: ptBR })}
-                      {" · "}Tamanho {o.size}
-                      {o.quantity > 1 && ` · Qtd: ${o.quantity}`}
-                    </p>
+                  <div className="flex items-start gap-3">
+                    {o.congress.shirtArtUrl && (
+                      <img src={o.congress.shirtArtUrl} alt="" className="w-12 h-12 rounded-lg object-cover flex-shrink-0" />
+                    )}
+                    <div>
+                      <p className="font-semibold text-foreground">{o.congress.name}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {format(new Date(o.congress.date), "dd 'de' MMM yyyy", { locale: ptBR })}
+                        {" · "}Tamanho {o.size}
+                        {o.quantity > 1 && ` · Qtd: ${o.quantity}`}
+                      </p>
+                    </div>
                   </div>
-                  <span
-                    className={`text-xs font-medium px-2 py-0.5 rounded-full flex-shrink-0 ${SHIRT_STATUS_STYLES[o.status]}`}
-                  >
+                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full flex-shrink-0 ${SHIRT_STATUS_STYLES[o.status]}`}>
                     {SHIRT_STATUS_LABELS[o.status]}
                   </span>
                 </div>
 
-                {/* Payment progress */}
                 <div className="mt-4">
                   <div className="flex items-center justify-between text-xs text-muted-foreground mb-1.5">
                     <span>Pagamento</span>
-                    <span>
-                      R$ {o.paidAmount.toFixed(2)} / R$ {o.totalAmount.toFixed(2)}
-                    </span>
+                    <span>R$ {o.paidAmount.toFixed(2)} / R$ {o.totalAmount.toFixed(2)}</span>
                   </div>
                   <div className="h-1.5 w-full bg-secondary rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-emerald-500 rounded-full transition-all"
-                      style={{ width: `${paidPercent}%` }}
-                    />
+                    <div className="h-full bg-emerald-500 rounded-full transition-all" style={{ width: `${paidPercent}%` }} />
                   </div>
                 </div>
+
+                {isPending && (
+                  <div className="mt-4 pt-4 border-t border-white/[0.06]">
+                    {o.paymentProofUrl ? (
+                      <div className="flex items-center gap-2 text-xs text-emerald-400">
+                        <CheckCircle className="w-3.5 h-3.5" />
+                        <span>Comprovante enviado</span>
+                        {o.paymentProofUploadedAt && (
+                          <span className="text-muted-foreground">
+                            em {format(new Date(o.paymentProofUploadedAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                          </span>
+                        )}
+                        <a href={o.paymentProofUrl} target="_blank" rel="noopener noreferrer" className="ml-auto text-primary underline underline-offset-2">
+                          Ver
+                        </a>
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2 text-xs text-amber-400">
+                          <Clock className="w-3.5 h-3.5" />
+                          Aguardando comprovante de pagamento
+                        </div>
+                        <button
+                          onClick={() => proofRefs.current[o.id]?.click()}
+                          disabled={uploading}
+                          className="flex items-center gap-1.5 text-xs font-medium bg-secondary hover:bg-secondary/80 text-foreground px-3 py-1.5 rounded-lg transition-all flex-shrink-0"
+                        >
+                          {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+                          Enviar comprovante
+                        </button>
+                        <input
+                          ref={el => { proofRefs.current[o.id] = el; }}
+                          type="file"
+                          accept="image/jpeg,image/png,application/pdf"
+                          className="hidden"
+                          onChange={e => {
+                            const file = e.target.files?.[0];
+                            if (file) handleProofUpload(o.id, file);
+                            e.target.value = "";
+                          }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             );
           })}
