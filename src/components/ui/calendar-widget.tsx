@@ -29,6 +29,7 @@ const EVENT_TYPE_DOT: Record<string, string> = {
   RETIRO:    "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]",
   CELULA:    "bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.5)]",
   CONGRESSO: "bg-orange-400 shadow-[0_0_8px_rgba(251,146,60,0.5)]",
+  BIRTHDAY:  "bg-pink-400 shadow-[0_0_8px_rgba(244,114,182,0.5)]",
   OUTRO:     "bg-slate-400",
 };
 

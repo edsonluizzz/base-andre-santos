@@ -114,6 +114,18 @@ export default function DashboardPage() {
     .sort((a, b) => daysUntil(a.birthday!) - daysUntil(b.birthday!))
     .slice(0, 5);
 
+  const birthdayEvents = members
+    .filter((m) => m.birthday)
+    .flatMap((m) => {
+      const [d, mo] = m.birthday!.split("/").map(Number);
+      const thisYear = new Date(now.getFullYear(), mo - 1, d);
+      const nextYear = new Date(now.getFullYear() + 1, mo - 1, d);
+      return [
+        { id: `bday-${m.id}-cy`, title: `🎂 ${m.name}`, type: "BIRTHDAY", date: thisYear.toISOString() },
+        { id: `bday-${m.id}-ny`, title: `🎂 ${m.name}`, type: "BIRTHDAY", date: nextYear.toISOString() },
+      ];
+    });
+
   function handleDayClick(date: Date) {
     const dayEvents = events.filter((e) => {
       const d = new Date(e.date);
@@ -220,12 +232,12 @@ export default function DashboardPage() {
           className="lg:col-span-2 animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-both"
           style={{ animationDelay: "200ms" }}
         >
-          <CalendarWidget events={events} onDayClick={handleDayClick} />
+          <CalendarWidget events={[...events, ...birthdayEvents]} onDayClick={handleDayClick} />
         </div>
 
         <div className="space-y-6">
-          {/* Radar de Liderança (Insights) */}
-          <div
+          {/* Radar de Liderança (Insights) — oculto para MEMBERs */}
+          {session?.user?.role !== "MEMBER" && <div
             className="glass-card p-5 animate-in fade-in slide-in-from-right-4 duration-500 fill-mode-both"
             style={{ animationDelay: "300ms" }}
           >
@@ -284,7 +296,7 @@ export default function DashboardPage() {
                 )}
               </div>
             )}
-          </div>
+          </div>}
 
           {/* Upcoming birthdays */}
           <div

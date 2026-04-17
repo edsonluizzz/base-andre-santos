@@ -345,10 +345,10 @@ export default function ChamadaPage() {
             <p className="text-muted-foreground text-sm mt-1">Controle de presença por evento</p>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={() => window.print()}>
+            {isLeaderOrAdmin && <Button variant="outline" onClick={() => window.print()}>
               <Printer className="w-4 h-4 mr-2" />
               Imprimir
-            </Button>
+            </Button>}
             {isLeaderOrAdmin && (
               <Button onClick={() => setNewEventOpen(true)}>
                 <Plus className="w-4 h-4 mr-2" />

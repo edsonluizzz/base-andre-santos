@@ -354,7 +354,7 @@ export default function CamisetasPage() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Button
+          {!isMember && <Button
             onClick={() => window.print()}
             variant="outline"
             size="sm"
@@ -362,7 +362,7 @@ export default function CamisetasPage() {
           >
             <Printer className="w-4 h-4 mr-1.5" />
             Imprimir PDF
-          </Button>
+          </Button>}
           {isAdmin && (
             <Button
               onClick={() => {

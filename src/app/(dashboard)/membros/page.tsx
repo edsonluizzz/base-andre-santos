@@ -45,6 +45,7 @@ type UserOption = {
 export default function MembrosPage() {
   const { data: session } = useSession();
   const isAdmin = session?.user?.role === "ADMIN";
+  const isLeaderOrAdmin = ["ADMIN", "LEADER"].includes(session?.user?.role ?? "");
 
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
@@ -201,14 +202,14 @@ export default function MembrosPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button
+          {isLeaderOrAdmin && <Button
             onClick={() => window.print()}
             variant="outline"
             className="hidden-print"
           >
             <Printer className="w-4 h-4 mr-2" />
             Imprimir
-          </Button>
+          </Button>}
           <div className="flex glass-card border border-white/[0.07] rounded-lg p-0.5">
             <button
               onClick={() => setViewMode("cards")}
