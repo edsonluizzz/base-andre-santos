@@ -62,6 +62,42 @@
   - Templates de e-mail: `sendBroadcastEmail`, `sendNurturingDay1/3/7Email`
   - Cron `/api/cron/nurturing` (13h UTC diário) — sequência automática day1/day3/day7 por step
   - `vercel.json` atualizado com o novo cron
+- **QR Code Presença** (2026-04-17):
+  - Botão "QR" na chamada abre modal com QR Code apontando para `/checkin/{eventId}`
+  - `GET /api/qr/[eventId]`: retorna info do evento + verifica se membro já está presente
+  - `POST /api/qr/[eventId]`: registra presença; busca membro por userId ou email (auto-vincula)
+  - Página `/checkin/[eventId]`: mobile-first, mostra detalhes do evento, botão "Confirmar Presença"
+  - `auth.config.ts`: `/checkin/*` não redireciona para `/entrar` ao escanear sem congregação selecionada
+- **Sentry** (2026-04-17):
+  - `sentry.client.config.ts`, `sentry.server.config.ts`, `sentry.edge.config.ts`
+  - `src/instrumentation.ts` carrega configs por runtime
+  - `src/app/global-error.tsx` captura erros React
+  - `next.config.mjs`: `withSentryConfig` + `withPWA` compostos
+  - Env vars necessárias: `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_ORG`, `SENTRY_PROJECT`, `SENTRY_AUTH_TOKEN`
+- **Sprint 2026-04-17 — Portal Camisetas + Correções UI**:
+  - Portal do membro: seção de camisetas reescrita — membro pode fazer pedido em congressos abertos (tamanho/qtd), enviar comprovante de pagamento (JPG/PNG/PDF ≤5MB via Vercel Blob)
+  - `api/portal/shirt-proof`: upload de comprovante vinculado ao pedido do membro
+  - `api/portal/me`: retorna `openCongresses` + dados enriquecidos de pedidos
+  - `api/congresses/[id]/orders GET`: fix filtro MEMBER (era `createdBy`, corrigido para `memberId`)
+  - Dashboard: Radar de Liderança oculto para role MEMBER
+  - Dashboard: aniversários aparecem como pontos rosa no calendário (tipo BIRTHDAY)
+  - Botões imprimir/PDF ocultados para MEMBER em chamada, membros e camisetas
+  - Migration `20260417000000_add_justification_to_attendance`: coluna `justification` em Attendance
+- **Sprint 2026-04-17 — Relatório Semanal + Visitantes**:
+  - Item E: cron `0 10 * * 0` (domingo 10h UTC) → `api/cron/weekly-report` → e-mail para ADMIN+LEADER com eventos, frequência, ofertas e visitantes da semana
+  - Item G: model `Visitor` (establishmentId, eventId?, name, phone, email) + migration `20260417100000_add_visitor`
+  - Página pública `/visita?e=<eid>&ev=<eventId>`: formulário mobile de auto-cadastro sem auth
+  - `api/visitors`: POST público + GET autenticado com filtro por establishment
+  - Página `/visitantes`: lista de visitantes com QR geral da congregação (ADMIN+LEADER)
+  - Chamada: botão "Visita" gera QR event-specific
+  - Sidebar: item "Visitantes" visível para LEADER/ADMIN (module: MEMBERS)
+  - Middleware: `/visita` e `/api/visitors` liberados como rotas públicas
+- **LGPD Banner** (2026-04-17):
+  - `src/components/lgpd-banner.tsx`: banner fixo bottom, exibido uma única vez via localStorage (`ovile_lgpd_consent`)
+  - Adicionado ao root layout — aparece em todas as páginas
+  - Link para `/privacidade` (já existia)
+- **Fix: membro duplicado no join** (2026-04-17):
+  - `api/join POST`: antes de criar novo membro, tenta match por email do Google com membro existente no mesmo establishment sem `userId` → vincula em vez de criar duplicata
 
 ## Infraestrutura
 
@@ -74,11 +110,22 @@
 | # | Item | Status |
 |---|------|--------|
 | A | Painel métricas super admin | ✅ Concluído |
-| B | QR Code presença | 🔜 Próximo |
-| C | Sentry | Pendente |
+| B | QR Code presença | ✅ Concluído |
+| C | Sentry observability | ✅ Concluído |
 | D | Dízimo individual (oferta → membro) | Pendente |
-| E | Relatório semanal automático por email | Pendente |
+| E | Relatório semanal automático por email | ✅ Concluído |
 | F | Vercel Analytics / PostHog | Pendente |
+| G | Cadastro de visitantes via QR | ✅ Concluído |
+| — | Banner LGPD (uma vez, todas as páginas) | ✅ Concluído |
+| — | Fix membro duplicado no join (match por email) | ✅ Concluído |
+
+## Env vars pendentes (ação do Edson)
+
+- `NEXT_PUBLIC_SENTRY_DSN` — DSN do projeto no Sentry
+- `SENTRY_ORG` — organização no Sentry
+- `SENTRY_PROJECT` — nome do projeto no Sentry
+- `SENTRY_AUTH_TOKEN` — token de auth do Sentry
+- ⚠️ `CRON_SECRET` — **rotacionar** (valor antigo foi exposto em conversa)
 
 ## Backlog histórico (concluído)
 
@@ -118,6 +165,12 @@
 ---
 
 ## Armadilhas conhecidas
+
+### Sempre commitar `package.json` + `package-lock.json` após `npm install`
+Pacote instalado só localmente não vai para o Vercel → build quebra com "Module not found".
+
+### Novos campos no schema.prisma exigem migration
+Campo adicionado ao schema sem `prisma migrate dev` não existe no banco de produção → 500 nas rotas que o usam.
 
 ### `User.establishmentId` é campo legado
 Não é atualizado quando o usuário entra via link de convite. **Nunca usar como filtro de tenant para queries de usuários.** Usar sempre `UserEstablishment`:
