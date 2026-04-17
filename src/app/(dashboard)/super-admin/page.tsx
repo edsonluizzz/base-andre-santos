@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/dialog";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { MetricsPanel } from "@/components/super-admin/metrics-panel";
 
 type Establishment = {
   id: string;
@@ -251,6 +252,9 @@ export default function SuperAdminPage() {
           Novo Estabelecimento
         </Button>
       </div>
+
+      {/* Metrics panel */}
+      <MetricsPanel />
 
       {/* Global stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
