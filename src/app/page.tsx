@@ -6,9 +6,7 @@ import {
   Users,
   ClipboardList,
   DollarSign,
-  Shirt,
   Cake,
-  BarChart2,
   CheckCircle,
   Menu,
   X,
@@ -24,8 +22,17 @@ import {
   ChevronRight,
   Sparkles,
   Megaphone,
-  Instagram,
 } from "lucide-react";
+
+function InstagramIcon({ className }: { className?: string }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+      <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+    </svg>
+  );
+}
 
 // ── Scroll animation hook ─────────────────────────────────────────────────────
 
@@ -831,7 +838,7 @@ export default function LandingPage() {
               className="px-3 py-2 rounded-lg text-slate-400 hover:text-pink-400 transition-colors hover:bg-white/[0.04]"
               title="Instagram @ovilegestao"
             >
-              <Instagram className="w-4 h-4" />
+              <InstagramIcon className="w-4 h-4" />
             </a>
             <div className="w-px h-4 mx-2" style={{ background: "rgba(255,255,255,0.08)" }} />
             <button onClick={() => setDemoOpen(true)} className="px-4 py-2 rounded-lg text-sm font-medium text-white skeu-btn">
@@ -858,7 +865,7 @@ export default function LandingPage() {
               rel="noopener noreferrer"
               className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-slate-400 hover:text-pink-400"
             >
-              <Instagram className="w-4 h-4" /> @ovilegestao
+              <InstagramIcon className="w-4 h-4" /> @ovilegestao
             </a>
             <button onClick={() => { setMobileOpen(false); setDemoOpen(true); }} className="w-full mt-2 py-2.5 rounded-xl text-sm font-medium text-white skeu-btn">
               Solicitar demo
@@ -1248,7 +1255,7 @@ export default function LandingPage() {
               className="text-slate-600 hover:text-pink-400 transition-colors"
               title="Instagram @ovilegestao"
             >
-              <Instagram className="w-3.5 h-3.5" />
+              <InstagramIcon className="w-3.5 h-3.5" />
             </a>
             <Link href="/login" className="text-xs text-slate-600 hover:text-slate-400 transition-colors">
               Acesso ao sistema →
