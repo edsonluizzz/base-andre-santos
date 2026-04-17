@@ -577,7 +577,7 @@ export default function ConfiguracoesPage() {
                     {/* Avatar + info */}
                     <div className="flex items-center gap-3 flex-1 min-w-0">
                       {u.image ? (
-                        <img src={u.image} alt="" className="w-9 h-9 rounded-full flex-shrink-0" />
+                        <img src={u.image} alt="" referrerPolicy="no-referrer" className="w-9 h-9 rounded-full flex-shrink-0" />
                       ) : (
                         <div className="w-9 h-9 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary text-xs font-bold flex-shrink-0">
                           {u.name?.[0] ?? "?"}

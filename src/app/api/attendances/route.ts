@@ -17,28 +17,26 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Dados inválidos" }, { status: 400 });
     }
 
-    // Limit batch size to prevent flooding
     if (attendances.length > 500) {
       return NextResponse.json({ error: "Lote muito grande" }, { status: 400 });
     }
 
-    const ops = attendances.map(({ memberId, status, justification }: { memberId: string; status: string; justification?: string }) =>
-      db.attendance.upsert({
-        where: { eventId_memberId: { eventId, memberId } },
-        update: { 
-          status: status as AttendanceStatus,
-          justification: justification ?? null,
-        },
-        create: { 
-          eventId, 
-          memberId, 
-          status: status as AttendanceStatus,
-          justification: justification ?? null,
-        },
-      })
+    const result = await db.$transaction(
+      async (tx) => {
+        const results = [];
+        for (const { memberId, status, justification } of attendances as { memberId: string; status: string; justification?: string }[]) {
+          results.push(
+            await tx.attendance.upsert({
+              where: { eventId_memberId: { eventId, memberId } },
+              update: { status: status as AttendanceStatus, justification: justification ?? null },
+              create: { eventId, memberId, status: status as AttendanceStatus, justification: justification ?? null },
+            })
+          );
+        }
+        return results;
+      },
+      { timeout: 30000 }
     );
-
-    const result = await db.$transaction(ops);
     return NextResponse.json(result);
   } catch {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

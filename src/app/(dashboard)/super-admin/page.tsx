@@ -576,7 +576,7 @@ export default function SuperAdminPage() {
                 <div key={u.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/10">
                   {u.image ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={u.image} alt={u.name ?? ""} className="w-8 h-8 rounded-full object-cover" />
+                    <img src={u.image} alt={u.name ?? ""} referrerPolicy="no-referrer" className="w-8 h-8 rounded-full object-cover" />
                   ) : (
                     <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
                       {(u.name ?? u.email ?? "?")[0].toUpperCase()}
