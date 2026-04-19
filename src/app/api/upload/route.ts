@@ -56,8 +56,11 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  const ALLOWED_FOLDERS = new Set(["uploads", "logos", "shirts", "shirt-proofs", "member-photos"]);
+  const rawFolder = req.headers.get("x-folder") ?? "uploads";
+  const folder = ALLOWED_FOLDERS.has(rawFolder) ? rawFolder : "uploads";
+
   const originalName = req.headers.get("x-filename") ?? `upload-${Date.now()}`;
-  const folder = req.headers.get("x-folder") ?? "uploads";
   const ext = originalName.split(".").pop() ?? "bin";
   const filename = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
 

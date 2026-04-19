@@ -13,30 +13,34 @@ export async function POST(
   _req: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const session = await auth();
-  if (!session?.user?.isSuperAdmin)
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  try {
+    const session = await auth();
+    if (!session?.user?.isSuperAdmin)
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-  const est = await db.establishment.findUnique({ where: { id: params.id } });
-  if (!est) return NextResponse.json({ error: "Estabelecimento não encontrado" }, { status: 404 });
+    const est = await db.establishment.findUnique({ where: { id: params.id } });
+    if (!est) return NextResponse.json({ error: "Estabelecimento não encontrado" }, { status: 404 });
 
-  // Garante unicidade do código
-  let code = generateCode();
-  let attempts = 0;
-  while (attempts < 10) {
-    const exists = await db.establishment.findUnique({ where: { joinCode: code } });
-    if (!exists) break;
-    code = generateCode();
-    attempts++;
+    let code = generateCode();
+    let attempts = 0;
+    while (attempts < 10) {
+      const exists = await db.establishment.findUnique({ where: { joinCode: code } });
+      if (!exists) break;
+      code = generateCode();
+      attempts++;
+    }
+
+    const updated = await db.establishment.update({
+      where: { id: params.id },
+      data: { joinCode: code },
+      select: { joinCode: true },
+    });
+
+    return NextResponse.json({ joinCode: updated.joinCode });
+  } catch (err) {
+    console.error("[super-admin/join-code POST] erro:", err);
+    return NextResponse.json({ error: "Erro interno" }, { status: 500 });
   }
-
-  const updated = await db.establishment.update({
-    where: { id: params.id },
-    data: { joinCode: code },
-    select: { joinCode: true },
-  });
-
-  return NextResponse.json({ joinCode: updated.joinCode });
 }
 
 // DELETE — remove o joinCode (desativa o link de acesso)
@@ -44,14 +48,19 @@ export async function DELETE(
   _req: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const session = await auth();
-  if (!session?.user?.isSuperAdmin)
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  try {
+    const session = await auth();
+    if (!session?.user?.isSuperAdmin)
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-  await db.establishment.update({
-    where: { id: params.id },
-    data: { joinCode: null },
-  });
+    await db.establishment.update({
+      where: { id: params.id },
+      data: { joinCode: null },
+    });
 
-  return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    console.error("[super-admin/join-code DELETE] erro:", err);
+    return NextResponse.json({ error: "Erro interno" }, { status: 500 });
+  }
 }

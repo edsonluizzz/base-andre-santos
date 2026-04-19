@@ -197,6 +197,7 @@ model Event {
 
   @@index([establishmentId])
   @@index([ministryId])
+  @@index([date])
 }
 
 // ─── RSVP de Eventos ──────────────────────────────────────────────────────────
@@ -227,6 +228,7 @@ model Attendance {
   member Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
 
   @@unique([eventId, memberId])
+  @@index([memberId])
 }
 
 // ─── Financeiro ───────────────────────────────────────────────────────────
@@ -252,6 +254,7 @@ model Offering {
   @@index([establishmentId])
   @@index([ministryId])
   @@index([bankAccountId])
+  @@index([date])
 }
 
 // ─── Despesas ─────────────────────────────────────────────────────────────

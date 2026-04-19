@@ -4,6 +4,7 @@ import * as XLSX from "xlsx";
 
 // GET /api/members/template — baixar planilha modelo
 export async function GET() {
+  try {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -54,4 +55,8 @@ export async function GET() {
       "Content-Disposition": 'attachment; filename="modelo-membros-ovile.xlsx"',
     },
   });
+  } catch (err) {
+    console.error("[members/template] erro:", err);
+    return NextResponse.json({ error: "Erro interno" }, { status: 500 });
+  }
 }
