@@ -118,7 +118,17 @@
 - **try/catch em 10 rotas**: `establishments`, `events/rsvp`, `invites`, `members/export`, `members/template`, `portal/me`, `portal/photo`, `portal/rsvp`, `super-admin/establishments/[id]/join-code`, `users/me` — todos retornam JSON 500 em vez de HTML
 - **Novos índices Prisma**: `Event.date`, `Attendance.memberId`, `Offering.date` — migration `20260419000000_add_missing_indexes` criada (precisa rodar em prod)
 - **Upload folder whitelist**: `/api/upload` agora valida `x-folder` contra lista `[uploads, logos, shirts, shirt-proofs, member-photos]`
-- ⚠️ **CRON_SECRET**: pendente rotação manual por Edson no Vercel (valor antigo exposto em conversa anterior)
+- ✅ **CRON_SECRET**: rotacionado por Edson em 2026-04-19
+
+## Sprint 2026-04-19 — N+1s + Dashboard Summary
+
+- **4 N+1s eliminados:**
+  - `insights/evasion`: loop N queries → 1 query agregada com Map
+  - `super-admin/establishments`: N×4 counts → 4 groupBy paralelos
+  - `user/establishments`: `Settings.findUnique` por eid (sempre null) → `logoBase64` via include da Establishment
+  - `portal/me`: 4 queries sequenciais → `Promise.all` + ranking via `groupBy`
+- **`GET /api/dashboard/summary`**: consolida members+events+settings+evasion+financial em 1 chamada
+- **Dashboard page**: refatorado de 6 fetches → 1
 
 ## Backlog priorizado — Edson (2026-04-17)
 
