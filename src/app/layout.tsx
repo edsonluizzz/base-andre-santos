@@ -4,6 +4,7 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { SessionProvider } from "@/components/session-provider";
 import { LgpdBanner } from "@/components/lgpd-banner";
+import { PostHogProvider } from "@/components/posthog-provider";
 import { auth } from "@/lib/auth";
 
 const dmSans = DM_Sans({
@@ -49,9 +50,11 @@ export default async function RootLayout({
       </head>
       <body className="antialiased">
         <SessionProvider session={session}>
-          {children}
-          <LgpdBanner />
-          <Toaster richColors theme="dark" />
+          <PostHogProvider>
+            {children}
+            <LgpdBanner />
+            <Toaster richColors theme="dark" />
+          </PostHogProvider>
         </SessionProvider>
       </body>
     </html>
