@@ -113,6 +113,13 @@
 - **Resend** ✅ DNS propagado, domínio ovile.com.br verificado, API Key ativa no Vercel
 - **CRON_SECRET** ✅ configurado no Vercel
 
+## Sprint 2026-04-19 — Quick Wins (Segurança & Performance)
+
+- **try/catch em 10 rotas**: `establishments`, `events/rsvp`, `invites`, `members/export`, `members/template`, `portal/me`, `portal/photo`, `portal/rsvp`, `super-admin/establishments/[id]/join-code`, `users/me` — todos retornam JSON 500 em vez de HTML
+- **Novos índices Prisma**: `Event.date`, `Attendance.memberId`, `Offering.date` — migration `20260419000000_add_missing_indexes` criada (precisa rodar em prod)
+- **Upload folder whitelist**: `/api/upload` agora valida `x-folder` contra lista `[uploads, logos, shirts, shirt-proofs, member-photos]`
+- ⚠️ **CRON_SECRET**: pendente rotação manual por Edson no Vercel (valor antigo exposto em conversa anterior)
+
 ## Backlog priorizado — Edson (2026-04-17)
 
 | # | Item | Status |
