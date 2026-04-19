@@ -9,33 +9,42 @@ export async function GET() {
     if (!session || !session.user?.isSuperAdmin)
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-    const establishments = await db.establishment.findMany({
-      orderBy: { createdAt: "asc" },
-      select: {
-        id: true, name: true, pixKey: true, suspended: true, plan: true,
-        adminNote: true, joinCode: true, createdAt: true,
-        stripeCustomerId: true, stripeSubscriptionId: true, stripePriceId: true,
-        stripeStatus: true, trialEndsAt: true, currentPeriodEnd: true, cancelAtPeriodEnd: true,
-        updatedAt: true,
-      },
-    });
+    const [establishments, memberCounts, userCounts, eventCounts, ministryCounts] = await Promise.all([
+      db.establishment.findMany({
+        orderBy: { createdAt: "asc" },
+        select: {
+          id: true, name: true, pixKey: true, suspended: true, plan: true,
+          adminNote: true, joinCode: true, createdAt: true,
+          stripeCustomerId: true, stripeSubscriptionId: true, stripePriceId: true,
+          stripeStatus: true, trialEndsAt: true, currentPeriodEnd: true, cancelAtPeriodEnd: true,
+          updatedAt: true,
+        },
+      }),
+      db.member.groupBy({ by: ["establishmentId"], _count: { _all: true } }),
+      db.user.groupBy({ by: ["establishmentId"], _count: { _all: true } }),
+      db.event.groupBy({ by: ["establishmentId"], _count: { _all: true } }),
+      db.ministry.groupBy({ by: ["establishmentId"], _count: { _all: true } }),
+    ]);
 
-    // Attach stats to each establishment
-    const enriched = await Promise.all(
-      establishments.map(async (est) => {
-        const [memberCount, userCount, eventCount, ministryCount] = await Promise.all([
-          db.member.count({ where: { establishmentId: est.id } }),
-          db.user.count({ where: { establishmentId: est.id } }),
-          db.event.count({ where: { establishmentId: est.id } }),
-          db.ministry.count({ where: { establishmentId: est.id } }),
-        ]);
-        return { ...est, memberCount, userCount, eventCount, ministryCount };
-      })
-    );
+    const toMap = (rows: { establishmentId: string; _count: { _all: number } }[]) =>
+      new Map(rows.map((r) => [r.establishmentId, r._count._all]));
+
+    const memberMap = toMap(memberCounts);
+    const userMap = toMap(userCounts);
+    const eventMap = toMap(eventCounts);
+    const ministryMap = toMap(ministryCounts);
+
+    const enriched = establishments.map((est) => ({
+      ...est,
+      memberCount: memberMap.get(est.id) ?? 0,
+      userCount: userMap.get(est.id) ?? 0,
+      eventCount: eventMap.get(est.id) ?? 0,
+      ministryCount: ministryMap.get(est.id) ?? 0,
+    }));
 
     return NextResponse.json(enriched);
   } catch {
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: "Erro interno" }, { status: 500 });
   }
 }
 
@@ -54,7 +63,6 @@ export async function POST(req: NextRequest) {
     if (!id?.trim() || !name?.trim())
       return NextResponse.json({ error: "id e name são obrigatórios" }, { status: 400 });
 
-    // Gera join code único automaticamente
     let joinCode = generateJoinCode();
     for (let i = 0; i < 10; i++) {
       const exists = await db.establishment.findUnique({ where: { joinCode } });
@@ -69,6 +77,6 @@ export async function POST(req: NextRequest) {
   } catch (e: unknown) {
     if ((e as { code?: string })?.code === "P2002")
       return NextResponse.json({ error: "ID já existe" }, { status: 409 });
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: "Erro interno" }, { status: 500 });
   }
 }

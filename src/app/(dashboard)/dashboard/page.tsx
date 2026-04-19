@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
-import { usePermissions } from "@/context/permissions-context";
 import { Users, DollarSign, CalendarDays, Cake, TrendingUp, AlertTriangle, CheckCircle, Phone, ChevronDown, ChevronUp, Plus } from "lucide-react";
 import Link from "next/link";
 import { format, isValid } from "date-fns";
@@ -33,6 +32,14 @@ type EvasionMember = {
   lastEvents: string[];
 };
 
+type Summary = {
+  members: Member[];
+  events: Event[];
+  settings: { hasJoinCode: boolean; hasLogo: boolean };
+  evasion: { members: EvasionMember[]; eventsAnalyzed: unknown[] };
+  financial: { offeringsTotal: number; expensesTotal: number } | null;
+};
+
 function safeFormat(dateStr: string | Date, fmt: string): string {
   try {
     const d = typeof dateStr === "string" ? new Date(dateStr) : dateStr;
@@ -60,50 +67,32 @@ function isToday(ddmm: string): boolean {
 
 export default function DashboardPage() {
   const { data: session } = useSession();
-  const { canView } = usePermissions();
-  const [members, setMembers] = useState<Member[]>([]);
-  const [events, setEvents] = useState<Event[]>([]);
-  const [totalMonth, setTotalMonth] = useState(0);
-  const [expensesTotal, setExpensesTotal] = useState(0);
-  const [evasionMembers, setEvasionMembers] = useState<EvasionMember[]>([]);
+  const [summary, setSummary] = useState<Summary | null>(null);
   const [evasionLoading, setEvasionLoading] = useState(true);
-  const [setupSettings, setSetupSettings] = useState<{ hasJoinCode: boolean; hasLogo: boolean }>({ hasJoinCode: false, hasLogo: false });
   const [newEventOpen, setNewEventOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [dayDetailOpen, setDayDetailOpen] = useState(false);
   const [dayDetailDate, setDayDetailDate] = useState<Date | undefined>();
   const [radarExpanded, setRadarExpanded] = useState(false);
 
-  const fetchEvents = async () => {
-    const res = await fetch("/api/events");
-    setEvents(await res.json());
-  };
+  const fetchSummary = useCallback(async () => {
+    const res = await fetch("/api/dashboard/summary");
+    if (!res.ok) return;
+    const data: Summary = await res.json();
+    setSummary(data);
+    setEvasionLoading(false);
+  }, []);
 
   useEffect(() => {
-    fetch("/api/members").then((r) => r.json()).then(setMembers);
-    fetchEvents();
-    fetch("/api/settings")
-      .then((r) => r.json())
-      .then((d) => setSetupSettings({ hasJoinCode: !!d.joinCode, hasLogo: !!d.logoBase64 }))
-      .catch(() => {});
-    fetch("/api/insights/evasion")
-      .then((r) => r.json())
-      .then((d) => {
-        setEvasionMembers(Array.isArray(d.members) ? d.members : []);
-        setEvasionLoading(false);
-      });
+    fetchSummary();
+  }, [fetchSummary]);
 
-    if (canView("FINANCIAL")) {
-      const now = new Date();
-      const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-      fetch(`/api/offerings?month=${month}`)
-        .then((r) => r.json())
-        .then((d) => setTotalMonth(d.total ?? 0));
-      fetch(`/api/expenses?month=${month}`)
-        .then((r) => r.json())
-        .then((d) => setExpensesTotal(d.total ?? 0));
-    }
-  }, [canView]);
+  const members = summary?.members ?? [];
+  const events = summary?.events ?? [];
+  const evasionMembers = summary?.evasion?.members ?? [];
+  const setupSettings = summary?.settings ?? { hasJoinCode: false, hasLogo: false };
+  const totalMonth = summary?.financial?.offeringsTotal ?? 0;
+  const expensesTotal = summary?.financial?.expensesTotal ?? 0;
 
   const active = members.filter((m) => m.status === "ACTIVE").length;
   const saldo = totalMonth - expensesTotal;
@@ -157,7 +146,7 @@ export default function DashboardPage() {
       href: "/membros",
       valueColor: undefined as string | undefined,
     },
-    ...(canView("FINANCIAL") ? [{
+    ...(summary?.financial != null ? [{
       icon: saldo >= 0 ? TrendingUp : DollarSign,
       label: "Saldo do Mês",
       value: `R$ ${Math.abs(saldo).toFixed(2).replace(".", ",")}`,
@@ -228,7 +217,7 @@ export default function DashboardPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         {/* Calendar widget — takes 2 cols on large screens */}
-        <div 
+        <div
           className="lg:col-span-2 animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-both"
           style={{ animationDelay: "200ms" }}
         >
@@ -393,7 +382,7 @@ export default function DashboardPage() {
         open={newEventOpen}
         onOpenChange={setNewEventOpen}
         initialDate={selectedDate}
-        onSuccess={() => { fetchEvents(); setNewEventOpen(false); }}
+        onSuccess={() => { fetchSummary(); setNewEventOpen(false); }}
       />
     </div>
   );
