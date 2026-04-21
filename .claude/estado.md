@@ -120,6 +120,13 @@
 - **Upload folder whitelist**: `/api/upload` agora valida `x-folder` contra lista `[uploads, logos, shirts, shirt-proofs, member-photos]`
 - ✅ **CRON_SECRET**: rotacionado por Edson em 2026-04-19
 
+## Sprint 2026-04-19 — PostHog Analytics
+
+- `posthog-js` instalado
+- `PostHogProvider` criado em `src/components/posthog-provider.tsx` — wraps o app, desabilitado se key ausente
+- Identifica usuário pós-login (id, email, role, establishmentId); reset no logout
+- **Ação Edson:** criar projeto no posthog.com e setar `NEXT_PUBLIC_POSTHOG_KEY` + `NEXT_PUBLIC_POSTHOG_HOST` no Vercel
+
 ## Sprint 2026-04-19 — N+1s + Dashboard Summary
 
 - **4 N+1s eliminados:**
@@ -150,7 +157,9 @@
 - `SENTRY_ORG` — organização no Sentry
 - `SENTRY_PROJECT` — nome do projeto no Sentry
 - `SENTRY_AUTH_TOKEN` — token de auth do Sentry
-- ⚠️ `CRON_SECRET` — **rotacionar** (valor antigo foi exposto em conversa)
+- ✅ `CRON_SECRET` — rotacionado 2026-04-19
+- `NEXT_PUBLIC_POSTHOG_KEY` — Project API Key do PostHog (criar em posthog.com)
+- `NEXT_PUBLIC_POSTHOG_HOST` — `https://us.i.posthog.com`
 
 ## Backlog histórico (concluído)
 
