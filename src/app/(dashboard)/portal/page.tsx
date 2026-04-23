@@ -196,6 +196,7 @@ export default function PortalPage() {
       {/* Profile Card */}
       <ProfileCard
         member={member}
+        googleImage={session?.user?.image ?? null}
         onPhotoUpdate={(url) => setPhotoUrl(url)}
       />
 
@@ -263,9 +264,11 @@ export default function PortalPage() {
 
 function ProfileCard({
   member,
+  googleImage,
   onPhotoUpdate,
 }: {
   member: Extract<PortalData, { linked: true }>["member"];
+  googleImage: string | null;
   onPhotoUpdate: (url: string | null) => void;
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
@@ -297,7 +300,7 @@ function ProfileCard({
   return (
     <div className="glass-card p-6 flex items-center gap-5">
       <div className="relative flex-shrink-0 group">
-        <UserAvatarImg image={member.photoUrl ?? session?.user?.image} name={member.name} className="w-16 h-16" />
+        <UserAvatarImg image={member.photoUrl ?? googleImage} name={member.name} className="w-16 h-16" />
         <button
           onClick={() => fileRef.current?.click()}
           disabled={uploading}
