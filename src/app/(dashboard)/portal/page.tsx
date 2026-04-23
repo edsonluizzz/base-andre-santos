@@ -22,6 +22,7 @@ import { StatCard } from "@/components/shared/stat-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { PortalWelcomeTour } from "@/components/onboarding/portal-welcome-tour";
+import { UserAvatarImg } from "@/components/ui/user-avatar-img";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -268,13 +269,6 @@ function ProfileCard({
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
 
-  const initials = member.name
-    .split(" ")
-    .slice(0, 2)
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase();
-
   async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -301,18 +295,7 @@ function ProfileCard({
   return (
     <div className="glass-card p-6 flex items-center gap-5">
       <div className="relative flex-shrink-0 group">
-        {member.photoUrl ? (
-          <img
-            src={member.photoUrl}
-            alt={member.name}
-            referrerPolicy="no-referrer"
-            className="w-16 h-16 rounded-full object-cover border border-primary/20"
-          />
-        ) : (
-          <div className="w-16 h-16 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-bold text-xl">
-            {initials}
-          </div>
-        )}
+        <UserAvatarImg image={member.photoUrl} name={member.name} className="w-16 h-16" />
         <button
           onClick={() => fileRef.current?.click()}
           disabled={uploading}

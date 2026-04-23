@@ -23,6 +23,7 @@ import {
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { MetricsPanel } from "@/components/super-admin/metrics-panel";
+import { UserAvatarImg } from "@/components/ui/user-avatar-img";
 
 type Establishment = {
   id: string;
@@ -574,14 +575,7 @@ export default function SuperAdminPage() {
             <div className="space-y-2 mt-2 max-h-80 overflow-y-auto">
               {estUsers.map((u) => (
                 <div key={u.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/10">
-                  {u.image ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={u.image} alt={u.name ?? ""} referrerPolicy="no-referrer" className="w-8 h-8 rounded-full object-cover" />
-                  ) : (
-                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
-                      {(u.name ?? u.email ?? "?")[0].toUpperCase()}
-                    </div>
-                  )}
+                  <UserAvatarImg image={u.image} name={u.name ?? u.email} className="w-8 h-8" />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-foreground truncate">{u.name ?? u.email}</p>
                     {u.name && <p className="text-xs text-muted-foreground truncate">{u.email}</p>}

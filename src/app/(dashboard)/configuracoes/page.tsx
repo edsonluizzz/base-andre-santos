@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import { Shield, Users, UserCog, ImageIcon, Save, Upload, X, ShieldCog, Trash2, Link, Building2, RefreshCw, Mail, UserPlus, Send, Clock, CreditCard, Copy, QrCode } from "lucide-react";
 import { PlanCard } from "@/components/plan-card";
+import { UserAvatarImg } from "@/components/ui/user-avatar-img";
 import { PermissionsTable } from "@/components/shirts/permissions-table";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -577,13 +578,7 @@ export default function ConfiguracoesPage() {
                   >
                     {/* Avatar + info */}
                     <div className="flex items-center gap-3 flex-1 min-w-0">
-                      {u.image ? (
-                        <img src={u.image} alt="" referrerPolicy="no-referrer" className="w-9 h-9 rounded-full flex-shrink-0" />
-                      ) : (
-                        <div className="w-9 h-9 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary text-xs font-bold flex-shrink-0">
-                          {u.name?.[0] ?? "?"}
-                        </div>
-                      )}
+                      <UserAvatarImg image={u.image} name={u.name} />
                       <div className="min-w-0">
                         <p className="text-sm font-medium text-foreground truncate">
                           {u.name ?? "Sem nome"}
