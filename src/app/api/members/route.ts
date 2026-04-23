@@ -37,13 +37,13 @@ export async function POST(req: NextRequest) {
 
     const eid = session.user?.establishmentId ?? "default-porto-belo";
 
-    // Enforce free plan limit of 50 members
+    // Enforce free plan limit of 20 members
     const est = await db.establishment.findUnique({ where: { id: eid }, select: { plan: true } });
     if (!est || est.plan === "FREE") {
       const count = await db.member.count({ where: { establishmentId: eid, deletedAt: null } });
-      if (count >= 50) {
+      if (count >= 20) {
         return NextResponse.json(
-          { error: "Limite de 50 membros atingido no plano gratuito. Faça upgrade para o plano Pro." },
+          { error: "Limite de 20 membros atingido no plano gratuito. Faça upgrade para o plano Pro." },
           { status: 403 }
         );
       }

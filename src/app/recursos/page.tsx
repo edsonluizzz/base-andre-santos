@@ -217,7 +217,7 @@ const SECTIONS = [
     icon: CreditCard,
     items: [
       "Portal do Stripe para atualizar cartão, trocar de plano ou ver histórico.",
-      "Plano FREE (até 50 membros) e PRO (ilimitado, R$ 29,99/mês).",
+      "Plano FREE (até 20 membros) e PRO (ilimitado, R$ 29,99/mês — 7 dias grátis).",
     ],
   },
   {
