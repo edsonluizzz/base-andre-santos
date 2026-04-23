@@ -14,6 +14,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       // ── Primeiro login ──────────────────────────────────────────────────────
       if (user?.email && user.id) {
         token.id = user.id;
+        token.image = user.image ?? token.image;
         token.isSuperAdmin = superAdminEmails.includes(user.email);
 
         // Resolver convites pendentes (UserEstablishment com pendingEmail)
@@ -229,6 +230,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (session.user) {
         session.user.id = token.id as string;
         session.user.role = token.role as string;
+        if (token.image) session.user.image = token.image as string;
         session.user.establishmentId = (token.establishmentId as string) ?? "";
         session.user.isSuperAdmin = Boolean(token.isSuperAdmin);
         session.user.needsChurchSelection = Boolean(token.needsChurchSelection);

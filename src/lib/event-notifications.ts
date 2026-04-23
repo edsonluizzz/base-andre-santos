@@ -61,16 +61,20 @@ export async function notifyEventCreated(
   const userIds = members.map((m) => m.userId).filter((uid): uid is string => uid !== null);
 
   if (userIds.length > 0) {
-    await db.notification.createMany({
-      data: userIds.map((uid) => ({
-        userId: uid,
-        title: `📅 Novo evento: ${event.title}`,
-        body: `${dateLabel}${event.location ? ` — ${event.location}` : ""}`,
-        type: "EVENT_CREATED",
-        link: "/dashboard/events",
-      })),
-      skipDuplicates: true,
-    });
+    try {
+      await db.notification.createMany({
+        data: userIds.map((uid) => ({
+          userId: uid,
+          title: `📅 Novo evento: ${event.title}`,
+          body: `${dateLabel}${event.location ? ` — ${event.location}` : ""}`,
+          type: "EVENT_CREATED",
+          link: "/chamada",
+        })),
+        skipDuplicates: true,
+      });
+    } catch (err) {
+      console.error("[event-notifications] erro ao criar notificações in-app:", err);
+    }
   }
 
   // ── 3. E-mails ──────────────────────────────────────────────────────────────

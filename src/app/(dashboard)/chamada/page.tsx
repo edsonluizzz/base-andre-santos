@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import { Plus, CalendarDays, ChevronRight, Check, X, Clock, Printer, Phone, Pencil, QrCode, Copy } from "lucide-react";
+import { Plus, CalendarDays, ChevronRight, Check, X, Clock, Printer, Phone, Pencil, QrCode, Copy, MessageCircle } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -106,6 +106,7 @@ export default function ChamadaPage() {
   const [justifyingMember, setJustifyingMember] = useState<{ id: string; name: string } | null>(null);
   const [qrOpen, setQrOpen] = useState(false);
   const [qrVisitaOpen, setQrVisitaOpen] = useState(false);
+  const [whatsappInvited, setWhatsappInvited] = useState<Set<string>>(new Set());
 
   const fetchEvents = useCallback(async () => {
     const res = await fetch("/api/events");
@@ -114,10 +115,29 @@ export default function ChamadaPage() {
     return data;
   }, []);
 
+  function handleWhatsAppInvite(e: React.MouseEvent, member: Member) {
+    e.stopPropagation();
+    if (!activeEvent || !member.phone) return;
+    const storageKey = `ovile_wainvite_${activeEvent.id}`;
+    const dateLabel = safeFormat(activeEvent.date, "dd 'de' MMMM");
+    const msg = `Olá ${member.name.split(" ")[0]}! 👋 Você está convidado(a) para *${activeEvent.title}* no dia ${dateLabel}${activeEvent.location ? ` — ${activeEvent.location}` : ""}. Contamos com a sua presença! 🙏`;
+    window.open(`https://wa.me/55${member.phone.replace(/\D/g, "")}?text=${encodeURIComponent(msg)}`, "_blank");
+    const updated = new Set(whatsappInvited);
+    updated.add(member.id);
+    setWhatsappInvited(updated);
+    const saved = JSON.parse(localStorage.getItem(storageKey) ?? "[]") as string[];
+    if (!saved.includes(member.id)) {
+      localStorage.setItem(storageKey, JSON.stringify([...saved, member.id]));
+    }
+  }
+
   async function openEvent(ev: Event, currentMembers: Member[]) {
     setActiveEvent(ev);
     setAttendances({});
     setAttendancesLoading(true);
+    const storageKey = `ovile_wainvite_${ev.id}`;
+    const saved = JSON.parse(localStorage.getItem(storageKey) ?? "[]") as string[];
+    setWhatsappInvited(new Set(saved));
     setPrintInsights([]);
     try {
       const res = await fetch(`/api/events/${ev.id}`);
@@ -528,14 +548,34 @@ export default function ChamadaPage() {
                       <Icon className="w-3 h-3" />
                       {cfg.label}
                     </span>
+                    {isLeaderOrAdmin && m.phone && (
+                      whatsappInvited.has(m.id) ? (
+                        <span
+                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 flex-shrink-0 text-[11px] font-medium cursor-default"
+                          title="Convite enviado"
+                        >
+                          <Check className="w-3 h-3" />
+                          <span className="hidden sm:inline">Convidado</span>
+                        </span>
+                      ) : (
+                        <button
+                          onClick={(e) => handleWhatsAppInvite(e, m)}
+                          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-colors flex-shrink-0 text-[11px] font-medium"
+                          title="Convidar via WhatsApp"
+                        >
+                          <MessageCircle className="w-3 h-3" />
+                          <span className="hidden sm:inline">Convidar</span>
+                        </button>
+                      )
+                    )}
                     {(status === "ABSENT" || status === "JUSTIFIED") && m.phone && (
                       <a
                         href={`https://wa.me/55${m.phone.replace(/\D/g, "")}?text=${encodeURIComponent(`Olá ${m.name.split(" ")[0]}, sentimos sua falta no evento de hoje. Tudo bem com você?`)}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={(e) => e.stopPropagation()}
-                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-colors flex-shrink-0 text-[11px] font-medium"
-                        title="Enviar mensagem no WhatsApp"
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 transition-colors flex-shrink-0 text-[11px] font-medium"
+                        title="Enviar mensagem de acompanhamento"
                       >
                         <Phone className="w-3 h-3" />
                         <span className="hidden sm:inline">Contatar</span>

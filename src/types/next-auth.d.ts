@@ -27,5 +27,6 @@ declare module "next-auth/jwt" {
     isImpersonating?: boolean;
     originalEstablishmentId?: string;
     noEstablishment?: boolean;
+    image?: string | null;
   }
 }

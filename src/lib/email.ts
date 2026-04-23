@@ -191,7 +191,7 @@ export async function sendEventCreatedEmail({
           ${locationLine}
         </div>
         <div style="margin:24px 0;">
-          <a href="${process.env.NEXTAUTH_URL ?? "https://ovile.com.br"}/dashboard/events"
+          <a href="${process.env.NEXTAUTH_URL ?? "https://ovile.com.br"}/chamada"
              style="display:inline-block;background:#4f46e5;color:#fff;text-decoration:none;padding:12px 24px;border-radius:10px;font-size:14px;font-weight:600;">
             Ver eventos →
           </a>
