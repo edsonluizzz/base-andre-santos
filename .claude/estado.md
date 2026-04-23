@@ -19,7 +19,7 @@
 - Portal do membro
 - Notificações in-app (sino) + e-mail transacional (Resend)
 - Cron de aniversariantes (diário 08h BRT) — e-mail + notificação in-app
-- Gating por plano: FREE (50 membros) / PRO (ilimitado, R$ 29,99/mês)
+- Gating por plano: FREE (20 membros) / PRO (ilimitado, R$ 29,99/mês — 7 dias grátis)
 - Páginas /termos e /privacidade (LGPD)
 - Landing page com animações skeuomórficas (anime.js)
 - **Fluxo de membros via link** (2026-04-13):
@@ -241,6 +241,7 @@ O frontend não consegue parsear como JSON → exibe "Erro de conexão". Todo ha
 | Arquivo | Fix |
 |---------|-----|
 | `plan-card.tsx` | Limite FREE corrigido: 10 → 50 membros |
+| `api/members/route.ts` + LP + plan-card + recursos | Limite FREE: 50 → 20 membros; trial 7 dias destacado na LP (2026-04-23) |
 | `dashboard/page.tsx` | Removidas variáveis nunca usadas: `attendance`, `upcomingEvents`, `lowAttendance`, `topAttendee`, `EVENT_TYPE_LABELS`, `EVENT_TYPE_BADGE`, import `Star` |
 | `api/insights/evasion/route.ts` | Removido parâmetro `req` não usado |
 | `.git/hooks/pre-push` | Bug crítico: `pass/fail/info` redirecionados para stderr; `rm -rf .next` antes do build (Windows/OneDrive symlinks) |
