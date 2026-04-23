@@ -24,6 +24,7 @@ type Member = {
   id: string;
   name: string;
   email: string | null;
+  userEmail: string | null;
   birthday: string | null;
   phone: string | null;
   status: "ACTIVE" | "INACTIVE";
@@ -68,7 +69,7 @@ export function MemberDialog({ open, onOpenChange, member, onSuccess }: Props) {
     if (member) {
       setForm({
         name: member.name,
-        email: member.email ?? "",
+        email: member.email ?? member.userEmail ?? "",
         birthday: member.birthday ?? "",
         phone: member.phone ?? "",
         notes: member.notes ?? "",
@@ -141,7 +142,9 @@ export function MemberDialog({ open, onOpenChange, member, onSuccess }: Props) {
               className="bg-background border-border text-foreground focus-visible:ring-primary"
             />
             <p className="text-[11px] text-muted-foreground/50">
-              Ao fazer login com esse e-mail, o membro será vinculado automaticamente.
+              {member?.userEmail && !member.email
+                ? "Preenchido com o e-mail do Google. Edite se necessário."
+                : "Ao fazer login com esse e-mail, o membro será vinculado automaticamente."}
             </p>
           </div>
 

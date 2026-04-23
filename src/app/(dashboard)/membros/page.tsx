@@ -29,6 +29,7 @@ type Member = {
   id: string;
   name: string;
   email: string | null;
+  userEmail: string | null;
   birthday: string | null;
   phone: string | null;
   status: "ACTIVE" | "INACTIVE";

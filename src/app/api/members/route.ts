@@ -11,8 +11,11 @@ export async function GET() {
     const members = await db.member.findMany({
       where: { establishmentId: eid, deletedAt: null },
       orderBy: { name: "asc" },
+      include: { user: { select: { email: true } } },
     });
-    return NextResponse.json(members);
+    return NextResponse.json(
+      members.map((m) => ({ ...m, userEmail: m.user?.email ?? null }))
+    );
   } catch {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
