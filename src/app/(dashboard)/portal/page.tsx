@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useSession } from "next-auth/react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
@@ -124,6 +125,7 @@ type UpcomingEvent = {
 };
 
 export default function PortalPage() {
+  const { data: session } = useSession();
   const [data, setData] = useState<PortalData | null>(null);
   const [loading, setLoading] = useState(true);
   const [upcomingEvents, setUpcomingEvents] = useState<UpcomingEvent[]>([]);
@@ -295,7 +297,7 @@ function ProfileCard({
   return (
     <div className="glass-card p-6 flex items-center gap-5">
       <div className="relative flex-shrink-0 group">
-        <UserAvatarImg image={member.photoUrl} name={member.name} className="w-16 h-16" />
+        <UserAvatarImg image={member.photoUrl ?? session?.user?.image} name={member.name} className="w-16 h-16" />
         <button
           onClick={() => fileRef.current?.click()}
           disabled={uploading}
