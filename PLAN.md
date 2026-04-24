@@ -1,135 +1,130 @@
-# PLAN — Onboarding Ovile
+# Ovile — Plano Estratégico 2026
 
-> Criado em 2026-04-16. Execute step por step. Ao retomar, paste o prompt do passo seguinte.
-
----
-
-## Contexto
-
-Dois fluxos de onboarding distintos:
-
-1. **Admin** — pastor/líder que acabou de criar a congregação. Primeiro acesso ao dashboard é completamente vazio. Precisa de orientação clara sobre o que fazer primeiro.
-2. **Membro** — entrou via link de convite ou join code. Acessa o portal mas não sabe o que pode fazer lá.
-
-### Decisões de design
-
-- **Sem migration de banco**: estado de onboarding via `localStorage` (chave por `establishmentId` para admin, por `userId` para membro). Simples, sem custo, funciona para o caso de uso.
-- **Admin**: checklist dinâmico no dashboard — cada passo é verificado pelo estado real do banco (dados já carregados). Some automaticamente quando todos os itens estiverem feitos, ou ao clicar em "dispensar".
-- **Membro**: modal de boas-vindas com tour de 3 steps no `/portal`. Aparece apenas na primeira visita.
-- **Página de sucesso do cadastro** (`/cadastro`): melhorar o "próximos passos" pós-criação da congregação.
+> Gerado em 2026-04-22. Atualizar conforme itens forem concluídos.
 
 ---
 
-## Arquivos alterados
+## Situação atual
 
-| Arquivo | O que muda |
-|---------|-----------|
-| `src/app/(dashboard)/dashboard/page.tsx` | Adiciona `<SetupChecklist>` acima dos stat cards |
-| `src/components/onboarding/setup-checklist.tsx` | **Novo** — card de primeiros passos para admin |
-| `src/app/(dashboard)/portal/page.tsx` | Adiciona `<PortalWelcomeTour>` |
-| `src/components/onboarding/portal-welcome-tour.tsx` | **Novo** — modal de boas-vindas para membros |
-| `src/app/cadastro/page.tsx` | Melhora tela de sucesso pós-cadastro |
+Produto v1 completo: auth, membros, financeiro, chamada, QR, portal, comunicados, relatórios, camisetas, visitantes, PWA, observabilidade.
+
+Foco agora: **crescer, monetizar melhor e fidelizar**.
 
 ---
 
-## Step 1 — Checklist de configuração (Admin Dashboard)
+## Roadmap Priorizado
 
-**Componente:** `src/components/onboarding/setup-checklist.tsx`
+### Semana 1 — Monetização rápida + infra
 
-Props recebidas do dashboard:
-```ts
-{
-  establishmentId: string
-  membersCount: number
-  eventsCount: number
-  hasJoinCode: boolean
-  hasLogo: boolean
-}
-```
+- [ ] **Plano anual no Stripe** — R$24,99/mês cobrado anualmente (R$299,88 à vista). Novo Price ID no Stripe + opção na tela de billing.
+- [ ] **Rodar migration de índices em prod** — `20260419000000_add_missing_indexes` (Event.date, Attendance.memberId, Offering.date)
+- [ ] **Rate limit `/api/visitors`** — max 10 req/min por IP
 
-Passos verificados:
-| # | Passo | Condição "feito" | Link destino |
-|---|-------|-----------------|-------------|
-| 1 | Congregação criada | sempre ✅ | — |
-| 2 | Adicionar membros | `membersCount > 0` | `/membros` |
-| 3 | Criar primeiro evento | `eventsCount > 0` | `/chamada` |
-| 4 | Gerar link de convite | `hasJoinCode` | `/configuracoes` |
-| 5 | Adicionar logo | `hasLogo` | `/configuracoes` |
+### Semana 2 — Células / Grupos pequenos
 
-Comportamento:
-- Aparece apenas para role `ADMIN`
-- Some automaticamente quando todos os 5 passos estiverem feitos
-- Botão "×" salva `ovile_setup_dismissed_{eid}` no localStorage
-- Barra de progresso `X/5 concluídos`
+- [ ] Model `Cell`: id, name, establishmentId, leaderId, meetingDay, meetingTime
+- [ ] Model `CellMember`: cellId, memberId
+- [ ] Model `CellMeeting`: cellId, date, notes
+- [ ] Model `CellAttendance`: cellMeetingId, memberId, present
+- [ ] CRUD de células (página `/celulas`)
+- [ ] Chamada de célula (fluxo similar à chamada de evento)
+- [ ] Relatório: crescimento por célula, frequência média
+- [ ] Sidebar: item "Células" (LEADER+ADMIN)
 
-**No dashboard:** inserir `<SetupChecklist>` entre o greeting e os stat cards. Calcular `membersCount` de `members` state, `eventsCount` de `events` state. Buscar `hasJoinCode` e `hasLogo` via `GET /api/settings` (já existe, já é chamado na página de configurações).
+### Semana 3 — Dízimo individual
 
----
+- [ ] Campo `memberId` opcional em `Offering` (vínculo ao membro)
+- [ ] UI: ao registrar oferta, campo "Membro" (opcional, autocomplete)
+- [ ] Relatório individual: histórico de dízimos por membro no ano
+- [ ] Comprovante PDF: export anual por membro (útil para IR)
+- [ ] Portal do membro: seção "Meus dízimos"
 
-## Step 2 — Tour de boas-vindas (Portal do Membro)
+### Semana 4 — Crescimento orgânico
 
-**Componente:** `src/components/onboarding/portal-welcome-tour.tsx`
+- [ ] **Referral program**: código único por estabelecimento → indica outra igreja → ambos ganham 1 mês grátis
+  - Model `Referral`: referrerId (establishmentId), referredId, redeemedAt
+  - Banner no dashboard: "Indique uma igreja, ganhe 1 mês grátis"
+  - Webhook Stripe: ao confirmar pagamento da indicada, aplica crédito na indicante
+- [ ] **SEO básico**: meta tags Open Graph + Twitter Card na landing page
+- [ ] **Blog estático** (`/blog`): 5 artigos iniciais sobre gestão de igrejas
 
-Modal com 3 steps, botões "Próximo / Concluir":
+### Mês 2 — PIX + Push + Oração + Escala
 
-| Step | Título | Conteúdo |
-|------|--------|----------|
-| 1 | Bem-vindo ao seu Portal! | Espaço pessoal na congregação. Veja sua presença, confirme eventos e atualize seu perfil. |
-| 2 | Sua Presença | Acompanhe seu histórico de participação por evento. Seu líder registra a chamada. |
-| 3 | Confirme Presença | Em eventos futuros, você pode confirmar antecipadamente via RSVP. |
+- [ ] **PIX para ofertas online**
+  - Integração Pagar.me ou Efí Bank
+  - Página pública `/oferta/[slug]` — membro ou visitante faz PIX
+  - Admin vê transações em tempo real no financeiro
+  - Taxa: 1,5% por transação (receita adicional)
 
-Comportamento:
-- Aparece na primeira visita: `!localStorage.getItem('ovile_portal_tour_{userId}')`
-- Ao fechar ou finalizar: `localStorage.setItem('ovile_portal_tour_{userId}', '1')`
-- Transição suave entre steps (opacity + translate)
+- [ ] **Web push notifications**
+  - Ativar push via service worker (PWA já está configurado)
+  - Solicitar permissão no primeiro login
+  - Triggers: aniversários, eventos, comunicados, pedidos de oração
 
----
+- [ ] **Pedidos de oração**
+  - Model `PrayerRequest`: memberId, establishmentId, text, isAnonymous, answeredAt
+  - Membro submete pelo portal → líder vê lista → marca como atendido
 
-## Step 3 — Pós-cadastro melhorado (`/cadastro`)
-
-Na tela de sucesso, substituir a mensagem simples atual por lista visual de próximos passos:
-
-```
-✅ Congregação criada!
-E-mail enviado para {adminEmail}.
-
-── Seus próximos passos ──
-1. Faça login com sua conta Google
-2. Adicione seus membros
-3. Crie o primeiro evento
-4. Compartilhe o link de convite com sua equipe
-
-[Ir para o Login →]
-```
+- [ ] **Escala ministerial**
+  - Model `ServiceScale`: eventId, memberId, role (LOUVOR, RECEPCAO, INTERCESSAO, etc.)
+  - Admin/Líder monta escala → notificação automática para os escalados
 
 ---
 
-## Ordem de execução
+## Novo modelo de preços
 
-1. **Step 1** (checklist admin) — maior impacto para retenção
-2. **Step 3** (pós-cadastro) — rápido, melhora primeira impressão
-3. **Step 2** (tour portal) — para membros
+| Plano | Preço | Limite | Diferenciais |
+|-------|-------|--------|-------------|
+| FREE | R$0 | 50 membros | Todos os módulos básicos |
+| PRO mensal | R$29,99/mês | Ilimitado | Relatórios PDF, Camisetas |
+| PRO anual | R$24,99/mês (R$299,88/ano) | Ilimitado | Mesmo do PRO + desconto |
+| PLUS | R$79,99/mês | Ilimitado | PRO + PIX, Células avançadas, Suporte WhatsApp |
 
 ---
 
-## Status
+## Pendências de infraestrutura (ação do Edson no Vercel)
 
-| Step | Status |
+- [ ] `NEXT_PUBLIC_SENTRY_DSN`
+- [ ] `SENTRY_ORG`
+- [ ] `SENTRY_PROJECT`
+- [ ] `SENTRY_AUTH_TOKEN`
+- [ ] `NEXT_PUBLIC_POSTHOG_KEY` — criar projeto em posthog.com
+- [ ] `NEXT_PUBLIC_POSTHOG_HOST` — `https://us.i.posthog.com`
+
+---
+
+## Gaps estratégicos identificados (referência)
+
+### Produto
+- Células/grupos pequenos — maior gap para igrejas pentecostais brasileiras
+- Dízimo individual + comprovante IR
+- Pedidos de oração (engajamento diário)
+- Escala ministerial (elimina o WhatsApp manual do líder)
+
+### Monetização
+- Plano anual (melhora LTV e reduz churn)
+- PIX para ofertas (nova linha de receita via taxa de transação)
+- Tier PLUS para igrejas grandes
+
+### Crescimento
+- Referral program (igrejas recomendam igrejas — canal principal)
+- SEO: zero conteúdo para ranquear "software gestão de igreja"
+- Demo sem cadastro na landing page
+- Parceria com denominações (Assembleia de Deus, Batista)
+- App na Play Store / App Store (wrapper Capacitor)
+
+### Retenção
+- Web push notifications (engajamento mesmo sem abrir o app)
+- Audit log de ações (governança para igrejas maiores)
+
+---
+
+## Histórico de sprints concluídos
+
+| Data | Sprint |
 |------|--------|
-| 1 — Checklist admin | 🔜 Próximo |
-| 2 — Tour portal | Pendente |
-| 3 — Pós-cadastro | Pendente |
-
----
-
-## Prompt para retomar no Step 1
-
-> "Execute o Step 1 do PLAN.md: criar `src/components/onboarding/setup-checklist.tsx` e integrá-lo no dashboard. Ver o plano completo em PLAN.md."
-
-## Prompt para retomar no Step 2
-
-> "Execute o Step 2 do PLAN.md: criar `src/components/onboarding/portal-welcome-tour.tsx` e integrá-lo em `src/app/(dashboard)/portal/page.tsx`. Ver o plano completo em PLAN.md."
-
-## Prompt para retomar no Step 3
-
-> "Execute o Step 3 do PLAN.md: melhorar a tela de sucesso pós-cadastro em `src/app/cadastro/page.tsx` com lista visual de próximos passos. Ver o plano completo em PLAN.md."
+| 2026-04-13 | Auth multi-tenant, membros, financeiro, portal |
+| 2026-04-15 | Convite WhatsApp, PWA, import 100+ linhas, BankAccount |
+| 2026-04-16 | Calendário interativo, onboarding admin+membro, comunicados, nurturing |
+| 2026-04-17 | QR presença, Sentry, relatório semanal, visitantes, LGPD, camisetas portal |
+| 2026-04-19 | try/catch 10 rotas, índices Prisma, upload whitelist, PostHog, N+1s, dashboard summary |
