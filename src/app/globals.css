@@ -5,175 +5,119 @@
 @tailwind utilities;
 
 @layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
+  .text-balance { text-wrap: balance; }
 }
 
 @layer base {
   :root {
-    /* ── Backgrounds ───────────────────────────────── */
-    --background: #06080F;          /* slate azul-profundo */
-    --card: rgba(15,23,42,0.65);    /* glass translúcido */
+    /* ── Backgrounds — Navy escuro ─────────────────── */
+    --background: #0a1220;
+    --card: rgba(13,27,42,0.70);
     --card-foreground: #f8fafc;
-    --popover: #0F172A;             /* opaco — dialogs não recebem glass */
+    --popover: #0d1b2a;
     --popover-foreground: #f8fafc;
-    --secondary: #0F172A;           /* slate-900 */
+    --secondary: #0d1b2a;
     --secondary-foreground: #f8fafc;
-    --muted: #0F172A;
-    --muted-foreground: #94a3b8;    /* slate-400 */
+    --muted: #0d1b2a;
+    --muted-foreground: #94a3b8;
 
-    /* ── Accent Principal — Indigo ─────────────────── */
-    --primary: #6366F1;             /* indigo-500 */
-    --primary-foreground: #ffffff;
-    --accent: #6366F11A;            /* indigo/10 */
-    --accent-foreground: #A5B4FC;   /* indigo-300 */
-    --ring: #6366F180;
+    /* ── Accent Principal — Gold ────────────────────── */
+    --primary: #d4af37;
+    --primary-foreground: #0a1220;
+    --accent: rgba(212,175,55,0.12);
+    --accent-foreground: #f0d060;
+    --ring: rgba(212,175,55,0.50);
 
-    /* ── CTA — Emerald (substituiu gold) ───────────── */
-    --cta: #10B981;                 /* emerald-500 */
-    --cta-foreground: #ffffff;
-    --cta-muted: #064e3b;           /* emerald-900 */
+    /* ── CTA — Gold claro ──────────────────────────── */
+    --cta: #d4af37;
+    --cta-foreground: #0a1220;
+    --cta-muted: rgba(212,175,55,0.15);
 
     /* ── Textos ────────────────────────────────────── */
-    --foreground: #f8fafc;          /* slate-50 */
+    --foreground: #f8fafc;
 
     /* ── Bordas / Inputs ───────────────────────────── */
     --border: rgba(255,255,255,0.07);
-    --input: #1e293b;               /* slate-800 */
+    --input: #1a2f4e;
 
     /* ── Status ────────────────────────────────────── */
     --destructive: #ef4444;
     --destructive-foreground: #fafafa;
-    --success: #10B981;             /* emerald — unificado com CTA */
+    --success: #10B981;
     --warning: #f59e0b;
     --green: #10B981;
 
     /* ── Sidebar ───────────────────────────────────── */
-    --sidebar: rgba(6,8,15,0.85);
+    --sidebar: rgba(10,18,32,0.90);
     --sidebar-foreground: #f8fafc;
-    --sidebar-primary: #6366F1;
-    --sidebar-primary-foreground: #ffffff;
-    --sidebar-accent: #6366F11A;
-    --sidebar-accent-foreground: #A5B4FC;
+    --sidebar-primary: #d4af37;
+    --sidebar-primary-foreground: #0a1220;
+    --sidebar-accent: rgba(212,175,55,0.12);
+    --sidebar-accent-foreground: #f0d060;
     --sidebar-border: rgba(255,255,255,0.06);
-    --sidebar-ring: #6366F180;
+    --sidebar-ring: rgba(212,175,55,0.50);
 
-    /* ── Radius ────────────────────────────────────── */
     --radius: 0.625rem;
   }
 
   * {
     @apply border-border;
-    outline-color: rgb(99 102 241 / 0.4);
+    outline-color: rgba(212,175,55,0.4);
   }
 
   body {
     @apply text-foreground;
-    background-color: #06080F;
+    background-color: #0a1220;
     background-image: radial-gradient(
       ellipse 80% 50% at 50% -10%,
-      #1e2456 0%,
-      #06080F 65%
+      #1a2f4e 0%,
+      #0a1220 65%
     );
     background-attachment: fixed;
-    font-family: "DM Sans", sans-serif;
+    font-family: "Inter", "DM Sans", sans-serif;
     -webkit-font-smoothing: antialiased;
   }
 
-  html {
-    @apply font-sans;
-  }
+  html { @apply font-sans; }
 }
 
-/* ── Glass card utility ──────────────────────────────── */
+/* ── Glass card ──────────────────────────────────────── */
 @layer components {
   .glass-card {
-    @apply rounded-xl border border-white/[0.07]
-           transition-all duration-200
-           hover:-translate-y-0.5;
-    background: rgba(15,23,42,0.6);
+    background: rgba(13,27,42,0.60);
+    backdrop-filter: blur(20px) saturate(160%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    border: 1px solid rgba(255,255,255,0.08);
     box-shadow:
-      0 1px 1px rgba(0,0,0,0.5),
-      inset 0 1px 0 rgba(255,255,255,0.04);
+      inset 0 1px 0 rgba(255,255,255,0.08),
+      0 8px 32px rgba(0,0,0,0.35);
   }
 
-  .glass-card:hover {
-    box-shadow:
-      0 8px 24px rgba(0,0,0,0.5),
-      0 0 0 1px rgba(99,102,241,0.15);
-  }
-
-  @supports (backdrop-filter: blur(1px)) {
-    .glass-card {
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      background: rgba(15,23,42,0.55);
-    }
+  .gold-glow {
+    box-shadow: 0 0 20px rgba(212,175,55,0.20);
   }
 }
 
-/* ── Custom scrollbar ───────────────────────────────── */
-::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: #1e293b;
-  border-radius: 3px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #6366F1;
+/* ── Animations ───────────────────────────────────────── */
+@layer utilities {
+  @keyframes glow-pulse {
+    0%, 100% { box-shadow: 0 0 8px rgba(212,175,55,0.30); }
+    50%       { box-shadow: 0 0 18px rgba(212,175,55,0.55); }
+  }
+  .animate-glow-pulse { animation: glow-pulse 2.5s ease-in-out infinite; }
 }
 
-/* ── Print Styles (Relatórios PDF) ───────────────────── */
+/* ── Scrollbar ───────────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #1a2f4e; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #d4af37; }
+
+/* ── Print ───────────────────────────────────────────── */
 @media print {
-  /* Ocultar elementos de UI não necessários */
-  .hidden-print, nav, header, button:not(.print-visible), .no-print, input[type="text"], input[type="search"] {
-    display: none !important;
-  }
-  
-  /* Resetar cores para economia de tinta e legibilidade total */
-  body {
-    background: transparent !important;
-  }
-
-  .glass-card, .bg-card, .bg-popover, .bg-background, .bg-secondary, table, th, td, div {
-    background-color: transparent !important;
-    color: black !important;
-    box-shadow: none !important;
-    backdrop-filter: none !important;
-    text-shadow: none !important;
-  }
-  * {
-    color: black !important;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-    border-color: #ddd !important;
-  }
-
-  /* Evitar quebra no meio de colunas ou linhas */
-  tr, .glass-card, img {
-    page-break-inside: avoid;
-  }
-
-  /* Expandir a área útil da MAIN removendo a margem da Sidebar (lg:ml-64) */
-  .print-expand {
-    margin-left: 0 !important;
-    padding: 0 !important;
-    max-width: 100% !important;
-    width: 100vw !important;
-  }
-
-  /* Ajustar SVGs da Lucide para preto básico */
-  svg {
-    stroke: black !important;
-  }
-
-  .text-muted-foreground, .text-primary, .text-success, .text-warning {
-    color: #333 !important;
-  }
+  .hidden-print, nav, header, button:not(.print-visible), .no-print { display: none !important; }
+  body { background: transparent !important; }
+  .glass-card, div { background-color: transparent !important; color: black !important; box-shadow: none !important; }
+  * { color: black !important; border-color: #ddd !important; }
+  .print-expand { margin-left: 0 !important; padding: 0 !important; width: 100vw !important; }
 }

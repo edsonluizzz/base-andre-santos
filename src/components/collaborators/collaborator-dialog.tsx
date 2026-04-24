@@ -1,0 +1,123 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+
+const ROLES = [
+  { value: "COORD_GERAL", label: "Coord. Geral" },
+  { value: "COORD_REGIONAL", label: "Coord. Regional" },
+  { value: "LIDER_MUNICIPAL", label: "Líder Municipal" },
+  { value: "LIDER_BAIRRO", label: "Líder de Bairro" },
+  { value: "VOLUNTARIO", label: "Voluntário" },
+];
+
+type Collaborator = {
+  id?: string; name?: string; email?: string; phone?: string; city?: string;
+  neighborhood?: string; campaignRole?: string; status?: string; notes?: string; birthday?: string;
+};
+
+type Props = {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  collaborator?: Collaborator | null;
+  onSuccess: () => void;
+};
+
+export function CollaboratorDialog({ open, onOpenChange, collaborator, onSuccess }: Props) {
+  const [form, setForm] = useState({ name: "", email: "", phone: "", city: "", neighborhood: "", campaignRole: "VOLUNTARIO", status: "ACTIVE", notes: "", birthday: "" });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (collaborator) {
+      setForm({ name: collaborator.name ?? "", email: collaborator.email ?? "", phone: collaborator.phone ?? "", city: collaborator.city ?? "", neighborhood: collaborator.neighborhood ?? "", campaignRole: collaborator.campaignRole ?? "VOLUNTARIO", status: collaborator.status ?? "ACTIVE", notes: collaborator.notes ?? "", birthday: collaborator.birthday ?? "" });
+    } else {
+      setForm({ name: "", email: "", phone: "", city: "", neighborhood: "", campaignRole: "VOLUNTARIO", status: "ACTIVE", notes: "", birthday: "" });
+    }
+    setError("");
+  }, [collaborator, open]);
+
+  const set = (k: string, v: string) => setForm((f) => ({ ...f, [k]: v }));
+
+  async function handleSave() {
+    if (!form.name.trim()) { setError("Nome obrigatório"); return; }
+    setSaving(true);
+    const method = collaborator?.id ? "PUT" : "POST";
+    const url = collaborator?.id ? `/api/collaborators/${collaborator.id}` : "/api/collaborators";
+    const res = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
+    setSaving(false);
+    if (res.ok) { onSuccess(); }
+    else { const d = await res.json(); setError(d.error ?? "Erro ao salvar"); }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>{collaborator?.id ? "Editar Colaborador" : "Novo Colaborador"}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="col-span-2">
+              <Label>Nome *</Label>
+              <Input value={form.name} onChange={(e) => set("name", e.target.value)} placeholder="Nome completo" />
+            </div>
+            <div>
+              <Label>Telefone / WhatsApp</Label>
+              <Input value={form.phone} onChange={(e) => set("phone", e.target.value)} placeholder="(41) 99999-9999" />
+            </div>
+            <div>
+              <Label>E-mail</Label>
+              <Input value={form.email} onChange={(e) => set("email", e.target.value)} type="email" placeholder="email@dominio.com" />
+            </div>
+            <div>
+              <Label>Município</Label>
+              <Input value={form.city} onChange={(e) => set("city", e.target.value)} placeholder="Curitiba" />
+            </div>
+            <div>
+              <Label>Bairro</Label>
+              <Input value={form.neighborhood} onChange={(e) => set("neighborhood", e.target.value)} placeholder="Centro" />
+            </div>
+            <div>
+              <Label>Cargo</Label>
+              <Select value={form.campaignRole} onValueChange={(v) => set("campaignRole", v)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>{ROLES.map((r) => <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Status</Label>
+              <Select value={form.status} onValueChange={(v) => set("status", v)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ACTIVE">Ativo</SelectItem>
+                  <SelectItem value="INACTIVE">Inativo</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Aniversário</Label>
+              <Input value={form.birthday} onChange={(e) => set("birthday", e.target.value)} type="date" />
+            </div>
+            <div className="col-span-2">
+              <Label>Observações</Label>
+              <Textarea value={form.notes} onChange={(e) => set("notes", e.target.value)} rows={2} placeholder="Notas internas..." />
+            </div>
+          </div>
+          {error && <p className="text-xs text-destructive">{error}</p>}
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
+            <Button onClick={handleSave} disabled={saving} className="bg-primary text-primary-foreground">
+              {saving ? "Salvando..." : "Salvar"}
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}

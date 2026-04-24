@@ -10,24 +10,17 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     if (!["ADMIN", "LEADER"].includes(session.user.role ?? "")) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-    const existing = await db.event.findFirst({ where: { id: params.id, campaignId: CID } });
+    const existing = await db.zone.findFirst({ where: { id: params.id, campaignId: CID } });
     if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-    const { title, type, date, location, notes, zoneId } = await req.json();
-    const updated = await db.event.update({
+    const { name, type, parentId, color } = await req.json();
+    const updated = await db.zone.update({
       where: { id: params.id },
-      data: {
-        ...(title && { title: title.trim() }),
-        ...(type && { type }),
-        ...(date && { date: new Date(date) }),
-        location: location?.trim() || null,
-        notes: notes?.trim() || null,
-        zoneId: zoneId || null,
-      },
+      data: { ...(name && { name: name.trim() }), ...(type && { type }), parentId: parentId || null, color: color || null },
     });
     return NextResponse.json(updated);
   } catch (err) {
-    console.error("[event PUT]", err);
+    console.error("[zone PUT]", err);
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });
   }
 }
@@ -38,13 +31,13 @@ export async function DELETE(_req: NextRequest, { params }: { params: { id: stri
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     if (session.user.role !== "ADMIN") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-    const existing = await db.event.findFirst({ where: { id: params.id, campaignId: CID } });
+    const existing = await db.zone.findFirst({ where: { id: params.id, campaignId: CID } });
     if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-    await db.event.delete({ where: { id: params.id } });
+    await db.zone.delete({ where: { id: params.id } });
     return NextResponse.json({ ok: true });
   } catch (err) {
-    console.error("[event DELETE]", err);
+    console.error("[zone DELETE]", err);
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });
   }
 }

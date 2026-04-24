@@ -3,6 +3,8 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import { db } from "./db";
 import { authConfig } from "./auth.config";
 
+const CAMPAIGN_ID = "andre-santos-2026";
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
   ...authConfig,
   adapter: PrismaAdapter(db),
@@ -11,216 +13,69 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       const superAdminEmails = (process.env.SUPER_ADMIN_EMAILS ?? "")
         .split(",").map((e) => e.trim()).filter(Boolean);
 
-      // ── Primeiro login ──────────────────────────────────────────────────────
       if (user?.email && user.id) {
         token.id = user.id;
         token.image = user.image ?? token.image;
         token.isSuperAdmin = superAdminEmails.includes(user.email);
 
-        // Resolver convites pendentes (UserEstablishment com pendingEmail)
-        const pending = await db.userEstablishment.findMany({
+        // Resolver convites pendentes
+        const pending = await db.userCampaign.findMany({
           where: { pendingEmail: user.email, userId: null },
         });
         for (const p of pending) {
-          await db.userEstablishment.update({
+          await db.userCampaign.update({
             where: { id: p.id },
             data: { userId: user.id, pendingEmail: null, inviteStatus: "ACCEPTED", acceptedAt: new Date() },
           }).catch(() => {});
-
-          // Criar registro de membro se ainda não existir para este usuário
-          const existingMember = await db.member.findUnique({
-            where: { userId: user.id },
-          });
-          if (!existingMember) {
-            await db.member.create({
-              data: {
-                name: user.name ?? user.email ?? "Membro",
-                establishmentId: p.establishmentId,
-                userId: user.id,
-              },
+          const existingCollab = await db.collaborator.findUnique({ where: { userId: user.id } });
+          if (!existingCollab) {
+            await db.collaborator.create({
+              data: { name: user.name ?? user.email ?? "Colaborador", campaignId: p.campaignId, userId: user.id },
             }).catch(() => {});
           }
         }
 
-        // Auto-vincular membros cadastrados com o mesmo e-mail
-        const membersByEmail = await db.member.findMany({
-          where: { email: user.email, userId: null },
-        });
-        for (const m of membersByEmail) {
-          await db.member.update({
-            where: { id: m.id },
-            data: { userId: user.id },
-          }).catch(() => {});
+        // Auto-vincular colaboradores com o mesmo e-mail
+        const collabsByEmail = await db.collaborator.findMany({ where: { email: user.email, userId: null } });
+        for (const c of collabsByEmail) {
+          await db.collaborator.update({ where: { id: c.id }, data: { userId: user.id } }).catch(() => {});
         }
 
-        // Buscar vínculos do usuário
-        const ues = await db.userEstablishment.findMany({
-          where: { userId: user.id },
+        // Buscar vínculo com a campanha
+        const uc = await db.userCampaign.findUnique({
+          where: { userId_campaignId: { userId: user.id, campaignId: CAMPAIGN_ID } },
         });
 
-        if (ues.length === 0) {
-          // Migração legada: se o usuário tinha estabelecimento não-padrão,
-          // cria o UserEstablishment. Novos usuários vão para /entrar.
-          const DEFAULT_EST = "default-porto-belo";
-          const dbUser = await db.user.findUnique({
-            where: { id: user.id },
-            select: { role: true, establishmentId: true },
-          });
-          if (dbUser && dbUser.establishmentId && dbUser.establishmentId !== DEFAULT_EST) {
-            await db.userEstablishment.upsert({
-              where: { userId_establishmentId: { userId: user.id, establishmentId: dbUser.establishmentId } },
-              update: { inviteStatus: "ACCEPTED" },
-              create: {
-                userId: user.id,
-                establishmentId: dbUser.establishmentId,
-                role: dbUser.role,
-                inviteStatus: "ACCEPTED",
-                acceptedAt: new Date(),
-              },
-            }).catch(() => {});
-            token.role = dbUser.role;
-            token.establishmentId = dbUser.establishmentId;
-            token.needsChurchSelection = false;
-            token.noEstablishment = false;
-          } else {
-            // Novo usuário sem vínculo → redirecionar para /entrar
-            token.noEstablishment = true;
-            token.needsChurchSelection = false;
-            token.establishmentId = "";
-            token.role = "MEMBER";
-          }
-        } else if (ues.length === 1) {
-          token.role = ues[0].role;
-          token.establishmentId = ues[0].establishmentId;
-          token.needsChurchSelection = false;
-          const est = await db.establishment.findUnique({ where: { id: ues[0].establishmentId }, select: { suspended: true } });
-          token.suspended = est?.suspended ?? false;
-          // Sincronizar User.role e User.establishmentId para compatibilidade
-          await db.user.update({
-            where: { id: user.id },
-            data: { role: ues[0].role, establishmentId: ues[0].establishmentId },
+        if (!uc) {
+          // Novo usuário — criar vínculo como MEMBER
+          await db.userCampaign.create({
+            data: { userId: user.id, campaignId: CAMPAIGN_ID, role: "MEMBER", inviteStatus: "ACCEPTED", acceptedAt: new Date() },
           }).catch(() => {});
+          token.role = "MEMBER";
+          token.campaignId = CAMPAIGN_ID;
         } else {
-          // Múltiplas congregações → seletor
-          token.role = ues[0].role;
-          token.establishmentId = ues[0].establishmentId;
-          token.needsChurchSelection = true;
+          token.role = uc.role;
+          token.campaignId = uc.campaignId;
+          await db.user.update({ where: { id: user.id }, data: { role: uc.role, campaignId: uc.campaignId } }).catch(() => {});
         }
       }
 
-      // ── Entrou via código de acesso (/entrar?c=CODE) ───────────────────────
-      if (trigger === "update" && session !== null && "joinedEstablishmentId" in session && session.joinedEstablishmentId) {
-        const ue = await db.userEstablishment.findUnique({
-          where: {
-            userId_establishmentId: {
-              userId: token.id as string,
-              establishmentId: session.joinedEstablishmentId as string,
-            },
-          },
-        });
-        if (ue) {
-          token.establishmentId = ue.establishmentId;
-          token.role = ue.role;
-          token.needsChurchSelection = false;
-          token.noEstablishment = false;
-        }
-        return token;
+      // Refresh de role
+      if (trigger === "update" && token.id && !session?.selectedEstablishmentId) {
+        const dbUser = await db.user.findUnique({ where: { id: token.id as string }, select: { role: true } });
+        if (dbUser) token.role = dbUser.role;
       }
 
-      // ── Impersonação de estabelecimento (super admin) ───────────────────────
+      // Impersonation (super admin)
       if (trigger === "update" && session !== null && "impersonateId" in session && token.isSuperAdmin) {
         if (session.impersonateId) {
-          const est = await db.establishment.findUnique({ where: { id: session.impersonateId as string } });
-          if (est) {
-            token.originalEstablishmentId = token.establishmentId;
-            token.establishmentId = est.id;
-            token.isImpersonating = true;
-            token.suspended = false; // super admin não é bloqueado por suspensão
-
-            // Audit log: início da impersonação
-            await db.auditLog.create({
-              data: {
-                action: "IMPERSONATE_START",
-                actorId: token.id as string,
-                targetId: est.id,
-                metadata: { establishmentName: est.name },
-              },
-            }).catch(() => {});
-          }
+          token.isImpersonating = true;
+          await db.auditLog.create({ data: { action: "IMPERSONATE_START", actorId: token.id as string, targetId: session.impersonateId as string } }).catch(() => {});
         } else {
-          // Sair da impersonação
-          const previousEstId = token.establishmentId;
-          token.establishmentId = token.originalEstablishmentId ?? token.establishmentId;
-          token.originalEstablishmentId = undefined;
           token.isImpersonating = false;
-          token.suspended = false;
-
-          // Audit log: fim da impersonação
-          await db.auditLog.create({
-            data: {
-              action: "IMPERSONATE_END",
-              actorId: token.id as string,
-              targetId: previousEstId as string,
-            },
-          }).catch(() => {});
+          await db.auditLog.create({ data: { action: "IMPERSONATE_END", actorId: token.id as string } }).catch(() => {});
         }
         return token;
-      }
-
-      // ── Troca de congregação via /select-church ─────────────────────────────
-      if (trigger === "update" && session?.selectedEstablishmentId && token.id) {
-        // SuperAdmin só pode trocar para estabelecimentos aos quais está vinculado
-        if (token.isSuperAdmin) {
-          const ue = await db.userEstablishment.findUnique({
-            where: {
-              userId_establishmentId: {
-                userId: token.id as string,
-                establishmentId: session.selectedEstablishmentId,
-              },
-            },
-          });
-          if (ue) {
-            token.establishmentId = ue.establishmentId;
-            token.role = ue.role;
-            token.needsChurchSelection = false;
-            await db.user.update({
-              where: { id: token.id as string },
-              data: { role: ue.role, establishmentId: ue.establishmentId },
-            }).catch(() => {});
-          }
-          return token;
-        }
-
-        const ue = await db.userEstablishment.findUnique({
-          where: {
-            userId_establishmentId: {
-              userId: token.id as string,
-              establishmentId: session.selectedEstablishmentId,
-            },
-          },
-        });
-        if (ue) {
-          token.establishmentId = ue.establishmentId;
-          token.role = ue.role;
-          token.needsChurchSelection = false;
-          await db.user.update({
-            where: { id: token.id as string },
-            data: { role: ue.role, establishmentId: ue.establishmentId },
-          }).catch(() => {});
-        }
-        return token;
-      }
-
-      // ── Refresh de role/establishment (ex: admin alterou permissão) ─────────
-      if (trigger === "update" && token.id && !session?.selectedEstablishmentId) {
-        const dbUser = await db.user.findUnique({
-          where: { id: token.id as string },
-          select: { role: true, establishmentId: true },
-        });
-        if (dbUser) {
-          token.role = dbUser.role;
-          token.establishmentId = dbUser.establishmentId;
-        }
       }
 
       return token;
@@ -231,19 +86,17 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.user.id = token.id as string;
         session.user.role = token.role as string;
         if (token.image) session.user.image = token.image as string;
-        session.user.establishmentId = (token.establishmentId as string) ?? "";
+        session.user.establishmentId = (token.campaignId as string) ?? CAMPAIGN_ID;
         session.user.isSuperAdmin = Boolean(token.isSuperAdmin);
-        session.user.needsChurchSelection = Boolean(token.needsChurchSelection);
-        session.user.suspended = Boolean(token.suspended);
+        session.user.needsChurchSelection = false;
+        session.user.suspended = false;
         session.user.isImpersonating = Boolean(token.isImpersonating);
-        session.user.originalEstablishmentId = token.originalEstablishmentId as string | undefined;
-        session.user.noEstablishment = Boolean(token.noEstablishment);
+        session.user.noEstablishment = false;
       }
       return session;
     },
 
     async signIn({ user }) {
-      // Promover para ADMIN se estiver na lista ADMIN_EMAILS
       const adminEmails = (process.env.ADMIN_EMAILS ?? "").split(",").map((e) => e.trim());
       if (user.email && adminEmails.includes(user.email)) {
         await db.user.upsert({
@@ -255,7 +108,5 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       return true;
     },
   },
-  session: {
-    strategy: "jwt",
-  },
+  session: { strategy: "jwt" },
 });

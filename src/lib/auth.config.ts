@@ -1,7 +1,6 @@
 import type { NextAuthConfig, Session } from "next-auth";
 import Google from "next-auth/providers/google";
 
-// Edge-safe config — sem imports de Node.js (Prisma, db, etc.)
 export const authConfig: NextAuthConfig = {
   providers: [
     Google({
@@ -9,25 +8,19 @@ export const authConfig: NextAuthConfig = {
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
   ],
-  session: {
-    strategy: "jwt",
-  },
-  pages: {
-    signIn: "/login",
-  },
+  session: { strategy: "jwt" },
+  pages: { signIn: "/login" },
   callbacks: {
-    // Session callback edge-safe: mapeia campos do token para session.user
-    // Necessário para que o middleware consiga ler campos customizados
     session({ session, token }) {
       if (session.user) {
         session.user.id = (token.id as string) ?? "";
         session.user.role = (token.role as string) ?? "MEMBER";
-        session.user.establishmentId = (token.establishmentId as string) ?? "";
+        session.user.establishmentId = (token.campaignId as string) ?? "andre-santos-2026";
         session.user.isSuperAdmin = Boolean(token.isSuperAdmin);
-        session.user.needsChurchSelection = Boolean(token.needsChurchSelection);
-        session.user.suspended = Boolean(token.suspended);
+        session.user.needsChurchSelection = false;
+        session.user.suspended = false;
         session.user.isImpersonating = Boolean(token.isImpersonating);
-        session.user.noEstablishment = Boolean(token.noEstablishment);
+        session.user.noEstablishment = false;
       }
       return session;
     },
@@ -37,58 +30,17 @@ export const authConfig: NextAuthConfig = {
       const isLoggedIn = !!session?.user;
       const { pathname } = nextUrl;
 
-      const isLoginPage = pathname === "/login";
-      const isLandingPage = pathname === "/";
-      const isCadastro = pathname.startsWith("/cadastro");
-      const isApiAuth = pathname.startsWith("/api/auth");
-      const isApiOnboarding = pathname === "/api/onboarding";
-      const isApiStripeWebhook = pathname === "/api/stripe/webhook";
-      const isApiJoin = pathname.startsWith("/api/join");
-      const isApiCron = pathname.startsWith("/api/cron/");
-      const isSelectChurch = pathname === "/select-church";
-      const isSuspendedPage = pathname === "/suspended";
-      const isEntrar = pathname.startsWith("/entrar");
-      const isSemAcesso = pathname === "/sem-acesso";
-      const isCheckin = pathname.startsWith("/checkin");
-      const isVisita = pathname.startsWith("/visita");
-      const isApiVisitors = pathname === "/api/visitors";
+      const isPublic =
+        pathname === "/" ||
+        pathname === "/login" ||
+        pathname.startsWith("/api/auth") ||
+        pathname.startsWith("/api/cron/") ||
+        pathname.startsWith("/api/join") ||
+        pathname === "/api/onboarding";
 
-      // Rotas sempre públicas
-      if (isApiAuth || isApiOnboarding || isApiStripeWebhook || isApiJoin || isApiCron ||
-          isLandingPage || isCadastro || isSuspendedPage || isEntrar || isSemAcesso ||
-          isVisita || isApiVisitors) {
-        return true;
-      }
-
-      // Não logado: redireciona para login (preserva ?c= do join code)
-      if (!isLoggedIn && !isLoginPage && !isSelectChurch) {
-        return Response.redirect(new URL("/login", nextUrl));
-      }
-
-      // Logado na página de login: redireciona para dashboard
-      if (isLoggedIn && isLoginPage) {
-        return Response.redirect(new URL("/dashboard", nextUrl));
-      }
-
-      // Chamadas de API nunca devem ser redirecionadas para páginas
-      const isApiRoute = pathname.startsWith("/api/");
-      if (isApiRoute) return true;
-
-      // Estabelecimento suspenso
-      if (isLoggedIn && session?.user?.suspended && !session?.user?.isSuperAdmin) {
-        return Response.redirect(new URL("/suspended", nextUrl));
-      }
-
-      // Sem nenhum estabelecimento vinculado → tela de entrada
-      // Checkin não redireciona: a API trata o caso de membro não encontrado
-      if (isLoggedIn && session?.user?.noEstablishment && !isSelectChurch && !isCheckin && !isVisita) {
-        return Response.redirect(new URL("/entrar", nextUrl));
-      }
-
-      // Precisa escolher congregação (múltiplos vínculos)
-      if (isLoggedIn && session?.user?.needsChurchSelection && !isSelectChurch && !isCheckin && !isVisita) {
-        return Response.redirect(new URL("/select-church", nextUrl));
-      }
+      if (isPublic) return true;
+      if (!isLoggedIn) return Response.redirect(new URL("/login", nextUrl));
+      if (isLoggedIn && pathname === "/login") return Response.redirect(new URL("/dashboard", nextUrl));
 
       return true;
     },

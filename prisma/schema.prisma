@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -9,73 +6,20 @@ datasource db {
   provider = "postgresql"
 }
 
-// ─── Multi-Tenant: Estabelecimentos ──────────────────────────────────────────
-
-model Establishment {
-  id                   String    @id
-  name                 String
-  logoBase64           String?   @db.Text
-  pixKey               String?
-  suspended            Boolean   @default(false)
-  plan                 String    @default("FREE")
-  adminNote            String?
-  joinCode             String?   @unique  // código de acesso para membros entrarem
-  // Stripe
-  stripeCustomerId     String?   @unique
-  stripeSubscriptionId String?   @unique
-  stripePriceId        String?
-  stripeStatus         String?   // trialing | active | past_due | canceled | incomplete
-  trialEndsAt          DateTime?
-  currentPeriodEnd     DateTime?
-  cancelAtPeriodEnd    Boolean   @default(false)
-  createdAt            DateTime  @default(now())
-  updatedAt            DateTime  @updatedAt
-  // Nurturing
-  nurturingStep        Int       @default(0) // 0=nenhum, 1=dia1, 2=dia3, 3=dia7
-
-  userEstablishments UserEstablishment[]
-  broadcasts         Broadcast[]
-  visitors           Visitor[]
+model Campaign {
+  id         String   @id
+  name       String
+  logoBase64 String?  @db.Text
+  joinCode   String?  @unique
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  collaborators  Collaborator[]
+  zones          Zone[]
+  broadcasts     Broadcast[]
+  whatsappGroups WhatsAppGroup[]
+  events         Event[]
+  userCampaigns  UserCampaign[]
 }
-
-// ─── Comunicados ──────────────────────────────────────────────────────────────
-
-model Broadcast {
-  id              String   @id @default(cuid())
-  establishmentId String
-  title           String
-  message         String   @db.Text
-  audience        String   // "ALL" | "MINISTRY:{id}"
-  sentCount       Int      @default(0)
-  createdBy       String?  // userId
-  createdAt       DateTime @default(now())
-
-  establishment Establishment @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
-
-  @@index([establishmentId])
-}
-
-// ─── Multi-Tenant: Vínculo Usuário ↔ Congregação ─────────────────────────────
-
-model UserEstablishment {
-  id              String        @id @default(cuid())
-  userId          String?
-  pendingEmail    String?       // pre-autoriza e-mail antes do 1º login
-  establishmentId String
-  role            Role          @default(MEMBER)
-  inviteStatus    InviteStatus  @default(PENDING)
-  invitedBy       String?       // userId de quem convidou
-  invitedAt       DateTime      @default(now())
-  acceptedAt      DateTime?
-
-  user          User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  establishment Establishment @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, establishmentId])
-  @@index([pendingEmail])
-}
-
-// ─── Auth (NextAuth) ───────────────────────────────────────────────────────
 
 model Account {
   id                String  @id @default(cuid())
@@ -90,9 +34,7 @@ model Account {
   scope             String?
   id_token          String? @db.Text
   session_state     String?
-
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
   @@unique([provider, providerAccountId])
 }
 
@@ -105,25 +47,44 @@ model Session {
 }
 
 model User {
-  id              String    @id @default(cuid())
-  name            String?
-  email           String?   @unique
-  emailVerified   DateTime?
-  image           String?
-  role            Role      @default(MEMBER)
-  establishmentId String    @default("default-porto-belo")
-  createdAt       DateTime  @default(now())
-
-  accounts           Account[]
-  sessions           Session[]
-  notifications      Notification[]
-  member             Member?
-  userEstablishments UserEstablishment[]
-
-  @@index([establishmentId])
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  role          Role      @default(MEMBER)
+  campaignId    String    @default("andre-santos-2026")
+  createdAt     DateTime  @default(now())
+  accounts      Account[]
+  sessions      Session[]
+  notifications Notification[]
+  collaborator  Collaborator?
+  userCampaigns UserCampaign[]
+  @@index([campaignId])
 }
 
-// ─── Notificações ─────────────────────────────────────────────────────────
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+  @@unique([identifier, token])
+}
+
+model UserCampaign {
+  id           String       @id @default(cuid())
+  userId       String?
+  pendingEmail String?
+  campaignId   String
+  role         Role         @default(MEMBER)
+  inviteStatus InviteStatus @default(PENDING)
+  invitedBy    String?
+  invitedAt    DateTime     @default(now())
+  acceptedAt   DateTime?
+  user     User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  @@unique([userId, campaignId])
+  @@index([pendingEmail])
+}
 
 model Notification {
   id        String   @id @default(cuid())
@@ -134,357 +95,171 @@ model Notification {
   read      Boolean  @default(false)
   link      String?
   createdAt DateTime @default(now())
-
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-model VerificationToken {
-  identifier String
-  token      String   @unique
-  expires    DateTime
-
-  @@unique([identifier, token])
-}
-
-// ─── Membros do grupo ─────────────────────────────────────────────────────
-
-model Member {
-  id              String       @id @default(cuid())
-  name            String
-  email           String?
-  birthday        String?
-  phone           String?
-  photoUrl        String?
-  status          MemberStatus @default(ACTIVE)
-  notes           String?
-  deletedAt       DateTime?
-  establishmentId String       @default("default-porto-belo")
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
-
-  userId    String?  @unique
-  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
-
-  attendances      Attendance[]
-  offerings        Offering[]
-  shirtOrders      ShirtOrder[]
-  ministryMembers  MinistryMember[]
-  rsvps            EventRsvp[]
-
-  @@index([establishmentId])
+model Collaborator {
+  id           String             @id @default(cuid())
+  campaignId   String
+  name         String
+  email        String?
+  phone        String?
+  city         String?
+  neighborhood String?
+  campaignRole CollaboratorRole   @default(VOLUNTARIO)
+  status       CollaboratorStatus @default(ACTIVE)
+  notes        String?
+  photoUrl     String?
+  birthday     String?
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+  userId String? @unique
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+  zones          ZoneCollaborator[]
+  whatsappGroups WhatsAppGroupMember[]
+  attendances    Attendance[]
+  rsvps          EventRsvp[]
+  @@index([campaignId])
   @@index([email])
+  @@index([city])
 }
 
-// ─── Eventos ──────────────────────────────────────────────────────────────
+model Zone {
+  id         String   @id @default(cuid())
+  campaignId String
+  name       String
+  type       ZoneType @default(MUNICIPAL)
+  parentId   String?
+  color      String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  campaign       Campaign           @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  parent         Zone?              @relation("ZoneHierarchy", fields: [parentId], references: [id])
+  children       Zone[]             @relation("ZoneHierarchy")
+  collaborators  ZoneCollaborator[]
+  whatsappGroups WhatsAppGroup[]
+  events         Event[]
+  @@index([campaignId])
+  @@index([parentId])
+}
+
+model ZoneCollaborator {
+  id             String   @id @default(cuid())
+  zoneId         String
+  collaboratorId String
+  isLeader       Boolean  @default(false)
+  joinedAt       DateTime @default(now())
+  zone         Zone         @relation(fields: [zoneId], references: [id], onDelete: Cascade)
+  collaborator Collaborator @relation(fields: [collaboratorId], references: [id], onDelete: Cascade)
+  @@unique([zoneId, collaboratorId])
+  @@index([collaboratorId])
+}
+
+model WhatsAppGroup {
+  id          String   @id @default(cuid())
+  campaignId  String
+  zoneId      String?
+  name        String
+  inviteLink  String?
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  campaign Campaign             @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  zone     Zone?                @relation(fields: [zoneId], references: [id], onDelete: SetNull)
+  members  WhatsAppGroupMember[]
+  @@index([campaignId])
+  @@index([zoneId])
+}
+
+model WhatsAppGroupMember {
+  id             String   @id @default(cuid())
+  groupId        String
+  collaboratorId String
+  addedAt        DateTime @default(now())
+  group        WhatsAppGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  collaborator Collaborator  @relation(fields: [collaboratorId], references: [id], onDelete: Cascade)
+  @@unique([groupId, collaboratorId])
+  @@index([collaboratorId])
+}
 
 model Event {
-  id              String    @id @default(cuid())
-  title           String
-  type            EventType
-  date            DateTime
-  location        String?
-  notes           String?
-  establishmentId String    @default("default-porto-belo")
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-
+  id                    String            @id @default(cuid())
+  campaignId            String
+  zoneId                String?
+  title                 String
+  type                  CampaignEventType @default(REUNIAO)
+  date                  DateTime
+  location              String?
+  notes                 String?
+  googleCalendarEventId String?
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+  campaign    Campaign     @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  zone        Zone?        @relation(fields: [zoneId], references: [id], onDelete: SetNull)
   attendances Attendance[]
-  offerings   Offering[]
   rsvps       EventRsvp[]
-  visitors    Visitor[]
-  ministryId  String?
-  ministry    Ministry? @relation(fields: [ministryId], references: [id], onDelete: SetNull)
-
-  @@index([establishmentId])
-  @@index([ministryId])
+  @@index([campaignId])
+  @@index([zoneId])
   @@index([date])
 }
-
-// ─── RSVP de Eventos ──────────────────────────────────────────────────────────
-
-model EventRsvp {
-  id        String   @id @default(cuid())
-  eventId   String
-  memberId  String
-  createdAt DateTime @default(now())
-
-  event  Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  member Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
-
-  @@unique([eventId, memberId])
-}
-
-// ─── Chamada ──────────────────────────────────────────────────────────────
 
 model Attendance {
-  id            String           @id @default(cuid())
-  eventId       String
-  memberId      String
-  status        AttendanceStatus @default(ABSENT)
-  justification String?
-  createdAt     DateTime         @default(now())
-
-  event  Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  member Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
-
-  @@unique([eventId, memberId])
-  @@index([memberId])
+  id             String           @id @default(cuid())
+  eventId        String
+  collaboratorId String
+  status         AttendanceStatus @default(ABSENT)
+  justification  String?
+  createdAt      DateTime         @default(now())
+  event        Event        @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  collaborator Collaborator @relation(fields: [collaboratorId], references: [id], onDelete: Cascade)
+  @@unique([eventId, collaboratorId])
+  @@index([collaboratorId])
 }
 
-// ─── Financeiro ───────────────────────────────────────────────────────────
-
-model Offering {
-  id              String        @id @default(cuid())
-  memberId        String
-  eventId         String?
-  amount          Float
-  method          PaymentMethod @default(CASH)
-  notes           String?
-  date            DateTime      @default(now())
-  establishmentId String        @default("default-porto-belo")
-  createdAt       DateTime      @default(now())
-  bankAccountId   String?
-
-  member      Member       @relation(fields: [memberId], references: [id], onDelete: Cascade)
-  event       Event?       @relation(fields: [eventId], references: [id], onDelete: SetNull)
-  ministryId  String?
-  ministry    Ministry?    @relation(fields: [ministryId], references: [id], onDelete: SetNull)
-  bankAccount BankAccount? @relation("OfferingBankAccount", fields: [bankAccountId], references: [id], onDelete: SetNull)
-
-  @@index([establishmentId])
-  @@index([ministryId])
-  @@index([bankAccountId])
-  @@index([date])
+model EventRsvp {
+  id             String   @id @default(cuid())
+  eventId        String
+  collaboratorId String
+  createdAt      DateTime @default(now())
+  event        Event        @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  collaborator Collaborator @relation(fields: [collaboratorId], references: [id], onDelete: Cascade)
+  @@unique([eventId, collaboratorId])
 }
 
-// ─── Despesas ─────────────────────────────────────────────────────────────
-
-model Expense {
-  id              String          @id @default(cuid())
-  description     String
-  amount          Float
-  category        ExpenseCategory @default(OUTRO)
-  date            DateTime        @default(now())
-  notes           String?
-  establishmentId String          @default("default-porto-belo")
-  ministryId      String?
-  ministry        Ministry?       @relation(fields: [ministryId], references: [id], onDelete: SetNull)
-  createdAt       DateTime        @default(now())
-  bankAccountId   String?
-  bankAccount     BankAccount?    @relation("ExpenseBankAccount", fields: [bankAccountId], references: [id], onDelete: SetNull)
-
-  @@index([establishmentId])
-  @@index([ministryId])
-  @@index([bankAccountId])
+model Broadcast {
+  id         String   @id @default(cuid())
+  campaignId String
+  title      String
+  message    String   @db.Text
+  audience   String
+  sentCount  Int      @default(0)
+  createdBy  String?
+  createdAt  DateTime @default(now())
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  @@index([campaignId])
 }
-
-// ─── Contas Bancárias / Caixas ────────────────────────────────────────────
-
-model BankAccount {
-  id              String   @id @default(cuid())
-  name            String
-  description     String?
-  isDefault       Boolean  @default(false)
-  establishmentId String   @default("default-porto-belo")
-  createdAt       DateTime @default(now())
-
-  offerings Offering[] @relation("OfferingBankAccount")
-  expenses  Expense[]  @relation("ExpenseBankAccount")
-
-  @@index([establishmentId])
-}
-
-// ─── Configurações globais ────────────────────────────────────────────────
 
 model Settings {
-  id         String   @id @default("singleton")
-  churchName String   @default("Porto Belo")
-  logoBase64 String?  @db.Text
-  updatedAt  DateTime @updatedAt
+  id           String   @id @default("singleton")
+  campaignName String   @default("Base Andre Santos")
+  logoBase64   String?  @db.Text
+  updatedAt    DateTime @updatedAt
 }
 
-// ─── Permissões por Role ───────────────────────────────────────────────────
-
-model RolePermission {
-  id              String           @id @default(cuid())
-  role            Role
-  module          PermissionModule
-  action          PermissionAction
-  granted         Boolean          @default(false)
-  establishmentId String           @default("default-porto-belo")
-  updatedAt       DateTime         @updatedAt
-  updatedBy       String?
-
-  @@unique([role, module, action, establishmentId])
-  @@index([establishmentId])
+model AuditLog {
+  id        String   @id @default(cuid())
+  action    String
+  actorId   String
+  targetId  String?
+  metadata  Json?
+  createdAt DateTime @default(now())
+  @@index([actorId])
+  @@index([createdAt])
 }
-
-// ─── Ministérios ──────────────────────────────────────────────────────────
-
-model Ministry {
-  id              String   @id @default(cuid())
-  name            String
-  description     String?
-  color           String?
-  establishmentId String   @default("default-porto-belo")
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  members   MinistryMember[]
-  events    Event[]
-  offerings Offering[]
-  expenses  Expense[]
-
-  @@index([establishmentId])
-}
-
-model MinistryMember {
-  id         String       @id @default(cuid())
-  ministryId String
-  memberId   String
-  role       MinistryRole @default(MEMBER)
-  joinedAt   DateTime     @default(now())
-
-  ministry Ministry @relation(fields: [ministryId], references: [id], onDelete: Cascade)
-  member   Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
-
-  @@unique([ministryId, memberId])
-}
-
-// ─── Congressos e Camisetas ───────────────────────────────────────────────
-
-model Congress {
-  id              String         @id @default(cuid())
-  name            String
-  date            DateTime
-  location        String?
-  description     String?
-  status          CongressStatus @default(OPEN)
-  shirtArtUrl     String?
-  shirtPricing    Json?
-  establishmentId String         @default("default-porto-belo")
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
-
-  shirtOrders ShirtOrder[]
-
-  @@index([establishmentId])
-}
-
-model ShirtOrder {
-  id                     String           @id @default(cuid())
-  congressId             String
-  memberId               String
-  size                   ShirtSize
-  quantity               Int              @default(1)
-  color                  String?
-  paidAmount             Decimal          @default(0) @db.Decimal(10, 2)
-  totalAmount            Decimal          @db.Decimal(10, 2)
-  paymentMethod          PaymentMethod?
-  paymentDate            DateTime?
-  status                 ShirtOrderStatus @default(PENDING)
-  deliveredAt            DateTime?
-  notes                  String?
-  paymentProofUrl        String?
-  paymentProofUploadedAt DateTime?
-  createdAt              DateTime         @default(now())
-  updatedAt              DateTime         @updatedAt
-  createdBy              String?
-
-  congress Congress @relation(fields: [congressId], references: [id], onDelete: Cascade)
-  member   Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
-
-  @@unique([congressId, memberId])
-}
-
-// ─── Enums ────────────────────────────────────────────────────────────────
 
 enum Role {
   ADMIN
   LEADER
-  MEMBER
-}
-
-enum MemberStatus {
-  ACTIVE
-  INACTIVE
-}
-
-enum EventType {
-  CULTO
-  ENSAIO
-  REUNIAO
-  RETIRO
-  OUTRO
-}
-
-enum AttendanceStatus {
-  PRESENT
-  ABSENT
-  JUSTIFIED
-}
-
-enum PaymentMethod {
-  CASH
-  PIX
-}
-
-enum ExpenseCategory {
-  MATERIAL
-  TRANSPORTE
-  ALIMENTACAO
-  EVENTO
-  OUTRO
-}
-
-enum PermissionModule {
-  MEMBERS
-  ATTENDANCE
-  FINANCIAL
-  REPORTS
-  EVENTS
-  BIRTHDAYS
-  SHIRTS
-  SETTINGS
-  USERS
-  MINISTRIES
-}
-
-enum PermissionAction {
-  VIEW
-  CREATE
-  EDIT
-  DELETE
-  EXPORT
-}
-
-enum ShirtSize {
-  PP
-  P
-  M
-  G
-  GG
-  XG
-  XXG
-}
-
-enum ShirtOrderStatus {
-  PENDING
-  PAID
-  PRODUCTION
-  READY
-  DELIVERED
-  CANCELLED
-}
-
-enum CongressStatus {
-  OPEN
-  CLOSED
-  FINISHED
-}
-
-enum MinistryRole {
-  COORDINATOR
   MEMBER
 }
 
@@ -493,35 +268,36 @@ enum InviteStatus {
   ACCEPTED
 }
 
-// ─── Visitantes ──────────────────────────────────────────────────────────────
-
-model Visitor {
-  id              String    @id @default(cuid())
-  establishmentId String
-  eventId         String?
-  name            String
-  phone           String?
-  email           String?
-  notes           String?
-  createdAt       DateTime  @default(now())
-
-  establishment Establishment @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
-  event         Event?        @relation(fields: [eventId], references: [id], onDelete: SetNull)
-
-  @@index([establishmentId])
-  @@index([eventId])
+enum CollaboratorRole {
+  COORD_GERAL
+  COORD_REGIONAL
+  LIDER_MUNICIPAL
+  LIDER_BAIRRO
+  VOLUNTARIO
 }
 
-// ─── Audit Log ────────────────────────────────────────────────────────────────
+enum CollaboratorStatus {
+  ACTIVE
+  INACTIVE
+}
 
-model AuditLog {
-  id              String   @id @default(cuid())
-  action          String   // ex: "IMPERSONATE_START", "IMPERSONATE_END"
-  actorId         String   // userId de quem realizou a ação
-  targetId        String?  // userId ou establishmentId alvo
-  metadata        Json?    // dados adicionais (IP, etc.)
-  createdAt       DateTime @default(now())
+enum ZoneType {
+  REGIONAL
+  MUNICIPAL
+  BAIRRO
+}
 
-  @@index([actorId])
-  @@index([createdAt])
+enum CampaignEventType {
+  REUNIAO
+  COMICIO
+  PANFLETAGEM
+  TREINAMENTO
+  VISITA
+  OUTRO
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  JUSTIFIED
 }

@@ -4,265 +4,88 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import {
-  Users,
-  User,
-  Cake,
-  DollarSign,
-  ClipboardList,
-  LayoutDashboard,
-  Settings,
-  LogOut,
-  Menu,
-  X,
-  BarChart2,
-  Shirt,
-  Cross,
-  Church,
-  Shield,
-  ChevronsUpDown,
-  Check,
-  Megaphone,
-  UserPlus,
+  LayoutDashboard, Users, MapPin, MessageCircle, Calendar,
+  Megaphone, Settings, LogOut, Menu, X, Shield, Star,
 } from "lucide-react";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { useState, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { usePermissions } from "@/context/permissions-context";
-import type { PermissionModule } from "@/types/permissions";
 
-const navItems: {
-  href: string;
-  icon: React.ElementType;
-  label: string;
-  module?: PermissionModule;
-  adminOnly?: boolean;
-  superAdminOnly?: boolean;
-}[] = [
-  { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-  { href: "/portal", icon: User, label: "Meu Portal" },
-  { href: "/membros", icon: Users, label: "Membros", module: "MEMBERS" },
-  { href: "/ministerios", icon: Church, label: "Ministérios", module: "MINISTRIES" },
-  { href: "/aniversarios", icon: Cake, label: "Aniversários", module: "BIRTHDAYS" },
-  { href: "/chamada", icon: ClipboardList, label: "Chamada", module: "ATTENDANCE" },
-  { href: "/relatorios", icon: BarChart2, label: "Relatórios", module: "REPORTS" },
-  { href: "/financeiro", icon: DollarSign, label: "Financeiro", module: "FINANCIAL" },
-  { href: "/camisetas", icon: Shirt, label: "Camisetas", module: "SHIRTS" },
-  { href: "/visitantes", icon: UserPlus, label: "Visitantes", module: "MEMBERS" },
-  { href: "/comunicados", icon: Megaphone, label: "Comunicados", adminOnly: true },
-  { href: "/configuracoes", icon: Settings, label: "Configurações", adminOnly: true },
-  { href: "/super-admin", icon: Shield, label: "Super Admin", superAdminOnly: true },
-];
+const navItems = [
+  { href: "/dashboard",     icon: LayoutDashboard, label: "Dashboard"      },
+  { href: "/colaboradores", icon: Users,            label: "Colaboradores"  },
+  { href: "/zonas",         icon: MapPin,           label: "Zonas"          },
+  { href: "/grupos",        icon: MessageCircle,    label: "Grupos WhatsApp"},
+  { href: "/agenda",        icon: Calendar,         label: "Agenda"         },
+  { href: "/comunicados",   icon: Megaphone,        label: "Comunicados", adminOnly: true },
+  { href: "/configuracoes", icon: Settings,         label: "Configurações", adminOnly: true },
+  { href: "/super-admin",   icon: Shield,           label: "Super Admin", superAdminOnly: true },
+] as const;
 
-type EstablishmentOption = { establishmentId: string; name: string; logoBase64?: string | null; role: string };
+const ROLE_LABEL: Record<string, string> = {
+  ADMIN: "Administrador",
+  LEADER: "Coordenador",
+  MEMBER: "Colaborador",
+};
 
 export function Sidebar() {
   const pathname = usePathname();
-  const { data: session, update } = useSession();
+  const { data: session } = useSession();
   const [mobileOpen, setMobileOpen] = useState(false);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
 
-  const [churchName, setChurchName] = useState("");
-  const [churchLogoUrl, setChurchLogoUrl] = useState("");
-  const [logoError, setLogoError] = useState(false);
-
-  // Seletor de estabelecimento
-  const [establishments, setEstablishments] = useState<EstablishmentOption[]>([]);
-  const [switcherOpen, setSwitcherOpen] = useState(false);
-  const [switching, setSwitching] = useState(false);
-
-  // Retorna foco ao botão de menu quando o mobile sidebar fecha
   useEffect(() => {
     if (!mobileOpen) menuButtonRef.current?.focus();
   }, [mobileOpen]);
 
-  const currentEstablishmentId = session?.user?.establishmentId;
-
-  useEffect(() => {
-    // Aplica nome local imediatamente para evitar exibir o estabelecimento errado
-    if (currentEstablishmentId && establishments.length > 0) {
-      const local = establishments.find((e) => e.establishmentId === currentEstablishmentId);
-      if (local) {
-        setChurchName(local.name);
-        setChurchLogoUrl(local.logoBase64 ?? "");
-        setLogoError(false);
-      }
-    }
-    fetch("/api/settings")
-      .then((r) => r.json())
-      .then((s) => {
-        if (s.churchName) setChurchName(s.churchName);
-        if (s.logoBase64 !== undefined) setChurchLogoUrl(s.logoBase64 ?? "");
-        setLogoError(false);
-      })
-      .catch(() => {});
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentEstablishmentId]); // re-busca quando troca de estabelecimento
-
-  useEffect(() => {
-    function onSettingsUpdated(e: Event) {
-      const detail = (e as CustomEvent).detail;
-      if (detail.churchName) setChurchName(detail.churchName);
-      setChurchLogoUrl(detail.logoBase64 ?? "");
-      setLogoError(false);
-    }
-    window.addEventListener("church-settings-updated", onSettingsUpdated);
-    return () => window.removeEventListener("church-settings-updated", onSettingsUpdated);
-  }, []);
-
-  useEffect(() => {
-    fetch("/api/user/establishments")
-      .then((r) => r.json())
-      .then((data) => { if (Array.isArray(data)) setEstablishments(data); })
-      .catch(() => {});
-  }, []);
-
-  async function switchEstablishment(eid: string) {
-    if (eid === session?.user?.establishmentId || switching) return;
-    setSwitching(true);
-    setSwitcherOpen(false);
-    const newSession = await update({ selectedEstablishmentId: eid });
-    // Verifica se a troca realmente aconteceu
-    if (newSession?.user?.establishmentId !== eid) {
-      setSwitching(false);
-      return;
-    }
-    // Reload completo garante que todos os dados (server + client) sejam do novo estabelecimento
-    window.location.href = "/dashboard";
-  }
-
-  const initials = session?.user?.name
-    ?.split(" ")
-    .slice(0, 2)
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase() ?? "U";
-
   const isAdmin = session?.user?.role === "ADMIN";
   const isSuperAdmin = (session?.user as { isSuperAdmin?: boolean })?.isSuperAdmin ?? false;
-  const { canView } = usePermissions();
+
   const visibleItems = navItems.filter((item) => {
-    if (item.superAdminOnly && !isSuperAdmin) return false;
-    if (item.adminOnly && !isAdmin) return false;
-    if (item.module && !canView(item.module)) return false;
+    if ("superAdminOnly" in item && item.superAdminOnly && !isSuperAdmin) return false;
+    if ("adminOnly" in item && item.adminOnly && !isAdmin) return false;
     return true;
   });
 
-  const roleLabel =
-    session?.user?.role === "ADMIN"
-      ? "Administrador"
-      : session?.user?.role === "LEADER"
-      ? "Líder"
-      : "Membro";
+  const initials = session?.user?.name
+    ?.split(" ").slice(0, 2).map((n) => n[0]).join("").toUpperCase() ?? "U";
 
   return (
     <>
-      {/* Mobile toggle */}
       <button
         ref={menuButtonRef}
         className="fixed top-4 left-4 z-50 lg:hidden glass-card border border-white/[0.07] p-2 rounded-lg cursor-pointer"
         onClick={() => setMobileOpen((o) => !o)}
         aria-label={mobileOpen ? "Fechar menu" : "Abrir menu"}
-        aria-expanded={mobileOpen}
-        aria-controls="mobile-sidebar"
       >
-        {mobileOpen ? (
-          <X className="w-5 h-5 text-primary" />
-        ) : (
-          <Menu className="w-5 h-5 text-primary" />
-        )}
+        {mobileOpen ? <X className="w-5 h-5 text-primary" /> : <Menu className="w-5 h-5 text-primary" />}
       </button>
 
-      {/* Overlay */}
       {mobileOpen && (
-        <div
-          className="fixed inset-0 bg-black/60 z-40 lg:hidden"
-          onClick={() => setMobileOpen(false)}
-        />
+        <div className="fixed inset-0 bg-black/60 z-40 lg:hidden" onClick={() => setMobileOpen(false)} />
       )}
 
-      {/* Sidebar */}
       <aside
-        id="mobile-sidebar"
         className={cn(
           "fixed top-0 left-0 h-full w-64 z-40 flex flex-col transition-transform duration-300",
-          "border-r border-white/[0.06]",
-          "bg-slate-950/80",
+          "border-r border-white/[0.06] bg-slate-950/90",
           "lg:translate-x-0",
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         )}
-        style={{
-          backdropFilter: "blur(20px)",
-          WebkitBackdropFilter: "blur(20px)",
-        }}
+        style={{ backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)" }}
       >
-        {/* Header / Switcher */}
-        <div className="p-4 border-b border-white/[0.06] relative">
-          <button
-            onClick={() => establishments.length > 1 && setSwitcherOpen((o) => !o)}
-            disabled={switching}
-            className={cn(
-              "w-full flex items-center gap-3 rounded-xl px-2 py-2 transition-all",
-              establishments.length > 1
-                ? "hover:bg-white/[0.04] cursor-pointer"
-                : "cursor-default"
-            )}
-          >
-            {churchLogoUrl && !logoError ? (
-              <img
-                src={churchLogoUrl}
-                alt="Logo"
-                className="w-9 h-9 rounded-lg object-cover border border-primary/30 flex-shrink-0"
-                onError={() => setLogoError(true)}
-              />
-            ) : (
-              <div className="w-9 h-9 rounded-lg bg-primary/10 border border-primary/25 flex items-center justify-center animate-glow-pulse flex-shrink-0">
-                <Cross className="w-4 h-4 text-primary" />
-              </div>
-            )}
-            <div className="flex-1 min-w-0 text-left">
-              <p className="text-[10px] tracking-[3px] uppercase text-primary/70">Ovile</p>
-              <p className="text-sm font-bold text-foreground truncate">
-                {switching ? "Trocando..." : (churchName || "...")}
-              </p>
+        {/* Header */}
+        <div className="p-4 border-b border-white/[0.06]">
+          <div className="flex items-center gap-3 px-2 py-2">
+            <div className="w-9 h-9 rounded-lg bg-primary/10 border border-primary/25 flex items-center justify-center animate-glow-pulse flex-shrink-0">
+              <Star className="w-4 h-4 text-primary fill-primary/30" />
             </div>
-            {establishments.length > 1 && (
-              <ChevronsUpDown className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
-            )}
-          </button>
-
-          {/* Dropdown */}
-          {switcherOpen && establishments.length > 1 && (
-            <>
-              <div className="fixed inset-0 z-30" onClick={() => setSwitcherOpen(false)} />
-              <div className="absolute left-4 right-4 top-full mt-1 z-40 rounded-xl border border-white/[0.10] bg-slate-900 shadow-xl overflow-hidden">
-                {establishments.map((e) => {
-                  const active = e.establishmentId === session?.user?.establishmentId;
-                  return (
-                    <button
-                      key={e.establishmentId}
-                      onClick={() => switchEstablishment(e.establishmentId)}
-                      className={cn(
-                        "w-full flex items-center gap-3 px-4 py-3 text-left text-sm transition-colors",
-                        active
-                          ? "bg-primary/10 text-primary"
-                          : "text-muted-foreground hover:text-foreground hover:bg-white/[0.04]"
-                      )}
-                    >
-                      <div className="w-6 h-6 rounded-md bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0 overflow-hidden">
-                        {e.logoBase64
-                          ? <img src={e.logoBase64} alt="" className="w-full h-full object-cover" />
-                          : <Cross className="w-3 h-3 text-primary" />
-                        }
-                      </div>
-                      <span className="flex-1 truncate font-medium">{e.name}</span>
-                      {active && <Check className="w-3.5 h-3.5 flex-shrink-0" />}
-                    </button>
-                  );
-                })}
-              </div>
-            </>
-          )}
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] tracking-[3px] uppercase text-primary/70">Campanha 2026</p>
+              <p className="text-sm font-bold text-foreground truncate">Base André Santos</p>
+            </div>
+          </div>
         </div>
 
         {/* Nav */}
@@ -277,7 +100,7 @@ export function Sidebar() {
                 className={cn(
                   "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200",
                   active
-                    ? "bg-primary/10 text-primary border border-primary/20 shadow-[inset_3px_0_0_#6366F1]"
+                    ? "bg-primary/10 text-primary border border-primary/20 shadow-[inset_3px_0_0_#d4af37]"
                     : "text-muted-foreground hover:text-foreground hover:bg-white/[0.04] hover:translate-x-0.5"
                 )}
               >
@@ -299,15 +122,11 @@ export function Sidebar() {
           <div className="flex items-center gap-3 mb-3">
             <Avatar className="w-8 h-8">
               <AvatarImage src={session?.user?.image ?? ""} referrerPolicy="no-referrer" />
-              <AvatarFallback className="bg-primary/10 text-primary text-xs">
-                {initials}
-              </AvatarFallback>
+              <AvatarFallback className="bg-primary/10 text-primary text-xs">{initials}</AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-foreground truncate">
-                {session?.user?.name ?? "Usuário"}
-              </p>
-              <p className="text-[10px] text-muted-foreground truncate">{roleLabel}</p>
+              <p className="text-xs font-medium text-foreground truncate">{session?.user?.name ?? "Usuário"}</p>
+              <p className="text-[10px] text-muted-foreground">{ROLE_LABEL[session?.user?.role ?? ""] ?? "Colaborador"}</p>
             </div>
           </div>
           <button
