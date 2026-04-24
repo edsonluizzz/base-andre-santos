@@ -1,7 +1,8 @@
-# Tropa — CRM de Campanha André Santos 2026
+# Base André Santos — CRM de Campanha 2026
 
 > **Estado dinâmico do projeto:** `.claude/estado.md` (ler ao iniciar, atualizar ao encerrar).
 > **Plano:** `../Andre Santos/PLAN-TROPA.md`
+> **GitHub:** https://github.com/edsonluizzz/base-andre-santos
 > **Comando de saída:** Ao ouvir "encerre e atualize", atualizar `.claude/estado.md`, commit e push.
 
 ## AI Preferences
