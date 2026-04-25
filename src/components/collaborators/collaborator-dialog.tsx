@@ -16,9 +16,27 @@ const ROLES = [
   { value: "VOLUNTARIO", label: "Voluntário" },
 ];
 
+const PROFILES = [
+  { value: "APOIADOR", label: "Apoiador" },
+  { value: "PASTOR", label: "Pastor" },
+  { value: "PRESIDENTE_ASSOCIACAO", label: "Pres. Associação" },
+  { value: "LIDER_POLITICO", label: "Líder Político" },
+  { value: "VEREADOR", label: "Vereador" },
+  { value: "EMPRESARIO", label: "Empresário" },
+  { value: "LIDERANCA_COMUNITARIA", label: "Liderança Comunit." },
+];
+
+const SUPPORT_STATUSES = [
+  { value: "NEUTRO", label: "Neutro" },
+  { value: "CONFIRMADO", label: "Confirmado" },
+  { value: "NEGOCIANDO", label: "Negociando" },
+  { value: "ADVERSARIO", label: "Adversário" },
+];
+
 type Collaborator = {
   id?: string; name?: string; email?: string; phone?: string; city?: string;
-  neighborhood?: string; campaignRole?: string; status?: string; notes?: string; birthday?: string;
+  neighborhood?: string; campaignRole?: string; status?: string; notes?: string;
+  birthday?: string; profile?: string; supportStatus?: string;
 };
 
 type Props = {
@@ -29,15 +47,15 @@ type Props = {
 };
 
 export function CollaboratorDialog({ open, onOpenChange, collaborator, onSuccess }: Props) {
-  const [form, setForm] = useState({ name: "", email: "", phone: "", city: "", neighborhood: "", campaignRole: "VOLUNTARIO", status: "ACTIVE", notes: "", birthday: "" });
+  const [form, setForm] = useState({ name: "", email: "", phone: "", city: "", neighborhood: "", campaignRole: "VOLUNTARIO", status: "ACTIVE", notes: "", birthday: "", profile: "APOIADOR", supportStatus: "NEUTRO" });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
     if (collaborator) {
-      setForm({ name: collaborator.name ?? "", email: collaborator.email ?? "", phone: collaborator.phone ?? "", city: collaborator.city ?? "", neighborhood: collaborator.neighborhood ?? "", campaignRole: collaborator.campaignRole ?? "VOLUNTARIO", status: collaborator.status ?? "ACTIVE", notes: collaborator.notes ?? "", birthday: collaborator.birthday ?? "" });
+      setForm({ name: collaborator.name ?? "", email: collaborator.email ?? "", phone: collaborator.phone ?? "", city: collaborator.city ?? "", neighborhood: collaborator.neighborhood ?? "", campaignRole: collaborator.campaignRole ?? "VOLUNTARIO", status: collaborator.status ?? "ACTIVE", notes: collaborator.notes ?? "", birthday: collaborator.birthday ?? "", profile: collaborator.profile ?? "APOIADOR", supportStatus: collaborator.supportStatus ?? "NEUTRO" });
     } else {
-      setForm({ name: "", email: "", phone: "", city: "", neighborhood: "", campaignRole: "VOLUNTARIO", status: "ACTIVE", notes: "", birthday: "" });
+      setForm({ name: "", email: "", phone: "", city: "", neighborhood: "", campaignRole: "VOLUNTARIO", status: "ACTIVE", notes: "", birthday: "", profile: "APOIADOR", supportStatus: "NEUTRO" });
     }
     setError("");
   }, [collaborator, open]);
@@ -103,6 +121,20 @@ export function CollaboratorDialog({ open, onOpenChange, collaborator, onSuccess
             <div>
               <Label>Aniversário</Label>
               <Input value={form.birthday} onChange={(e) => set("birthday", e.target.value)} type="date" />
+            </div>
+            <div>
+              <Label>Perfil</Label>
+              <Select value={form.profile} onValueChange={(v) => set("profile", v)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>{PROFILES.map((p) => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Apoio ao André</Label>
+              <Select value={form.supportStatus} onValueChange={(v) => set("supportStatus", v)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>{SUPPORT_STATUSES.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}</SelectContent>
+              </Select>
             </div>
             <div className="col-span-2">
               <Label>Observações</Label>

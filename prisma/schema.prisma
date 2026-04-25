@@ -113,7 +113,9 @@ model Collaborator {
   birthday     String?
   createdAt    DateTime           @default(now())
   updatedAt    DateTime           @updatedAt
-  source   String?
+  source        String?
+  profile       CollaboratorProfile @default(APOIADOR)
+  supportStatus SupportStatus       @default(NEUTRO)
   userId String? @unique
   user     User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
   campaign Campaign  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
@@ -303,4 +305,21 @@ enum AttendanceStatus {
   PRESENT
   ABSENT
   JUSTIFIED
+}
+
+enum CollaboratorProfile {
+  PASTOR
+  PRESIDENTE_ASSOCIACAO
+  LIDER_POLITICO
+  VEREADOR
+  EMPRESARIO
+  LIDERANCA_COMUNITARIA
+  APOIADOR
+}
+
+enum SupportStatus {
+  CONFIRMADO
+  NEGOCIANDO
+  NEUTRO
+  ADVERSARIO
 }

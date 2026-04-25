@@ -30,7 +30,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     if (!["ADMIN", "LEADER"].includes(session.user.role ?? "")) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
     const body = await req.json();
-    const { name, email, phone, city, neighborhood, campaignRole, status, notes, birthday, zoneIds } = body;
+    const { name, email, phone, city, neighborhood, campaignRole, status, notes, birthday, zoneIds, profile, supportStatus } = body;
 
     const existing = await db.collaborator.findFirst({ where: { id: params.id, campaignId: CID } });
     if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -49,6 +49,8 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
         neighborhood: neighborhood?.trim() || null,
         ...(campaignRole && { campaignRole }),
         ...(status && { status }),
+        ...(profile && { profile }),
+        ...(supportStatus && { supportStatus }),
         notes: notes?.trim() || null,
         birthday: birthday || null,
         ...(zoneIds !== undefined && {
