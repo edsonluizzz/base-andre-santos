@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Users, Plus, Search, Filter, Phone, MapPin, ChevronDown } from "lucide-react";
+import { Users, Plus, Search, Filter, Phone, MapPin, ChevronDown, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CollaboratorDialog } from "@/components/collaborators/collaborator-dialog";
 import { DeleteConfirm } from "@/components/collaborators/delete-confirm";
+import { ImportCsvDialog } from "@/components/collaborators/import-csv-dialog";
 
 const ROLE_LABEL: Record<string, string> = {
   COORD_GERAL: "Coord. Geral",
@@ -48,6 +49,7 @@ export default function ColaboradoresPage() {
   const [filterRole, setFilterRole] = useState("ALL");
   const [filterStatus, setFilterStatus] = useState("ACTIVE");
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [editing, setEditing] = useState<Collaborator | null>(null);
   const [deleting, setDeleting] = useState<Collaborator | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -109,9 +111,14 @@ export default function ColaboradoresPage() {
           <h1 className="text-2xl font-bold text-foreground">Colaboradores</h1>
           <p className="text-sm text-muted-foreground mt-1">{collaborators.length} encontrado{collaborators.length !== 1 ? "s" : ""}</p>
         </div>
-        <Button onClick={openNew} className="bg-primary text-primary-foreground hover:bg-primary/90 gap-2">
-          <Plus className="w-4 h-4" /> Novo Colaborador
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={() => setImportOpen(true)} variant="outline" className="gap-2 hidden sm:flex">
+            <Upload className="w-4 h-4" /> Importar CSV
+          </Button>
+          <Button onClick={openNew} className="bg-primary text-primary-foreground hover:bg-primary/90 gap-2">
+            <Plus className="w-4 h-4" /> Novo Colaborador
+          </Button>
+        </div>
       </div>
 
       {/* Filtros */}
@@ -267,6 +274,12 @@ export default function ColaboradoresPage() {
         onOpenChange={setDialogOpen}
         collaborator={editing}
         onSuccess={handleSuccess}
+      />
+
+      <ImportCsvDialog
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        onSuccess={() => { fetchCollaborators(); toast.success("CSV importado com sucesso!"); }}
       />
 
       {deleting && (
