@@ -1,5 +1,4 @@
 import NextAuth from "next-auth";
-import { PrismaAdapter } from "@auth/prisma-adapter";
 import { db } from "./db";
 import { authConfig } from "./auth.config";
 
@@ -7,7 +6,6 @@ const CAMPAIGN_ID = "andre-santos-2026";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   ...authConfig,
-  adapter: PrismaAdapter(db),
   callbacks: {
     async jwt({ token, user, trigger, session }) {
       try {
@@ -97,23 +95,39 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       return session;
     },
 
-    async signIn({ user }) {
+    async signIn({ user, profile }) {
       try {
-        // Garante que a Campaign existe (idempotente)
+        // Garante Campaign
         await db.campaign.upsert({
           where: { id: CAMPAIGN_ID },
           update: {},
           create: { id: CAMPAIGN_ID, name: "Base André Santos", joinCode: "andre2026" },
         });
 
+        if (!user.email) return true;
+
         const adminEmails = (process.env.ADMIN_EMAILS ?? "").split(",").map((e) => e.trim());
-        if (user.email && adminEmails.includes(user.email)) {
-          await db.user.upsert({
-            where: { email: user.email },
-            update: { role: "ADMIN" },
-            create: { email: user.email, name: user.name ?? "", role: "ADMIN" },
-          }).catch(() => {});
-        }
+        const isAdmin = adminEmails.includes(user.email);
+
+        // Upsert do usuário (sem PrismaAdapter, fazemos manualmente)
+        const dbUser = await db.user.upsert({
+          where: { email: user.email },
+          update: {
+            name: user.name ?? undefined,
+            image: (profile?.picture as string) ?? user.image ?? undefined,
+            ...(isAdmin ? { role: "ADMIN" } : {}),
+          },
+          create: {
+            email: user.email,
+            name: user.name ?? "",
+            image: (profile?.picture as string) ?? user.image ?? "",
+            role: isAdmin ? "ADMIN" : "MEMBER",
+            campaignId: CAMPAIGN_ID,
+          },
+        });
+
+        // Sincroniza o id do NextAuth com o id do banco
+        user.id = dbUser.id;
       } catch (err) {
         console.error("[signIn] erro:", err);
       }
