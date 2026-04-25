@@ -30,7 +30,13 @@ const ROLE_LABEL: Record<string, string> = {
   MEMBER: "Colaborador",
 };
 
-export function Sidebar() {
+export function Sidebar({
+  serverRole,
+  serverIsSuperAdmin,
+}: {
+  serverRole?: string;
+  serverIsSuperAdmin?: boolean;
+}) {
   const pathname = usePathname();
   const { data: session } = useSession();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -40,8 +46,9 @@ export function Sidebar() {
     if (!mobileOpen) menuButtonRef.current?.focus();
   }, [mobileOpen]);
 
-  const isAdmin = session?.user?.role === "ADMIN";
-  const isSuperAdmin = (session?.user as { isSuperAdmin?: boolean })?.isSuperAdmin ?? false;
+  // Usa props do servidor (confiáveis) — cai de volta no useSession apenas se não passado
+  const isAdmin = serverRole === "ADMIN" || session?.user?.role === "ADMIN";
+  const isSuperAdmin = serverIsSuperAdmin ?? (session?.user as { isSuperAdmin?: boolean })?.isSuperAdmin ?? false;
 
   const visibleItems = navItems.filter((item) => {
     if ("superAdminOnly" in item && item.superAdminOnly && !isSuperAdmin) return false;
