@@ -33,6 +33,8 @@ export const authConfig: NextAuthConfig = {
       const isPublic =
         pathname === "/" ||
         pathname === "/login" ||
+        pathname.startsWith("/cadastro") ||
+        pathname.startsWith("/api/public/") ||
         pathname.startsWith("/api/auth") ||
         pathname.startsWith("/api/cron/") ||
         pathname.startsWith("/api/join") ||

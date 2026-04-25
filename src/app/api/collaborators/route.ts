@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
     const collaborators = await db.collaborator.findMany({
       where: {
         campaignId: CID,
-        status: status === "ALL" ? undefined : (status as "ACTIVE" | "INACTIVE"),
+        status: status === "ALL" ? undefined : (status as "LEAD" | "ACTIVE" | "INACTIVE"),
         ...(role && { campaignRole: role as never }),
         ...(city && { city }),
         ...(search && {
