@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Map, Phone, Search, Filter, RefreshCw, CheckCircle2, Clock, Minus, XCircle } from "lucide-react";
+import { Map, Phone, Search, Filter, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -28,11 +28,11 @@ const PROFILE_COLOR: Record<string, string> = {
   APOIADOR: "bg-slate-500/15 text-slate-400 border-slate-500/30",
 };
 
-const SUPPORT_CONFIG: Record<string, { label: string; color: string; dot: string; icon: React.ElementType }> = {
-  CONFIRMADO: { label: "Confirmado", color: "bg-green-500/15 text-green-400 border-green-500/30", dot: "bg-green-500", icon: CheckCircle2 },
-  NEGOCIANDO: { label: "Negociando", color: "bg-yellow-500/15 text-yellow-400 border-yellow-500/30", dot: "bg-yellow-500", icon: Clock },
-  NEUTRO: { label: "Neutro", color: "bg-slate-500/15 text-slate-400 border-slate-500/30", dot: "bg-slate-500", icon: Minus },
-  ADVERSARIO: { label: "Adversário", color: "bg-red-500/15 text-red-400 border-red-500/30", dot: "bg-red-500", icon: XCircle },
+const SUPPORT_CONFIG: Record<string, { label: string; color: string; dot: string }> = {
+  CONFIRMADO: { label: "Confirmado", color: "bg-green-500/15 text-green-400 border-green-500/30", dot: "bg-green-500" },
+  NEGOCIANDO: { label: "Negociando", color: "bg-yellow-500/15 text-yellow-400 border-yellow-500/30", dot: "bg-yellow-500" },
+  NEUTRO: { label: "Neutro", color: "bg-slate-500/15 text-slate-400 border-slate-500/30", dot: "bg-slate-500" },
+  ADVERSARIO: { label: "Adversário", color: "bg-red-500/15 text-red-400 border-red-500/30", dot: "bg-red-500" },
 };
 
 type Person = {

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { CollaboratorRole, CollaboratorStatus } from "@prisma/client";
 
 const CID = "andre-santos-2026";
 
@@ -18,8 +19,8 @@ export async function GET(req: NextRequest) {
     const collaborators = await db.collaborator.findMany({
       where: {
         campaignId: CID,
-        status: status === "ALL" ? undefined : (status as "LEAD" | "ACTIVE" | "INACTIVE"),
-        ...(role && { campaignRole: role as never }),
+        status: status === "ALL" ? undefined : (status as CollaboratorStatus),
+        ...(role && { campaignRole: role as CollaboratorRole }),
         ...(city && { city }),
         ...(search && {
           OR: [

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { CollaboratorProfile, SupportStatus } from "@prisma/client";
 
 const CID = "andre-santos-2026";
 
@@ -18,9 +19,9 @@ export async function GET(req: NextRequest) {
       where: {
         campaignId: CID,
         status: { not: "INACTIVE" },
-        profile: profile ? (profile as never) : { not: "APOIADOR" },
+        profile: profile ? (profile as CollaboratorProfile) : { not: CollaboratorProfile.APOIADOR },
         ...(city && { city: { contains: city, mode: "insensitive" } }),
-        ...(supportStatus && { supportStatus: supportStatus as never }),
+        ...(supportStatus && { supportStatus: supportStatus as SupportStatus }),
       },
       select: {
         id: true,
