@@ -13,7 +13,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           .split(",").map((e) => e.trim()).filter(Boolean);
 
         if (user?.email && user.id) {
-          token.id = user.id;
+          // user.id aqui é o sub do OAuth (Google), não o UUID do banco — buscar pelo email
+          const dbUser = await db.user.findUnique({ where: { email: user.email }, select: { id: true } });
+          const userId = dbUser?.id ?? user.id;
+
+          token.id = userId;
           token.image = user.image ?? token.image;
           token.isSuperAdmin = superAdminEmails.includes(user.email);
 
@@ -23,35 +27,43 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           for (const p of pending) {
             await db.userCampaign.update({
               where: { id: p.id },
-              data: { userId: user.id, pendingEmail: null, inviteStatus: "ACCEPTED", acceptedAt: new Date() },
+              data: { userId, pendingEmail: null, inviteStatus: "ACCEPTED", acceptedAt: new Date() },
             }).catch(() => {});
-            const existingCollab = await db.collaborator.findUnique({ where: { userId: user.id } });
+            const existingCollab = await db.collaborator.findUnique({ where: { userId } });
             if (!existingCollab) {
               await db.collaborator.create({
-                data: { name: user.name ?? user.email ?? "Colaborador", campaignId: p.campaignId, userId: user.id },
+                data: { name: user.name ?? user.email ?? "Colaborador", campaignId: p.campaignId, userId },
               }).catch(() => {});
             }
           }
 
           const collabsByEmail = await db.collaborator.findMany({ where: { email: user.email, userId: null } });
           for (const c of collabsByEmail) {
-            await db.collaborator.update({ where: { id: c.id }, data: { userId: user.id } }).catch(() => {});
+            await db.collaborator.update({ where: { id: c.id }, data: { userId } }).catch(() => {});
           }
 
           const uc = await db.userCampaign.findUnique({
-            where: { userId_campaignId: { userId: user.id, campaignId: CAMPAIGN_ID } },
+            where: { userId_campaignId: { userId, campaignId: CAMPAIGN_ID } },
           });
 
+          const adminEmails = (process.env.ADMIN_EMAILS ?? "").split(",").map((e) => e.trim()).filter(Boolean);
+          const isAdmin = adminEmails.includes(user.email);
+
           if (!uc) {
+            const newRole = isAdmin ? "ADMIN" : "MEMBER";
             await db.userCampaign.create({
-              data: { userId: user.id, campaignId: CAMPAIGN_ID, role: "MEMBER", inviteStatus: "ACCEPTED", acceptedAt: new Date() },
+              data: { userId, campaignId: CAMPAIGN_ID, role: newRole, inviteStatus: "ACCEPTED", acceptedAt: new Date() },
             }).catch(() => {});
-            token.role = "MEMBER";
+            token.role = newRole;
             token.campaignId = CAMPAIGN_ID;
           } else {
-            token.role = uc.role;
+            const effectiveRole = isAdmin && uc.role !== "ADMIN" ? "ADMIN" : uc.role;
+            if (isAdmin && uc.role !== "ADMIN") {
+              await db.userCampaign.update({ where: { userId_campaignId: { userId, campaignId: CAMPAIGN_ID } }, data: { role: "ADMIN" } }).catch(() => {});
+            }
+            token.role = effectiveRole;
             token.campaignId = uc.campaignId;
-            await db.user.update({ where: { id: user.id }, data: { role: uc.role, campaignId: uc.campaignId } }).catch(() => {});
+            await db.user.update({ where: { id: userId }, data: { role: effectiveRole, campaignId: uc.campaignId } }).catch(() => {});
           }
         }
 
