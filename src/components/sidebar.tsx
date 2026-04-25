@@ -134,7 +134,7 @@ export function Sidebar({
             </Avatar>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-medium text-foreground truncate">{session?.user?.name ?? "Usuário"}</p>
-              <p className="text-[10px] text-muted-foreground">{ROLE_LABEL[session?.user?.role ?? ""] ?? "Colaborador"}</p>
+              <p className="text-[10px] text-muted-foreground">{ROLE_LABEL[serverRole ?? session?.user?.role ?? ""] ?? "Colaborador"}</p>
             </div>
           </div>
           <button
