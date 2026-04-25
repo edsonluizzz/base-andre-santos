@@ -128,6 +128,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         // Sincroniza o id do NextAuth com o id do banco
         user.id = dbUser.id;
+
+        // Garante que UserCampaign reflita o role correto (admin nunca deve ficar como MEMBER)
+        await db.userCampaign.upsert({
+          where: { userId_campaignId: { userId: dbUser.id, campaignId: CAMPAIGN_ID } },
+          update: { ...(isAdmin ? { role: "ADMIN" } : {}), inviteStatus: "ACCEPTED" },
+          create: { userId: dbUser.id, campaignId: CAMPAIGN_ID, role: isAdmin ? "ADMIN" : "MEMBER", inviteStatus: "ACCEPTED", acceptedAt: new Date() },
+        }).catch(() => {});
       } catch (err) {
         console.error("[signIn] erro:", err);
       }
