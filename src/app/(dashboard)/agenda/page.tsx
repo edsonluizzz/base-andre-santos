@@ -119,13 +119,13 @@ export default function AgendaPage() {
             <div><Label>Título *</Label><Input value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} placeholder="Ex: Reunião de líderes" /></div>
             <div className="grid grid-cols-2 gap-3">
               <div><Label>Tipo</Label>
-                <Select value={form.type} onValueChange={(v) => setForm((f) => ({ ...f, type: v }))}>
+                <Select value={form.type} onValueChange={(v) => setForm((f) => ({ ...f, type: v ?? f.type }))}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>{Object.entries(TYPE_LABEL).map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div><Label>Zona</Label>
-                <Select value={form.zoneId} onValueChange={(v) => setForm((f) => ({ ...f, zoneId: v }))}>
+                <Select value={form.zoneId} onValueChange={(v) => setForm((f) => ({ ...f, zoneId: v ?? f.zoneId }))}>
                   <SelectTrigger><SelectValue placeholder="Nenhuma" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="">Nenhuma</SelectItem>

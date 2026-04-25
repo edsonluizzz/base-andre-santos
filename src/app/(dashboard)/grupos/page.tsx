@@ -128,7 +128,7 @@ export default function GruposPage() {
             <div><Label>Nome *</Label><Input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} placeholder="Ex: Líderes Curitiba" /></div>
             <div><Label>Link de Convite</Label><Input value={form.inviteLink} onChange={(e) => setForm((f) => ({ ...f, inviteLink: e.target.value }))} placeholder="https://chat.whatsapp.com/..." /></div>
             <div><Label>Zona (opcional)</Label>
-              <Select value={form.zoneId} onValueChange={(v) => setForm((f) => ({ ...f, zoneId: v }))}>
+              <Select value={form.zoneId} onValueChange={(v) => setForm((f) => ({ ...f, zoneId: v ?? f.zoneId }))}>
                 <SelectTrigger><SelectValue placeholder="Nenhuma" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="">Nenhuma</SelectItem>

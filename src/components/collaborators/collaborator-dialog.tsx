@@ -42,7 +42,7 @@ export function CollaboratorDialog({ open, onOpenChange, collaborator, onSuccess
     setError("");
   }, [collaborator, open]);
 
-  const set = (k: string, v: string) => setForm((f) => ({ ...f, [k]: v }));
+  const set = (k: string, v: string | null) => { if (v !== null) setForm((f) => ({ ...f, [k]: v })); };
 
   async function handleSave() {
     if (!form.name.trim()) { setError("Nome obrigatório"); return; }

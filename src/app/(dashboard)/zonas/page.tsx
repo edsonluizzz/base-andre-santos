@@ -143,7 +143,7 @@ export default function ZonasPage() {
           <div className="space-y-4">
             <div><Label>Nome *</Label><Input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} placeholder="Ex: Curitiba, Região Metropolitana" /></div>
             <div><Label>Tipo</Label>
-              <Select value={form.type} onValueChange={(v) => setForm((f) => ({ ...f, type: v }))}>
+              <Select value={form.type} onValueChange={(v) => setForm((f) => ({ ...f, type: v ?? f.type }))}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="REGIONAL">Regional</SelectItem>
@@ -153,7 +153,7 @@ export default function ZonasPage() {
               </Select>
             </div>
             <div><Label>Zona Pai (opcional)</Label>
-              <Select value={form.parentId} onValueChange={(v) => setForm((f) => ({ ...f, parentId: v }))}>
+              <Select value={form.parentId} onValueChange={(v) => setForm((f) => ({ ...f, parentId: v ?? f.parentId }))}>
                 <SelectTrigger><SelectValue placeholder="Nenhuma" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="">Nenhuma</SelectItem>
