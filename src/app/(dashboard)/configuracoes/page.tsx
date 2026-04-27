@@ -1,27 +1,38 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Settings, Upload, Key, X } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
+import { Settings, Upload, Key, X, Calendar, CheckCircle2, AlertCircle, RefreshCw, Unlink } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Image from "next/image";
 
-export default function ConfiguracoesPage() {
+function ConfiguracoesContent() {
+  const searchParams = useSearchParams();
   const [campaignName, setCampaignName] = useState("");
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [logoBase64, setLogoBase64] = useState<string | null | undefined>(undefined);
   const [joinCode, setJoinCode] = useState("");
   const [saving, setSaving] = useState(false);
+  const [gcalConnected, setGcalConnected] = useState(false);
+  const [gcalSyncing, setGcalSyncing] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    const gcalParam = searchParams.get("gcal");
+    if (gcalParam === "connected") { toast.success("Google Calendar conectado!"); setGcalConnected(true); }
+    if (gcalParam === "error") toast.error("Erro ao conectar Google Calendar");
+    if (gcalParam === "no_refresh_token") toast.error("Autorize o acesso offline ao Google Calendar");
+
     fetch("/api/settings")
       .then((r) => r.json())
       .then((s) => {
         if (s.campaignName) setCampaignName(s.campaignName);
         if (s.logoBase64) setLogoPreview(s.logoBase64);
+        if (s.googleRefreshToken) setGcalConnected(true);
       })
       .catch(() => {});
 
@@ -29,7 +40,7 @@ export default function ConfiguracoesPage() {
       .then((r) => r.json())
       .then((c) => { if (c.joinCode) setJoinCode(c.joinCode); })
       .catch(() => {});
-  }, []);
+  }, [searchParams]);
 
   function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -152,9 +163,71 @@ export default function ConfiguracoesPage() {
         </div>
       </div>
 
+      {/* Google Calendar */}
+      <div className="glass-card rounded-2xl p-6 border border-white/[0.08] space-y-4">
+        <div className="flex items-center gap-2 mb-2">
+          <Calendar className="w-4 h-4 text-primary" />
+          <h2 className="text-sm font-semibold">Google Calendar</h2>
+        </div>
+        {gcalConnected ? (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 text-sm text-green-400">
+              <CheckCircle2 className="w-4 h-4" />
+              <span>Calendário conectado</span>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" disabled={gcalSyncing} className="gap-1.5 text-xs"
+                onClick={async () => {
+                  setGcalSyncing(true);
+                  const res = await fetch("/api/google-calendar/sync", { method: "POST" });
+                  setGcalSyncing(false);
+                  if (res.ok) {
+                    const d = await res.json();
+                    toast.success(`Sync concluído: ${d.pushed} enviados, ${d.pulled} importados`);
+                  } else toast.error("Erro ao sincronizar");
+                }}
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${gcalSyncing ? "animate-spin" : ""}`} />
+                {gcalSyncing ? "Sincronizando..." : "Sincronizar agora"}
+              </Button>
+              <Button variant="ghost" size="sm" className="gap-1.5 text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
+                onClick={async () => {
+                  const res = await fetch("/api/google-calendar/sync", { method: "DELETE" });
+                  if (res.ok) { setGcalConnected(false); toast.success("Calendário desconectado"); }
+                  else toast.error("Erro ao desconectar");
+                }}
+              >
+                <Unlink className="w-3.5 h-3.5" /> Desconectar
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <AlertCircle className="w-4 h-4" />
+              <span>Não conectado</span>
+            </div>
+            <Button variant="outline" size="sm" className="gap-2 text-xs" onClick={() => { window.location.href = "/api/google-calendar/connect"; }}>
+              <Calendar className="w-3.5 h-3.5" /> Conectar Google Calendar
+            </Button>
+            <p className="text-[11px] text-muted-foreground">
+              Sincroniza os eventos da agenda com o Google Calendar da conta autorizada.
+            </p>
+          </div>
+        )}
+      </div>
+
       <Button onClick={handleSave} disabled={saving} className="bg-primary text-primary-foreground">
         {saving ? "Salvando..." : "Salvar alterações"}
       </Button>
     </div>
+  );
+}
+
+export default function ConfiguracoesPage() {
+  return (
+    <Suspense fallback={null}>
+      <ConfiguracoesContent />
+    </Suspense>
   );
 }

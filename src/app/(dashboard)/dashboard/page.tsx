@@ -39,10 +39,10 @@ export default async function DashboardPage() {
   const session = await auth();
   const userId = session?.user?.id;
 
-  const [total, byRole, topCities, groups, zones, upcomingEvents, myTotal, myActive, myTier] = await Promise.all([
+  const [total, byRole, cityRaw, groups, zones, upcomingEvents, myTotal, myActive, myTier] = await Promise.all([
     db.collaborator.count({ where: { campaignId: CID, status: "ACTIVE" } }),
     db.collaborator.groupBy({ by: ["campaignRole"], where: { campaignId: CID, status: "ACTIVE" }, _count: { id: true } }),
-    db.collaborator.groupBy({ by: ["city"], where: { campaignId: CID, status: "ACTIVE", city: { not: null } }, _count: { id: true }, orderBy: { _count: { id: "desc" } }, take: 6 }),
+    db.collaborator.findMany({ where: { campaignId: CID, status: "ACTIVE", city: { not: null } }, select: { city: true, supportStatus: true, campaignRole: true } }),
     db.whatsAppGroup.count({ where: { campaignId: CID } }),
     db.zone.count({ where: { campaignId: CID } }),
     db.event.findMany({ where: { campaignId: CID, date: { gte: new Date() } }, orderBy: { date: "asc" }, take: 5, include: { zone: { select: { name: true } } } }),
@@ -50,6 +50,18 @@ export default async function DashboardPage() {
     userId ? db.collaborator.count({ where: { campaignId: CID, registeredById: userId, status: "ACTIVE" } }) : Promise.resolve(0),
     userId ? db.userCampaign.findFirst({ where: { userId, campaignId: CID }, select: { tier: true } }) : Promise.resolve(null),
   ]);
+
+  // Agregar cobertura por cidade
+  type CityData = { total: number; confirmados: number; hasLeader: boolean };
+  const cityAgg: Record<string, CityData> = {};
+  for (const c of cityRaw) {
+    const city = c.city!;
+    if (!cityAgg[city]) cityAgg[city] = { total: 0, confirmados: 0, hasLeader: false };
+    cityAgg[city].total++;
+    if (c.supportStatus === "CONFIRMADO") cityAgg[city].confirmados++;
+    if (["COORD_GERAL","COORD_REGIONAL","LIDER_MUNICIPAL","LIDER_BAIRRO"].includes(c.campaignRole)) cityAgg[city].hasLeader = true;
+  }
+  const topCities = Object.entries(cityAgg).sort((a, b) => b[1].total - a[1].total).slice(0, 12);
 
   const roleMap = Object.fromEntries(byRole.map((r) => [r.campaignRole, r._count.id]));
   const tier = myTier?.tier ?? "APOIADOR";
@@ -194,17 +206,41 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {/* Top municípios */}
+      {/* Cobertura por município */}
       {topCities.length > 0 && (
         <div className="glass-card rounded-2xl p-6 border border-white/[0.08]">
-          <h2 className="text-sm font-semibold text-foreground mb-5">Colaboradores por Município</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-            {topCities.map((c) => (
-              <div key={c.city} className="text-center p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]">
-                <p className="text-xl font-bold text-primary">{c._count.id}</p>
-                <p className="text-xs text-muted-foreground truncate mt-1">{c.city}</p>
-              </div>
-            ))}
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="text-sm font-semibold text-foreground">Cobertura por Município</h2>
+            <Link href="/relatorio" className="text-xs text-primary hover:text-primary/80">Ver relatório completo</Link>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+            {topCities.map(([city, data]) => {
+              const pct = data.total > 0 ? Math.round((data.confirmados / data.total) * 100) : 0;
+              const borderColor = data.hasLeader ? "border-green-500/25" : "border-white/[0.06]";
+              return (
+                <div key={city} className={`p-3 rounded-xl bg-white/[0.03] border ${borderColor} space-y-2`}>
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs text-muted-foreground truncate flex-1">{city}</p>
+                    {data.hasLeader && <span className="w-1.5 h-1.5 rounded-full bg-green-500 shrink-0 ml-1" />}
+                  </div>
+                  <p className="text-xl font-bold text-primary">{data.total}</p>
+                  {data.total > 0 && (
+                    <div className="space-y-1">
+                      <div className="h-1 rounded-full bg-white/[0.06]">
+                        <div className="h-full bg-green-500/70 rounded-full" style={{ width: `${pct}%` }} />
+                      </div>
+                      {data.confirmados > 0 && (
+                        <p className="text-[10px] text-green-400">{data.confirmados} confirmado{data.confirmados !== 1 ? "s" : ""}</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          <div className="flex gap-4 mt-4 text-[10px] text-muted-foreground">
+            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-500 inline-block" />Com liderança</span>
+            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-slate-600 inline-block" />Sem liderança definida</span>
           </div>
         </div>
       )}

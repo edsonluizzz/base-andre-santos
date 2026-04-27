@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Calendar, Plus, MapPin, Clock } from "lucide-react";
+import { Calendar, Plus, MapPin, Clock, RefreshCw } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
@@ -25,6 +25,7 @@ export default function AgendaPage() {
   const [editing, setEditing] = useState<Event | null>(null);
   const [form, setForm] = useState({ title: "", type: "REUNIAO", date: "", time: "09:00", location: "", notes: "", zoneId: "" });
   const [saving, setSaving] = useState(false);
+  const [syncing, setSyncing] = useState(false);
 
   const fetchEvents = useCallback(async () => {
     setLoading(true);
@@ -79,9 +80,29 @@ export default function AgendaPage() {
           <h1 className="text-2xl font-bold text-foreground">Agenda</h1>
           <p className="text-sm text-muted-foreground mt-1">{upcoming.length} eventos futuros</p>
         </div>
-        <Button onClick={openNew} className="bg-primary text-primary-foreground hover:bg-primary/90 gap-2">
-          <Plus className="w-4 h-4" /> Novo Evento
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" disabled={syncing} className="gap-1.5 text-xs hidden sm:flex"
+            onClick={async () => {
+              setSyncing(true);
+              const res = await fetch("/api/google-calendar/sync", { method: "POST" });
+              setSyncing(false);
+              if (res.ok) {
+                const d = await res.json();
+                toast.success(`Sync: ${d.pushed} enviados, ${d.pulled} importados`);
+                fetchEvents();
+              } else {
+                const e = await res.json();
+                toast.error(e.error ?? "Erro ao sincronizar");
+              }
+            }}
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${syncing ? "animate-spin" : ""}`} />
+            {syncing ? "Sincronizando..." : "Google Calendar"}
+          </Button>
+          <Button onClick={openNew} className="bg-primary text-primary-foreground hover:bg-primary/90 gap-2">
+            <Plus className="w-4 h-4" /> Novo Evento
+          </Button>
+        </div>
       </div>
 
       {loading ? (

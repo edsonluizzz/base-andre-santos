@@ -250,10 +250,11 @@ model Broadcast {
 }
 
 model Settings {
-  id           String   @id @default("singleton")
-  campaignName String   @default("Base Andre Santos")
-  logoBase64   String?  @db.Text
-  updatedAt    DateTime @updatedAt
+  id                  String   @id @default("singleton")
+  campaignName        String   @default("Base Andre Santos")
+  logoBase64          String?  @db.Text
+  googleRefreshToken  String?  @db.Text
+  updatedAt           DateTime @updatedAt
 }
 
 model AuditLog {
