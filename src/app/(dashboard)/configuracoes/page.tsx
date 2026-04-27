@@ -79,7 +79,7 @@ export default function ConfiguracoesPage() {
     <div className="space-y-6 max-w-lg">
       <div>
         <h1 className="text-2xl font-bold text-foreground">Configurações</h1>
-        <p className="text-sm text-muted-foreground mt-1">Configurações gerais da campanha</p>
+        <p className="text-sm text-muted-foreground mt-1">Configurações gerais da base de apoio</p>
       </div>
 
       {/* Campanha */}

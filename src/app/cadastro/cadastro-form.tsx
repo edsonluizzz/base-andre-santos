@@ -109,9 +109,9 @@ export function CadastroForm() {
             </div>
           </div>
           <div>
-            <p className="text-xs tracking-[3px] uppercase" style={{ color: "rgba(212,175,55,0.7)" }}>Campanha 2026</p>
+            <p className="text-xs tracking-[3px] uppercase" style={{ color: "rgba(212,175,55,0.7)" }}>Base de Apoio 2026</p>
             <h1 className="text-2xl font-bold text-white mt-1">André Santos</h1>
-            <p className="text-slate-400 text-sm mt-1">Deputado Estadual — Paraná</p>
+            <p className="text-slate-400 text-sm mt-1">Pré-candidato a Deputado Estadual · PR</p>
           </div>
           <div className="rounded-2xl px-4 py-3" style={{ background: "rgba(212,175,55,0.08)", border: "1px solid rgba(212,175,55,0.15)" }}>
             <p className="text-sm font-medium" style={{ color: "#d4af37" }}>Faça parte da nossa base!</p>
@@ -226,7 +226,7 @@ export function CadastroForm() {
           </button>
 
           <p className="text-center text-xs text-slate-500">
-            Seus dados são usados exclusivamente pela equipe de campanha.
+            Seus dados são usados exclusivamente pela equipe de apoio.
           </p>
         </form>
       </div>

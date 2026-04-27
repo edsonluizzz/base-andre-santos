@@ -16,9 +16,9 @@ export default async function LoginPage() {
           </div>
         </div>
         <div>
-          <p className="text-xs tracking-[3px] uppercase text-primary/70 mb-1">Campanha 2026</p>
+          <p className="text-xs tracking-[3px] uppercase text-primary/70 mb-1">Base de Apoio 2026</p>
           <h1 className="text-2xl font-bold text-foreground">Base André Santos</h1>
-          <p className="text-sm text-muted-foreground mt-2">Sistema interno de gestão de campanha</p>
+          <p className="text-sm text-muted-foreground mt-2">Sistema interno de gestão da base de apoio</p>
         </div>
         <form action={async () => {
           "use server";
@@ -37,7 +37,7 @@ export default async function LoginPage() {
             Entrar com Google
           </button>
         </form>
-        <p className="text-xs text-muted-foreground">Acesso restrito à equipe da campanha</p>
+        <p className="text-xs text-muted-foreground">Acesso restrito à equipe de apoio</p>
       </div>
     </div>
   );

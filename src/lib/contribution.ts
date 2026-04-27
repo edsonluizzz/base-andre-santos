@@ -1,5 +1,5 @@
 export const CONTRIBUTION_OPTIONS = [
-  { value: "VOLUNTARIO_CAMPANHA", label: "Voluntário de campanha" },
+  { value: "VOLUNTARIO_CAMPANHA", label: "Voluntário de apoio" },
   { value: "DOADOR",              label: "Doador" },
   { value: "DIVULGADOR_REDES",    label: "Divulgar nas redes" },
   { value: "CABO_ELEITORAL",      label: "Cabo eleitoral" },

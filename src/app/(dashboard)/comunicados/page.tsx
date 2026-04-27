@@ -45,7 +45,7 @@ export default function ComunicadosPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Comunicados</h1>
-          <p className="text-sm text-muted-foreground mt-1">Registro de comunicações da campanha</p>
+          <p className="text-sm text-muted-foreground mt-1">Registro de comunicações da base de apoio</p>
         </div>
         <Button onClick={() => { setForm({ title: "", message: "", audience: "ALL" }); setDialogOpen(true); }} className="bg-primary text-primary-foreground hover:bg-primary/90 gap-2">
           <Plus className="w-4 h-4" /> Novo Comunicado
