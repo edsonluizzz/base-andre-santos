@@ -60,6 +60,7 @@ model User {
   notifications Notification[]
   collaborator  Collaborator?
   userCampaigns UserCampaign[]
+  registeredCollaborators Collaborator[] @relation("RegisteredCollaborators")
   @@index([campaignId])
 }
 
@@ -76,7 +77,8 @@ model UserCampaign {
   pendingEmail String?
   campaignId   String
   role         Role         @default(MEMBER)
-  inviteStatus InviteStatus @default(PENDING)
+  inviteStatus InviteStatus    @default(PENDING)
+  tier         CollaboratorTier @default(APOIADOR)
   invitedBy    String?
   invitedAt    DateTime     @default(now())
   acceptedAt   DateTime?
@@ -116,8 +118,11 @@ model Collaborator {
   source        String?
   profile       CollaboratorProfile @default(APOIADOR)
   supportStatus SupportStatus       @default(NEUTRO)
+  contributionTypes String[]
+  registeredById    String?
   userId String? @unique
-  user     User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  user         User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  registeredBy User?     @relation("RegisteredCollaborators", fields: [registeredById], references: [id], onDelete: SetNull)
   campaign Campaign  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
   zones          ZoneCollaborator[]
   whatsappGroups WhatsAppGroupMember[]
@@ -126,6 +131,7 @@ model Collaborator {
   @@index([campaignId])
   @@index([email])
   @@index([city])
+  @@index([registeredById])
 }
 
 model Zone {
@@ -322,4 +328,11 @@ enum SupportStatus {
   NEGOCIANDO
   NEUTRO
   ADVERSARIO
+}
+
+enum CollaboratorTier {
+  APOIADOR
+  ATIVISTA
+  LIDER_CELULA
+  COORDENADOR
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { recalcTier } from "@/lib/tier";
 import { CollaboratorRole, CollaboratorStatus } from "@prisma/client";
 
 const CID = "andre-santos-2026";
@@ -15,6 +16,7 @@ export async function GET(req: NextRequest) {
     const role = searchParams.get("role") ?? "";
     const city = searchParams.get("city") ?? "";
     const status = searchParams.get("status") ?? "ACTIVE";
+    const mine = searchParams.get("mine") === "true";
 
     const collaborators = await db.collaborator.findMany({
       where: {
@@ -22,6 +24,7 @@ export async function GET(req: NextRequest) {
         status: status === "ALL" ? undefined : (status as CollaboratorStatus),
         ...(role && { campaignRole: role as CollaboratorRole }),
         ...(city && { city }),
+        ...(mine && { registeredById: session.user.id }),
         ...(search && {
           OR: [
             { name: { contains: search, mode: "insensitive" } },
@@ -34,6 +37,7 @@ export async function GET(req: NextRequest) {
       include: {
         zones: { include: { zone: { select: { id: true, name: true } } } },
         whatsappGroups: { include: { group: { select: { id: true, name: true } } } },
+        registeredBy: { select: { name: true, email: true } },
       },
       orderBy: { name: "asc" },
     });
@@ -52,7 +56,7 @@ export async function POST(req: NextRequest) {
     if (!["ADMIN", "LEADER"].includes(session.user.role ?? "")) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
     const body = await req.json();
-    const { name, email, phone, city, neighborhood, campaignRole, notes, birthday, zoneIds } = body;
+    const { name, email, phone, city, neighborhood, campaignRole, notes, birthday, zoneIds, contributionTypes } = body;
     if (!name?.trim()) return NextResponse.json({ error: "Nome obrigatório" }, { status: 400 });
 
     const collaborator = await db.collaborator.create({
@@ -66,12 +70,20 @@ export async function POST(req: NextRequest) {
         campaignRole: campaignRole ?? "VOLUNTARIO",
         notes: notes?.trim() || null,
         birthday: birthday || null,
+        contributionTypes: Array.isArray(contributionTypes) ? contributionTypes : [],
+        registeredById: session.user.id,
         zones: zoneIds?.length
           ? { create: zoneIds.map((zid: string) => ({ zoneId: zid })) }
           : undefined,
       },
-      include: { zones: { include: { zone: { select: { id: true, name: true } } } } },
+      include: {
+        zones: { include: { zone: { select: { id: true, name: true } } } },
+        registeredBy: { select: { name: true, email: true } },
+      },
     });
+
+    // status padrão é ACTIVE → recalcula tier do registrador
+    await recalcTier(session.user.id).catch(() => {});
 
     return NextResponse.json(collaborator, { status: 201 });
   } catch (err) {

@@ -1,31 +1,33 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Users, Plus, Search, Filter, Phone, MapPin, ChevronDown, Upload } from "lucide-react";
+import { Users, Plus, Search, Filter, Phone, MapPin, ChevronDown, Upload, UserCheck } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CollaboratorDialog } from "@/components/collaborators/collaborator-dialog";
 import { DeleteConfirm } from "@/components/collaborators/delete-confirm";
 import { ImportCsvDialog } from "@/components/collaborators/import-csv-dialog";
+import { CONTRIBUTION_OPTIONS } from "@/lib/contribution";
 
 const ROLE_LABEL: Record<string, string> = {
-  COORD_GERAL: "Coord. Geral",
-  COORD_REGIONAL: "Coord. Regional",
+  COORD_GERAL:     "Coord. Geral",
+  COORD_REGIONAL:  "Coord. Regional",
   LIDER_MUNICIPAL: "Líder Municipal",
-  LIDER_BAIRRO: "Líder de Bairro",
-  VOLUNTARIO: "Voluntário",
+  LIDER_BAIRRO:    "Líder de Bairro",
+  VOLUNTARIO:      "Voluntário",
 };
 
 const ROLE_COLOR: Record<string, string> = {
-  COORD_GERAL: "bg-yellow-500/15 text-yellow-400 border-yellow-500/30",
-  COORD_REGIONAL: "bg-blue-500/15 text-blue-400 border-blue-500/30",
+  COORD_GERAL:     "bg-yellow-500/15 text-yellow-400 border-yellow-500/30",
+  COORD_REGIONAL:  "bg-blue-500/15 text-blue-400 border-blue-500/30",
   LIDER_MUNICIPAL: "bg-green-500/15 text-green-400 border-green-500/30",
-  LIDER_BAIRRO: "bg-purple-500/15 text-purple-400 border-purple-500/30",
-  VOLUNTARIO: "bg-slate-500/15 text-slate-400 border-slate-500/30",
+  LIDER_BAIRRO:    "bg-purple-500/15 text-purple-400 border-purple-500/30",
+  VOLUNTARIO:      "bg-slate-500/15 text-slate-400 border-slate-500/30",
 };
+
+const CONTRIBUTION_LABEL = Object.fromEntries(CONTRIBUTION_OPTIONS.map((o) => [o.value, o.label]));
 
 type Collaborator = {
   id: string;
@@ -38,6 +40,8 @@ type Collaborator = {
   status: string;
   notes?: string;
   birthday?: string;
+  contributionTypes?: string[];
+  registeredBy?: { name: string | null; email: string | null } | null;
   zones: { zone: { id: string; name: string } }[];
   whatsappGroups: { group: { id: string; name: string } }[];
 };
@@ -48,6 +52,7 @@ export default function ColaboradoresPage() {
   const [search, setSearch] = useState("");
   const [filterRole, setFilterRole] = useState("ALL");
   const [filterStatus, setFilterStatus] = useState("ACTIVE");
+  const [filterMine, setFilterMine] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [editing, setEditing] = useState<Collaborator | null>(null);
@@ -60,36 +65,25 @@ export default function ColaboradoresPage() {
     if (search) params.set("q", search);
     if (filterRole !== "ALL") params.set("role", filterRole);
     if (filterStatus !== "ALL") params.set("status", filterStatus);
+    if (filterMine) params.set("mine", "true");
     const res = await fetch(`/api/collaborators?${params.toString()}`);
     if (res.ok) setCollaborators(await res.json());
     setLoading(false);
-  }, [search, filterRole, filterStatus]);
+  }, [search, filterRole, filterStatus, filterMine]);
 
   useEffect(() => {
     const t = setTimeout(fetchCollaborators, 300);
     return () => clearTimeout(t);
   }, [fetchCollaborators]);
 
-  function openNew() {
-    setEditing(null);
-    setDialogOpen(true);
-  }
-
-  function openEdit(c: Collaborator) {
-    setEditing(c);
-    setDialogOpen(true);
-  }
+  function openNew() { setEditing(null); setDialogOpen(true); }
+  function openEdit(c: Collaborator) { setEditing(c); setDialogOpen(true); }
 
   async function handleDelete() {
     if (!deleting) return;
     const res = await fetch(`/api/collaborators/${deleting.id}`, { method: "DELETE" });
-    if (res.ok) {
-      setDeleting(null);
-      fetchCollaborators();
-      toast.success("Colaborador removido");
-    } else {
-      toast.error("Erro ao excluir");
-    }
+    if (res.ok) { setDeleting(null); fetchCollaborators(); toast.success("Colaborador removido"); }
+    else toast.error("Erro ao excluir");
   }
 
   function handleSuccess() {
@@ -122,15 +116,10 @@ export default function ColaboradoresPage() {
       </div>
 
       {/* Filtros */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
+      <div className="flex flex-col sm:flex-row gap-3 flex-wrap">
+        <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Buscar por nome, telefone, cidade..."
-            className="pl-9"
-          />
+          <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar por nome, telefone, cidade..." className="pl-9" />
         </div>
         <Select value={filterRole} onValueChange={setFilterRole}>
           <SelectTrigger className="w-full sm:w-44">
@@ -153,6 +142,17 @@ export default function ColaboradoresPage() {
             <SelectItem value="ALL">Todos</SelectItem>
           </SelectContent>
         </Select>
+        <button
+          onClick={() => setFilterMine((v) => !v)}
+          className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium border transition-colors ${
+            filterMine
+              ? "bg-primary/10 text-primary border-primary/30"
+              : "bg-white/[0.03] text-muted-foreground border-white/[0.08] hover:border-white/[0.15]"
+          }`}
+        >
+          <UserCheck className="w-3.5 h-3.5" />
+          Meus cadastros
+        </button>
       </div>
 
       {/* Lista */}
@@ -170,16 +170,11 @@ export default function ColaboradoresPage() {
         <div className="space-y-2">
           {collaborators.map((c) => (
             <div key={c.id} className="glass-card rounded-xl border border-white/[0.08] hover:border-primary/20 transition-colors">
-              <div
-                className="p-4 flex items-center gap-4 cursor-pointer"
-                onClick={() => setExpanded(expanded === c.id ? null : c.id)}
-              >
-                {/* Avatar inicial */}
+              <div className="p-4 flex items-center gap-4 cursor-pointer" onClick={() => setExpanded(expanded === c.id ? null : c.id)}>
                 <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
                   <span className="text-sm font-semibold text-primary">{c.name[0].toUpperCase()}</span>
                 </div>
 
-                {/* Info principal */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-semibold text-foreground truncate">{c.name}</span>
@@ -201,10 +196,7 @@ export default function ColaboradoresPage() {
                       </span>
                     )}
                     {c.phone && (
-                      <a
-                        href={whatsappHref(c.phone)}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                      <a href={whatsappHref(c.phone)} target="_blank" rel="noopener noreferrer"
                         onClick={(e) => e.stopPropagation()}
                         className="flex items-center gap-1 hover:text-green-400 transition-colors"
                       >
@@ -214,47 +206,38 @@ export default function ColaboradoresPage() {
                   </div>
                 </div>
 
-                {/* Ações rápidas */}
                 <div className="flex items-center gap-2 shrink-0">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-7 text-xs hidden sm:flex"
-                    onClick={(e) => { e.stopPropagation(); openEdit(c); }}
-                  >
+                  <Button size="sm" variant="outline" className="h-7 text-xs hidden sm:flex"
+                    onClick={(e) => { e.stopPropagation(); openEdit(c); }}>
                     Editar
                   </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-7 text-xs text-destructive hover:text-destructive hover:bg-destructive/10 hidden sm:flex"
-                    onClick={(e) => { e.stopPropagation(); setDeleting(c); }}
-                  >
+                  <Button size="sm" variant="ghost" className="h-7 text-xs text-destructive hover:text-destructive hover:bg-destructive/10 hidden sm:flex"
+                    onClick={(e) => { e.stopPropagation(); setDeleting(c); }}>
                     Excluir
                   </Button>
-                  <ChevronDown
-                    className={`w-4 h-4 text-muted-foreground transition-transform ${expanded === c.id ? "rotate-180" : ""}`}
-                  />
+                  <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${expanded === c.id ? "rotate-180" : ""}`} />
                 </div>
               </div>
 
-              {/* Detalhes expandidos */}
               {expanded === c.id && (
                 <div className="border-t border-white/[0.06] px-4 pb-4 pt-3 space-y-3">
                   <div className="grid sm:grid-cols-2 gap-2 text-xs text-muted-foreground">
                     {c.email && <div><span className="text-foreground/60">E-mail:</span> {c.email}</div>}
                     {c.birthday && <div><span className="text-foreground/60">Aniversário:</span> {new Date(c.birthday + "T12:00:00").toLocaleDateString("pt-BR")}</div>}
-                    {c.zones.length > 0 && (
-                      <div>
-                        <span className="text-foreground/60">Zonas:</span>{" "}
-                        {c.zones.map((z) => z.zone.name).join(", ")}
+                    {c.registeredBy && (
+                      <div><span className="text-foreground/60">Cadastrado por:</span> {c.registeredBy.name ?? c.registeredBy.email}</div>
+                    )}
+                    {c.contributionTypes && c.contributionTypes.length > 0 && (
+                      <div className="sm:col-span-2">
+                        <span className="text-foreground/60">Contribuições:</span>{" "}
+                        {c.contributionTypes.map((t) => CONTRIBUTION_LABEL[t] ?? t).join(", ")}
                       </div>
                     )}
+                    {c.zones.length > 0 && (
+                      <div><span className="text-foreground/60">Zonas:</span> {c.zones.map((z) => z.zone.name).join(", ")}</div>
+                    )}
                     {c.whatsappGroups.length > 0 && (
-                      <div>
-                        <span className="text-foreground/60">Grupos WA:</span>{" "}
-                        {c.whatsappGroups.map((g) => g.group.name).join(", ")}
-                      </div>
+                      <div><span className="text-foreground/60">Grupos WA:</span> {c.whatsappGroups.map((g) => g.group.name).join(", ")}</div>
                     )}
                     {c.notes && <div className="sm:col-span-2"><span className="text-foreground/60">Obs:</span> {c.notes}</div>}
                   </div>
@@ -269,26 +252,9 @@ export default function ColaboradoresPage() {
         </div>
       )}
 
-      <CollaboratorDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        collaborator={editing}
-        onSuccess={handleSuccess}
-      />
-
-      <ImportCsvDialog
-        open={importOpen}
-        onOpenChange={setImportOpen}
-        onSuccess={() => { fetchCollaborators(); toast.success("CSV importado com sucesso!"); }}
-      />
-
-      {deleting && (
-        <DeleteConfirm
-          name={deleting.name}
-          onConfirm={handleDelete}
-          onCancel={() => setDeleting(null)}
-        />
-      )}
+      <CollaboratorDialog open={dialogOpen} onOpenChange={setDialogOpen} collaborator={editing} onSuccess={handleSuccess} />
+      <ImportCsvDialog open={importOpen} onOpenChange={setImportOpen} onSuccess={() => { fetchCollaborators(); toast.success("CSV importado com sucesso!"); }} />
+      {deleting && <DeleteConfirm name={deleting.name} onConfirm={handleDelete} onCancel={() => setDeleting(null)} />}
     </div>
   );
 }

@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { recalcTier } from "@/lib/tier";
 
 const CID = "andre-santos-2026";
 
-// Limite simples por IP em memória (reseta a cada reinício da função)
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
 
 function isRateLimited(ip: string): boolean {
@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { name, phone, city, neighborhood, email, howHelp } = body;
+    const { name, phone, city, neighborhood, email, contributionTypes, refUserId } = body;
 
     if (!name?.trim()) return NextResponse.json({ error: "Nome é obrigatório" }, { status: 400 });
     if (!phone?.trim()) return NextResponse.json({ error: "WhatsApp é obrigatório" }, { status: 400 });
@@ -36,12 +36,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Número de WhatsApp inválido" }, { status: 400 });
     }
 
-    // Evita duplicidade por telefone
     const existing = await db.collaborator.findFirst({
       where: { campaignId: CID, phone: { contains: cleanPhone.slice(-8) } },
     });
     if (existing) {
       return NextResponse.json({ message: "Cadastro já realizado! Entraremos em contato." }, { status: 200 });
+    }
+
+    // Valida refUserId se fornecido
+    let registeredById: string | null = null;
+    if (refUserId) {
+      const refUser = await db.user.findUnique({ where: { id: refUserId }, select: { id: true } });
+      if (refUser) registeredById = refUser.id;
     }
 
     await db.collaborator.create({
@@ -54,10 +60,16 @@ export async function POST(req: NextRequest) {
         neighborhood: neighborhood?.trim() || null,
         campaignRole: "VOLUNTARIO",
         status: "LEAD",
-        notes: howHelp ? `Como quer ajudar: ${howHelp}` : null,
         source: "CADASTRO_PUBLICO",
+        contributionTypes: Array.isArray(contributionTypes) ? contributionTypes : [],
+        registeredById,
       },
     });
+
+    // Leads não contam para tier (status=LEAD) — recalc só ao ativar
+    if (registeredById) {
+      await recalcTier(registeredById).catch(() => {});
+    }
 
     return NextResponse.json({ message: "Cadastro realizado com sucesso!" }, { status: 201 });
   } catch (err) {

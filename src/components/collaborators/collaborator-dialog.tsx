@@ -7,27 +7,28 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { CONTRIBUTION_OPTIONS } from "@/lib/contribution";
 
 const ROLES = [
-  { value: "COORD_GERAL", label: "Coord. Geral" },
-  { value: "COORD_REGIONAL", label: "Coord. Regional" },
-  { value: "LIDER_MUNICIPAL", label: "Líder Municipal" },
-  { value: "LIDER_BAIRRO", label: "Líder de Bairro" },
-  { value: "VOLUNTARIO", label: "Voluntário" },
+  { value: "COORD_GERAL",    label: "Coord. Geral"      },
+  { value: "COORD_REGIONAL", label: "Coord. Regional"   },
+  { value: "LIDER_MUNICIPAL",label: "Líder Municipal"   },
+  { value: "LIDER_BAIRRO",   label: "Líder de Bairro"   },
+  { value: "VOLUNTARIO",     label: "Voluntário"        },
 ];
 
 const PROFILES = [
-  { value: "APOIADOR", label: "Apoiador" },
-  { value: "PASTOR", label: "Pastor" },
-  { value: "PRESIDENTE_ASSOCIACAO", label: "Pres. Associação" },
-  { value: "LIDER_POLITICO", label: "Líder Político" },
-  { value: "VEREADOR", label: "Vereador" },
-  { value: "EMPRESARIO", label: "Empresário" },
-  { value: "LIDERANCA_COMUNITARIA", label: "Liderança Comunit." },
+  { value: "APOIADOR",              label: "Apoiador"             },
+  { value: "PASTOR",                label: "Pastor"               },
+  { value: "PRESIDENTE_ASSOCIACAO", label: "Pres. Associação"     },
+  { value: "LIDER_POLITICO",        label: "Líder Político"       },
+  { value: "VEREADOR",              label: "Vereador"             },
+  { value: "EMPRESARIO",            label: "Empresário"           },
+  { value: "LIDERANCA_COMUNITARIA", label: "Liderança Comunit."   },
 ];
 
 const SUPPORT_STATUSES = [
-  { value: "NEUTRO", label: "Neutro" },
+  { value: "NEUTRO",     label: "Neutro"     },
   { value: "CONFIRMADO", label: "Confirmado" },
   { value: "NEGOCIANDO", label: "Negociando" },
   { value: "ADVERSARIO", label: "Adversário" },
@@ -37,6 +38,8 @@ type Collaborator = {
   id?: string; name?: string; email?: string; phone?: string; city?: string;
   neighborhood?: string; campaignRole?: string; status?: string; notes?: string;
   birthday?: string; profile?: string; supportStatus?: string;
+  contributionTypes?: string[];
+  registeredBy?: { name: string | null; email: string | null } | null;
 };
 
 type Props = {
@@ -47,27 +50,56 @@ type Props = {
 };
 
 export function CollaboratorDialog({ open, onOpenChange, collaborator, onSuccess }: Props) {
-  const [form, setForm] = useState({ name: "", email: "", phone: "", city: "", neighborhood: "", campaignRole: "VOLUNTARIO", status: "ACTIVE", notes: "", birthday: "", profile: "APOIADOR", supportStatus: "NEUTRO" });
+  const [form, setForm] = useState({
+    name: "", email: "", phone: "", city: "", neighborhood: "",
+    campaignRole: "VOLUNTARIO", status: "ACTIVE", notes: "", birthday: "",
+    profile: "APOIADOR", supportStatus: "NEUTRO",
+  });
+  const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
     if (collaborator) {
-      setForm({ name: collaborator.name ?? "", email: collaborator.email ?? "", phone: collaborator.phone ?? "", city: collaborator.city ?? "", neighborhood: collaborator.neighborhood ?? "", campaignRole: collaborator.campaignRole ?? "VOLUNTARIO", status: collaborator.status ?? "ACTIVE", notes: collaborator.notes ?? "", birthday: collaborator.birthday ?? "", profile: collaborator.profile ?? "APOIADOR", supportStatus: collaborator.supportStatus ?? "NEUTRO" });
+      setForm({
+        name: collaborator.name ?? "",
+        email: collaborator.email ?? "",
+        phone: collaborator.phone ?? "",
+        city: collaborator.city ?? "",
+        neighborhood: collaborator.neighborhood ?? "",
+        campaignRole: collaborator.campaignRole ?? "VOLUNTARIO",
+        status: collaborator.status ?? "ACTIVE",
+        notes: collaborator.notes ?? "",
+        birthday: collaborator.birthday ?? "",
+        profile: collaborator.profile ?? "APOIADOR",
+        supportStatus: collaborator.supportStatus ?? "NEUTRO",
+      });
+      setSelectedTypes(collaborator.contributionTypes ?? []);
     } else {
       setForm({ name: "", email: "", phone: "", city: "", neighborhood: "", campaignRole: "VOLUNTARIO", status: "ACTIVE", notes: "", birthday: "", profile: "APOIADOR", supportStatus: "NEUTRO" });
+      setSelectedTypes([]);
     }
     setError("");
   }, [collaborator, open]);
 
   const set = (k: string, v: string | null) => { if (v !== null) setForm((f) => ({ ...f, [k]: v })); };
 
+  function toggleType(value: string) {
+    setSelectedTypes((prev) =>
+      prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]
+    );
+  }
+
   async function handleSave() {
     if (!form.name.trim()) { setError("Nome obrigatório"); return; }
     setSaving(true);
     const method = collaborator?.id ? "PUT" : "POST";
     const url = collaborator?.id ? `/api/collaborators/${collaborator.id}` : "/api/collaborators";
-    const res = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
+    const res = await fetch(url, {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...form, contributionTypes: selectedTypes }),
+    });
     setSaving(false);
     if (res.ok) { onSuccess(); }
     else { const d = await res.json(); setError(d.error ?? "Erro ao salvar"); }
@@ -75,11 +107,18 @@ export function CollaboratorDialog({ open, onOpenChange, collaborator, onSuccess
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{collaborator?.id ? "Editar Colaborador" : "Novo Colaborador"}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
+          {/* Cadastrado por */}
+          {collaborator?.registeredBy && (
+            <p className="text-xs text-muted-foreground bg-white/[0.03] rounded-lg px-3 py-2">
+              Cadastrado por: <span className="text-foreground">{collaborator.registeredBy.name ?? collaborator.registeredBy.email}</span>
+            </p>
+          )}
+
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2">
               <Label>Nome *</Label>
@@ -114,6 +153,7 @@ export function CollaboratorDialog({ open, onOpenChange, collaborator, onSuccess
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="ACTIVE">Ativo</SelectItem>
+                  <SelectItem value="LEAD">Lead</SelectItem>
                   <SelectItem value="INACTIVE">Inativo</SelectItem>
                 </SelectContent>
               </Select>
@@ -141,6 +181,28 @@ export function CollaboratorDialog({ open, onOpenChange, collaborator, onSuccess
               <Textarea value={form.notes} onChange={(e) => set("notes", e.target.value)} rows={2} placeholder="Notas internas..." />
             </div>
           </div>
+
+          {/* Formas de contribuição */}
+          <div>
+            <Label className="mb-2 block">Formas de contribuição</Label>
+            <div className="grid grid-cols-2 gap-2">
+              {CONTRIBUTION_OPTIONS.map((opt) => {
+                const active = selectedTypes.includes(opt.value);
+                return (
+                  <button key={opt.value} type="button" onClick={() => toggleType(opt.value)}
+                    className={`rounded-lg px-3 py-2 text-xs text-left border transition-colors ${
+                      active
+                        ? "bg-primary/10 text-primary border-primary/30"
+                        : "bg-white/[0.02] text-muted-foreground border-white/[0.08] hover:border-white/[0.15]"
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           {error && <p className="text-xs text-destructive">{error}</p>}
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
