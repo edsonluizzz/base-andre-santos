@@ -9,7 +9,13 @@
 ## Status Atual
 
 Sistema funcional e em produção. Build passando com `typescript: { ignoreBuildErrors: true }`.
-Auth corrigida: Edson entra como ADMIN com `isSuperAdmin: true`. Sidebar exibe "Administrador" e mostra Comunicados, Configurações e Super Admin.
+Auth corrigida: Edson entra como ADMIN com `isSuperAdmin: true`.
+
+**Sprint 2026-04-27:** Contribuições + rastreio + tiers + lider de célula implementados.
+- `/cadastro` agora aceita `?ref=<userId>` para rastreio + multi-select de formas de contribuição
+- Dashboard exibe card "Minha Célula" com tier, contadores e link copiável
+- Lista de colaboradores: filtro "Meus cadastros" + mostra quem cadastrou
+- Permissão de lider de célula: usuário pode alterar status dos colaboradores que registrou
 
 ---
 
@@ -39,7 +45,13 @@ Auth corrigida: Edson entra como ADMIN com `isSuperAdmin: true`. Sidebar exibe "
 - `/api/public/cadastro` — sem auth, rate limit 5/min, dedup por telefone
 
 ### Schema Collaborator
-Campos relevantes: `campaignRole`, `status` (LEAD/ACTIVE/INACTIVE), `profile` (PASTOR, PRESIDENTE_ASSOCIACAO, LIDER_POLITICO, VEREADOR, EMPRESARIO, LIDERANCA_COMUNITARIA, APOIADOR), `supportStatus` (CONFIRMADO, NEGOCIANDO, NEUTRO, ADVERSARIO), `source`
+Campos relevantes: `campaignRole`, `status` (LEAD/ACTIVE/INACTIVE), `profile`, `supportStatus`, `source`, `contributionTypes String[]`, `registeredById String?`
+
+### Schema UserCampaign
+Campo `tier CollaboratorTier` (APOIADOR/ATIVISTA/LIDER_CELULA/COORDENADOR) — recalculado automaticamente por `src/lib/tier.ts`
+
+### Tiers (thresholds automáticos por cadastros ativos)
+- APOIADOR: 0–4 · ATIVISTA: 5–14 · LIDER_CELULA: 15+ · COORDENADOR: manual
 
 ---
 
@@ -80,6 +92,7 @@ Opcionais: `RESEND_API_KEY`, `BLOB_READ_WRITE_TOKEN`, `GOOGLE_CALENDAR_*`
 - [ ] Google Calendar: sync bidirecional de eventos
 - [ ] Relatório de cobertura por município
 - [ ] Dashboard: mapa visual do Paraná com cobertura por cidade
+- [ ] Página "Minha Célula" dedicada: lista dos próprios cadastros com gestão de status
 
 ---
 
