@@ -37,7 +37,6 @@ Auth corrigida: Edson entra como ADMIN com `isSuperAdmin: true`. Sidebar exibe "
 - `/api/zones`, `/api/events`, `/api/broadcasts`, `/api/settings`
 - `/api/campaign` — GET/PUT para nome e joinCode da campanha
 - `/api/public/cadastro` — sem auth, rate limit 5/min, dedup por telefone
-- `/api/debug-session` — diagnóstico de sessão (remover quando não precisar)
 
 ### Schema Collaborator
 Campos relevantes: `campaignRole`, `status` (LEAD/ACTIVE/INACTIVE), `profile` (PASTOR, PRESIDENTE_ASSOCIACAO, LIDER_POLITICO, VEREADOR, EMPRESARIO, LIDERANCA_COMUNITARIA, APOIADOR), `supportStatus` (CONFIRMADO, NEGOCIANDO, NEUTRO, ADVERSARIO), `source`
