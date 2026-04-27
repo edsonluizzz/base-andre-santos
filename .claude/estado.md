@@ -1,6 +1,6 @@
 # Estado — Base André Santos
 
-**Última atualização:** 2026-04-25
+**Última atualização:** 2026-04-25 (sessão tarde)
 **GitHub:** https://github.com/edsonluizzz/base-andre-santos
 **Deploy:** Vercel (ver domínio em vercel.com → projeto → aba Domains)
 
@@ -9,7 +9,7 @@
 ## Status Atual
 
 Sistema funcional e em produção. Build passando com `typescript: { ignoreBuildErrors: true }`.
-Auth corrigida: Edson (edsonluizz.silva@gmail.com) entra como ADMIN.
+Auth corrigida: Edson entra como ADMIN com `isSuperAdmin: true`. Sidebar exibe "Administrador" e mostra Comunicados, Configurações e Super Admin.
 
 ---
 
@@ -25,7 +25,7 @@ Auth corrigida: Edson (edsonluizz.silva@gmail.com) entra como ADMIN.
 | Grupos WhatsApp | `/grupos` | ✅ com gerenciamento de membros |
 | Agenda | `/agenda` | ✅ |
 | Comunicados | `/comunicados` | ✅ |
-| Configurações | `/configuracoes` | ✅ |
+| Configurações | `/configuracoes` | ✅ nome da campanha + logo + join code |
 | Cadastro público | `/cadastro` | ✅ sem auth |
 
 ### APIs
@@ -35,7 +35,9 @@ Auth corrigida: Edson (edsonluizz.silva@gmail.com) entra como ADMIN.
 - `/api/mapa` — lideranças agrupadas por cidade + stats
 - `/api/groups` + `/api/groups/[id]` + `/api/groups/[id]/members`
 - `/api/zones`, `/api/events`, `/api/broadcasts`, `/api/settings`
+- `/api/campaign` — GET/PUT para nome e joinCode da campanha
 - `/api/public/cadastro` — sem auth, rate limit 5/min, dedup por telefone
+- `/api/debug-session` — diagnóstico de sessão (remover quando não precisar)
 
 ### Schema Collaborator
 Campos relevantes: `campaignRole`, `status` (LEAD/ACTIVE/INACTIVE), `profile` (PASTOR, PRESIDENTE_ASSOCIACAO, LIDER_POLITICO, VEREADOR, EMPRESARIO, LIDERANCA_COMUNITARIA, APOIADOR), `supportStatus` (CONFIRMADO, NEGOCIANDO, NEUTRO, ADVERSARIO), `source`
