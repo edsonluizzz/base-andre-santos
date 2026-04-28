@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
-import { Shield, Plus, Trash2, Clock, Crown, Search, ChevronDown, ChevronUp, RefreshCw, Mail } from "lucide-react";
+import { Shield, Plus, Trash2, Clock, Crown, Search, ChevronDown, ChevronUp, RefreshCw, Mail, GitMerge, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,6 +46,11 @@ type AuditEntry = {
   metadata: Record<string, unknown> | null;
 };
 
+type DupPair = {
+  keep: { id: string; name: string; email: string | null; phone: string | null; city: string | null; userId: string | null };
+  merge: { id: string; name: string; email: string | null; phone: string | null; city: string | null; userId: string | null };
+};
+
 function timeAgo(dateStr: string | null): string {
   if (!dateStr) return "—";
   const d = new Date(dateStr);
@@ -84,6 +89,11 @@ export default function SuperAdminPage() {
   const [showAudit, setShowAudit] = useState(false);
   const [auditLoading, setAuditLoading] = useState(false);
 
+  const [dupPairs, setDupPairs] = useState<DupPair[]>([]);
+  const [ignoredDups, setIgnoredDups] = useState<Set<string>>(new Set());
+  const [showDups, setShowDups] = useState(false);
+  const [dupLoading, setDupLoading] = useState(false);
+
   const fetchUsers = useCallback(async () => {
     setLoading(true);
     const res = await fetch("/api/admin/users");
@@ -106,6 +116,34 @@ export default function SuperAdminPage() {
   function toggleAudit() {
     if (!showAudit && auditLogs.length === 0) fetchAudit();
     setShowAudit((v) => !v);
+  }
+
+  async function fetchDups() {
+    setDupLoading(true);
+    const res = await fetch("/api/admin/collaborators/duplicates");
+    if (res.ok) { const d = await res.json(); setDupPairs(d.pairs ?? []); }
+    setDupLoading(false);
+  }
+
+  function toggleDups() {
+    if (!showDups && dupPairs.length === 0) fetchDups();
+    setShowDups((v) => !v);
+  }
+
+  async function mergeDup(keepId: string, mergeId: string) {
+    if (!confirm("Mesclar os dois registros? O registro sem conta de usuário será absorvido pelo que tem login.")) return;
+    const res = await fetch("/api/admin/collaborators/merge", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ keepId, mergeId }),
+    });
+    if (res.ok) {
+      toast.success("Registros mesclados com sucesso");
+      setDupPairs((prev) => prev.filter((p) => p.keep.id !== keepId || p.merge.id !== mergeId));
+    } else {
+      const e = await res.json();
+      toast.error(e.error ?? "Erro ao mesclar");
+    }
   }
 
   async function handleInvite() {
@@ -396,6 +434,83 @@ export default function SuperAdminPage() {
           )}
         </div>
       )}
+
+      {/* Duplicatas */}
+      <div className="glass-card rounded-2xl border border-white/[0.08] overflow-hidden">
+        <button
+          onClick={toggleDups}
+          className="w-full flex items-center justify-between p-4 text-left hover:bg-white/[0.02] transition-colors"
+        >
+          <div className="flex items-center gap-2">
+            <GitMerge className="w-4 h-4 text-muted-foreground" />
+            <span className="text-sm font-medium text-foreground">Cadastros Duplicados</span>
+            {dupPairs.filter((p) => !ignoredDups.has(`${p.keep.id}:${p.merge.id}`)).length > 0 && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30">
+                {dupPairs.filter((p) => !ignoredDups.has(`${p.keep.id}:${p.merge.id}`)).length} par{dupPairs.filter((p) => !ignoredDups.has(`${p.keep.id}:${p.merge.id}`)).length !== 1 ? "es" : ""}
+              </span>
+            )}
+          </div>
+          {showDups ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+        </button>
+
+        {showDups && (
+          <div className="border-t border-white/[0.06]">
+            {dupLoading ? (
+              <div className="text-center py-8 text-muted-foreground text-sm">Verificando...</div>
+            ) : dupPairs.filter((p) => !ignoredDups.has(`${p.keep.id}:${p.merge.id}`)).length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground text-sm flex flex-col items-center gap-2">
+                <span className="text-green-400 text-lg">✓</span>
+                Nenhum cadastro duplicado detectado
+              </div>
+            ) : (
+              <div className="divide-y divide-white/[0.04]">
+                {dupPairs
+                  .filter((p) => !ignoredDups.has(`${p.keep.id}:${p.merge.id}`))
+                  .map((pair) => (
+                    <div key={`${pair.keep.id}:${pair.merge.id}`} className="p-4 space-y-3">
+                      <div className="flex items-center gap-2">
+                        <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                        <span className="text-xs font-medium text-amber-400">Possível duplicata detectada</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="rounded-xl p-3 space-y-1 border border-green-500/20 bg-green-500/[0.04]">
+                          <p className="text-[10px] text-green-400 font-medium">MANTER (com login)</p>
+                          <p className="text-sm text-foreground font-medium truncate">{pair.keep.name}</p>
+                          <p className="text-xs text-muted-foreground truncate">{pair.keep.email ?? "—"}</p>
+                          <p className="text-xs text-muted-foreground truncate">{pair.keep.phone ?? "—"}</p>
+                          {pair.keep.city && <p className="text-xs text-muted-foreground truncate">{pair.keep.city}</p>}
+                        </div>
+                        <div className="rounded-xl p-3 space-y-1 border border-amber-500/20 bg-amber-500/[0.04]">
+                          <p className="text-[10px] text-amber-400 font-medium">ABSORVER (dados ricos)</p>
+                          <p className="text-sm text-foreground font-medium truncate">{pair.merge.name}</p>
+                          <p className="text-xs text-muted-foreground truncate">{pair.merge.email ?? "—"}</p>
+                          <p className="text-xs text-muted-foreground truncate">{pair.merge.phone ?? "—"}</p>
+                          {pair.merge.city && <p className="text-xs text-muted-foreground truncate">{pair.merge.city}</p>}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 justify-end">
+                        <Button
+                          size="sm" variant="ghost"
+                          className="h-7 text-xs text-muted-foreground"
+                          onClick={() => setIgnoredDups((prev) => new Set([...prev, `${pair.keep.id}:${pair.merge.id}`]))}
+                        >
+                          Ignorar
+                        </Button>
+                        <Button
+                          size="sm"
+                          className="h-7 text-xs bg-primary text-primary-foreground gap-1"
+                          onClick={() => mergeDup(pair.keep.id, pair.merge.id)}
+                        >
+                          <GitMerge className="w-3 h-3" /> Mesclar
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* Auditoria */}
       <div className="glass-card rounded-2xl border border-white/[0.08] overflow-hidden">

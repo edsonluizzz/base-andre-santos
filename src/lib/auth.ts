@@ -21,6 +21,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           token.image = user.image ?? token.image;
           token.isSuperAdmin = superAdminEmails.includes(user.email);
 
+          // A) Vincula Collaborators existentes por email PRIMEIRO (evita criação de duplicata)
+          let linkedCollabId: string | null = null;
+          const collabsByEmail = await db.collaborator.findMany({ where: { email: user.email, userId: null } });
+          if (collabsByEmail.length > 0) {
+            await db.collaborator.update({ where: { id: collabsByEmail[0].id }, data: { userId } }).catch(() => {});
+            linkedCollabId = collabsByEmail[0].id;
+          }
+
+          // B) Ativa pending UserCampaigns (invites pendentes)
           const pending = await db.userCampaign.findMany({
             where: { pendingEmail: user.email, userId: null },
           });
@@ -29,17 +38,27 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               where: { id: p.id },
               data: { userId, pendingEmail: null, inviteStatus: "ACCEPTED", acceptedAt: new Date() },
             }).catch(() => {});
-            const existingCollab = await db.collaborator.findUnique({ where: { userId } });
-            if (!existingCollab) {
-              await db.collaborator.create({
-                data: { name: user.name ?? user.email ?? "Colaborador", campaignId: p.campaignId, userId },
-              }).catch(() => {});
-            }
-          }
 
-          const collabsByEmail = await db.collaborator.findMany({ where: { email: user.email, userId: null } });
-          for (const c of collabsByEmail) {
-            await db.collaborator.update({ where: { id: c.id }, data: { userId } }).catch(() => {});
+            // Se o convite foi criado a partir de um Collaborator específico → vincular esse
+            const pWithCollab = p as typeof p & { collaboratorId?: string };
+            if (!linkedCollabId && pWithCollab.collaboratorId) {
+              const target = await db.collaborator.findUnique({ where: { id: pWithCollab.collaboratorId } }).catch(() => null);
+              if (target && !target.userId) {
+                await db.collaborator.update({ where: { id: target.id }, data: { userId } }).catch(() => {});
+                linkedCollabId = target.id;
+              }
+            }
+
+            // Só cria novo Collaborator se absolutamente nenhum foi vinculado
+            if (!linkedCollabId) {
+              const existing = await db.collaborator.findUnique({ where: { userId } }).catch(() => null);
+              if (!existing) {
+                const c = await db.collaborator.create({
+                  data: { name: user.name ?? user.email ?? "Colaborador", campaignId: p.campaignId, userId },
+                }).catch(() => null);
+                if (c) linkedCollabId = c.id;
+              }
+            }
           }
 
           const uc = await db.userCampaign.findUnique({

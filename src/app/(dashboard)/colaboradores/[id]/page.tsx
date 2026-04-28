@@ -2,7 +2,8 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Phone, MapPin, Mail, Calendar, Star, Users, UserCheck, ShieldCheck, ShieldAlert } from "lucide-react";
+import { ArrowLeft, Phone, MapPin, Mail, Calendar, Star, Users, UserCheck, ShieldCheck, ShieldAlert, Monitor } from "lucide-react";
+import { InviteToSystem } from "@/components/collaborators/invite-to-system";
 import { CONTRIBUTION_OPTIONS, TIER_LABEL } from "@/lib/contribution";
 
 const CID = "andre-santos-2026";
@@ -42,7 +43,7 @@ export default async function CollaboratorProfilePage({ params }: { params: { id
       whatsappGroups: { include: { group: true } },
       attendances:    { include: { event: { select: { title: true, date: true, type: true } } }, orderBy: { event: { date: "desc" } }, take: 5 },
       registeredBy:   { select: { name: true, email: true } },
-      user:           { select: { id: true, userCampaigns: { where: { campaignId: CID }, select: { tier: true, role: true } } } },
+      user:           { select: { id: true, name: true, email: true, userCampaigns: { where: { campaignId: CID }, select: { tier: true, role: true } } } },
     },
   });
 
@@ -223,6 +224,33 @@ export default async function CollaboratorProfilePage({ params }: { params: { id
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Acesso ao sistema */}
+      {isAdmin && (
+        <div className="glass-card rounded-2xl p-6 border border-white/[0.08] space-y-3">
+          <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
+            <Monitor className="w-4 h-4" /> Acesso ao Sistema
+          </h2>
+          {collaborator.user ? (
+            <div className="flex items-center gap-2 text-sm text-green-400">
+              <ShieldCheck className="w-4 h-4 shrink-0" />
+              Usuário ativo:{" "}
+              <span className="text-foreground">{collaborator.user.name ?? collaborator.user.email ?? "—"}</span>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <p className="text-xs text-muted-foreground">
+                Este colaborador ainda não tem acesso ao sistema. Convide-o para que possa fazer login e cadastrar outros apoiadores.
+              </p>
+              <InviteToSystem
+                collaboratorId={collaborator.id}
+                collaboratorName={collaborator.name}
+                defaultEmail={collaborator.email}
+              />
+            </div>
+          )}
         </div>
       )}
 

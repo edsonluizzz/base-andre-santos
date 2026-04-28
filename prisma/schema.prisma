@@ -79,11 +79,13 @@ model UserCampaign {
   role         Role         @default(MEMBER)
   inviteStatus InviteStatus    @default(PENDING)
   tier         CollaboratorTier @default(APOIADOR)
-  invitedBy    String?
-  invitedAt    DateTime     @default(now())
-  acceptedAt   DateTime?
-  user     User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  invitedBy      String?
+  invitedAt      DateTime     @default(now())
+  acceptedAt     DateTime?
+  collaboratorId String?
+  user         User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  campaign     Campaign      @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  collaborator Collaborator? @relation("InvitedAs", fields: [collaboratorId], references: [id], onDelete: SetNull)
   @@unique([userId, campaignId])
   @@index([pendingEmail])
 }
@@ -123,6 +125,7 @@ model Collaborator {
   lgpdConsent       Boolean   @default(false)
   lgpdConsentAt     DateTime?
   userId String? @unique
+  inviteRecord UserCampaign? @relation("InvitedAs")
   user         User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
   registeredBy User?     @relation("RegisteredCollaborators", fields: [registeredById], references: [id], onDelete: SetNull)
   campaign Campaign  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
