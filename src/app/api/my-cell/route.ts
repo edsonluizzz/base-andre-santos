@@ -18,7 +18,7 @@ export async function GET() {
       db.collaborator.count({ where: { campaignId: CID, registeredById: uid, status: "INACTIVE" } }),
     ]);
 
-    return NextResponse.json({ tier: uc?.tier ?? "APOIADOR", total, active, leads, inactive });
+    return NextResponse.json({ tier: uc?.tier ?? "APOIADOR", total, active, leads, inactive, userId: uid });
   } catch (err) {
     console.error("[my-cell GET]", err);
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });

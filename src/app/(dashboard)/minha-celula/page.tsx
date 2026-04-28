@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useSession } from "next-auth/react";
 import { Star, Users, UserCheck, UserX, Copy, Check, Phone, MapPin, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -21,7 +20,7 @@ const STATUS_COLOR: Record<string, string> = {
   INACTIVE: "bg-red-500/10 text-red-400 border-red-500/20",
 };
 
-type CellStats = { tier: string; total: number; active: number; leads: number; inactive: number };
+type CellStats = { tier: string; total: number; active: number; leads: number; inactive: number; userId: string };
 
 type Collaborator = {
   id: string; name: string; phone?: string; city?: string; neighborhood?: string;
@@ -29,7 +28,6 @@ type Collaborator = {
 };
 
 export default function MinhaCelulaPage() {
-  const { data: session } = useSession();
   const [stats, setStats] = useState<CellStats | null>(null);
   const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
   const [loading, setLoading] = useState(true);
@@ -37,8 +35,8 @@ export default function MinhaCelulaPage() {
   const [copied, setCopied] = useState(false);
 
   const referralLink =
-    typeof window !== "undefined" && session?.user?.id
-      ? `${window.location.origin}/cadastro?ref=${session.user.id}`
+    typeof window !== "undefined" && stats?.userId
+      ? `${window.location.origin}/cadastro?ref=${stats.userId}`
       : "";
 
   const fetchAll = useCallback(async () => {
