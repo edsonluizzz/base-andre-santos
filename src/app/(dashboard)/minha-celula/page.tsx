@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Star, Users, UserCheck, UserX, Copy, Check, Phone, MapPin, ChevronDown } from "lucide-react";
+import { Star, Users, UserCheck, UserX, Copy, Check, Phone, MapPin, ChevronDown, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TIER_LABEL, TIER_THRESHOLDS } from "@/lib/contribution";
@@ -162,7 +162,15 @@ export default function MinhaCelulaPage() {
                       {copied ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
                     </button>
                   </div>
-                  <p className="text-[10px] text-muted-foreground mt-1.5">Clique no ícone para copiar</p>
+                  <a
+                    href={`https://wa.me/?text=${encodeURIComponent(`Olá! Faça parte da base de apoio do André Santos 2026, pré-candidato a Deputado Estadual pelo PR. Cadastre-se por este link: ${referralLink}`)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 w-full rounded-xl py-2.5 text-sm font-medium bg-green-500/15 text-green-400 border border-green-500/30 hover:bg-green-500/25 transition-colors"
+                  >
+                    <MessageCircle className="w-4 h-4" /> Compartilhar no WhatsApp
+                  </a>
+                  <p className="text-[10px] text-muted-foreground mt-1.5">Clique no ícone para copiar o link</p>
                 </div>
               )}
             </div>

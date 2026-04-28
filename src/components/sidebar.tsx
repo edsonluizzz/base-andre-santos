@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import {
   LayoutDashboard, Users, MapPin, MessageCircle, Calendar,
-  Megaphone, Settings, LogOut, Menu, X, Shield, Star, Map, BarChart2,
+  Megaphone, Settings, LogOut, Menu, X, Shield, Star, Map, BarChart2, Network, Trophy,
 } from "lucide-react";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { useState, useEffect, useRef } from "react";
@@ -16,6 +16,8 @@ const navItems = [
   { href: "/dashboard",     icon: LayoutDashboard, label: "Dashboard"      },
   { href: "/colaboradores", icon: Users,            label: "Colaboradores"  },
   { href: "/minha-celula",  icon: Star,             label: "Minha Célula"   },
+  { href: "/celulas",       icon: Network,          label: "Células"        },
+  { href: "/ranking",       icon: Trophy,           label: "Ranking"        },
   { href: "/mapa",          icon: Map,              label: "Mapa de Apoio"  },
   { href: "/zonas",         icon: MapPin,           label: "Zonas"          },
   { href: "/grupos",        icon: MessageCircle,    label: "Grupos WhatsApp"},

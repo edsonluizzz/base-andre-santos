@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { BarChart2, Download } from "lucide-react";
 import Link from "next/link";
+import { PrintButton } from "@/components/relatorio/print-button";
 
 const CID = "andre-santos-2026";
 
@@ -70,12 +71,15 @@ export default async function RelatorioPage() {
           </h1>
           <p className="text-sm text-muted-foreground mt-1">{cities.length} municípios · {totals.active} ativos · {totals.leads} leads</p>
         </div>
-        <Link
-          href="/api/relatorio/export"
-          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
-        >
-          <Download className="w-4 h-4" /> Exportar CSV
-        </Link>
+        <div className="flex items-center gap-2">
+          <PrintButton />
+          <Link
+            href="/api/relatorio/export"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+          >
+            <Download className="w-4 h-4" /> Exportar CSV
+          </Link>
+        </div>
       </div>
 
       {/* Resumo */}

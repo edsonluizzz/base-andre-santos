@@ -87,6 +87,16 @@ export async function POST(req: NextRequest) {
           leadPhone: phone.trim(),
         }).catch(() => {});
       }
+      // Notificação in-app para o líder
+      await db.notification.create({
+        data: {
+          userId: registeredById,
+          title: "Novo apoiador cadastrado",
+          body: `${name.trim()} de ${city?.trim() || "cidade não informada"} entrou pela sua célula`,
+          type: "NEW_LEAD",
+          link: "/minha-celula",
+        },
+      }).catch(() => {});
     }
 
     return NextResponse.json({ message: "Cadastro realizado com sucesso!" }, { status: 201 });
