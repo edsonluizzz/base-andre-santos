@@ -82,7 +82,7 @@ model UserCampaign {
   invitedBy      String?
   invitedAt      DateTime     @default(now())
   acceptedAt     DateTime?
-  collaboratorId String?
+  collaboratorId String? @unique
   user         User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
   campaign     Campaign      @relation(fields: [campaignId], references: [id], onDelete: Cascade)
   collaborator Collaborator? @relation("InvitedAs", fields: [collaboratorId], references: [id], onDelete: SetNull)
