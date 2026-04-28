@@ -10,7 +10,7 @@ export async function GET() {
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const rows = await db.collaborator.findMany({
-      where: { campaignId: CID, status: { not: "INACTIVE" }, profile: { not: "APOIADOR" }, city: { not: null } },
+      where: { campaignId: CID, status: { not: "INACTIVE" }, city: { not: null } },
       select: { city: true, supportStatus: true },
     });
 
