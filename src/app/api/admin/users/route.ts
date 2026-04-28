@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { sendAccessGrantedEmail } from "@/lib/email";
 
 const CID = "andre-santos-2026";
 
@@ -56,7 +57,8 @@ export async function POST(req: NextRequest) {
       });
       // Atualiza role no User tb
       await db.user.update({ where: { id: existingUser.id }, data: { role: targetRole as "ADMIN" | "LEADER" | "MEMBER" } });
-      return NextResponse.json({ status: "linked", message: "Acesso concedido ao usuário existente" });
+      await sendAccessGrantedEmail({ to: targetEmail, role: targetRole });
+    return NextResponse.json({ status: "linked", message: "Acesso concedido ao usuário existente" });
     }
 
     // Usuário não existe → cria convite pendente (será ativado no login)
@@ -68,6 +70,7 @@ export async function POST(req: NextRequest) {
         data: { pendingEmail: targetEmail, campaignId: CID, role: targetRole as "ADMIN" | "LEADER" | "MEMBER", inviteStatus: "PENDING", invitedBy: session.user.id },
       });
     }
+    await sendAccessGrantedEmail({ to: targetEmail, role: targetRole });
     return NextResponse.json({ status: "pending", message: "Convite criado — ativo ao fazer login com Google" });
   } catch (err) {
     console.error("[admin/users POST]", err);

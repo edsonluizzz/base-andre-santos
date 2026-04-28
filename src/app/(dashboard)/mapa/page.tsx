@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { CollaboratorDialog } from "@/components/collaborators/collaborator-dialog";
+import { ChoroplethMap, type CityData } from "@/components/mapa/choropleth-map";
 
 const PROFILE_LABEL: Record<string, string> = {
   PASTOR: "Pastor",
@@ -54,6 +55,22 @@ export default function MapaPage() {
   const [filterProfile, setFilterProfile] = useState("ALL");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Person | null>(null);
+  const [choroplethStats, setChoroplethStats] = useState<Record<string, CityData>>({});
+
+  // Carrega dados do choropleth uma vez (não filtra por cidade/status)
+  useEffect(() => {
+    fetch("/api/mapa/stats")
+      .then((r) => r.json())
+      .then((d) => {
+        const map: Record<string, CityData> = {};
+        for (const c of (d.cities ?? [])) {
+          const key = c.name.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
+          map[key] = { confirmado: c.confirmado, negociando: c.negociando, neutro: c.neutro, adversario: c.adversario };
+        }
+        setChoroplethStats(map);
+      })
+      .catch(() => {});
+  }, []);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -107,6 +124,11 @@ export default function MapaPage() {
         <Button variant="outline" size="sm" onClick={fetchData} className="gap-1.5">
           <RefreshCw className="w-3.5 h-3.5" /> Atualizar
         </Button>
+      </div>
+
+      {/* Mapa choropleth do Paraná */}
+      <div className="glass-card rounded-2xl p-4 border border-white/[0.08]">
+        <ChoroplethMap cityStats={choroplethStats} />
       </div>
 
       {/* Stats */}

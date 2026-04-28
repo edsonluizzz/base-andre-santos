@@ -1,0 +1,170 @@
+"use client";
+
+import { useState } from "react";
+import { ComposableMap, Geographies, Geography } from "react-simple-maps";
+
+const GEO_URL = "/pr-municipalities.json";
+
+export type CityData = {
+  confirmado: number;
+  negociando: number;
+  neutro: number;
+  adversario: number;
+};
+
+function normalize(s: string): string {
+  return s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
+}
+
+function lerpColor(a: string, b: string, t: number): string {
+  const hex = (c: string) => ({
+    r: parseInt(c.slice(1, 3), 16),
+    g: parseInt(c.slice(3, 5), 16),
+    v: parseInt(c.slice(5, 7), 16),
+  });
+  const ca = hex(a); const cb = hex(b);
+  const r = Math.round(ca.r + (cb.r - ca.r) * t);
+  const g = Math.round(ca.g + (cb.g - ca.g) * t);
+  const v = Math.round(ca.v + (cb.v - ca.v) * t);
+  return `#${r.toString(16).padStart(2,"0")}${g.toString(16).padStart(2,"0")}${v.toString(16).padStart(2,"0")}`;
+}
+
+function getColor(data?: CityData): string {
+  if (!data) return "#0f172a";
+  const { confirmado, negociando, neutro, adversario } = data;
+  if (confirmado + negociando + neutro + adversario === 0) return "#0f172a";
+
+  // Adversários dominam
+  if (adversario > confirmado) {
+    const t = Math.min(adversario / 5, 1);
+    return lerpColor("#fca5a5", "#7f1d1d", t);
+  }
+
+  // Confirmados presentes → verde degradê
+  if (confirmado > 0) {
+    const t = Math.min((confirmado - 1) / 6, 1); // 1 → claro, 7+ → escuro
+    return lerpColor("#86efac", "#14532d", t);
+  }
+
+  // Somente negociando
+  if (negociando > 0) return "#92400e";
+
+  // Somente neutro
+  return "#334155";
+}
+
+type TooltipState = {
+  name: string;
+  data?: CityData;
+  x: number;
+  y: number;
+};
+
+export function ChoroplethMap({
+  cityStats,
+}: {
+  cityStats: Record<string, CityData>;
+}) {
+  const [tooltip, setTooltip] = useState<TooltipState | null>(null);
+
+  return (
+    <div className="relative w-full select-none">
+      <ComposableMap
+        projection="geoMercator"
+        projectionConfig={{ scale: 3300, center: [-51.5, -24.5] }}
+        width={900}
+        height={420}
+        style={{ width: "100%", height: "auto" }}
+      >
+        <Geographies geography={GEO_URL}>
+          {({ geographies }: { geographies: any[] }) =>
+            geographies.map((geo) => {
+              const key = normalize(geo.properties.name as string);
+              const data = cityStats[key];
+              const fill = getColor(data);
+              return (
+                <Geography
+                  key={geo.rsmKey}
+                  geography={geo}
+                  fill={fill}
+                  stroke="#1e293b"
+                  strokeWidth={0.4}
+                  style={{
+                    default: { outline: "none" },
+                    hover: { outline: "none", filter: "brightness(1.3)", cursor: "pointer" },
+                    pressed: { outline: "none" },
+                  }}
+                  onMouseMove={(evt: React.MouseEvent) => {
+                    setTooltip({
+                      name: geo.properties.name as string,
+                      data,
+                      x: evt.clientX,
+                      y: evt.clientY,
+                    });
+                  }}
+                  onMouseLeave={() => setTooltip(null)}
+                />
+              );
+            })
+          }
+        </Geographies>
+      </ComposableMap>
+
+      {/* Tooltip flutuante */}
+      {tooltip && (
+        <div
+          className="fixed z-50 pointer-events-none"
+          style={{ left: tooltip.x + 12, top: tooltip.y - 60 }}
+        >
+          <div className="rounded-xl px-3 py-2 text-xs shadow-xl border border-white/[0.12]"
+            style={{ background: "rgba(15,23,42,0.95)", backdropFilter: "blur(8px)" }}>
+            <p className="font-semibold text-white mb-1">{tooltip.name}</p>
+            {tooltip.data ? (
+              <div className="space-y-0.5">
+                {tooltip.data.confirmado > 0 && (
+                  <p className="text-green-400">✓ {tooltip.data.confirmado} confirmado{tooltip.data.confirmado !== 1 ? "s" : ""}</p>
+                )}
+                {tooltip.data.negociando > 0 && (
+                  <p className="text-amber-400">⟳ {tooltip.data.negociando} negociando</p>
+                )}
+                {tooltip.data.neutro > 0 && (
+                  <p className="text-slate-400">◯ {tooltip.data.neutro} neutro{tooltip.data.neutro !== 1 ? "s" : ""}</p>
+                )}
+                {tooltip.data.adversario > 0 && (
+                  <p className="text-red-400">✗ {tooltip.data.adversario} adversário{tooltip.data.adversario !== 1 ? "s" : ""}</p>
+                )}
+              </div>
+            ) : (
+              <p className="text-slate-500">Sem lideranças cadastradas</p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Legenda */}
+      <div className="flex flex-wrap items-center gap-4 mt-3 text-[11px] text-muted-foreground px-1">
+        <span className="flex items-center gap-1.5">
+          <span className="w-8 h-3 rounded-sm inline-block" style={{ background: "linear-gradient(to right, #86efac, #14532d)" }} />
+          Confirmados (claro → escuro)
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="w-3 h-3 rounded-sm inline-block bg-[#fca5a5]" />
+          <span className="w-3 h-3 rounded-sm inline-block bg-[#7f1d1d]" />
+          Adversários
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="w-3 h-3 rounded-sm inline-block bg-[#92400e]" />
+          Negociando
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="w-3 h-3 rounded-sm inline-block bg-[#334155]" />
+          Neutro
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="w-3 h-3 rounded-sm inline-block bg-[#0f172a] border border-white/10" />
+          Sem dados
+        </span>
+      </div>
+    </div>
+  );
+}

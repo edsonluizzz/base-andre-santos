@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { recalcTier } from "@/lib/tier";
+import { sendNewLeadNotificationEmail } from "@/lib/email";
 
 const CID = "andre-santos-2026";
 
@@ -69,6 +70,20 @@ export async function POST(req: NextRequest) {
     // Leads não contam para tier (status=LEAD) — recalc só ao ativar
     if (registeredById) {
       await recalcTier(registeredById).catch(() => {});
+      // Notifica o líder de célula por email
+      const refUser = await db.user.findUnique({
+        where: { id: registeredById },
+        select: { email: true, name: true },
+      }).catch(() => null);
+      if (refUser?.email) {
+        await sendNewLeadNotificationEmail({
+          to: refUser.email,
+          cellLeaderName: refUser.name ?? refUser.email,
+          leadName: name.trim(),
+          leadCity: city?.trim() || null,
+          leadPhone: phone.trim(),
+        }).catch(() => {});
+      }
     }
 
     return NextResponse.json({ message: "Cadastro realizado com sucesso!" }, { status: 201 });
