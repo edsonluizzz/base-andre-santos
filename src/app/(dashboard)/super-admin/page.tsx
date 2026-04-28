@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
-import { Shield, Plus, Trash2, Clock, Crown, Search, ChevronDown, ChevronUp, RefreshCw, Mail, GitMerge, AlertTriangle } from "lucide-react";
+import { Shield, Plus, Trash2, Clock, Crown, Search, ChevronDown, ChevronUp, RefreshCw, Mail, GitMerge, AlertTriangle, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -84,6 +84,7 @@ export default function SuperAdminPage() {
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("MEMBER");
   const [inviting, setInviting] = useState(false);
+  const [inviteDone, setInviteDone] = useState(false);
 
   const [auditLogs, setAuditLogs] = useState<AuditEntry[]>([]);
   const [showAudit, setShowAudit] = useState(false);
@@ -166,7 +167,7 @@ export default function SuperAdminPage() {
     if (res.ok) {
       const d = await res.json();
       toast.success(d.message);
-      setInviteOpen(false); setInviteEmail(""); setInviteRole("MEMBER");
+      setInviteDone(true);
       fetchUsers();
     } else { const e = await res.json(); toast.error(e.error ?? "Erro"); }
   }
@@ -422,10 +423,20 @@ export default function SuperAdminPage() {
                         </div>
                       </div>
                       <div className="flex items-center gap-1 shrink-0">
+                        {uc.pendingEmail && (
+                          <a
+                            href={`https://wa.me/?text=${encodeURIComponent(`Olá! Você recebeu acesso ao sistema da Base de Apoio André Santos 2026.\n\nAcesse com seu Gmail (${uc.pendingEmail}) pelo link:\n${typeof window !== "undefined" ? window.location.origin : ""}/login`)}`}
+                            target="_blank" rel="noopener noreferrer"
+                            className="h-7 px-2 rounded-md flex items-center gap-1 text-xs text-green-400 hover:bg-green-500/10 transition-colors"
+                            title="Enviar convite via WhatsApp"
+                          >
+                            <MessageCircle className="w-3 h-3" />
+                          </a>
+                        )}
                         <Button
                           size="sm" variant="ghost" onClick={() => uc.pendingEmail && resendInvite(uc.pendingEmail)}
                           className="h-7 px-2 text-muted-foreground hover:text-foreground text-xs gap-1"
-                          title="Reenviar convite"
+                          title="Reenviar convite por email"
                         >
                           <Mail className="w-3 h-3" /> Reenviar
                         </Button>
@@ -574,38 +585,61 @@ export default function SuperAdminPage() {
       </div>
 
       {/* Dialog: Conceder Acesso */}
-      <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
+      <Dialog open={inviteOpen} onOpenChange={(v) => { setInviteOpen(v); if (!v) { setInviteEmail(""); setInviteRole("MEMBER"); setInviteDone(false); } }}>
         <DialogContent className="max-w-md">
           <DialogHeader><DialogTitle>Conceder Acesso ao Sistema</DialogTitle></DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label>Gmail *</Label>
-              <Input
-                value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)}
-                placeholder="email@gmail.com" type="email" autoComplete="off"
-              />
-              <p className="text-[11px] text-muted-foreground mt-1.5">
-                A pessoa faz login com esse Gmail e o acesso é ativado automaticamente.
+          {inviteDone ? (
+            <div className="space-y-4 py-2">
+              <div className="rounded-xl p-4 bg-green-500/10 border border-green-500/20 text-center space-y-1">
+                <p className="text-sm font-medium text-green-400">Convite criado com sucesso!</p>
+                <p className="text-xs text-muted-foreground">{inviteEmail}</p>
+              </div>
+              <p className="text-xs text-muted-foreground text-center">
+                Avise a pessoa para fazer login com esse Gmail. Ou envie o convite agora pelo WhatsApp:
               </p>
-            </div>
-            <div>
-              <Label>Nível de acesso</Label>
-              <Select value={inviteRole} onValueChange={setInviteRole}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="MEMBER">Colaborador — gerencia próprios cadastros</SelectItem>
-                  <SelectItem value="LEADER">Coordenador — gerencia colaboradores e zonas</SelectItem>
-                  <SelectItem value="ADMIN">Administrador — acesso total</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setInviteOpen(false)}>Cancelar</Button>
-              <Button onClick={handleInvite} disabled={inviting} className="bg-primary text-primary-foreground">
-                {inviting ? "Processando..." : "Conceder Acesso"}
+              <a
+                href={`https://wa.me/?text=${encodeURIComponent(`Olá! Você recebeu acesso ao sistema da Base de Apoio André Santos 2026.\n\nAcesse com seu Gmail (${inviteEmail}) pelo link:\n${typeof window !== "undefined" ? window.location.origin : ""}/login`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 w-full rounded-xl py-3 text-sm font-medium bg-green-500/15 text-green-400 border border-green-500/30 hover:bg-green-500/25 transition-colors"
+              >
+                <Mail className="w-4 h-4" /> Enviar convite via WhatsApp
+              </a>
+              <Button variant="outline" className="w-full" onClick={() => { setInviteOpen(false); setInviteEmail(""); setInviteRole("MEMBER"); setInviteDone(false); }}>
+                Fechar
               </Button>
             </div>
-          </div>
+          ) : (
+            <div className="space-y-4">
+              <div>
+                <Label>Gmail *</Label>
+                <Input
+                  value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)}
+                  placeholder="email@gmail.com" type="email" autoComplete="off"
+                />
+                <p className="text-[11px] text-muted-foreground mt-1.5">
+                  A pessoa faz login com esse Gmail e o acesso é ativado automaticamente.
+                </p>
+              </div>
+              <div>
+                <Label>Nível de acesso</Label>
+                <Select value={inviteRole} onValueChange={setInviteRole}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="MEMBER">Colaborador — gerencia próprios cadastros</SelectItem>
+                    <SelectItem value="LEADER">Coordenador — gerencia colaboradores e zonas</SelectItem>
+                    <SelectItem value="ADMIN">Administrador — acesso total</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setInviteOpen(false)}>Cancelar</Button>
+                <Button onClick={handleInvite} disabled={inviting} className="bg-primary text-primary-foreground">
+                  {inviting ? "Processando..." : "Conceder Acesso"}
+                </Button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>

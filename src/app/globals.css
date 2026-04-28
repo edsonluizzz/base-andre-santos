@@ -115,9 +115,27 @@
 
 /* ── Print ───────────────────────────────────────────── */
 @media print {
-  .hidden-print, nav, header, button:not(.print-visible), .no-print { display: none !important; }
-  body { background: transparent !important; }
-  .glass-card, div { background-color: transparent !important; color: black !important; box-shadow: none !important; }
-  * { color: black !important; border-color: #ddd !important; }
-  .print-expand { margin-left: 0 !important; padding: 0 !important; width: 100vw !important; }
+  @page { margin: 1.5cm; size: A4 landscape; }
+
+  .hidden-print, nav, header, button:not(.print-visible), .no-print,
+  [data-radix-popper-content-wrapper], [role="dialog"] { display: none !important; }
+
+  body { background: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+  main { margin-left: 0 !important; padding: 1rem !important; }
+
+  * { color: black !important; box-shadow: none !important; }
+
+  .glass-card { background: white !important; border: 1px solid #e5e7eb !important; border-radius: 8px !important; }
+
+  table { width: 100% !important; border-collapse: collapse !important; }
+  th { background: #f3f4f6 !important; color: #374151 !important; font-weight: 600 !important; border-bottom: 2px solid #d1d5db !important; }
+  td, th { padding: 6px 10px !important; border-bottom: 1px solid #e5e7eb !important; }
+  tr:last-child td { border-bottom: none !important; }
+  tfoot td, tfoot th { background: #f9fafb !important; font-weight: 700 !important; border-top: 2px solid #d1d5db !important; }
+
+  h1 { font-size: 18pt !important; margin-bottom: 4pt !important; }
+  p { font-size: 9pt !important; }
+
+  .print-expand { margin-left: 0 !important; padding: 0 !important; width: 100% !important; }
 }

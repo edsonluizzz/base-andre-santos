@@ -47,7 +47,9 @@ export default function ColaboradoresPage() {
   const [filterStatus, setFilterStatus] = useState("ACTIVE");
   const [filterMine, setFilterMine] = useState(false);
   const [filterLeader, setFilterLeader] = useState("ALL");
+  const [filterCity, setFilterCity] = useState("ALL");
   const [leaders, setLeaders] = useState<{ id: string; name: string; count: number }[]>([]);
+  const [cities, setCities] = useState<string[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [editing, setEditing] = useState<Collaborator | null>(null);
@@ -58,6 +60,7 @@ export default function ColaboradoresPage() {
 
   useEffect(() => {
     fetch("/api/leaders").then((r) => r.ok ? r.json() : []).then(setLeaders).catch(() => {});
+    fetch("/api/cities").then((r) => r.ok ? r.json() : []).then(setCities).catch(() => {});
   }, []);
 
   const fetchCollaborators = useCallback(async () => {
@@ -68,11 +71,12 @@ export default function ColaboradoresPage() {
     if (filterStatus !== "ALL") params.set("status", filterStatus);
     if (filterMine) params.set("mine", "true");
     if (filterLeader !== "ALL") params.set("registeredBy", filterLeader);
+    if (filterCity !== "ALL") params.set("city", filterCity);
     const res = await fetch(`/api/collaborators?${params.toString()}`);
     if (res.ok) setCollaborators(await res.json());
     setLoading(false);
     setSelected(new Set());
-  }, [search, filterRole, filterStatus, filterMine, filterLeader]);
+  }, [search, filterRole, filterStatus, filterMine, filterLeader, filterCity]);
 
   useEffect(() => {
     const t = setTimeout(fetchCollaborators, 300);
@@ -202,9 +206,21 @@ export default function ColaboradoresPage() {
             <SelectContent>
               <SelectItem value="ALL">Todos os líderes</SelectItem>
               {leaders.map((l) => (
-                <SelectItem key={l.id} value={l.id}>
-                  {l.name} ({l.count})
-                </SelectItem>
+                <SelectItem key={l.id} value={l.id}>{l.name} ({l.count})</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+        {cities.length > 0 && (
+          <Select value={filterCity} onValueChange={setFilterCity}>
+            <SelectTrigger className="w-full sm:w-44">
+              <MapPin className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
+              <SelectValue placeholder="Por cidade" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">Todas as cidades</SelectItem>
+              {cities.map((c) => (
+                <SelectItem key={c} value={c}>{c}</SelectItem>
               ))}
             </SelectContent>
           </Select>
