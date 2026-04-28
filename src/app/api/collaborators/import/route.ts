@@ -4,6 +4,28 @@ import { db } from "@/lib/db";
 
 const CID = "andre-santos-2026";
 
+const PROFILE_MAP: Record<string, string> = {
+  "pastor": "PASTOR", "pr": "PASTOR", "pr.": "PASTOR",
+  "presidente associacao": "PRESIDENTE_ASSOCIACAO", "presidente": "PRESIDENTE_ASSOCIACAO",
+  "lider politico": "LIDER_POLITICO", "líder político": "LIDER_POLITICO",
+  "vereador": "VEREADOR",
+  "empresario": "EMPRESARIO", "empresário": "EMPRESARIO",
+  "lideranca comunitaria": "LIDERANCA_COMUNITARIA", "liderança comunitária": "LIDERANCA_COMUNITARIA",
+  "apoiador": "APOIADOR",
+};
+
+function parseProfile(val: string): string {
+  return PROFILE_MAP[val.toLowerCase().trim()] ?? "APOIADOR";
+}
+
+const STATUS_MAP: Record<string, string> = {
+  "lead": "LEAD", "ativo": "ACTIVE", "active": "ACTIVE", "inativo": "INACTIVE", "inactive": "INACTIVE",
+};
+
+function parseStatus(val: string): string {
+  return STATUS_MAP[val.toLowerCase().trim()] ?? "ACTIVE";
+}
+
 const ROLE_MAP: Record<string, string> = {
   "coord. geral": "COORD_GERAL", "coord geral": "COORD_GERAL", "coordenador geral": "COORD_GERAL",
   "coord. regional": "COORD_REGIONAL", "coord regional": "COORD_REGIONAL", "coordenador regional": "COORD_REGIONAL",
@@ -46,6 +68,10 @@ export async function POST(req: NextRequest) {
       const neighborhood = (row.bairro || row.Bairro || "").trim() || null;
       const roleRaw = (row.cargo || row.Cargo || row.role || "").trim();
       const campaignRole = parseRole(roleRaw);
+      const profileRaw = (row.perfil || row.profile || row.Perfil || "").trim();
+      const profile = parseProfile(profileRaw);
+      const statusRaw = (row.status || row.Status || "").trim();
+      const status = statusRaw ? parseStatus(statusRaw) : "ACTIVE";
 
       try {
         // Pula duplicatas por nome+telefone
@@ -61,7 +87,10 @@ export async function POST(req: NextRequest) {
         await db.collaborator.create({
           data: {
             campaignId: CID, name, phone: phone || null, email, city, neighborhood,
-            campaignRole: campaignRole as never, status: "ACTIVE", source: "IMPORTACAO_CSV",
+            campaignRole: campaignRole as never,
+            profile: profile as never,
+            status: status as never,
+            source: "IMPORTACAO_CSV",
           },
         });
         created++;
