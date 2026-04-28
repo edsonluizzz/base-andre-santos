@@ -1,6 +1,6 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { Users, MapPin, MessageCircle, Calendar, TrendingUp, Star } from "lucide-react";
+import { Users, MapPin, MessageCircle, Calendar, TrendingUp, Star, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { TIER_LABEL, TIER_THRESHOLDS } from "@/lib/contribution";
 import { CopyButton } from "@/components/dashboard/copy-button";
@@ -84,6 +84,19 @@ export default async function DashboardPage() {
           Bem-vindo, {session?.user?.name?.split(" ")[0]}. Visão geral da base de apoio.
         </p>
       </div>
+
+      {/* Banner de boas-vindas para quem ainda não cadastrou ninguém */}
+      {myTotal === 0 && (
+        <Link href="/onboarding" className="block glass-card rounded-2xl p-5 border border-primary/20 bg-primary/[0.04] hover:border-primary/40 transition-colors">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="font-semibold text-foreground text-sm">Comece por aqui</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Veja como usar a base de apoio e compartilhe seu link de cadastro</p>
+            </div>
+            <ChevronRight className="w-5 h-5 text-primary shrink-0" />
+          </div>
+        </Link>
+      )}
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

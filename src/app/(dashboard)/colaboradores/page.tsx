@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Users, Plus, Search, Filter, Phone, MapPin, ChevronDown, Upload, UserCheck } from "lucide-react";
+import { Users, Plus, Search, Filter, Phone, MapPin, ChevronDown, Upload, UserCheck, ExternalLink } from "lucide-react";
+import Link from "next/link";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -207,6 +208,11 @@ export default function ColaboradoresPage() {
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0">
+                  <Link href={`/colaboradores/${c.id}`} onClick={(e) => e.stopPropagation()}>
+                    <Button size="sm" variant="ghost" className="h-7 w-7 p-0 hidden sm:flex" title="Ver perfil">
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </Button>
+                  </Link>
                   <Button size="sm" variant="outline" className="h-7 text-xs hidden sm:flex"
                     onClick={(e) => { e.stopPropagation(); openEdit(c); }}>
                     Editar

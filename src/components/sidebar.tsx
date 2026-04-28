@@ -23,7 +23,7 @@ const navItems = [
   { href: "/relatorio",     icon: BarChart2,        label: "Relatório"      },
   { href: "/comunicados",   icon: Megaphone,        label: "Comunicados", adminOnly: true },
   { href: "/configuracoes", icon: Settings,         label: "Configurações", adminOnly: true },
-  { href: "/super-admin",   icon: Shield,           label: "Super Admin", superAdminOnly: true },
+  { href: "/super-admin",   icon: Shield,           label: "Super Admin", adminOnly: true },
 ] as const;
 
 const ROLE_LABEL: Record<string, string> = {
