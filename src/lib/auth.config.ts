@@ -33,6 +33,7 @@ export const authConfig: NextAuthConfig = {
       const isPublic =
         pathname === "/" ||
         pathname === "/login" ||
+        pathname === "/sem-acesso" ||
         pathname.startsWith("/cadastro") ||
         pathname.startsWith("/api/public/") ||
         pathname.startsWith("/api/auth") ||

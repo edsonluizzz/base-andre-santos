@@ -128,7 +128,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
     async signIn({ user, profile }) {
       try {
-        // Garante Campaign
         await db.campaign.upsert({
           where: { id: CAMPAIGN_ID },
           update: {},
@@ -137,10 +136,33 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         if (!user.email) return true;
 
-        const adminEmails = (process.env.ADMIN_EMAILS ?? "").split(",").map((e) => e.trim());
-        const isAdmin = adminEmails.includes(user.email);
+        const adminEmails = (process.env.ADMIN_EMAILS ?? "").split(",").map((e) => e.trim()).filter(Boolean);
+        const superAdminEmails = (process.env.SUPER_ADMIN_EMAILS ?? "").split(",").map((e) => e.trim()).filter(Boolean);
+        const isAdmin = adminEmails.includes(user.email) || superAdminEmails.includes(user.email);
 
-        // Upsert do usuário (sem PrismaAdapter, fazemos manualmente)
+        if (!isAdmin) {
+          // Verifica convite pendente por email
+          const pendingInvite = await db.userCampaign.findFirst({
+            where: { pendingEmail: user.email.toLowerCase(), campaignId: CAMPAIGN_ID },
+            select: { id: true },
+          });
+
+          if (!pendingInvite) {
+            // Verifica se já é usuário aceito (retornando)
+            const existingUser = await db.user.findUnique({ where: { email: user.email }, select: { id: true } });
+            if (existingUser) {
+              const acceptedUC = await db.userCampaign.findFirst({
+                where: { userId: existingUser.id, campaignId: CAMPAIGN_ID, inviteStatus: "ACCEPTED" },
+                select: { id: true },
+              });
+              if (!acceptedUC) return "/sem-acesso";
+            } else {
+              // Novo usuário sem convite → bloquear
+              return "/sem-acesso";
+            }
+          }
+        }
+
         const dbUser = await db.user.upsert({
           where: { email: user.email },
           update: {
@@ -157,10 +179,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           },
         });
 
-        // Sincroniza o id do NextAuth com o id do banco
         user.id = dbUser.id;
 
-        // Garante que UserCampaign reflita o role correto (admin nunca deve ficar como MEMBER)
+        // Só cria/atualiza UserCampaign para admins ou usuários já convidados
         await db.userCampaign.upsert({
           where: { userId_campaignId: { userId: dbUser.id, campaignId: CAMPAIGN_ID } },
           update: { ...(isAdmin ? { role: "ADMIN" } : {}), inviteStatus: "ACCEPTED" },
