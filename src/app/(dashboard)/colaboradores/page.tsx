@@ -46,6 +46,8 @@ export default function ColaboradoresPage() {
   const [filterRole, setFilterRole] = useState("ALL");
   const [filterStatus, setFilterStatus] = useState("ACTIVE");
   const [filterMine, setFilterMine] = useState(false);
+  const [filterLeader, setFilterLeader] = useState("ALL");
+  const [leaders, setLeaders] = useState<{ id: string; name: string; count: number }[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [editing, setEditing] = useState<Collaborator | null>(null);
@@ -54,6 +56,10 @@ export default function ColaboradoresPage() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkLoading, setBulkLoading] = useState(false);
 
+  useEffect(() => {
+    fetch("/api/leaders").then((r) => r.ok ? r.json() : []).then(setLeaders).catch(() => {});
+  }, []);
+
   const fetchCollaborators = useCallback(async () => {
     setLoading(true);
     const params = new URLSearchParams();
@@ -61,11 +67,12 @@ export default function ColaboradoresPage() {
     if (filterRole !== "ALL") params.set("role", filterRole);
     if (filterStatus !== "ALL") params.set("status", filterStatus);
     if (filterMine) params.set("mine", "true");
+    if (filterLeader !== "ALL") params.set("registeredBy", filterLeader);
     const res = await fetch(`/api/collaborators?${params.toString()}`);
     if (res.ok) setCollaborators(await res.json());
     setLoading(false);
     setSelected(new Set());
-  }, [search, filterRole, filterStatus, filterMine]);
+  }, [search, filterRole, filterStatus, filterMine, filterLeader]);
 
   useEffect(() => {
     const t = setTimeout(fetchCollaborators, 300);
@@ -186,6 +193,22 @@ export default function ColaboradoresPage() {
           <UserCheck className="w-3.5 h-3.5" />
           Meus cadastros
         </button>
+        {leaders.length > 0 && (
+          <Select value={filterLeader} onValueChange={(v) => { setFilterLeader(v); setFilterMine(false); }}>
+            <SelectTrigger className="w-full sm:w-52">
+              <UserCheck className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
+              <SelectValue placeholder="Por líder" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">Todos os líderes</SelectItem>
+              {leaders.map((l) => (
+                <SelectItem key={l.id} value={l.id}>
+                  {l.name} ({l.count})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
       </div>
 
       {/* Header de seleção em massa */}

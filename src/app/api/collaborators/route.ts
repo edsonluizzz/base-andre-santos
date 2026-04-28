@@ -17,6 +17,7 @@ export async function GET(req: NextRequest) {
     const city = searchParams.get("city") ?? "";
     const status = searchParams.get("status") ?? "ACTIVE";
     const mine = searchParams.get("mine") === "true";
+    const registeredBy = searchParams.get("registeredBy") ?? "";
 
     const collaborators = await db.collaborator.findMany({
       where: {
@@ -25,6 +26,7 @@ export async function GET(req: NextRequest) {
         ...(role && { campaignRole: role as CollaboratorRole }),
         ...(city && { city }),
         ...(mine && { registeredById: session.user.id }),
+        ...(registeredBy && { registeredById: registeredBy }),
         ...(search && {
           OR: [
             { name: { contains: search, mode: "insensitive" } },
