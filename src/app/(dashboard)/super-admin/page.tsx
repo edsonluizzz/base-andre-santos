@@ -130,6 +130,14 @@ export default function SuperAdminPage() {
     setShowDups((v) => !v);
   }
 
+  async function fixCuritibaPastors() {
+    if (!confirm("Definir cidade=Curitiba para todos os pastores sem cidade com DDD 41?")) return;
+    const res = await fetch("/api/admin/fix/curitiba-pastors", { method: "POST" });
+    const d = await res.json();
+    if (res.ok) toast.success(d.message);
+    else toast.error(d.error ?? "Erro");
+  }
+
   async function mergeDup(keepId: string, mergeId: string) {
     if (!confirm("Mesclar os dois registros? O registro sem conta de usuário será absorvido pelo que tem login.")) return;
     const res = await fetch("/api/admin/collaborators/merge", {
@@ -229,6 +237,9 @@ export default function SuperAdminPage() {
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={fetchUsers} className="gap-1.5">
             <RefreshCw className="w-3.5 h-3.5" />
+          </Button>
+          <Button variant="outline" size="sm" onClick={fixCuritibaPastors} className="gap-1.5 text-amber-400 border-amber-500/30 hover:bg-amber-500/10">
+            Corrigir cidade (pastores CWB)
           </Button>
           <Button onClick={() => setInviteOpen(true)} className="bg-primary text-primary-foreground gap-2">
             <Plus className="w-4 h-4" /> Conceder Acesso
