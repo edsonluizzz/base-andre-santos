@@ -2,7 +2,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Phone, MapPin, Mail, Calendar, Star, Users, UserCheck } from "lucide-react";
+import { ArrowLeft, Phone, MapPin, Mail, Calendar, Star, Users, UserCheck, ShieldCheck, ShieldAlert } from "lucide-react";
 import { CONTRIBUTION_OPTIONS, TIER_LABEL } from "@/lib/contribution";
 
 const CID = "andre-santos-2026";
@@ -111,6 +111,27 @@ export default async function CollaboratorProfilePage({ params }: { params: { id
         {collaborator.notes && (
           <div className="pt-1 border-t border-white/[0.06]">
             <p className="text-xs text-muted-foreground">{collaborator.notes}</p>
+          </div>
+        )}
+
+        {isAdmin && (
+          <div className="pt-2 border-t border-white/[0.06]">
+            {collaborator.lgpdConsent ? (
+              <div className="flex items-center gap-2 text-xs text-green-400">
+                <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
+                LGPD: consentimento registrado
+                {collaborator.lgpdConsentAt && (
+                  <span className="text-muted-foreground">
+                    em {new Date(collaborator.lgpdConsentAt).toLocaleDateString("pt-BR")}
+                  </span>
+                )}
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 text-xs text-amber-400/70">
+                <ShieldAlert className="w-3.5 h-3.5 shrink-0" />
+                LGPD: sem consentimento registrado
+              </div>
+            )}
           </div>
         )}
       </div>

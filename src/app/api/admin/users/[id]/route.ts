@@ -21,10 +21,13 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
 
     await db.userCampaign.update({ where: { id: uc.id }, data });
 
-    // Sincroniza role no User também
     if (role && uc.userId) {
       await db.user.update({ where: { id: uc.userId }, data: { role } }).catch(() => {});
     }
+
+    await db.auditLog.create({
+      data: { action: "UPDATE_USER", actorId: session.user.id, targetId: params.id, metadata: { role, tier } },
+    }).catch(() => {});
 
     return NextResponse.json({ ok: true });
   } catch (err) {
@@ -39,12 +42,16 @@ export async function DELETE(_req: NextRequest, { params }: { params: { id: stri
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     if (!["ADMIN"].includes(session.user.role ?? "")) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-    // Não pode revogar o próprio acesso
     if (params.id === session.user.id) {
       return NextResponse.json({ error: "Não é possível revogar seu próprio acesso" }, { status: 400 });
     }
 
     await db.userCampaign.deleteMany({ where: { userId: params.id, campaignId: CID } });
+
+    await db.auditLog.create({
+      data: { action: "REVOKE_ACCESS", actorId: session.user.id, targetId: params.id },
+    }).catch(() => {});
+
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error("[admin/users DELETE]", err);
@@ -52,14 +59,20 @@ export async function DELETE(_req: NextRequest, { params }: { params: { id: stri
   }
 }
 
-// DELETE por pendingEmail (convite pendente)
-export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+// Remove convite pendente
+export async function PATCH(_req: NextRequest, { params }: { params: { id: string } }) {
   try {
     const session = await auth();
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     if (!["ADMIN"].includes(session.user.role ?? "")) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
+    const uc = await db.userCampaign.findUnique({ where: { id: params.id } });
     await db.userCampaign.delete({ where: { id: params.id } });
+
+    await db.auditLog.create({
+      data: { action: "REVOKE_ACCESS", actorId: session.user.id, metadata: { pendingEmail: uc?.pendingEmail } },
+    }).catch(() => {});
+
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error("[admin/users PATCH]", err);

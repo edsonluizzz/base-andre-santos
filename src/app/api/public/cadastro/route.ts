@@ -27,10 +27,11 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { name, phone, city, neighborhood, email, contributionTypes, refUserId } = body;
+    const { name, phone, city, neighborhood, email, contributionTypes, refUserId, lgpdConsent } = body;
 
     if (!name?.trim()) return NextResponse.json({ error: "Nome é obrigatório" }, { status: 400 });
     if (!phone?.trim()) return NextResponse.json({ error: "WhatsApp é obrigatório" }, { status: 400 });
+    if (!lgpdConsent) return NextResponse.json({ error: "Consentimento LGPD é obrigatório" }, { status: 400 });
 
     const cleanPhone = phone.replace(/\D/g, "");
     if (cleanPhone.length < 10) {
@@ -64,6 +65,8 @@ export async function POST(req: NextRequest) {
         source: "CADASTRO_PUBLICO",
         contributionTypes: Array.isArray(contributionTypes) ? contributionTypes : [],
         registeredById,
+        lgpdConsent: true,
+        lgpdConsentAt: new Date(),
       },
     });
 

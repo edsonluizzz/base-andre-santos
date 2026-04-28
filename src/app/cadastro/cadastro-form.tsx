@@ -21,6 +21,7 @@ export function CadastroForm() {
   const [neighborhood, setNeighborhood] = useState("");
   const [email, setEmail] = useState("");
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
+  const [lgpdConsent, setLgpdConsent] = useState(false);
 
   function formatPhone(val: string) {
     const d = val.replace(/\D/g, "").slice(0, 11);
@@ -41,13 +42,14 @@ export function CadastroForm() {
     setError("");
     if (!name.trim()) { setError("Informe seu nome completo"); return; }
     if (phone.replace(/\D/g, "").length < 10) { setError("Informe um WhatsApp válido"); return; }
+    if (!lgpdConsent) { setError("É necessário concordar com os termos de uso dos dados para se cadastrar"); return; }
 
     setLoading(true);
     try {
       const res = await fetch("/api/public/cadastro", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, phone, city, neighborhood, email, contributionTypes: selectedTypes, refUserId }),
+        body: JSON.stringify({ name, phone, city, neighborhood, email, contributionTypes: selectedTypes, refUserId, lgpdConsent }),
       });
       const data = await res.json();
       if (!res.ok && res.status !== 200) {
@@ -64,7 +66,7 @@ export function CadastroForm() {
 
   function resetForm() {
     setStep("form");
-    setName(""); setPhone(""); setCity(""); setNeighborhood(""); setEmail(""); setSelectedTypes([]);
+    setName(""); setPhone(""); setCity(""); setNeighborhood(""); setEmail(""); setSelectedTypes([]); setLgpdConsent(false);
   }
 
   if (step === "success") {
@@ -211,6 +213,44 @@ export function CadastroForm() {
               />
             </div>
           </div>
+
+          {/* LGPD */}
+          <label
+            className="flex items-start gap-3 cursor-pointer rounded-xl px-4 py-3 transition-all"
+            style={{
+              background: lgpdConsent ? "rgba(212,175,55,0.06)" : "rgba(13,27,42,0.50)",
+              border: lgpdConsent ? "1px solid rgba(212,175,55,0.25)" : "1px solid rgba(255,255,255,0.07)",
+            }}
+          >
+            <div className="mt-0.5 shrink-0 relative">
+              <input
+                type="checkbox"
+                checked={lgpdConsent}
+                onChange={(e) => setLgpdConsent(e.target.checked)}
+                className="sr-only"
+              />
+              <div
+                className="w-5 h-5 rounded flex items-center justify-center transition-all"
+                style={{
+                  background: lgpdConsent ? "#d4af37" : "transparent",
+                  border: lgpdConsent ? "1px solid #d4af37" : "1px solid rgba(255,255,255,0.2)",
+                }}
+              >
+                {lgpdConsent && (
+                  <svg className="w-3 h-3" viewBox="0 0 12 12" fill="none">
+                    <path d="M2 6l3 3 5-5" stroke="#0a1220" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                )}
+              </div>
+            </div>
+            <p className="text-xs leading-relaxed" style={{ color: lgpdConsent ? "rgba(212,175,55,0.9)" : "#94a3b8" }}>
+              Autorizo o uso dos meus dados pessoais (nome, WhatsApp, cidade) pela Base de Apoio André Santos 2026
+              para fins de comunicação política, conforme a{" "}
+              <span style={{ color: lgpdConsent ? "#d4af37" : "#64748b" }}>LGPD — Lei 13.709/2018</span>.
+              Poderei solicitar a exclusão dos meus dados a qualquer momento pelo WhatsApp ou e-mail da equipe.{" "}
+              <span style={{ color: "#d4af37" }}>*</span>
+            </p>
+          </label>
 
           {error && (
             <p className="text-sm text-center rounded-xl py-2.5 px-4" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", color: "#ef4444" }}>

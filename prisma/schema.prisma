@@ -120,6 +120,8 @@ model Collaborator {
   supportStatus SupportStatus       @default(NEUTRO)
   contributionTypes String[]
   registeredById    String?
+  lgpdConsent       Boolean   @default(false)
+  lgpdConsentAt     DateTime?
   userId String? @unique
   user         User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
   registeredBy User?     @relation("RegisteredCollaborators", fields: [registeredById], references: [id], onDelete: SetNull)

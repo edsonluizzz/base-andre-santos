@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Shield, Plus, Trash2, Clock } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { Shield, Plus, Trash2, Clock, Crown, Search, ChevronDown, ChevronUp, RefreshCw, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,34 +11,102 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
+const ROLE_LABEL: Record<string, string> = {
+  ADMIN: "Administrador",
+  LEADER: "Coordenador",
+  MEMBER: "Colaborador",
+};
+
 const ROLE_COLOR: Record<string, string> = {
   ADMIN:  "bg-yellow-500/15 text-yellow-400 border-yellow-500/30",
   LEADER: "bg-blue-500/15 text-blue-400 border-blue-500/30",
   MEMBER: "bg-slate-500/15 text-slate-400 border-slate-500/30",
 };
 
+const ACTION_ICON: Record<string, string> = {
+  GRANT_ACCESS: "✓",
+  REVOKE_ACCESS: "✗",
+  UPDATE_USER: "↺",
+  IMPERSONATE_START: "👁",
+  IMPERSONATE_END: "👁",
+};
+
 type UCRecord = {
   id: string; userId: string | null; pendingEmail: string | null;
   role: string; tier: string; inviteStatus: string; registeredCount: number;
-  user: { id: string; name: string | null; email: string | null; image: string | null } | null;
+  isSuperAdmin: boolean; invitedByName: string | null; lastSeen: string | null;
+  invitedAt: string; acceptedAt: string | null;
+  user: { id: string; name: string | null; email: string | null; image: string | null; createdAt: string } | null;
 };
 
+type AuditEntry = {
+  id: string; action: string; actionLabel: string; createdAt: string;
+  actor: { id: string; name: string | null; email: string | null };
+  target: { id: string; name: string | null; email: string | null } | null;
+  metadata: Record<string, unknown> | null;
+};
+
+function timeAgo(dateStr: string | null): string {
+  if (!dateStr) return "—";
+  const d = new Date(dateStr);
+  const diff = Date.now() - d.getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "agora";
+  if (mins < 60) return `${mins}min atrás`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h atrás`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days}d atrás`;
+  return d.toLocaleDateString("pt-BR");
+}
+
+function fmtDate(dateStr: string | null): string {
+  if (!dateStr) return "—";
+  return new Date(dateStr).toLocaleDateString("pt-BR");
+}
+
 export default function SuperAdminPage() {
+  const { data: session } = useSession();
+  const currentUserId = (session?.user as { id?: string })?.id;
+  const currentIsSuperAdmin = (session?.user as { isSuperAdmin?: boolean })?.isSuperAdmin;
+
   const [records, setRecords] = useState<UCRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [roleFilter, setRoleFilter] = useState("ALL");
+
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("MEMBER");
   const [inviting, setInviting] = useState(false);
 
+  const [auditLogs, setAuditLogs] = useState<AuditEntry[]>([]);
+  const [showAudit, setShowAudit] = useState(false);
+  const [auditLoading, setAuditLoading] = useState(false);
+
   const fetchUsers = useCallback(async () => {
     setLoading(true);
     const res = await fetch("/api/admin/users");
-    if (res.ok) setRecords(await res.json());
+    if (res.ok) {
+      const d = await res.json();
+      setRecords(d.users ?? d);
+    }
     setLoading(false);
   }, []);
 
   useEffect(() => { fetchUsers(); }, [fetchUsers]);
+
+  async function fetchAudit() {
+    setAuditLoading(true);
+    const res = await fetch("/api/admin/audit");
+    if (res.ok) setAuditLogs(await res.json());
+    setAuditLoading(false);
+  }
+
+  function toggleAudit() {
+    if (!showAudit && auditLogs.length === 0) fetchAudit();
+    setShowAudit((v) => !v);
+  }
 
   async function handleInvite() {
     if (!inviteEmail.trim()) { toast.error("Informe o e-mail"); return; }
@@ -54,6 +123,16 @@ export default function SuperAdminPage() {
       setInviteOpen(false); setInviteEmail(""); setInviteRole("MEMBER");
       fetchUsers();
     } else { const e = await res.json(); toast.error(e.error ?? "Erro"); }
+  }
+
+  async function resendInvite(email: string) {
+    const res = await fetch("/api/admin/users", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+    if (res.ok) toast.success("Convite reenviado");
+    else toast.error("Erro ao reenviar");
   }
 
   async function updateUser(userId: string, data: { role?: string; tier?: string }) {
@@ -78,85 +157,196 @@ export default function SuperAdminPage() {
   const accepted = records.filter((r) => r.inviteStatus === "ACCEPTED");
   const pending  = records.filter((r) => r.inviteStatus === "PENDING");
 
+  const filtered = accepted.filter((r) => {
+    const q = search.toLowerCase();
+    const matchSearch = !q ||
+      r.user?.name?.toLowerCase().includes(q) ||
+      r.user?.email?.toLowerCase().includes(q);
+    const matchRole = roleFilter === "ALL" || r.role === roleFilter;
+    return matchSearch && matchRole;
+  });
+
+  const byRole = {
+    ADMIN:  accepted.filter((r) => r.role === "ADMIN").length,
+    LEADER: accepted.filter((r) => r.role === "LEADER").length,
+    MEMBER: accepted.filter((r) => r.role === "MEMBER").length,
+  };
+
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-            <Shield className="w-6 h-6 text-primary" /> Super Admin
+            <Shield className="w-6 h-6 text-primary" />
+            Super Admin
+            {currentIsSuperAdmin && (
+              <span className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-yellow-500/15 text-yellow-400 border border-yellow-500/30 font-normal">
+                <Crown className="w-3 h-3" /> Proprietário
+              </span>
+            )}
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">Gerenciamento de acesso ao sistema</p>
+          <p className="text-sm text-muted-foreground mt-1">Gerenciamento de acesso e auditoria do sistema</p>
         </div>
-        <Button onClick={() => setInviteOpen(true)} className="bg-primary text-primary-foreground gap-2">
-          <Plus className="w-4 h-4" /> Conceder Acesso
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={fetchUsers} className="gap-1.5">
+            <RefreshCw className="w-3.5 h-3.5" />
+          </Button>
+          <Button onClick={() => setInviteOpen(true)} className="bg-primary text-primary-foreground gap-2">
+            <Plus className="w-4 h-4" /> Conceder Acesso
+          </Button>
+        </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-3 max-w-xs">
+      {/* Stats por role */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: "Com acesso", value: accepted.length, color: "text-primary" },
-          { label: "Pendentes",  value: pending.length,  color: "text-amber-400" },
-          { label: "Total",      value: records.length,  color: "text-muted-foreground" },
+          { label: "Administradores", value: byRole.ADMIN,  color: "text-yellow-400", bg: "bg-yellow-500/[0.06]" },
+          { label: "Coordenadores",   value: byRole.LEADER, color: "text-blue-400",   bg: "bg-blue-500/[0.06]" },
+          { label: "Colaboradores",   value: byRole.MEMBER, color: "text-slate-400",  bg: "bg-white/[0.04]" },
+          { label: "Pendentes",       value: pending.length, color: "text-amber-400",  bg: "bg-amber-500/[0.06]" },
         ].map((s) => (
-          <div key={s.label} className="glass-card rounded-xl p-3 border border-white/[0.08] text-center">
-            <p className={`text-xl font-bold ${s.color}`}>{s.value}</p>
-            <p className="text-[10px] text-muted-foreground">{s.label}</p>
+          <div key={s.label} className={`glass-card rounded-xl p-3 border border-white/[0.07] ${s.bg}`}>
+            <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
+            <p className="text-[11px] text-muted-foreground">{s.label}</p>
           </div>
         ))}
+      </div>
+
+      {/* Filtros */}
+      <div className="flex gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar por nome ou e-mail..." className="pl-9" />
+        </div>
+        <Select value={roleFilter} onValueChange={setRoleFilter}>
+          <SelectTrigger className="w-44">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ALL">Todos os níveis</SelectItem>
+            <SelectItem value="ADMIN">Administradores</SelectItem>
+            <SelectItem value="LEADER">Coordenadores</SelectItem>
+            <SelectItem value="MEMBER">Colaboradores</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {loading ? (
         <div className="text-center py-16 text-muted-foreground">Carregando...</div>
       ) : (
         <div className="space-y-6">
-          {accepted.length > 0 && (
+          {/* Usuários com acesso */}
+          {filtered.length > 0 && (
             <div>
-              <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Com acesso ({accepted.length})</h2>
+              <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+                Com acesso ({filtered.length}{search || roleFilter !== "ALL" ? ` de ${accepted.length}` : ""})
+              </h2>
               <div className="glass-card rounded-2xl border border-white/[0.08] overflow-hidden">
                 <div className="divide-y divide-white/[0.05]">
-                  {accepted.map((uc) => (
-                    <div key={uc.id} className="flex items-center gap-3 p-4 flex-wrap sm:flex-nowrap">
-                      <Avatar className="w-9 h-9 shrink-0">
-                        <AvatarImage src={uc.user?.image ?? ""} referrerPolicy="no-referrer" />
-                        <AvatarFallback className="bg-primary/10 text-primary text-xs">
-                          {uc.user?.name?.[0]?.toUpperCase() ?? "?"}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm text-foreground truncate">{uc.user?.name ?? "—"}</p>
-                        <p className="text-xs text-muted-foreground truncate">{uc.user?.email}</p>
-                        <p className="text-[10px] text-muted-foreground mt-0.5">{uc.registeredCount} cadastro{uc.registeredCount !== 1 ? "s" : ""} registrados</p>
+                  {filtered.map((uc) => {
+                    const isCurrent = uc.userId === currentUserId;
+                    return (
+                      <div key={uc.id} className={`flex items-start gap-3 p-4 flex-wrap sm:flex-nowrap ${isCurrent ? "bg-primary/[0.04]" : ""}`}>
+                        <Avatar className="w-9 h-9 shrink-0 mt-0.5">
+                          <AvatarImage src={uc.user?.image ?? ""} referrerPolicy="no-referrer" />
+                          <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                            {uc.user?.name?.[0]?.toUpperCase() ?? "?"}
+                          </AvatarFallback>
+                        </Avatar>
+
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-medium text-sm text-foreground">
+                              {uc.user?.name ?? "—"}
+                            </span>
+                            {isCurrent && (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/30">
+                                Você
+                              </span>
+                            )}
+                            {uc.isSuperAdmin && (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-yellow-500/15 text-yellow-400 border border-yellow-500/30 flex items-center gap-0.5">
+                                <Crown className="w-2.5 h-2.5" /> Super Admin
+                              </span>
+                            )}
+                            <span className={`text-[10px] px-1.5 py-0.5 rounded-full border ${ROLE_COLOR[uc.role]}`}>
+                              {ROLE_LABEL[uc.role]}
+                            </span>
+                          </div>
+                          <p className="text-xs text-muted-foreground truncate mt-0.5">{uc.user?.email}</p>
+                          <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1">
+                            <span className="text-[10px] text-muted-foreground/70">
+                              {uc.registeredCount} cadastro{uc.registeredCount !== 1 ? "s" : ""}
+                            </span>
+                            {uc.acceptedAt && (
+                              <span className="text-[10px] text-muted-foreground/70">
+                                Entrou {fmtDate(uc.acceptedAt)}
+                              </span>
+                            )}
+                            {uc.invitedByName && (
+                              <span className="text-[10px] text-muted-foreground/70">
+                                Convidado por {uc.invitedByName}
+                              </span>
+                            )}
+                            {uc.lastSeen && (
+                              <span className="text-[10px] text-muted-foreground/70">
+                                Visto {timeAgo(uc.lastSeen)}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                          <Select
+                            value={uc.role}
+                            onValueChange={(v) => uc.userId && updateUser(uc.userId, { role: v })}
+                            disabled={isCurrent}
+                          >
+                            <SelectTrigger className="h-7 w-36 text-xs"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="MEMBER">Colaborador</SelectItem>
+                              <SelectItem value="LEADER">Coordenador</SelectItem>
+                              <SelectItem value="ADMIN">Administrador</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <Select
+                            value={uc.tier ?? "APOIADOR"}
+                            onValueChange={(v) => uc.userId && updateUser(uc.userId, { tier: v })}
+                          >
+                            <SelectTrigger className="h-7 w-36 text-xs"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="APOIADOR">Apoiador</SelectItem>
+                              <SelectItem value="ATIVISTA">Ativista</SelectItem>
+                              <SelectItem value="LIDER_CELULA">Líder de Célula</SelectItem>
+                              <SelectItem value="COORDENADOR">Coordenador</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          {!isCurrent && (
+                            <Button
+                              size="sm" variant="ghost" onClick={() => revoke(uc)}
+                              className="h-7 w-7 p-0 text-destructive hover:bg-destructive/10"
+                              title="Revogar acesso"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </Button>
+                          )}
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2 shrink-0 flex-wrap">
-                        <Select value={uc.role} onValueChange={(v) => uc.userId && updateUser(uc.userId, { role: v })}>
-                          <SelectTrigger className="h-7 w-32 text-xs"><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="MEMBER">Colaborador</SelectItem>
-                            <SelectItem value="LEADER">Coordenador</SelectItem>
-                            <SelectItem value="ADMIN">Administrador</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <Select value={uc.tier ?? "APOIADOR"} onValueChange={(v) => uc.userId && updateUser(uc.userId, { tier: v })}>
-                          <SelectTrigger className="h-7 w-36 text-xs"><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="APOIADOR">Apoiador</SelectItem>
-                            <SelectItem value="ATIVISTA">Ativista</SelectItem>
-                            <SelectItem value="LIDER_CELULA">Líder de Célula</SelectItem>
-                            <SelectItem value="COORDENADOR">Coordenador</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <Button size="sm" variant="ghost" onClick={() => revoke(uc)}
-                          className="h-7 w-7 p-0 text-destructive hover:bg-destructive/10">
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             </div>
           )}
 
+          {filtered.length === 0 && (search || roleFilter !== "ALL") && (
+            <div className="glass-card rounded-2xl p-8 text-center border border-white/[0.08]">
+              <p className="text-muted-foreground text-sm">Nenhum usuário encontrado</p>
+            </div>
+          )}
+
+          {/* Convites pendentes */}
           {pending.length > 0 && (
             <div>
               <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
@@ -171,17 +361,33 @@ export default function SuperAdminPage() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm text-foreground truncate">{uc.pendingEmail}</p>
-                        <div className="flex items-center gap-2 mt-0.5">
+                        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                           <span className={`text-[10px] px-2 py-0.5 rounded-full border ${ROLE_COLOR[uc.role]}`}>
-                            {uc.role === "ADMIN" ? "Administrador" : uc.role === "LEADER" ? "Coordenador" : "Colaborador"}
+                            {ROLE_LABEL[uc.role]}
                           </span>
                           <span className="text-[10px] text-amber-400">Aguardando login com Google</span>
+                          {uc.invitedByName && (
+                            <span className="text-[10px] text-muted-foreground/70">por {uc.invitedByName}</span>
+                          )}
+                          <span className="text-[10px] text-muted-foreground/70">{fmtDate(uc.invitedAt)}</span>
                         </div>
                       </div>
-                      <Button size="sm" variant="ghost" onClick={() => revoke(uc)}
-                        className="h-7 w-7 p-0 text-destructive hover:bg-destructive/10 shrink-0">
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </Button>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <Button
+                          size="sm" variant="ghost" onClick={() => uc.pendingEmail && resendInvite(uc.pendingEmail)}
+                          className="h-7 px-2 text-muted-foreground hover:text-foreground text-xs gap-1"
+                          title="Reenviar convite"
+                        >
+                          <Mail className="w-3 h-3" /> Reenviar
+                        </Button>
+                        <Button
+                          size="sm" variant="ghost" onClick={() => revoke(uc)}
+                          className="h-7 w-7 p-0 text-destructive hover:bg-destructive/10"
+                          title="Cancelar convite"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -191,14 +397,67 @@ export default function SuperAdminPage() {
         </div>
       )}
 
+      {/* Auditoria */}
+      <div className="glass-card rounded-2xl border border-white/[0.08] overflow-hidden">
+        <button
+          onClick={toggleAudit}
+          className="w-full flex items-center justify-between p-4 text-left hover:bg-white/[0.02] transition-colors"
+        >
+          <div className="flex items-center gap-2">
+            <Shield className="w-4 h-4 text-muted-foreground" />
+            <span className="text-sm font-medium text-foreground">Log de Auditoria</span>
+            {auditLogs.length > 0 && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-white/[0.06] text-muted-foreground border border-white/[0.08]">
+                {auditLogs.length} registro{auditLogs.length !== 1 ? "s" : ""}
+              </span>
+            )}
+          </div>
+          {showAudit ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+        </button>
+
+        {showAudit && (
+          <div className="border-t border-white/[0.06]">
+            {auditLoading ? (
+              <div className="text-center py-8 text-muted-foreground text-sm">Carregando...</div>
+            ) : auditLogs.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground text-sm">Nenhum registro ainda</div>
+            ) : (
+              <div className="divide-y divide-white/[0.04] max-h-96 overflow-y-auto">
+                {auditLogs.map((log) => (
+                  <div key={log.id} className="flex items-center gap-3 px-4 py-2.5">
+                    <span className="text-xs w-4 text-center">{ACTION_ICON[log.action] ?? "•"}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-foreground">
+                        <span className="font-medium">{log.actor.name ?? log.actor.email}</span>
+                        {" "}{log.actionLabel}
+                        {log.target && <span className="text-muted-foreground"> → {log.target.name ?? log.target.email}</span>}
+                      </p>
+                      {log.metadata && (log.metadata as Record<string, unknown>).role && (
+                        <p className="text-[10px] text-muted-foreground mt-0.5">
+                          Nível: {ROLE_LABEL[(log.metadata as Record<string, unknown>).role as string] ?? (log.metadata as Record<string, unknown>).role as string}
+                        </p>
+                      )}
+                    </div>
+                    <span className="text-[10px] text-muted-foreground shrink-0">{timeAgo(log.createdAt)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Dialog: Conceder Acesso */}
       <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader><DialogTitle>Conceder Acesso ao Sistema</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <div>
               <Label>Gmail *</Label>
-              <Input value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)}
-                placeholder="email@gmail.com" type="email" autoComplete="off" />
+              <Input
+                value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)}
+                placeholder="email@gmail.com" type="email" autoComplete="off"
+              />
               <p className="text-[11px] text-muted-foreground mt-1.5">
                 A pessoa faz login com esse Gmail e o acesso é ativado automaticamente.
               </p>
