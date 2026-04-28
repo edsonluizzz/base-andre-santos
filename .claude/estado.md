@@ -1,6 +1,6 @@
 # Estado — Base André Santos
 
-**Última atualização:** 2026-04-25 (sessão tarde)
+**Última atualização:** 2026-04-28
 **GitHub:** https://github.com/edsonluizzz/base-andre-santos
 **Deploy:** Vercel (ver domínio em vercel.com → projeto → aba Domains)
 
@@ -8,97 +8,118 @@
 
 ## Status Atual
 
-Sistema funcional e em produção. Build passando com `typescript: { ignoreBuildErrors: true }`.
-Auth corrigida: Edson entra como ADMIN com `isSuperAdmin: true`.
-
-**Sprint 2026-04-27:** Contribuições + rastreio + tiers + lider de célula implementados.
-- `/cadastro` agora aceita `?ref=<userId>` para rastreio + multi-select de formas de contribuição
-- Dashboard exibe card "Minha Célula" com tier, contadores e link copiável
-- Lista de colaboradores: filtro "Meus cadastros" + mostra quem cadastrou
-- Permissão de lider de célula: usuário pode alterar status dos colaboradores que registrou
+Sistema funcional e em produção. Terminologia "Base de Apoio" (não "campanha") em todos os textos visíveis — requisito legal pré-campanha.
 
 ---
 
-## O que está pronto
+## Módulos
 
-### Módulos
 | Módulo | Rota | Status |
 |--------|------|--------|
-| Dashboard | `/dashboard` | ✅ |
-| Colaboradores | `/colaboradores` | ✅ com importação CSV |
-| Mapa de Apoio | `/mapa` | ✅ |
+| Dashboard | `/dashboard` | ✅ com card "Minha Célula" + cobertura por município |
+| Colaboradores | `/colaboradores` | ✅ CSV import · seleção em massa · bulk status |
+| Mapa de Apoio | `/mapa` | ✅ choropleth PR · zoom/pan · tooltip hover |
 | Zonas | `/zonas` | ✅ |
-| Grupos WhatsApp | `/grupos` | ✅ com gerenciamento de membros |
-| Agenda | `/agenda` | ✅ |
-| Comunicados | `/comunicados` | ✅ |
-| Configurações | `/configuracoes` | ✅ nome da campanha + logo + join code |
-| Cadastro público | `/cadastro` | ✅ sem auth |
+| Grupos WhatsApp | `/grupos` | ✅ gerenciamento de membros |
+| Agenda | `/agenda` | ✅ + botão Google Calendar sync |
+| Comunicados | `/comunicados` | ✅ filtro por audiência + contagem em tempo real |
+| Configurações | `/configuracoes` | ✅ logo · join code · Google Calendar |
+| Relatório | `/relatorio` | ✅ cobertura por município + export CSV |
+| Minha Célula | `/minha-celula` | ✅ tier · stats · link de convite · gestão de status |
+| Super Admin | `/super-admin` | ✅ conceder/revogar acesso via Gmail · role/tier |
+| Onboarding | `/onboarding` | ✅ boas-vindas + tour de features |
+| Perfil colaborador | `/colaboradores/[id]` | ✅ |
+| Cadastro público | `/cadastro` | ✅ sem auth · ?ref= rastreio · contribuições |
 
-### APIs
-- `/api/collaborators` — CRUD + filtros (status: LEAD/ACTIVE/INACTIVE)
-- `/api/collaborators/[id]` — GET/PUT/DELETE
-- `/api/collaborators/import` — bulk import CSV (max 500 linhas)
+---
+
+## APIs
+
+- `/api/collaborators` — CRUD + filtros + `?mine=true`
+- `/api/collaborators/[id]` — GET/PUT/DELETE (lider de célula pode editar status dos próprios)
+- `/api/collaborators/import` — bulk CSV (max 500 linhas)
+- `/api/collaborators/bulk` — PATCH status em massa (max 500)
 - `/api/mapa` — lideranças agrupadas por cidade + stats
-- `/api/groups` + `/api/groups/[id]` + `/api/groups/[id]/members`
-- `/api/zones`, `/api/events`, `/api/broadcasts`, `/api/settings`
-- `/api/campaign` — GET/PUT para nome e joinCode da campanha
+- `/api/mapa/stats` — agregado por cidade para choropleth (todos os colaboradores)
+- `/api/my-cell` — tier + stats + userId do usuário logado
+- `/api/admin/users` — listar/convidar usuários por Gmail
+- `/api/admin/users/[id]` — atualizar role/tier, revogar acesso
+- `/api/broadcasts` + `/api/broadcasts/count` — comunicados + contagem por audiência
+- `/api/relatorio/export` — CSV de cobertura
+- `/api/google-calendar/connect`, `/callback`, `/sync` — OAuth + sync bidirecional
 - `/api/public/cadastro` — sem auth, rate limit 5/min, dedup por telefone
 
-### Schema Collaborator
-Campos relevantes: `campaignRole`, `status` (LEAD/ACTIVE/INACTIVE), `profile`, `supportStatus`, `source`, `contributionTypes String[]`, `registeredById String?`
+---
 
-### Schema UserCampaign
-Campo `tier CollaboratorTier` (APOIADOR/ATIVISTA/LIDER_CELULA/COORDENADOR) — recalculado automaticamente por `src/lib/tier.ts`
+## Schema
 
-### Tiers (thresholds automáticos por cadastros ativos)
-- APOIADOR: 0–4 · ATIVISTA: 5–14 · LIDER_CELULA: 15+ · COORDENADOR: manual
+### Collaborator
+`campaignRole`, `status` (LEAD/ACTIVE/INACTIVE), `profile`, `supportStatus`, `source`, `contributionTypes String[]`, `registeredById String?`
+
+### UserCampaign
+`tier CollaboratorTier` (APOIADOR/ATIVISTA/LIDER_CELULA/COORDENADOR) — recalculado por `src/lib/tier.ts`
+- Thresholds: 0–4 APOIADOR · 5–14 ATIVISTA · 15+ LIDER_CELULA · COORDENADOR manual
+
+### Settings
+`campaignName`, `logoBase64`, `googleRefreshToken`
 
 ---
 
-## Env Vars necessárias no Vercel
+## Env Vars no Vercel
 
 ```
-DATABASE_URL
-AUTH_SECRET
-AUTH_GOOGLE_ID
-AUTH_GOOGLE_SECRET
-APP_URL
-ADMIN_EMAILS         = edsonluizz.silva@gmail.com
-SUPER_ADMIN_EMAILS   = edsonluizz.silva@gmail.com
+DATABASE_URL · AUTH_SECRET · AUTH_GOOGLE_ID · AUTH_GOOGLE_SECRET · APP_URL
+ADMIN_EMAILS = edsonluizz.silva@gmail.com
+SUPER_ADMIN_EMAILS = edsonluizz.silva@gmail.com
 ```
-Opcionais: `RESEND_API_KEY`, `BLOB_READ_WRITE_TOKEN`, `GOOGLE_CALENDAR_*`
+Opcionais (funcionam sem, mas habilitam features):
+```
+RESEND_API_KEY          → emails de convite e notificação de leads
+RESEND_FROM             → "Base André Santos <noreply@seudominio.com.br>"
+BLOB_READ_WRITE_TOKEN   → upload de logo
+GOOGLE_CALENDAR_CLIENT_ID / CLIENT_SECRET / REDIRECT_URI / ID
+```
 
 ---
 
-## Como usar os principais recursos
+## Recursos-chave
 
-### Mapa de Apoio
-- Colaboradores com `profile` ≠ APOIADOR aparecem no mapa
-- Editar colaborador → campos "Perfil" e "Apoio ao André"
+### Cadastro público com rastreio
+- Link simples: `/cadastro`
+- Link com rastreio de célula: `/cadastro?ref=<userId>`
+- Leads chegam com `status=LEAD`
 
-### Cadastro público /cadastro
-- Link: `https://<dominio>.vercel.app/cadastro`
-- Leads chegam com `status = LEAD` → filtro "Leads" na lista de colaboradores
+### Seleção em massa (colaboradores)
+- Checkboxes em cada linha; "selecionar todos" no topo
+- Barra flutuante: Ativo / Lead / Inativo em massa
 
-### Importação CSV
-- Botão "Importar CSV" na página de colaboradores
-- Formato: `nome, telefone, email, cidade, bairro, cargo`
-- Dedup automático por telefone; máx 500 linhas
+### Conceder acesso ao sistema
+- Super Admin → "Conceder Acesso" → insere Gmail → convite pendente
+- Ao fazer login com Google, acesso é ativado automaticamente
+
+### Mapa choropleth
+- `/public/pr-municipalities.json` — GeoJSON IBGE, 399 municípios PR
+- Verde degradê (confirmados) · vermelho (adversários) · âmbar (negociando) · cinza (neutro)
+- Zoom por scroll/botões, pan por arrastar, tooltip ao hover
+
+### Tiers automáticos
+- Recalculados em `recalcTier()` a cada criação/alteração/exclusão de colaborador
+- Exibidos no card "Minha Célula" do dashboard e na página `/minha-celula`
 
 ---
 
-## Próximas features
+## Pendências
 
-- [ ] Google Calendar: sync bidirecional de eventos
-- [ ] Relatório de cobertura por município
-- [ ] Dashboard: mapa visual do Paraná com cobertura por cidade
-- [ ] Página "Minha Célula" dedicada: lista dos próprios cadastros com gestão de status
+- [ ] Google Calendar: configurar env vars `GOOGLE_CALENDAR_*` no Vercel
+- [ ] Resend: verificar domínio + configurar `RESEND_FROM` no Vercel
+- [ ] Nice-to-haves: PDF relatório · botão WhatsApp no link de convite · NotificationBell com contagem
 
 ---
 
 ## Armadilhas conhecidas
 
 - `campaignId` fixo = "andre-santos-2026" em todos os endpoints
-- `auth.ts` usa `db.user.findUnique({ where: { email } })` para resolver o userId real (o sub do Google OAuth ≠ UUID do banco)
+- NextAuth v5 Beta: `user.id` no jwt callback = sub do OAuth (não UUID). `auth.ts` resolve via `findUnique({ email })`
 - Build usa `prisma db push` — banco Neon precisa estar acessível no build
-- `typescript: { ignoreBuildErrors: true }` em next.config.mjs — erros de tipo não quebram o build
+- `typescript: { ignoreBuildErrors: true }` — erros de tipo não quebram o build
+- Terminologia: usar "base de apoio" (não "campanha") nos textos visíveis — requisito legal
