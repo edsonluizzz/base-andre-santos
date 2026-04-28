@@ -2,7 +2,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Phone, MapPin, Mail, Calendar, Star, Users, UserCheck, ShieldCheck, ShieldAlert, Monitor } from "lucide-react";
+import { ArrowLeft, Phone, MapPin, Mail, Calendar, Star, UserCheck, ShieldCheck, ShieldAlert, Monitor } from "lucide-react";
 import { InviteToSystem } from "@/components/collaborators/invite-to-system";
 import { CONTRIBUTION_OPTIONS, TIER_LABEL } from "@/lib/contribution";
 

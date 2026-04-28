@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
 
     const audience = req.nextUrl.searchParams.get("audience") ?? "ALL";
 
-    let where: Record<string, unknown> = { campaignId: CID };
+    const where: Record<string, unknown> = { campaignId: CID };
 
     if (audience === "LEAD") {
       where.status = "LEAD";

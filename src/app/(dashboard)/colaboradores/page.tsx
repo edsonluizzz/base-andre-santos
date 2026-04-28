@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Users, Plus, Search, Filter, Phone, MapPin, ChevronDown, Upload, UserCheck, ExternalLink, CheckSquare, Square, X, ArrowUpCircle, UserX, UserMinus } from "lucide-react";
+import { Users, Plus, Search, Filter, Phone, MapPin, ChevronDown, Upload, UserCheck, ExternalLink, CheckSquare, Square, X, ArrowUpCircle, UserMinus } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -87,7 +87,7 @@ export default function ColaboradoresPage() {
     e.stopPropagation();
     setSelected((prev) => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      if (next.has(id)) { next.delete(id); } else { next.add(id); }
       return next;
     });
   }
@@ -154,7 +154,9 @@ export default function ColaboradoresPage() {
             <Upload className="w-4 h-4" /> Importar CSV
           </Button>
           <Button onClick={openNew} className="bg-primary text-primary-foreground hover:bg-primary/90 gap-2">
-            <Plus className="w-4 h-4" /> Novo Colaborador
+            <Plus className="w-4 h-4" />
+            <span className="sm:hidden">Novo</span>
+            <span className="hidden sm:inline">Novo Colaborador</span>
           </Button>
         </div>
       </div>
@@ -370,28 +372,28 @@ export default function ColaboradoresPage() {
 
       {/* Barra de ação em massa — aparece quando há seleção */}
       {selected.size > 0 && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-4 py-3 rounded-2xl shadow-2xl border border-white/[0.12]"
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center flex-wrap justify-center gap-2 px-4 py-3 rounded-2xl shadow-2xl border border-white/[0.12] max-w-[calc(100vw-2rem)]"
           style={{ background: "rgba(13,27,42,0.97)", backdropFilter: "blur(16px)" }}>
-          <span className="text-sm font-semibold text-foreground mr-1">
-            {selected.size} selecionado{selected.size !== 1 ? "s" : ""}
+          <span className="text-sm font-semibold text-foreground">
+            {selected.size} sel.
           </span>
-          <div className="w-px h-4 bg-white/[0.15] mx-1" />
+          <div className="w-px h-4 bg-white/[0.15]" />
           <Button size="sm" disabled={bulkLoading} onClick={() => bulkUpdate("ACTIVE")}
             className="h-8 gap-1.5 text-xs bg-green-600 hover:bg-green-500 text-white border-0">
             <ArrowUpCircle className="w-3.5 h-3.5" />
-            Marcar como Ativo
+            <span className="hidden sm:inline">Marcar como </span>Ativo
           </Button>
           <Button size="sm" disabled={bulkLoading} onClick={() => bulkUpdate("LEAD")}
             variant="outline" className="h-8 gap-1.5 text-xs border-amber-500/40 text-amber-400 hover:bg-amber-500/10">
             <UserCheck className="w-3.5 h-3.5" />
-            Manter como Lead
+            <span className="hidden sm:inline">Manter como </span>Lead
           </Button>
           <Button size="sm" disabled={bulkLoading} onClick={() => bulkUpdate("INACTIVE")}
             variant="outline" className="h-8 gap-1.5 text-xs border-red-500/30 text-red-400 hover:bg-red-500/10">
             <UserMinus className="w-3.5 h-3.5" />
             Inativar
           </Button>
-          <div className="w-px h-4 bg-white/[0.15] mx-1" />
+          <div className="w-px h-4 bg-white/[0.15]" />
           <button onClick={() => setSelected(new Set())}
             className="text-muted-foreground hover:text-foreground transition-colors p-1">
             <X className="w-4 h-4" />

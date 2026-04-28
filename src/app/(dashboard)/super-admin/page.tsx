@@ -222,9 +222,9 @@ export default function SuperAdminPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2 flex-wrap">
             <Shield className="w-6 h-6 text-primary" />
             Super Admin
             {currentIsSuperAdmin && (
@@ -235,15 +235,17 @@ export default function SuperAdminPage() {
           </h1>
           <p className="text-sm text-muted-foreground mt-1">Gerenciamento de acesso e auditoria do sistema</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Button variant="outline" size="sm" onClick={fetchUsers} className="gap-1.5">
             <RefreshCw className="w-3.5 h-3.5" />
           </Button>
-          <Button variant="outline" size="sm" onClick={fixCuritibaPastors} className="gap-1.5 text-amber-400 border-amber-500/30 hover:bg-amber-500/10">
+          <Button variant="outline" size="sm" onClick={fixCuritibaPastors} className="gap-1.5 text-amber-400 border-amber-500/30 hover:bg-amber-500/10 hidden sm:flex">
             Corrigir cidade (pastores CWB)
           </Button>
           <Button onClick={() => setInviteOpen(true)} className="bg-primary text-primary-foreground gap-2">
-            <Plus className="w-4 h-4" /> Conceder Acesso
+            <Plus className="w-4 h-4" />
+            <span className="sm:hidden">Acesso</span>
+            <span className="hidden sm:inline">Conceder Acesso</span>
           </Button>
         </div>
       </div>
@@ -264,13 +266,13 @@ export default function SuperAdminPage() {
       </div>
 
       {/* Filtros */}
-      <div className="flex gap-3">
+      <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar por nome ou e-mail..." className="pl-9" />
         </div>
         <Select value={roleFilter} onValueChange={setRoleFilter}>
-          <SelectTrigger className="w-44">
+          <SelectTrigger className="w-full sm:w-44">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>

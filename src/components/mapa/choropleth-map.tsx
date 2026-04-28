@@ -99,7 +99,7 @@ export function ChoroplethMap({ cityStats }: { cityStats: Record<string, CityDat
           onMoveEnd={handleMoveEnd}
         >
           <Geographies geography={GEO_URL}>
-            {({ geographies }: { geographies: any[] }) =>
+            {({ geographies }: { geographies: { properties: { name: string }; rsmKey: string }[] }) =>
               geographies.map((geo) => {
                 const key = normalize(geo.properties.name as string);
                 const data = cityStats[key];

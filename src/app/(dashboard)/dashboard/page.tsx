@@ -111,7 +111,7 @@ export default async function DashboardPage() {
               <span className="text-xs text-muted-foreground font-medium">{kpi.label}</span>
               <kpi.icon className={`w-4 h-4 ${kpi.color}`} />
             </div>
-            <p className={`text-3xl font-bold ${kpi.color}`}>{kpi.value}</p>
+            <p className={`text-2xl sm:text-3xl font-bold ${kpi.color}`}>{kpi.value}</p>
           </Link>
         ))}
       </div>

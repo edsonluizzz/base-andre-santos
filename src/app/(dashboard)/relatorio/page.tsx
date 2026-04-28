@@ -64,14 +64,14 @@ export default async function RelatorioPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
             <BarChart2 className="w-6 h-6 text-primary" /> Relatório de Cobertura
           </h1>
           <p className="text-sm text-muted-foreground mt-1">{cities.length} municípios · {totals.active} ativos · {totals.leads} leads</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <PrintButton />
           <Link
             href="/api/relatorio/export"
@@ -99,7 +99,7 @@ export default async function RelatorioPage() {
       </div>
 
       {/* Legenda */}
-      <div className="flex gap-4 text-xs text-muted-foreground">
+      <div className="flex gap-4 flex-wrap text-xs text-muted-foreground">
         <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-green-500 inline-block" /> Alta (coord. ou líder municipal)</span>
         <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-yellow-500 inline-block" /> Média (líder de bairro)</span>
         <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-slate-500 inline-block" /> Baixa (só voluntários)</span>

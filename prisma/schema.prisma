@@ -15,9 +15,7 @@ model Campaign {
   updatedAt  DateTime @updatedAt
   collaborators  Collaborator[]
   zones          Zone[]
-  broadcasts     Broadcast[]
   whatsappGroups WhatsAppGroup[]
-  events         Event[]
   userCampaigns  UserCampaign[]
 }
 
@@ -199,7 +197,7 @@ model WhatsAppGroupMember {
 
 model Event {
   id                    String            @id @default(cuid())
-  campaignId            String
+  campaignId            String            @default("andre-santos-2026")
   zoneId                String?
   title                 String
   type                  CampaignEventType @default(REUNIAO)
@@ -209,7 +207,6 @@ model Event {
   googleCalendarEventId String?
   createdAt             DateTime          @default(now())
   updatedAt             DateTime          @updatedAt
-  campaign    Campaign     @relation(fields: [campaignId], references: [id], onDelete: Cascade)
   zone        Zone?        @relation(fields: [zoneId], references: [id], onDelete: SetNull)
   attendances Attendance[]
   rsvps       EventRsvp[]
@@ -221,13 +218,13 @@ model Event {
 model Attendance {
   id             String           @id @default(cuid())
   eventId        String
-  collaboratorId String
+  collaboratorId String?
   status         AttendanceStatus @default(ABSENT)
   justification  String?
   createdAt      DateTime         @default(now())
-  event        Event        @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  collaborator Collaborator @relation(fields: [collaboratorId], references: [id], onDelete: Cascade)
-  @@unique([eventId, collaboratorId])
+  event        Event         @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  collaborator Collaborator? @relation(fields: [collaboratorId], references: [id], onDelete: SetNull)
+  @@index([eventId])
   @@index([collaboratorId])
 }
 
@@ -243,14 +240,13 @@ model EventRsvp {
 
 model Broadcast {
   id         String   @id @default(cuid())
-  campaignId String
+  campaignId String   @default("andre-santos-2026")
   title      String
   message    String   @db.Text
   audience   String
   sentCount  Int      @default(0)
   createdBy  String?
   createdAt  DateTime @default(now())
-  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
   @@index([campaignId])
 }
 

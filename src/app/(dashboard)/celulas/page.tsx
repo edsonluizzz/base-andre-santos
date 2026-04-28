@@ -38,7 +38,7 @@ export default function CelulasPage() {
   function toggle(id: string) {
     setExpanded((prev) => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      if (next.has(id)) { next.delete(id); } else { next.add(id); }
       return next;
     });
   }
@@ -56,15 +56,15 @@ export default function CelulasPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-3 gap-2 sm:gap-3">
         {[
           { label: "Líderes ativos",   value: leaders.length, color: "text-primary"   },
           { label: "Total ativos",     value: totalAtivos,    color: "text-green-400" },
           { label: "Leads em aberto",  value: totalLeads,     color: "text-amber-400" },
         ].map((s) => (
-          <div key={s.label} className="glass-card rounded-xl p-4 border border-white/[0.08]">
-            <p className="text-xs text-muted-foreground">{s.label}</p>
-            <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
+          <div key={s.label} className="glass-card rounded-xl p-3 sm:p-4 border border-white/[0.08]">
+            <p className="text-[10px] sm:text-xs text-muted-foreground leading-tight">{s.label}</p>
+            <p className={`text-xl sm:text-2xl font-bold ${s.color} mt-0.5`}>{s.value}</p>
           </div>
         ))}
       </div>
@@ -102,12 +102,13 @@ export default function CelulasPage() {
                     </div>
                     <p className="text-xs text-muted-foreground mt-0.5">{leader.email}</p>
                   </div>
-                  <div className="flex items-center gap-4 shrink-0 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-2 sm:gap-4 shrink-0 text-xs text-muted-foreground">
                     <span className="flex items-center gap-1">
                       <UserCheck className="w-3.5 h-3.5 text-green-400" />
-                      <span className="text-green-400 font-medium">{leader.active}</span> ativos
+                      <span className="text-green-400 font-medium">{leader.active}</span>
+                      <span className="hidden sm:inline"> ativos</span>
                     </span>
-                    <span className="flex items-center gap-1">
+                    <span className="hidden sm:flex items-center gap-1">
                       <Users className="w-3.5 h-3.5" />
                       {leader.total} total
                     </span>
@@ -126,15 +127,15 @@ export default function CelulasPage() {
                     ) : (
                       <div className="divide-y divide-white/[0.04]">
                         {leader.members.map((m) => (
-                          <div key={m.id} className="flex items-center gap-3 px-4 py-2.5 pl-14">
+                          <div key={m.id} className="flex items-center gap-3 px-4 py-2.5 pl-8 sm:pl-14">
                             <div className={`w-2 h-2 rounded-full shrink-0 ${STATUS_DOT[m.status] ?? "bg-slate-500"}`} />
-                            <span className="text-sm text-foreground flex-1">{m.name}</span>
+                            <span className="text-sm text-foreground flex-1 min-w-0 truncate">{m.name}</span>
                             {m.city && (
-                              <span className="text-xs text-muted-foreground flex items-center gap-1">
+                              <span className="text-xs text-muted-foreground hidden sm:flex items-center gap-1 shrink-0">
                                 <MapPin className="w-3 h-3" />{m.city}
                               </span>
                             )}
-                            <span className="text-[10px] text-muted-foreground/60">
+                            <span className="text-[10px] text-muted-foreground/60 hidden sm:inline shrink-0">
                               {new Date(m.createdAt).toLocaleDateString("pt-BR")}
                             </span>
                           </div>

@@ -112,13 +112,13 @@ export default function MinhaCelulaPage() {
 
               <div className="grid grid-cols-3 gap-2 text-center">
                 {[
-                  { icon: Users,     label: "Total",    value: stats?.total    ?? 0, color: "text-primary"    },
-                  { icon: UserCheck, label: "Ativos",   value: stats?.active   ?? 0, color: "text-green-400"  },
-                  { icon: UserX,     label: "Leads",    value: stats?.leads    ?? 0, color: "text-amber-400"  },
+                  { icon: Users,     label: "Total",  value: stats?.total  ?? 0, color: "text-primary"   },
+                  { icon: UserCheck, label: "Ativos", value: stats?.active ?? 0, color: "text-green-400" },
+                  { icon: UserX,     label: "Leads",  value: stats?.leads  ?? 0, color: "text-amber-400" },
                 ].map(({ icon: Icon, label, value, color }) => (
-                  <div key={label} className="rounded-xl p-3 bg-white/[0.03] border border-white/[0.06]">
-                    <Icon className={`w-4 h-4 mx-auto mb-1 ${color}`} />
-                    <p className={`text-xl font-bold ${color}`}>{value}</p>
+                  <div key={label} className="rounded-xl p-2 sm:p-3 bg-white/[0.03] border border-white/[0.06]">
+                    <Icon className={`w-3.5 h-3.5 sm:w-4 sm:h-4 mx-auto mb-1 ${color}`} />
+                    <p className={`text-lg sm:text-xl font-bold ${color}`}>{value}</p>
                     <p className="text-[10px] text-muted-foreground">{label}</p>
                   </div>
                 ))}
