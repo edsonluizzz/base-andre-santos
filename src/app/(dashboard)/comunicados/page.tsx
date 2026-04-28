@@ -128,7 +128,7 @@ export default function ComunicadosPage() {
             </div>
             <div>
               <Label>Destinatários</Label>
-              <Select value={form.audience} onValueChange={(v) => setForm((f) => ({ ...f, audience: v })}>
+              <Select value={form.audience} onValueChange={(v) => setForm((f) => ({ ...f, audience: v }))}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {AUDIENCE_OPTIONS.map((o) => (
