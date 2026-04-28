@@ -34,9 +34,9 @@ function lerpColor(a: string, b: string, t: number): string {
 }
 
 function getColor(data?: CityData): string {
-  if (!data) return "#0f172a";
+  if (!data) return "#1a3347";
   const { confirmado, negociando, neutro, adversario } = data;
-  if (confirmado + negociando + neutro + adversario === 0) return "#0f172a";
+  if (confirmado + negociando + neutro + adversario === 0) return "#1a3347";
   if (adversario > confirmado) {
     return lerpColor("#fca5a5", "#7f1d1d", Math.min(adversario / 5, 1));
   }
@@ -105,13 +105,13 @@ export function ChoroplethMap({ cityStats }: { cityStats: Record<string, CityDat
                 const data = cityStats[key];
                 const fill = getColor(data);
                 // Stroke mais fino conforme zoom aumenta
-                const sw = Math.max(0.1, 0.4 / zoom);
+                const sw = Math.max(0.15, 0.6 / zoom);
                 return (
                   <Geography
                     key={geo.rsmKey}
                     geography={geo}
                     fill={fill}
-                    stroke="#1e293b"
+                    stroke="#0d1f35"
                     strokeWidth={sw}
                     style={{
                       default: { outline: "none" },
@@ -178,7 +178,7 @@ export function ChoroplethMap({ cityStats }: { cityStats: Record<string, CityDat
           Neutro
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded-sm inline-block bg-[#0f172a] border border-white/10" />
+          <span className="w-3 h-3 rounded-sm inline-block bg-[#1a3347] border border-white/10" />
           Sem dados
         </span>
         <span className="ml-auto text-[10px] opacity-60">Scroll ou botões para zoom · arrastar para mover</span>

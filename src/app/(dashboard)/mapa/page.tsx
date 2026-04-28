@@ -127,7 +127,7 @@ export default function MapaPage() {
       </div>
 
       {/* Mapa choropleth do Paraná */}
-      <div className="glass-card rounded-2xl p-4 border border-white/[0.08]">
+      <div className="rounded-2xl p-4 border border-white/[0.12]" style={{ background: "#0d1f35" }}>
         <ChoroplethMap cityStats={choroplethStats} />
       </div>
 
