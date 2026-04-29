@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Users, Plus, Search, Filter, Phone, MapPin, ChevronDown, Upload, UserCheck, ExternalLink, CheckSquare, Square, X, ArrowUpCircle, UserMinus } from "lucide-react";
+import { Users, Plus, Search, Filter, Phone, MapPin, ChevronDown, Upload, UserCheck, ExternalLink, CheckSquare, Square, X, ArrowUpCircle, UserMinus, ThumbsUp } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -107,6 +107,24 @@ export default function ColaboradoresPage() {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ids: [...selected], status }),
+    });
+    setBulkLoading(false);
+    if (res.ok) {
+      const d = await res.json();
+      toast.success(`${d.updated} colaborador${d.updated !== 1 ? "es" : ""} atualizado${d.updated !== 1 ? "s" : ""}`);
+      fetchCollaborators();
+    } else {
+      toast.error("Erro ao atualizar em massa");
+    }
+  }
+
+  async function bulkSupportStatus(supportStatus: string) {
+    if (selected.size === 0) return;
+    setBulkLoading(true);
+    const res = await fetch("/api/collaborators/bulk", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids: [...selected], supportStatus }),
     });
     setBulkLoading(false);
     if (res.ok) {
@@ -392,6 +410,12 @@ export default function ColaboradoresPage() {
             variant="outline" className="h-8 gap-1.5 text-xs border-red-500/30 text-red-400 hover:bg-red-500/10">
             <UserMinus className="w-3.5 h-3.5" />
             Inativar
+          </Button>
+          <div className="w-px h-4 bg-white/[0.15]" />
+          <Button size="sm" disabled={bulkLoading} onClick={() => bulkSupportStatus("CONFIRMADO")}
+            className="h-8 gap-1.5 text-xs bg-primary hover:bg-primary/90 text-primary-foreground border-0">
+            <ThumbsUp className="w-3.5 h-3.5" />
+            Confirmado
           </Button>
           <div className="w-px h-4 bg-white/[0.15]" />
           <button onClick={() => setSelected(new Set())}

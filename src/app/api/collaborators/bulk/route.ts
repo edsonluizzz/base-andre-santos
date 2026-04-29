@@ -12,7 +12,7 @@ export async function PATCH(req: NextRequest) {
     if (!["ADMIN", "LEADER"].includes(session.user.role ?? ""))
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-    const { ids, status, campaignRole } = await req.json();
+    const { ids, status, campaignRole, supportStatus } = await req.json();
 
     if (!Array.isArray(ids) || ids.length === 0)
       return NextResponse.json({ error: "Nenhum ID fornecido" }, { status: 400 });
@@ -21,8 +21,9 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: "Máximo 500 registros por operação" }, { status: 400 });
 
     const data: Record<string, unknown> = {};
-    if (status)       data.status = status;
-    if (campaignRole) data.campaignRole = campaignRole;
+    if (status)        data.status = status;
+    if (campaignRole)  data.campaignRole = campaignRole;
+    if (supportStatus) data.supportStatus = supportStatus;
 
     if (Object.keys(data).length === 0)
       return NextResponse.json({ error: "Nenhum campo para atualizar" }, { status: 400 });
