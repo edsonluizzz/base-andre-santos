@@ -1,6 +1,6 @@
 # Estado — Base André Santos
 
-**Última atualização:** 2026-04-29
+**Última atualização:** 2026-04-29 (sprint 2)
 **GitHub:** https://github.com/edsonluizzz/base-andre-santos
 **Deploy:** Vercel (ver domínio em vercel.com → projeto → aba Domains)
 
@@ -139,6 +139,14 @@ GOOGLE_CALENDAR_CLIENT_ID / CLIENT_SECRET / REDIRECT_URI / ID
 - Exibidos no card "Minha Célula" do dashboard e na página `/minha-celula`
 
 ---
+
+## Sprint 2026-04-29 (sessão 2) — entregues
+
+- ✅ Fix nome "Usuário" no sidebar: `token.name` e `session.user.name` agora propagados corretamente
+- ✅ Segurança: rate limit em `/api/invite/pre-auth`; `/api/invite/validate` sem metadados públicos; enum validation no bulk; N+1 → groupBy em admin/users; índices em Collaborator.status e .supportStatus
+- ✅ Mobile: fix overflow horizontal (CopyButton `min-w-0`); layout `pl-16` para conteúdo não ficar sob o hamburger; `overflow-x: hidden` em html/body
+- ✅ Labels: `src/lib/labels.ts` centralizado; CSV e XLSX exportam em PT-BR (nunca mais CONFIRMADO/APOIADOR/PASTOR crus)
+- ✅ Relatório: painel "Por Cargo", "Por Perfil" e "Status de Apoio" com barras visuais; exportação XLSX com 3 abas (Resumo, Cobertura, Colaboradores)
 
 ## Pendências
 
