@@ -156,8 +156,8 @@ export default function MinhaCelulaPage() {
               </p>
               {referralLink && (
                 <div className="mt-auto">
-                  <div className="flex items-center gap-2 rounded-lg px-3 py-2.5 bg-white/[0.04] border border-white/[0.08]">
-                    <span className="flex-1 text-xs text-muted-foreground font-mono truncate">{referralLink}</span>
+                  <div className="flex items-center gap-2 rounded-lg px-3 py-2.5 bg-white/[0.04] border border-white/[0.08] overflow-hidden">
+                    <span className="flex-1 min-w-0 text-xs text-muted-foreground font-mono truncate">{referralLink}</span>
                     <button onClick={copyLink} className="shrink-0 text-muted-foreground hover:text-primary transition-colors">
                       {copied ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
                     </button>

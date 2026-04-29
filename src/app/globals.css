@@ -78,7 +78,8 @@
     -webkit-font-smoothing: antialiased;
   }
 
-  html { @apply font-sans; }
+  html { @apply font-sans; overflow-x: hidden; }
+  body { overflow-x: hidden; }
 }
 
 /* ── Glass card ──────────────────────────────────────── */
