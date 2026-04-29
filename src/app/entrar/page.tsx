@@ -8,8 +8,11 @@ function EntrarContent() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
 
-  const [status, setStatus] = useState<"loading" | "valid" | "invalid" | "used" | "error">("loading");
-  const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState<"loading" | "valid" | "email" | "ready" | "invalid" | "used" | "error">("loading");
+  const [email, setEmail] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState("");
+  const [signingIn, setSigningIn] = useState(false);
 
   useEffect(() => {
     if (!token) { setStatus("invalid"); return; }
@@ -21,25 +24,45 @@ function EntrarContent() {
     })
       .then((r) => {
         if (r.status === 410) setStatus("used");
-        else if (r.ok) setStatus("valid");
+        else if (r.ok) setStatus("email");
         else setStatus("invalid");
       })
       .catch(() => setStatus("error"));
   }, [token]);
 
-  async function handleEntrar() {
-    if (!token) return;
-    setLoading(true);
+  async function handleEmailSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setFormError("");
+    const trimmed = email.trim().toLowerCase();
+    if (!trimmed || !trimmed.includes("@")) { setFormError("Informe um Gmail válido"); return; }
+
+    setSubmitting(true);
     try {
       const res = await fetch("/api/invite/pre-auth", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token }),
+        body: JSON.stringify({ token, email: trimmed }),
       });
-      if (!res.ok) { setStatus("used"); setLoading(false); return; }
+      if (res.status === 410) { setStatus("used"); return; }
+      if (!res.ok) {
+        const d = await res.json();
+        setFormError(d.error ?? "Erro ao processar convite");
+        return;
+      }
+      setStatus("ready");
+    } catch {
+      setFormError("Erro de conexão. Tente novamente.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleSignIn() {
+    setSigningIn(true);
+    try {
       await signIn("google", { callbackUrl: "/completar-perfil" });
     } catch {
-      setLoading(false);
+      setSigningIn(false);
     }
   }
 
@@ -49,17 +72,50 @@ function EntrarContent() {
         <div className="text-center text-white/50 py-4">Validando convite...</div>
       )}
 
-      {status === "valid" && (
+      {status === "email" && (
         <>
           <h2 className="text-xl font-semibold text-white text-center mb-2">
             Você foi convidado!
           </h2>
-          <p className="text-white/60 text-center text-sm mb-8">
-            Entre com sua conta Google para acessar a base de apoio e completar seu cadastro.
+          <p className="text-white/60 text-center text-sm mb-6">
+            Informe o Gmail que vai usar para acessar o sistema.
           </p>
+          <form onSubmit={handleEmailSubmit} className="space-y-4">
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="seu@gmail.com"
+              autoComplete="email"
+              className="w-full rounded-xl px-4 py-3 text-sm text-white placeholder-white/30 outline-none bg-white/5 border border-white/10 focus:border-[#d4af37]/50 transition"
+            />
+            {formError && (
+              <p className="text-xs text-red-400 text-center">{formError}</p>
+            )}
+            <button
+              type="submit"
+              disabled={submitting}
+              className="w-full py-3 rounded-xl font-semibold text-sm transition disabled:opacity-60"
+              style={{ background: "#d4af37", color: "#0a0a0a" }}
+            >
+              {submitting ? "Processando..." : "Continuar"}
+            </button>
+          </form>
+        </>
+      )}
+
+      {status === "ready" && (
+        <>
+          <h2 className="text-xl font-semibold text-white text-center mb-2">
+            Quase lá!
+          </h2>
+          <p className="text-white/60 text-center text-sm mb-2">
+            Entre com o Gmail abaixo para ativar seu acesso:
+          </p>
+          <p className="text-[#d4af37] text-center text-sm font-mono mb-6">{email}</p>
           <button
-            onClick={handleEntrar}
-            disabled={loading}
+            onClick={handleSignIn}
+            disabled={signingIn}
             className="w-full flex items-center justify-center gap-3 bg-white text-gray-800 font-semibold py-3 px-4 rounded-xl hover:bg-gray-100 transition disabled:opacity-60"
           >
             <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24" fill="currentColor">
@@ -68,8 +124,11 @@ function EntrarContent() {
               <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
               <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
             </svg>
-            {loading ? "Redirecionando..." : "Entrar com Google"}
+            {signingIn ? "Redirecionando..." : "Entrar com Google"}
           </button>
+          <p className="text-white/30 text-xs text-center mt-3">
+            Use exatamente esse Gmail para entrar
+          </p>
         </>
       )}
 

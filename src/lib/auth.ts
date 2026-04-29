@@ -1,5 +1,4 @@
 import NextAuth from "next-auth";
-import { cookies } from "next/headers";
 import { db } from "./db";
 import { authConfig } from "./auth.config";
 
@@ -59,33 +58,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                 }).catch(() => null);
                 if (c) linkedCollabId = c.id;
               }
-            }
-          }
-
-          // C) Processa convite por token (InviteLink) — somente no primeiro login
-          if (trigger === "signIn") {
-            try {
-              const cookieStore = await cookies();
-              const inviteToken = cookieStore.get("invite_token")?.value;
-              if (inviteToken) {
-                const inviteLink = await db.inviteLink.findUnique({ where: { token: inviteToken } });
-                if (inviteLink && !inviteLink.usedAt) {
-                  await db.userCampaign.upsert({
-                    where: { userId_campaignId: { userId, campaignId: CAMPAIGN_ID } },
-                    update: { role: inviteLink.role, inviteStatus: "ACCEPTED", acceptedAt: new Date() },
-                    create: { userId, campaignId: CAMPAIGN_ID, role: inviteLink.role, inviteStatus: "ACCEPTED", acceptedAt: new Date() },
-                  }).catch(() => {});
-                  await db.inviteLink.update({
-                    where: { id: inviteLink.id },
-                    data: { usedAt: new Date(), usedBy: userId },
-                  }).catch(() => {});
-                  await db.user.update({ where: { id: userId }, data: { role: inviteLink.role } }).catch(() => {});
-                  token.role = inviteLink.role;
-                  token.campaignId = CAMPAIGN_ID;
-                }
-              }
-            } catch {
-              // cookies() pode não estar disponível em todos os contextos — ignora silenciosamente
             }
           }
 
@@ -169,44 +141,25 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const isAdmin = adminEmails.includes(user.email) || superAdminEmails.includes(user.email);
 
         if (!isAdmin) {
-          let allowAccess = false;
-
           // 1) Convite pendente por email
           const pendingInvite = await db.userCampaign.findFirst({
             where: { pendingEmail: user.email.toLowerCase(), campaignId: CAMPAIGN_ID },
             select: { id: true },
           });
-          if (pendingInvite) allowAccess = true;
 
-          // 2) Convite por token (InviteLink cookie)
-          if (!allowAccess) {
-            try {
-              const cookieStore = await cookies();
-              const inviteToken = cookieStore.get("invite_token")?.value;
-              if (inviteToken) {
-                const inviteLink = await db.inviteLink.findUnique({ where: { token: inviteToken } });
-                if (inviteLink && !inviteLink.usedAt && (!inviteLink.expiresAt || inviteLink.expiresAt > new Date())) {
-                  allowAccess = true;
-                }
-              }
-            } catch {
-              // ignora se cookies() não disponível neste contexto
-            }
-          }
-
-          // 3) Usuário já aceito (retornando)
-          if (!allowAccess) {
+          if (!pendingInvite) {
+            // 2) Usuário já aceito (retornando)
             const existingUser = await db.user.findUnique({ where: { email: user.email }, select: { id: true } });
             if (existingUser) {
               const acceptedUC = await db.userCampaign.findFirst({
                 where: { userId: existingUser.id, campaignId: CAMPAIGN_ID, inviteStatus: "ACCEPTED" },
                 select: { id: true },
               });
-              if (acceptedUC) allowAccess = true;
+              if (!acceptedUC) return "/sem-acesso";
+            } else {
+              return "/sem-acesso";
             }
           }
-
-          if (!allowAccess) return "/sem-acesso";
         }
 
         const dbUser = await db.user.upsert({
