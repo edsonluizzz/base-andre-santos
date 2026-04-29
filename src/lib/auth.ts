@@ -169,41 +169,44 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const isAdmin = adminEmails.includes(user.email) || superAdminEmails.includes(user.email);
 
         if (!isAdmin) {
-          // Verifica convite pendente por email
+          let allowAccess = false;
+
+          // 1) Convite pendente por email
           const pendingInvite = await db.userCampaign.findFirst({
             where: { pendingEmail: user.email.toLowerCase(), campaignId: CAMPAIGN_ID },
             select: { id: true },
           });
+          if (pendingInvite) allowAccess = true;
 
-          if (!pendingInvite) {
-            // Verifica convite por token (InviteLink cookie)
+          // 2) Convite por token (InviteLink cookie)
+          if (!allowAccess) {
             try {
               const cookieStore = await cookies();
               const inviteToken = cookieStore.get("invite_token")?.value;
               if (inviteToken) {
                 const inviteLink = await db.inviteLink.findUnique({ where: { token: inviteToken } });
                 if (inviteLink && !inviteLink.usedAt && (!inviteLink.expiresAt || inviteLink.expiresAt > new Date())) {
-                  // Token válido — permite o login; jwt callback irá ativar o UserCampaign
-                  return true;
+                  allowAccess = true;
                 }
               }
             } catch {
-              // ignora se cookies() não disponível
+              // ignora se cookies() não disponível neste contexto
             }
+          }
 
-            // Verifica se já é usuário aceito (retornando)
+          // 3) Usuário já aceito (retornando)
+          if (!allowAccess) {
             const existingUser = await db.user.findUnique({ where: { email: user.email }, select: { id: true } });
             if (existingUser) {
               const acceptedUC = await db.userCampaign.findFirst({
                 where: { userId: existingUser.id, campaignId: CAMPAIGN_ID, inviteStatus: "ACCEPTED" },
                 select: { id: true },
               });
-              if (!acceptedUC) return "/sem-acesso";
-            } else {
-              // Novo usuário sem convite → bloquear
-              return "/sem-acesso";
+              if (acceptedUC) allowAccess = true;
             }
           }
+
+          if (!allowAccess) return "/sem-acesso";
         }
 
         const dbUser = await db.user.upsert({
