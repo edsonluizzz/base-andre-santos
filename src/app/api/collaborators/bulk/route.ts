@@ -20,6 +20,17 @@ export async function PATCH(req: NextRequest) {
     if (ids.length > 500)
       return NextResponse.json({ error: "Máximo 500 registros por operação" }, { status: 400 });
 
+    const VALID_STATUS = new Set(["LEAD", "ACTIVE", "INACTIVE"]);
+    const VALID_ROLE   = new Set(["COORD_GERAL", "COORD_REGIONAL", "LIDER_MUNICIPAL", "LIDER_BAIRRO", "VOLUNTARIO"]);
+    const VALID_SUPPORT = new Set(["CONFIRMADO", "NEGOCIANDO", "NEUTRO", "ADVERSARIO"]);
+
+    if (status && !VALID_STATUS.has(status))
+      return NextResponse.json({ error: "Status inválido" }, { status: 400 });
+    if (campaignRole && !VALID_ROLE.has(campaignRole))
+      return NextResponse.json({ error: "Cargo inválido" }, { status: 400 });
+    if (supportStatus && !VALID_SUPPORT.has(supportStatus))
+      return NextResponse.json({ error: "Status de apoio inválido" }, { status: 400 });
+
     const data: Record<string, unknown> = {};
     if (status)        data.status = status;
     if (campaignRole)  data.campaignRole = campaignRole;

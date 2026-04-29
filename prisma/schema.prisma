@@ -135,6 +135,8 @@ model Collaborator {
   @@index([email])
   @@index([city])
   @@index([registeredById])
+  @@index([status])
+  @@index([supportStatus])
 }
 
 model Zone {

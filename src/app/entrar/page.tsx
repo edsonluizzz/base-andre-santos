@@ -134,9 +134,9 @@ function EntrarContent() {
 
       {status === "used" && (
         <div className="text-center py-4">
-          <div className="text-4xl mb-4">🔒</div>
-          <h2 className="text-lg font-semibold text-white mb-2">Convite já utilizado</h2>
-          <p className="text-white/50 text-sm">Este link de convite já foi usado. Solicite um novo link ao administrador.</p>
+          <div className="text-4xl mb-4">⏰</div>
+          <h2 className="text-lg font-semibold text-white mb-2">Convite expirado</h2>
+          <p className="text-white/50 text-sm">Este link de convite expirou. Solicite um novo link ao administrador.</p>
         </div>
       )}
 

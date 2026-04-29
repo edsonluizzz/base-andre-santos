@@ -3,8 +3,21 @@ import { db } from "@/lib/db";
 
 const CAMPAIGN_ID = "andre-santos-2026";
 
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+function isRateLimited(ip: string): boolean {
+  const now = Date.now();
+  const entry = rateLimitMap.get(ip);
+  if (!entry || now > entry.resetAt) { rateLimitMap.set(ip, { count: 1, resetAt: now + 60_000 }); return false; }
+  if (entry.count >= 10) return true;
+  entry.count++;
+  return false;
+}
+
 export async function POST(req: NextRequest) {
   try {
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+    if (isRateLimited(ip)) return NextResponse.json({ error: "Muitas tentativas. Aguarde 1 minuto." }, { status: 429 });
+
     const { token, email } = await req.json();
     if (!token) return NextResponse.json({ error: "Token ausente" }, { status: 400 });
     if (!email || !email.includes("@")) return NextResponse.json({ error: "Email inválido" }, { status: 400 });

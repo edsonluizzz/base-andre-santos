@@ -18,6 +18,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           const userId = dbUser?.id ?? user.id;
 
           token.id = userId;
+          token.name = user.name ?? token.name;
           token.image = user.image ?? token.image;
           token.isSuperAdmin = superAdminEmails.includes(user.email);
 
@@ -115,6 +116,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (session.user) {
         session.user.id = token.id as string;
         session.user.role = token.role as string;
+        if (token.name) session.user.name = token.name as string;
         if (token.image) session.user.image = token.image as string;
         session.user.establishmentId = (token.campaignId as string) ?? CAMPAIGN_ID;
         session.user.isSuperAdmin = Boolean(token.isSuperAdmin);

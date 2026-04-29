@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Expirado" }, { status: 410 });
     }
 
-    return NextResponse.json({ ok: true, role: link.role, useCount: link.useCount });
+    return NextResponse.json({ ok: true });
   } catch (err) {
     console.error("[invite/validate] erro:", err);
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });

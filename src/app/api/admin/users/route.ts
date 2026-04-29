@@ -43,20 +43,21 @@ export async function GET() {
       }
     }
 
-    const withStats = await Promise.all(
-      userCampaigns.map(async (uc) => {
-        const registeredCount = uc.userId
-          ? await db.collaborator.count({ where: { registeredById: uc.userId, campaignId: CID } })
-          : 0;
-        return {
-          ...uc,
-          registeredCount,
-          isSuperAdmin: uc.user?.email ? superAdminEmails.includes(uc.user.email) : false,
-          invitedByName: uc.invitedBy ? (inviterMap[uc.invitedBy] ?? null) : null,
-          lastSeen: uc.userId ? (lastSeenMap[uc.userId] ?? null) : null,
-        };
-      })
-    );
+    // Batch count — single query instead of N+1
+    const regCounts = await db.collaborator.groupBy({
+      by: ["registeredById"],
+      where: { campaignId: CID, registeredById: { not: null } },
+      _count: true,
+    });
+    const regCountMap = Object.fromEntries(regCounts.map((r) => [r.registeredById!, r._count]));
+
+    const withStats = userCampaigns.map((uc) => ({
+      ...uc,
+      registeredCount: uc.userId ? (regCountMap[uc.userId] ?? 0) : 0,
+      isSuperAdmin: uc.user?.email ? superAdminEmails.includes(uc.user.email) : false,
+      invitedByName: uc.invitedBy ? (inviterMap[uc.invitedBy] ?? null) : null,
+      lastSeen: uc.userId ? (lastSeenMap[uc.userId] ?? null) : null,
+    }));
 
     return NextResponse.json({ users: withStats, currentUserId: session.user.id });
   } catch (err) {
