@@ -257,6 +257,7 @@ model InviteLink {
   role       Role      @default(MEMBER)
   createdBy  String
   expiresAt  DateTime?
+  useCount   Int       @default(0)
   usedAt     DateTime?
   usedBy     String?
   createdAt  DateTime  @default(now())

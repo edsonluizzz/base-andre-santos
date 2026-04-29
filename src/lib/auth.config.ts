@@ -1,6 +1,12 @@
 import type { NextAuthConfig, Session } from "next-auth";
 import Google from "next-auth/providers/google";
 
+const ROLE_RANK: Record<string, number> = { MEMBER: 0, LEADER: 1, ADMIN: 2 };
+const ROUTE_MIN_RANK: [string, number][] = [
+  ["/mapa", 1], ["/zonas", 1], ["/grupos", 1], ["/agenda", 1], ["/relatorio", 1],
+  ["/comunicados", 2], ["/configuracoes", 2], ["/super-admin", 2],
+];
+
 export const authConfig: NextAuthConfig = {
   providers: [
     Google({
@@ -46,6 +52,15 @@ export const authConfig: NextAuthConfig = {
       if (isPublic) return true;
       if (!isLoggedIn) return Response.redirect(new URL("/login", nextUrl));
       if (isLoggedIn && pathname === "/login") return Response.redirect(new URL("/dashboard", nextUrl));
+
+      // Proteção por papel
+      const role = (auth as Session | null)?.user?.role ?? "MEMBER";
+      const rank = ROLE_RANK[role] ?? 0;
+      for (const [prefix, minRank] of ROUTE_MIN_RANK) {
+        if (pathname.startsWith(prefix) && rank < minRank) {
+          return Response.redirect(new URL("/dashboard", nextUrl));
+        }
+      }
 
       return true;
     },

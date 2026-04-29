@@ -11,7 +11,6 @@ export async function POST(req: NextRequest) {
 
     const link = await db.inviteLink.findUnique({ where: { token } });
     if (!link) return NextResponse.json({ error: "Convite inválido" }, { status: 404 });
-    if (link.usedAt) return NextResponse.json({ error: "Convite já utilizado" }, { status: 410 });
     if (link.expiresAt && link.expiresAt < new Date()) {
       return NextResponse.json({ error: "Convite expirado" }, { status: 410 });
     }
@@ -25,8 +24,10 @@ export async function POST(req: NextRequest) {
         where: { userId: existingUser.id, campaignId: CAMPAIGN_ID, inviteStatus: "ACCEPTED" },
       });
       if (alreadyAccepted) {
-        // Marca link como usado e retorna ok — pessoa já tem acesso
-        await db.inviteLink.update({ where: { id: link.id }, data: { usedAt: new Date(), usedBy: existingUser.id } }).catch(() => {});
+        await db.inviteLink.update({
+          where: { id: link.id },
+          data: { useCount: { increment: 1 }, usedAt: new Date(), usedBy: existingUser.id },
+        }).catch(() => {});
         return NextResponse.json({ ok: true, alreadyHasAccess: true });
       }
     }
@@ -46,12 +47,14 @@ export async function POST(req: NextRequest) {
         },
       });
     } else {
-      // Atualiza o role do convite pendente existente
       await db.userCampaign.update({ where: { id: existing.id }, data: { role: link.role } });
     }
 
-    // Marca o InviteLink como usado
-    await db.inviteLink.update({ where: { id: link.id }, data: { usedAt: new Date() } });
+    // Registra o uso (não bloqueia — link reutilizável)
+    await db.inviteLink.update({
+      where: { id: link.id },
+      data: { useCount: { increment: 1 }, usedAt: new Date() },
+    });
 
     return NextResponse.json({ ok: true });
   } catch (err) {

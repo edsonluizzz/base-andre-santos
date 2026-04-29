@@ -47,8 +47,8 @@ type AuditEntry = {
 };
 
 type InviteLinkRecord = {
-  id: string; token: string; role: string;
-  createdAt: string; usedAt: string | null; usedBy: string | null; expiresAt: string | null;
+  id: string; token: string; role: string; useCount: number;
+  createdAt: string; usedAt: string | null; expiresAt: string | null;
 };
 
 type DupPair = {
@@ -546,26 +546,28 @@ export default function SuperAdminPage() {
               <div className="divide-y divide-white/[0.04] rounded-xl border border-white/[0.06] overflow-hidden">
                 {inviteLinks.map((link) => {
                   const url = `${typeof window !== "undefined" ? window.location.origin : ""}/entrar?token=${link.token}`;
-                  const used = !!link.usedAt;
                   return (
                     <div key={link.id} className="flex items-center gap-3 p-3">
-                      <div className={`w-2 h-2 rounded-full shrink-0 ${used ? "bg-slate-600" : "bg-green-400"}`} />
+                      <div className="w-2 h-2 rounded-full shrink-0 bg-green-400" />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className={`text-[10px] px-2 py-0.5 rounded-full border ${ROLE_COLOR[link.role]}`}>
                             {ROLE_LABEL[link.role]}
                           </span>
-                          <span className={`text-[10px] ${used ? "text-muted-foreground" : "text-green-400"}`}>
-                            {used ? `Usado em ${fmtDate(link.usedAt)}` : "Disponível"}
+                          <span className="text-[10px] text-green-400">
+                            {link.useCount === 0 ? "Nunca usado" : `${link.useCount} uso${link.useCount !== 1 ? "s" : ""}`}
                           </span>
-                          <span className="text-[10px] text-muted-foreground/60">{fmtDate(link.createdAt)}</span>
+                          {link.usedAt && (
+                            <span className="text-[10px] text-muted-foreground/60">último: {fmtDate(link.usedAt)}</span>
+                          )}
+                          <span className="text-[10px] text-muted-foreground/40">{fmtDate(link.createdAt)}</span>
                         </div>
                         <p className="text-[10px] text-muted-foreground/50 truncate mt-0.5 font-mono">
                           /entrar?token={link.token.slice(0, 16)}...
                         </p>
                       </div>
                       <div className="flex items-center gap-1 shrink-0">
-                        {!used && (
+                        {(
                           <>
                             <Button
                               size="sm" variant="ghost"
@@ -768,7 +770,7 @@ export default function SuperAdminPage() {
                   </SelectContent>
                 </Select>
                 <p className="text-[11px] text-muted-foreground mt-1.5">
-                  O link pode ser usado por qualquer pessoa que faça login com Google. Válido para um único uso.
+                  O link é reutilizável — qualquer pessoa pode usá-lo para entrar. Revogue manualmente quando quiser desativar.
                 </p>
               </div>
               <div className="flex justify-end gap-2">

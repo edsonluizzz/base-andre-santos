@@ -12,21 +12,23 @@ import { useState, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
+const ROLE_RANK: Record<string, number> = { MEMBER: 0, LEADER: 1, ADMIN: 2 };
+
 const navItems = [
-  { href: "/dashboard",     icon: LayoutDashboard, label: "Dashboard"      },
-  { href: "/colaboradores", icon: Users,            label: "Colaboradores"  },
-  { href: "/minha-celula",  icon: Star,             label: "Minha Célula"   },
-  { href: "/celulas",       icon: Network,          label: "Células"        },
-  { href: "/ranking",       icon: Trophy,           label: "Ranking"        },
-  { href: "/mapa",          icon: Map,              label: "Mapa de Apoio"  },
-  { href: "/zonas",         icon: MapPin,           label: "Zonas"          },
-  { href: "/grupos",        icon: MessageCircle,    label: "Grupos WhatsApp"},
-  { href: "/agenda",        icon: Calendar,         label: "Agenda"         },
-  { href: "/relatorio",     icon: BarChart2,        label: "Relatório"      },
-  { href: "/comunicados",   icon: Megaphone,        label: "Comunicados", adminOnly: true },
-  { href: "/configuracoes", icon: Settings,         label: "Configurações", adminOnly: true },
-  { href: "/super-admin",   icon: Shield,           label: "Super Admin", adminOnly: true },
-] as const;
+  { href: "/dashboard",     icon: LayoutDashboard, label: "Dashboard",       minRole: "MEMBER" },
+  { href: "/colaboradores", icon: Users,            label: "Colaboradores",   minRole: "MEMBER" },
+  { href: "/minha-celula",  icon: Star,             label: "Minha Célula",    minRole: "MEMBER" },
+  { href: "/celulas",       icon: Network,          label: "Células",         minRole: "MEMBER" },
+  { href: "/ranking",       icon: Trophy,           label: "Ranking",         minRole: "MEMBER" },
+  { href: "/mapa",          icon: Map,              label: "Mapa de Apoio",   minRole: "LEADER" },
+  { href: "/zonas",         icon: MapPin,           label: "Zonas",           minRole: "LEADER" },
+  { href: "/grupos",        icon: MessageCircle,    label: "Grupos WhatsApp", minRole: "LEADER" },
+  { href: "/agenda",        icon: Calendar,         label: "Agenda",          minRole: "LEADER" },
+  { href: "/relatorio",     icon: BarChart2,        label: "Relatório",       minRole: "LEADER" },
+  { href: "/comunicados",   icon: Megaphone,        label: "Comunicados",     minRole: "ADMIN"  },
+  { href: "/configuracoes", icon: Settings,         label: "Configurações",   minRole: "ADMIN"  },
+  { href: "/super-admin",   icon: Shield,           label: "Super Admin",     minRole: "ADMIN"  },
+];
 
 const ROLE_LABEL: Record<string, string> = {
   ADMIN: "Administrador",
@@ -51,14 +53,16 @@ export function Sidebar({
   }, [mobileOpen]);
 
   // Usa props do servidor (confiáveis) — cai de volta no useSession apenas se não passado
-  const isAdmin = serverRole === "ADMIN" || session?.user?.role === "ADMIN";
+  const role = serverRole ?? session?.user?.role ?? "MEMBER";
   const isSuperAdmin = serverIsSuperAdmin ?? (session?.user as { isSuperAdmin?: boolean })?.isSuperAdmin ?? false;
+  const userRank = ROLE_RANK[role] ?? 0;
 
-  const visibleItems = navItems.filter((item) => {
-    if ("superAdminOnly" in item && item.superAdminOnly && !isSuperAdmin) return false;
-    if ("adminOnly" in item && item.adminOnly && !isAdmin) return false;
-    return true;
-  });
+  const visibleItems = navItems.filter((item) => (ROLE_RANK[item.minRole] ?? 0) <= userRank);
+
+  // Super Admin visível apenas para superAdmin (subset do ADMIN)
+  const finalItems = visibleItems.filter((item) =>
+    item.href === "/super-admin" ? isSuperAdmin : true
+  );
 
   const initials = session?.user?.name
     ?.split(" ").slice(0, 2).map((n) => n[0]).join("").toUpperCase() ?? "U";
@@ -102,7 +106,7 @@ export function Sidebar({
 
         {/* Nav */}
         <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-          {visibleItems.map((item) => {
+          {finalItems.map((item) => {
             const active = pathname.startsWith(item.href);
             return (
               <Link
@@ -138,7 +142,7 @@ export function Sidebar({
             </Avatar>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-medium text-foreground truncate">{session?.user?.name ?? "Usuário"}</p>
-              <p className="text-[10px] text-muted-foreground">{ROLE_LABEL[serverRole ?? session?.user?.role ?? ""] ?? "Colaborador"}</p>
+              <p className="text-[10px] text-muted-foreground">{ROLE_LABEL[role] ?? "Colaborador"}</p>
             </div>
           </div>
           <button
