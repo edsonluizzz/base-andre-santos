@@ -67,7 +67,7 @@ function EntrarContent() {
   }
 
   return (
-    <div className="bg-[#111] border border-white/10 rounded-2xl p-8 shadow-xl">
+    <div className="rounded-2xl p-8 shadow-xl glass-card border border-white/[0.08]">
       {status === "loading" && (
         <div className="text-center text-white/50 py-4">Validando convite...</div>
       )}
@@ -153,7 +153,7 @@ function EntrarContent() {
 
 export default function EntrarPage() {
   return (
-    <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-4">
+    <div className="min-h-screen flex items-center justify-center p-4" style={{ background: "#0a1220", backgroundImage: "radial-gradient(ellipse 80% 50% at 50% -10%, #1a2f4e 0%, #0a1220 65%)" }}>
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
