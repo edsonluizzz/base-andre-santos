@@ -87,6 +87,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           }
         }
 
+        // Fallback: JWT antigo sem token.name → busca 1x do banco e armazena no cookie
+        if (!token.name && token.id) {
+          const dbUser = await db.user.findUnique({ where: { id: token.id as string }, select: { name: true } });
+          if (dbUser?.name) token.name = dbUser.name;
+        }
+
         if (trigger === "update" && token.id && !session?.selectedEstablishmentId) {
           const dbUser = await db.user.findUnique({ where: { id: token.id as string }, select: { role: true } });
           if (dbUser) token.role = dbUser.role;
