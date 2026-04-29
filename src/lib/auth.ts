@@ -1,4 +1,5 @@
 import NextAuth from "next-auth";
+import { cookies } from "next/headers";
 import { db } from "./db";
 import { authConfig } from "./auth.config";
 
@@ -58,6 +59,33 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                 }).catch(() => null);
                 if (c) linkedCollabId = c.id;
               }
+            }
+          }
+
+          // C) Processa convite por token (InviteLink) — somente no primeiro login
+          if (trigger === "signIn") {
+            try {
+              const cookieStore = await cookies();
+              const inviteToken = cookieStore.get("invite_token")?.value;
+              if (inviteToken) {
+                const inviteLink = await db.inviteLink.findUnique({ where: { token: inviteToken } });
+                if (inviteLink && !inviteLink.usedAt) {
+                  await db.userCampaign.upsert({
+                    where: { userId_campaignId: { userId, campaignId: CAMPAIGN_ID } },
+                    update: { role: inviteLink.role, inviteStatus: "ACCEPTED", acceptedAt: new Date() },
+                    create: { userId, campaignId: CAMPAIGN_ID, role: inviteLink.role, inviteStatus: "ACCEPTED", acceptedAt: new Date() },
+                  }).catch(() => {});
+                  await db.inviteLink.update({
+                    where: { id: inviteLink.id },
+                    data: { usedAt: new Date(), usedBy: userId },
+                  }).catch(() => {});
+                  await db.user.update({ where: { id: userId }, data: { role: inviteLink.role } }).catch(() => {});
+                  token.role = inviteLink.role;
+                  token.campaignId = CAMPAIGN_ID;
+                }
+              }
+            } catch {
+              // cookies() pode não estar disponível em todos os contextos — ignora silenciosamente
             }
           }
 
@@ -148,6 +176,21 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           });
 
           if (!pendingInvite) {
+            // Verifica convite por token (InviteLink cookie)
+            try {
+              const cookieStore = await cookies();
+              const inviteToken = cookieStore.get("invite_token")?.value;
+              if (inviteToken) {
+                const inviteLink = await db.inviteLink.findUnique({ where: { token: inviteToken } });
+                if (inviteLink && !inviteLink.usedAt && (!inviteLink.expiresAt || inviteLink.expiresAt > new Date())) {
+                  // Token válido — permite o login; jwt callback irá ativar o UserCampaign
+                  return true;
+                }
+              }
+            } catch {
+              // ignora se cookies() não disponível
+            }
+
             // Verifica se já é usuário aceito (retornando)
             const existingUser = await db.user.findUnique({ where: { email: user.email }, select: { id: true } });
             if (existingUser) {

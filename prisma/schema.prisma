@@ -250,6 +250,19 @@ model Broadcast {
   @@index([campaignId])
 }
 
+model InviteLink {
+  id         String    @id @default(cuid())
+  token      String    @unique @default(cuid())
+  campaignId String    @default("andre-santos-2026")
+  role       Role      @default(MEMBER)
+  createdBy  String
+  expiresAt  DateTime?
+  usedAt     DateTime?
+  usedBy     String?
+  createdAt  DateTime  @default(now())
+  @@index([campaignId])
+}
+
 model Settings {
   id                  String   @id @default("singleton")
   campaignName        String   @default("Base Andre Santos")

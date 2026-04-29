@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
-import { Shield, Plus, Trash2, Clock, Crown, Search, ChevronDown, ChevronUp, RefreshCw, Mail, GitMerge, AlertTriangle, MessageCircle } from "lucide-react";
+import { Shield, Plus, Trash2, Clock, Crown, Search, ChevronDown, ChevronUp, RefreshCw, Mail, GitMerge, AlertTriangle, MessageCircle, Link2, Copy } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,6 +44,11 @@ type AuditEntry = {
   actor: { id: string; name: string | null; email: string | null };
   target: { id: string; name: string | null; email: string | null } | null;
   metadata: Record<string, unknown> | null;
+};
+
+type InviteLinkRecord = {
+  id: string; token: string; role: string;
+  createdAt: string; usedAt: string | null; usedBy: string | null; expiresAt: string | null;
 };
 
 type DupPair = {
@@ -95,6 +100,14 @@ export default function SuperAdminPage() {
   const [showDups, setShowDups] = useState(false);
   const [dupLoading, setDupLoading] = useState(false);
 
+  const [inviteLinks, setInviteLinks] = useState<InviteLinkRecord[]>([]);
+  const [showInviteLinks, setShowInviteLinks] = useState(false);
+  const [inviteLinksLoading, setInviteLinksLoading] = useState(false);
+  const [linkDialogOpen, setLinkDialogOpen] = useState(false);
+  const [linkRole, setLinkRole] = useState("MEMBER");
+  const [linkCreating, setLinkCreating] = useState(false);
+  const [newLinkUrl, setNewLinkUrl] = useState<string | null>(null);
+
   const fetchUsers = useCallback(async () => {
     setLoading(true);
     const res = await fetch("/api/admin/users");
@@ -129,6 +142,47 @@ export default function SuperAdminPage() {
   function toggleDups() {
     if (!showDups && dupPairs.length === 0) fetchDups();
     setShowDups((v) => !v);
+  }
+
+  async function fetchInviteLinks() {
+    setInviteLinksLoading(true);
+    const res = await fetch("/api/invite-links");
+    if (res.ok) setInviteLinks(await res.json());
+    setInviteLinksLoading(false);
+  }
+
+  function toggleInviteLinks() {
+    if (!showInviteLinks && inviteLinks.length === 0) fetchInviteLinks();
+    setShowInviteLinks((v) => !v);
+  }
+
+  async function createInviteLink() {
+    setLinkCreating(true);
+    const res = await fetch("/api/invite-links", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ role: linkRole }),
+    });
+    if (res.ok) {
+      const link = await res.json();
+      const url = `${window.location.origin}/entrar?token=${link.token}`;
+      setNewLinkUrl(url);
+      fetchInviteLinks();
+    } else {
+      toast.error("Erro ao gerar link");
+    }
+    setLinkCreating(false);
+  }
+
+  async function revokeInviteLink(id: string) {
+    if (!confirm("Revogar este link? Ele não poderá mais ser usado.")) return;
+    const res = await fetch(`/api/invite-links/${id}`, { method: "DELETE" });
+    if (res.ok) { toast.success("Link revogado"); setInviteLinks((prev) => prev.filter((l) => l.id !== id)); }
+    else toast.error("Erro ao revogar");
+  }
+
+  function copyToClipboard(text: string) {
+    navigator.clipboard.writeText(text).then(() => toast.success("Link copiado!"));
   }
 
   async function fixCuritibaPastors() {
@@ -459,6 +513,96 @@ export default function SuperAdminPage() {
         </div>
       )}
 
+      {/* Links de Convite */}
+      <div className="glass-card rounded-2xl border border-white/[0.08] overflow-hidden">
+        <button
+          onClick={toggleInviteLinks}
+          className="w-full flex items-center justify-between p-4 text-left hover:bg-white/[0.02] transition-colors"
+        >
+          <div className="flex items-center gap-2">
+            <Link2 className="w-4 h-4 text-muted-foreground" />
+            <span className="text-sm font-medium text-foreground">Links de Convite</span>
+            {inviteLinks.filter((l) => !l.usedAt).length > 0 && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-green-500/15 text-green-400 border border-green-500/30">
+                {inviteLinks.filter((l) => !l.usedAt).length} disponível{inviteLinks.filter((l) => !l.usedAt).length !== 1 ? "is" : ""}
+              </span>
+            )}
+          </div>
+          {showInviteLinks ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+        </button>
+
+        {showInviteLinks && (
+          <div className="border-t border-white/[0.06] p-4 space-y-4">
+            <div className="flex justify-end">
+              <Button size="sm" onClick={() => { setLinkDialogOpen(true); setNewLinkUrl(null); }} className="gap-1.5 bg-primary text-primary-foreground">
+                <Plus className="w-3.5 h-3.5" /> Gerar Link
+              </Button>
+            </div>
+            {inviteLinksLoading ? (
+              <div className="text-center py-4 text-muted-foreground text-sm">Carregando...</div>
+            ) : inviteLinks.length === 0 ? (
+              <div className="text-center py-4 text-muted-foreground text-sm">Nenhum link gerado ainda</div>
+            ) : (
+              <div className="divide-y divide-white/[0.04] rounded-xl border border-white/[0.06] overflow-hidden">
+                {inviteLinks.map((link) => {
+                  const url = `${typeof window !== "undefined" ? window.location.origin : ""}/entrar?token=${link.token}`;
+                  const used = !!link.usedAt;
+                  return (
+                    <div key={link.id} className="flex items-center gap-3 p-3">
+                      <div className={`w-2 h-2 rounded-full shrink-0 ${used ? "bg-slate-600" : "bg-green-400"}`} />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className={`text-[10px] px-2 py-0.5 rounded-full border ${ROLE_COLOR[link.role]}`}>
+                            {ROLE_LABEL[link.role]}
+                          </span>
+                          <span className={`text-[10px] ${used ? "text-muted-foreground" : "text-green-400"}`}>
+                            {used ? `Usado em ${fmtDate(link.usedAt)}` : "Disponível"}
+                          </span>
+                          <span className="text-[10px] text-muted-foreground/60">{fmtDate(link.createdAt)}</span>
+                        </div>
+                        <p className="text-[10px] text-muted-foreground/50 truncate mt-0.5 font-mono">
+                          /entrar?token={link.token.slice(0, 16)}...
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        {!used && (
+                          <>
+                            <Button
+                              size="sm" variant="ghost"
+                              className="h-7 px-2 text-xs gap-1 text-primary hover:bg-primary/10"
+                              onClick={() => copyToClipboard(url)}
+                              title="Copiar link"
+                            >
+                              <Copy className="w-3 h-3" />
+                            </Button>
+                            <a
+                              href={`https://wa.me/?text=${encodeURIComponent(`Você foi convidado para a Base de Apoio André Santos 2026!\n\nClique no link e entre com sua conta Google:\n${url}`)}`}
+                              target="_blank" rel="noopener noreferrer"
+                              className="h-7 px-2 rounded-md flex items-center gap-1 text-xs text-green-400 hover:bg-green-500/10 transition-colors"
+                              title="Enviar via WhatsApp"
+                            >
+                              <MessageCircle className="w-3 h-3" />
+                            </a>
+                          </>
+                        )}
+                        <Button
+                          size="sm" variant="ghost"
+                          className="h-7 w-7 p-0 text-destructive hover:bg-destructive/10"
+                          onClick={() => revokeInviteLink(link.id)}
+                          title="Revogar link"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
       {/* Duplicatas */}
       <div className="glass-card rounded-2xl border border-white/[0.08] overflow-hidden">
         <button
@@ -585,6 +729,58 @@ export default function SuperAdminPage() {
           </div>
         )}
       </div>
+
+      {/* Dialog: Gerar Link de Convite */}
+      <Dialog open={linkDialogOpen} onOpenChange={(v) => { setLinkDialogOpen(v); if (!v) { setLinkRole("MEMBER"); setNewLinkUrl(null); } }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle>Gerar Link de Convite</DialogTitle></DialogHeader>
+          {newLinkUrl ? (
+            <div className="space-y-4 py-2">
+              <div className="rounded-xl p-4 bg-green-500/10 border border-green-500/20 space-y-2">
+                <p className="text-sm font-medium text-green-400 text-center">Link gerado com sucesso!</p>
+                <p className="text-xs font-mono text-muted-foreground break-all bg-white/[0.04] rounded-lg p-2">{newLinkUrl}</p>
+              </div>
+              <div className="flex gap-2">
+                <Button className="flex-1 gap-1.5 bg-primary text-primary-foreground" onClick={() => copyToClipboard(newLinkUrl)}>
+                  <Copy className="w-4 h-4" /> Copiar Link
+                </Button>
+                <a
+                  href={`https://wa.me/?text=${encodeURIComponent(`Você foi convidado para a Base de Apoio André Santos 2026!\n\nClique no link e entre com sua conta Google:\n${newLinkUrl}`)}`}
+                  target="_blank" rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-2 px-4 rounded-xl text-sm font-medium bg-green-500/15 text-green-400 border border-green-500/30 hover:bg-green-500/25 transition-colors"
+                  title="Enviar via WhatsApp"
+                >
+                  <MessageCircle className="w-4 h-4" />
+                </a>
+              </div>
+              <Button variant="outline" className="w-full" onClick={() => setLinkDialogOpen(false)}>Fechar</Button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div>
+                <Label>Nível de acesso</Label>
+                <Select value={linkRole} onValueChange={setLinkRole}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="MEMBER">Colaborador — gerencia próprios cadastros</SelectItem>
+                    <SelectItem value="LEADER">Coordenador — gerencia colaboradores e zonas</SelectItem>
+                    <SelectItem value="ADMIN">Administrador — acesso total</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-[11px] text-muted-foreground mt-1.5">
+                  O link pode ser usado por qualquer pessoa que faça login com Google. Válido para um único uso.
+                </p>
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setLinkDialogOpen(false)}>Cancelar</Button>
+                <Button onClick={createInviteLink} disabled={linkCreating} className="bg-primary text-primary-foreground">
+                  {linkCreating ? "Gerando..." : "Gerar Link"}
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Dialog: Conceder Acesso */}
       <Dialog open={inviteOpen} onOpenChange={(v) => { setInviteOpen(v); if (!v) { setInviteEmail(""); setInviteRole("MEMBER"); setInviteDone(false); } }}>
