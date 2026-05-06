@@ -145,7 +145,10 @@ export function SocialMetricsWidget({ initialInstagram, initialYoutube }: Props)
     <>
       <div className="glass-card rounded-2xl p-6 border border-white/[0.08]">
         <div className="flex items-center justify-between mb-5">
-          <h2 className="text-sm font-semibold text-foreground">Redes Sociais</h2>
+          <div>
+            <h2 className="text-sm font-semibold text-foreground">Redes Sociais</h2>
+            <p className="text-[10px] text-muted-foreground mt-0.5">YouTube sincroniza automaticamente todo dia às 8h</p>
+          </div>
           <span className="text-[10px] px-2 py-0.5 rounded-full bg-yellow-500/15 text-yellow-400 border border-yellow-500/30">Admin</span>
         </div>
 
