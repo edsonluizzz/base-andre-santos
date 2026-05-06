@@ -128,9 +128,8 @@ export function Sidebar({
         </nav>
 
         {/* Notificações */}
-        <div className="px-4 pb-2 flex items-center gap-2">
-          <NotificationBell />
-          <span className="text-xs text-muted-foreground">Notificações</span>
+        <div className="px-4 pb-2">
+          <NotificationBell fullWidth />
         </div>
 
         {/* User footer */}
