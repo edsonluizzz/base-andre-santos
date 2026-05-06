@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Map, Phone, Search, Filter, RefreshCw } from "lucide-react";
+import { Map, Phone, Search, Filter, RefreshCw, CheckSquare, Square } from "lucide-react";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { CollaboratorDialog } from "@/components/collaborators/collaborator-dialog";
 import { ChoroplethMap, type CityData } from "@/components/mapa/choropleth-map";
 
@@ -57,7 +58,16 @@ export default function MapaPage() {
   const [editing, setEditing] = useState<Person | null>(null);
   const [choroplethStats, setChoroplethStats] = useState<Record<string, CityData>>({});
 
-  // Carrega dados do choropleth uma vez (não filtra por cidade/status)
+  // Bulk modal
+  const [bulkModal, setBulkModal] = useState<string | null>(null);
+  const [bulkList, setBulkList] = useState<Person[]>([]);
+  const [bulkLoading, setBulkLoading] = useState(false);
+  const [bulkSelected, setBulkSelected] = useState<Set<string>>(new Set());
+  const [bulkTargetStatus, setBulkTargetStatus] = useState("");
+  const [bulkApplying, setBulkApplying] = useState(false);
+  const [bulkEditing, setBulkEditing] = useState<Person | null>(null);
+  const [bulkDialogOpen, setBulkDialogOpen] = useState(false);
+
   useEffect(() => {
     fetch("/api/mapa/stats")
       .then((r) => r.json())
@@ -92,13 +102,75 @@ export default function MapaPage() {
     return () => clearTimeout(t);
   }, [fetchData]);
 
+  async function openBulkModal(statusKey: string) {
+    setBulkModal(statusKey);
+    setBulkSelected(new Set());
+    setBulkTargetStatus("");
+    setBulkList([]);
+    setBulkLoading(true);
+    const params = new URLSearchParams();
+    if (statusKey !== "ALL") params.set("supportStatus", statusKey);
+    const res = await fetch(`/api/mapa?${params}`);
+    if (res.ok) {
+      const data = await res.json();
+      const flat: Person[] = Object.values(data.byCity as Record<string, Person[]>).flat();
+      setBulkList(flat);
+    }
+    setBulkLoading(false);
+  }
+
+  function toggleAll() {
+    if (bulkSelected.size === bulkList.length) {
+      setBulkSelected(new Set());
+    } else {
+      setBulkSelected(new Set(bulkList.map((p) => p.id)));
+    }
+  }
+
+  function toggleOne(id: string) {
+    setBulkSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  async function applyBulk() {
+    if (bulkSelected.size === 0 || !bulkTargetStatus) return;
+    setBulkApplying(true);
+    const res = await fetch("/api/collaborators/bulk", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids: [...bulkSelected], supportStatus: bulkTargetStatus }),
+    });
+    const d = await res.json();
+    if (res.ok) {
+      toast.success(`${d.updated} registro${d.updated !== 1 ? "s" : ""} atualizado${d.updated !== 1 ? "s" : ""}`);
+      setBulkModal(null);
+      fetchData();
+    } else {
+      toast.error(d.error ?? "Erro ao atualizar");
+    }
+    setBulkApplying(false);
+  }
+
   function openEdit(p: Person) {
-    setEditing({ ...p });
-    setDialogOpen(true);
+    return () => {
+      setEditing({ ...p });
+      setDialogOpen(true);
+    };
   }
 
   function handleSuccess() {
     setDialogOpen(false);
+    fetchData();
+    toast.success("Atualizado");
+  }
+
+  function handleBulkEditSuccess() {
+    setBulkDialogOpen(false);
+    if (bulkModal) openBulkModal(bulkModal);
     fetchData();
     toast.success("Atualizado");
   }
@@ -110,6 +182,22 @@ export default function MapaPage() {
 
   const cities = Object.keys(byCity).sort();
   const totalShown = cities.reduce((acc, c) => acc + byCity[c].length, 0);
+
+  const CARDS = stats ? [
+    { key: "ALL",        label: "Total",       value: stats.total,      color: "text-foreground", bg: "bg-white/[0.04]",      hover: "hover:border-white/[0.25]" },
+    { key: "CONFIRMADO", label: "Confirmados", value: stats.confirmado,  color: "text-green-400",  bg: "bg-green-500/[0.07]",  hover: "hover:border-green-500/40" },
+    { key: "NEGOCIANDO", label: "Negociando",  value: stats.negociando,  color: "text-yellow-400", bg: "bg-yellow-500/[0.07]", hover: "hover:border-yellow-500/40" },
+    { key: "NEUTRO",     label: "Neutros",     value: stats.neutro,      color: "text-slate-400",  bg: "bg-white/[0.03]",      hover: "hover:border-white/[0.25]" },
+    { key: "ADVERSARIO", label: "Adversários", value: stats.adversario,  color: "text-red-400",    bg: "bg-red-500/[0.07]",    hover: "hover:border-red-500/40" },
+  ] : [];
+
+  const bulkModalTitle = bulkModal === "ALL"
+    ? `Todas as lideranças (${bulkList.length})`
+    : bulkModal
+    ? `${SUPPORT_CONFIG[bulkModal]?.label ?? bulkModal} (${bulkList.length})`
+    : "";
+
+  const allSelected = bulkList.length > 0 && bulkSelected.size === bulkList.length;
 
   return (
     <div className="space-y-6">
@@ -131,20 +219,18 @@ export default function MapaPage() {
         <ChoroplethMap cityStats={choroplethStats} />
       </div>
 
-      {/* Stats */}
-      {stats && (
+      {/* Cards clicáveis */}
+      {CARDS.length > 0 && (
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-          {[
-            { label: "Total", value: stats.total, color: "text-foreground", bg: "bg-white/[0.04]" },
-            { label: "Confirmados", value: stats.confirmado, color: "text-green-400", bg: "bg-green-500/[0.07]" },
-            { label: "Negociando", value: stats.negociando, color: "text-yellow-400", bg: "bg-yellow-500/[0.07]" },
-            { label: "Neutros", value: stats.neutro, color: "text-slate-400", bg: "bg-white/[0.03]" },
-            { label: "Adversários", value: stats.adversario, color: "text-red-400", bg: "bg-red-500/[0.07]" },
-          ].map((s) => (
-            <div key={s.label} className={`glass-card rounded-xl p-3 border border-white/[0.07] ${s.bg}`}>
-              <p className="text-xs text-muted-foreground">{s.label}</p>
+          {CARDS.map((s) => (
+            <button
+              key={s.key}
+              onClick={() => openBulkModal(s.key)}
+              className={`glass-card rounded-xl p-3 border border-white/[0.07] ${s.bg} ${s.hover} cursor-pointer transition-all text-left group`}
+            >
+              <p className="text-xs text-muted-foreground group-hover:text-foreground/70 transition-colors">{s.label}</p>
               <p className={`text-2xl font-bold mt-0.5 ${s.color}`}>{s.value}</p>
-            </div>
+            </button>
           ))}
         </div>
       )}
@@ -202,7 +288,7 @@ export default function MapaPage() {
         </Select>
       </div>
 
-      {/* Conteúdo */}
+      {/* Listagem por cidade */}
       {loading ? (
         <div className="text-center py-16 text-muted-foreground">Carregando...</div>
       ) : cities.length === 0 ? (
@@ -219,7 +305,6 @@ export default function MapaPage() {
             const confirmed = people.filter((p) => p.supportStatus === "CONFIRMADO").length;
             return (
               <div key={city} className="glass-card rounded-2xl border border-white/[0.08] overflow-hidden">
-                {/* Cabeçalho cidade */}
                 <div className="px-4 py-3 flex items-center justify-between border-b border-white/[0.06]" style={{ background: "rgba(13,27,42,0.5)" }}>
                   <div className="flex items-center gap-2">
                     <span className="font-semibold text-foreground">{city}</span>
@@ -231,17 +316,12 @@ export default function MapaPage() {
                     </span>
                   )}
                 </div>
-
-                {/* Lista de pessoas */}
                 <div className="divide-y divide-white/[0.04]">
                   {people.map((p) => {
                     const sc = SUPPORT_CONFIG[p.supportStatus] ?? SUPPORT_CONFIG.NEUTRO;
                     return (
                       <div key={p.id} className="px-4 py-3 flex items-center gap-3 hover:bg-white/[0.02] transition-colors">
-                        {/* Dot de status */}
                         <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${sc.dot}`} />
-
-                        {/* Info */}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="font-medium text-sm text-foreground">{p.name}</span>
@@ -252,15 +332,9 @@ export default function MapaPage() {
                               {sc.label}
                             </span>
                           </div>
-                          {p.neighborhood && (
-                            <p className="text-xs text-muted-foreground mt-0.5">{p.neighborhood}</p>
-                          )}
-                          {p.notes && (
-                            <p className="text-xs text-muted-foreground/70 mt-0.5 truncate max-w-xs">{p.notes}</p>
-                          )}
+                          {p.neighborhood && <p className="text-xs text-muted-foreground mt-0.5">{p.neighborhood}</p>}
+                          {p.notes && <p className="text-xs text-muted-foreground/70 mt-0.5 truncate max-w-xs">{p.notes}</p>}
                         </div>
-
-                        {/* Ações */}
                         <div className="flex items-center gap-2 shrink-0">
                           {p.phone && (
                             <a href={whatsappHref(p.phone)} target="_blank" rel="noopener noreferrer"
@@ -270,7 +344,7 @@ export default function MapaPage() {
                               <Phone className="w-3.5 h-3.5" />
                             </a>
                           )}
-                          <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => openEdit(p)}>
+                          <Button size="sm" variant="outline" className="h-7 text-xs" onClick={openEdit(p)}>
                             Editar
                           </Button>
                         </div>
@@ -284,11 +358,127 @@ export default function MapaPage() {
         </div>
       )}
 
+      {/* Dialog edição individual */}
       <CollaboratorDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         collaborator={editing}
         onSuccess={handleSuccess}
+      />
+
+      {/* Modal bulk edit */}
+      <Dialog open={bulkModal !== null} onOpenChange={(v) => { if (!v) setBulkModal(null); }}>
+        <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col p-0">
+          <DialogHeader className="px-6 pt-6 pb-4 border-b border-white/[0.07] shrink-0">
+            <DialogTitle className="text-lg">{bulkModalTitle}</DialogTitle>
+          </DialogHeader>
+
+          {/* Barra de ação bulk */}
+          <div className="px-6 py-3 border-b border-white/[0.07] flex items-center gap-3 flex-wrap shrink-0" style={{ background: "rgba(13,27,42,0.4)" }}>
+            <button
+              onClick={toggleAll}
+              className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {allSelected
+                ? <CheckSquare className="w-4 h-4 text-primary" />
+                : <Square className="w-4 h-4" />}
+              {allSelected ? "Desmarcar todos" : "Selecionar todos"}
+            </button>
+
+            {bulkSelected.size > 0 && (
+              <span className="text-xs px-2 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/30">
+                {bulkSelected.size} selecionado{bulkSelected.size !== 1 ? "s" : ""}
+              </span>
+            )}
+
+            <div className="flex items-center gap-2 ml-auto">
+              <Select value={bulkTargetStatus} onValueChange={setBulkTargetStatus}>
+                <SelectTrigger className="h-8 w-44 text-xs">
+                  <SelectValue placeholder="Alterar para..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="CONFIRMADO">Confirmado</SelectItem>
+                  <SelectItem value="NEGOCIANDO">Negociando</SelectItem>
+                  <SelectItem value="NEUTRO">Neutro</SelectItem>
+                  <SelectItem value="ADVERSARIO">Adversário</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button
+                size="sm"
+                className="h-8 text-xs bg-primary text-primary-foreground"
+                disabled={bulkSelected.size === 0 || !bulkTargetStatus || bulkApplying}
+                onClick={applyBulk}
+              >
+                {bulkApplying ? "Aplicando..." : "Aplicar"}
+              </Button>
+            </div>
+          </div>
+
+          {/* Lista scrollável */}
+          <div className="overflow-y-auto flex-1 divide-y divide-white/[0.05]">
+            {bulkLoading ? (
+              <div className="text-center py-12 text-muted-foreground text-sm">Carregando...</div>
+            ) : bulkList.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground text-sm">Nenhuma liderança neste status</div>
+            ) : (
+              bulkList.map((p) => {
+                const sc = SUPPORT_CONFIG[p.supportStatus] ?? SUPPORT_CONFIG.NEUTRO;
+                const checked = bulkSelected.has(p.id);
+                return (
+                  <div
+                    key={p.id}
+                    onClick={() => toggleOne(p.id)}
+                    className={`px-6 py-3 flex items-center gap-3 cursor-pointer transition-colors ${checked ? "bg-primary/[0.06]" : "hover:bg-white/[0.02]"}`}
+                  >
+                    {checked
+                      ? <CheckSquare className="w-4 h-4 text-primary shrink-0" />
+                      : <Square className="w-4 h-4 text-muted-foreground/40 shrink-0" />}
+
+                    <div className={`w-2 h-2 rounded-full shrink-0 ${sc.dot}`} />
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-medium text-sm text-foreground">{p.name}</span>
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full border ${PROFILE_COLOR[p.profile]}`}>
+                          {PROFILE_LABEL[p.profile]}
+                        </span>
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full border ${sc.color}`}>
+                          {sc.label}
+                        </span>
+                      </div>
+                      {p.city && <p className="text-xs text-muted-foreground mt-0.5">{p.city}{p.neighborhood ? ` · ${p.neighborhood}` : ""}</p>}
+                    </div>
+
+                    <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
+                      {p.phone && (
+                        <a href={whatsappHref(p.phone)} target="_blank" rel="noopener noreferrer"
+                          className="p-1.5 rounded-lg hover:bg-green-500/10 text-muted-foreground hover:text-green-400 transition-colors"
+                          title="WhatsApp"
+                        >
+                          <Phone className="w-3.5 h-3.5" />
+                        </a>
+                      )}
+                      <Button
+                        size="sm" variant="outline" className="h-7 text-xs"
+                        onClick={() => { setBulkEditing({ ...p }); setBulkDialogOpen(true); }}
+                      >
+                        Editar
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog edição individual dentro do bulk modal */}
+      <CollaboratorDialog
+        open={bulkDialogOpen}
+        onOpenChange={setBulkDialogOpen}
+        collaborator={bulkEditing}
+        onSuccess={handleBulkEditSuccess}
       />
     </div>
   );

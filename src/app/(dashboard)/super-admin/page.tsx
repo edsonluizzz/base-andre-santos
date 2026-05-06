@@ -185,14 +185,6 @@ export default function SuperAdminPage() {
     navigator.clipboard.writeText(text).then(() => toast.success("Link copiado!"));
   }
 
-  async function normalizeCities() {
-    if (!confirm("Normalizar nomes de municípios? Ex: 'curitiba' → 'Curitiba', 'SÃO JOSÉ' → 'São José'. Isso afeta todos os colaboradores com cidade cadastrada.")) return;
-    const res = await fetch("/api/admin/fix/normalize-cities", { method: "POST" });
-    const d = await res.json();
-    if (res.ok) toast.success(`${d.updated} município${d.updated !== 1 ? "s" : ""} normalizado${d.updated !== 1 ? "s" : ""} (de ${d.total} registros)`);
-    else toast.error(d.error ?? "Erro");
-  }
-
   async function mergeDup(keepId: string, mergeId: string) {
     if (!confirm("Mesclar os dois registros? O registro sem conta de usuário será absorvido pelo que tem login.")) return;
     const res = await fetch("/api/admin/collaborators/merge", {
@@ -292,9 +284,6 @@ export default function SuperAdminPage() {
         <div className="flex items-center gap-2 flex-wrap">
           <Button variant="outline" size="sm" onClick={fetchUsers} className="gap-1.5">
             <RefreshCw className="w-3.5 h-3.5" />
-          </Button>
-          <Button variant="outline" size="sm" onClick={normalizeCities} className="gap-1.5 text-blue-400 border-blue-500/30 hover:bg-blue-500/10 hidden sm:flex">
-            Normalizar municípios
           </Button>
           <Button onClick={() => setInviteOpen(true)} className="bg-primary text-primary-foreground gap-2">
             <Plus className="w-4 h-4" />
