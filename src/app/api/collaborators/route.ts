@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { recalcTier } from "@/lib/tier";
+import { normalizeCity } from "@/lib/utils";
 import { CollaboratorRole, CollaboratorStatus } from "@prisma/client";
 
 const CID = "andre-santos-2026";
@@ -67,7 +68,7 @@ export async function POST(req: NextRequest) {
         name: name.trim(),
         email: email?.trim() || null,
         phone: phone?.trim() || null,
-        city: city?.trim() || null,
+        city: normalizeCity(city),
         neighborhood: neighborhood?.trim() || null,
         campaignRole: campaignRole ?? "VOLUNTARIO",
         notes: notes?.trim() || null,

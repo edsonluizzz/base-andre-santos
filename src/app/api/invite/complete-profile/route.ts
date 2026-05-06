@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { normalizeCity } from "@/lib/utils";
 
 const CAMPAIGN_ID = "andre-santos-2026";
 
@@ -26,7 +27,7 @@ export async function POST(req: NextRequest) {
         data: {
           name: name.trim(),
           phone,
-          city: city?.trim() || null,
+          city: normalizeCity(city),
           neighborhood: neighborhood?.trim() || null,
           profile: profile ?? existing.profile,
           contributionTypes: contributionTypes ?? existing.contributionTypes,
@@ -41,7 +42,7 @@ export async function POST(req: NextRequest) {
           userId,
           name: name.trim(),
           phone,
-          city: city?.trim() || null,
+          city: normalizeCity(city),
           neighborhood: neighborhood?.trim() || null,
           email: user?.email ?? null,
           profile: profile ?? "APOIADOR",

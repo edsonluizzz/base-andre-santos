@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { recalcTier } from "@/lib/tier";
+import { normalizeCity } from "@/lib/utils";
 
 const CID = "andre-santos-2026";
 
@@ -49,7 +50,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
       if (name) data.name = name.trim();
       if (email !== undefined) data.email = email?.trim() || null;
       if (phone !== undefined) data.phone = phone?.trim() || null;
-      if (city !== undefined) data.city = city?.trim() || null;
+      if (city !== undefined) data.city = normalizeCity(city);
       if (neighborhood !== undefined) data.neighborhood = neighborhood?.trim() || null;
       if (campaignRole) data.campaignRole = campaignRole;
       if (profile) data.profile = profile;

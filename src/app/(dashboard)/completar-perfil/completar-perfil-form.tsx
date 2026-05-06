@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Star, ChevronRight } from "lucide-react";
 import { CONTRIBUTION_OPTIONS } from "@/lib/contribution";
@@ -30,8 +30,16 @@ export function CompletarPerfilForm({ defaultName, defaultEmail }: Props) {
   const [phone, setPhone] = useState("");
   const [city, setCity] = useState("");
   const [neighborhood, setNeighborhood] = useState("");
+  const [citySuggestions, setCitySuggestions] = useState<string[]>([]);
   const [profile, setProfile] = useState("APOIADOR");
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
+
+  useEffect(() => {
+    fetch("/api/cities")
+      .then((r) => r.json())
+      .then((data: string[]) => setCitySuggestions(data))
+      .catch(() => {});
+  }, []);
 
   function formatPhone(val: string) {
     const d = val.replace(/\D/g, "").slice(0, 11);
@@ -121,12 +129,15 @@ export function CompletarPerfilForm({ defaultName, defaultEmail }: Props) {
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <label className="text-xs font-medium text-slate-300">Cidade</label>
-                <input type="text" value={city} onChange={(e) => setCity(e.target.value)} placeholder="Ex: Curitiba"
+                <input type="text" list="city-suggestions" value={city} onChange={(e) => setCity(e.target.value)} placeholder="Ex: Curitiba"
                   className="w-full rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 outline-none transition-all"
                   style={{ background: "#1a2f4e", border: "1px solid rgba(255,255,255,0.07)" }}
                   onFocus={(e) => e.target.style.borderColor = "rgba(212,175,55,0.5)"}
                   onBlur={(e) => e.target.style.borderColor = "rgba(255,255,255,0.07)"}
                 />
+                <datalist id="city-suggestions">
+                  {citySuggestions.map((c) => <option key={c} value={c} />)}
+                </datalist>
               </div>
               <div className="space-y-1.5">
                 <label className="text-xs font-medium text-slate-300">Bairro</label>

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { normalizeCity } from "@/lib/utils";
 
 const CID = "andre-santos-2026";
 
@@ -64,7 +65,7 @@ export async function POST(req: NextRequest) {
 
       const phone = (row.telefone || row.whatsapp || row.Telefone || row.WhatsApp || "").trim();
       const email = (row.email || row.Email || "").trim() || null;
-      const city = (row.cidade || row.municipio || row.Cidade || row.Município || "").trim() || null;
+      const city = normalizeCity(row.cidade || row.municipio || row.Cidade || row.Município || "");
       const neighborhood = (row.bairro || row.Bairro || "").trim() || null;
       const roleRaw = (row.cargo || row.Cargo || row.role || "").trim();
       const campaignRole = parseRole(roleRaw);
