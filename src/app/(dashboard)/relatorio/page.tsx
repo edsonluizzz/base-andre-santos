@@ -44,8 +44,13 @@ const COVERAGE_DOT: Record<string, string> = {
   alta: "bg-green-500", media: "bg-yellow-500", baixa: "bg-slate-500",
 };
 
-export default async function RelatorioPage() {
+export default async function RelatorioPage({
+  searchParams,
+}: {
+  searchParams: { cob?: string };
+}) {
   await auth();
+  const activeCob = searchParams.cob ?? null;
 
   const all = await db.collaborator.findMany({
     where: { campaignId: CID },
@@ -84,6 +89,14 @@ export default async function RelatorioPage() {
     if (c.supportStatus === "CONFIRMADO" && c.status === "ACTIVE") m.confirmados++;
   }
   const cities = Object.entries(cityMap).sort((a, b) => b[1].active - a[1].active);
+
+  const filteredCities = cities.filter(([, m]) => {
+    if (activeCob === "alta")    return coverageScore(m.roles) === "alta";
+    if (activeCob === "media")   return coverageScore(m.roles) === "media";
+    if (activeCob === "confirm") return m.confirmados > 0;
+    return true;
+  });
+
   const totals  = cities.reduce((acc, [, m]) => ({
     total: acc.total + m.total, active: acc.active + m.active,
     leads: acc.leads + m.leads, confirmados: acc.confirmados + m.confirmados,
@@ -166,20 +179,27 @@ export default async function RelatorioPage() {
         </div>
       </div>
 
-      {/* KPIs */}
+      {/* KPIs clicáveis */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: "Municípios",      value: cities.length,       color: "text-primary"    },
-          { label: "Cobertura Alta",  value: highCoverage,        color: "text-green-400",  hint: "Com coord. ou líder municipal" },
-          { label: "Cobertura Média", value: medCoverage,         color: "text-yellow-400", hint: "Com líder de bairro" },
-          { label: "Confirmados",     value: totals.confirmados,  color: "text-green-400"  },
-        ].map((s) => (
-          <div key={s.label} className="glass-card rounded-xl p-4 border border-white/[0.08]">
-            <p className="text-xs text-muted-foreground">{s.label}</p>
-            {s.hint && <p className="text-[10px] text-muted-foreground/60 mb-0.5">{s.hint}</p>}
-            <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
-          </div>
-        ))}
+          { key: null,      label: "Municípios",      value: cities.length,      color: "text-primary",    hint: null },
+          { key: "alta",    label: "Cobertura Alta",  value: highCoverage,       color: "text-green-400",  hint: "Com coord. ou líder municipal" },
+          { key: "media",   label: "Cobertura Média", value: medCoverage,        color: "text-yellow-400", hint: "Com líder de bairro" },
+          { key: "confirm", label: "Confirmados",     value: totals.confirmados, color: "text-green-400",  hint: null },
+        ].map((s) => {
+          const isActive = activeCob === s.key || (s.key === null && activeCob === null);
+          return (
+            <Link
+              key={s.label}
+              href={s.key ? `/relatorio?cob=${s.key}` : "/relatorio"}
+              className={`glass-card rounded-xl p-4 border transition-all hover:border-primary/40 group ${isActive ? "border-primary/50 bg-primary/[0.04]" : "border-white/[0.08]"}`}
+            >
+              <p className={`text-xs transition-colors ${isActive ? "text-primary/80" : "text-muted-foreground group-hover:text-foreground/70"}`}>{s.label}</p>
+              {s.hint && <p className="text-[10px] text-muted-foreground/60 mb-0.5">{s.hint}</p>}
+              <p className={`text-2xl font-bold mt-0.5 ${s.color}`}>{s.value}</p>
+            </Link>
+          );
+        })}
       </div>
 
       {/* INSIGHTS */}
@@ -388,6 +408,21 @@ export default async function RelatorioPage() {
 
       {/* Tabela de cobertura */}
       <div className="glass-card rounded-2xl border border-white/[0.08] overflow-hidden">
+        {/* Indicador de filtro ativo */}
+        <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/[0.06]" style={{ background: "rgba(13,27,42,0.3)" }}>
+          <p className="text-xs text-muted-foreground">
+            {activeCob ? (
+              <>Mostrando <span className="text-foreground font-medium">{filteredCities.length}</span> de {cities.length} municípios — filtro: <span className="text-primary font-medium">{activeCob === "alta" ? "Cobertura Alta" : activeCob === "media" ? "Cobertura Média" : "Confirmados"}</span></>
+            ) : (
+              <>{cities.length} município{cities.length !== 1 ? "s" : ""} — clique em um card acima para filtrar</>
+            )}
+          </p>
+          {activeCob && (
+            <Link href="/relatorio" className="text-[10px] text-muted-foreground hover:text-foreground transition-colors underline underline-offset-2">
+              Limpar filtro
+            </Link>
+          )}
+        </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -402,7 +437,7 @@ export default async function RelatorioPage() {
               </tr>
             </thead>
             <tbody>
-              {cities.map(([city, m]) => {
+              {filteredCities.map(([city, m]) => {
                 const score = coverageScore(m.roles);
                 return (
                   <tr key={city} className={`border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors ${COVERAGE_STYLE[score]}`}>
@@ -426,15 +461,15 @@ export default async function RelatorioPage() {
             </tbody>
             <tfoot>
               <tr className="border-t border-white/[0.08]" style={{ background: "rgba(13,27,42,0.5)" }}>
-                <td className="px-4 py-3 text-xs font-semibold text-muted-foreground">Total ({cities.length} municípios)</td>
+                <td className="px-4 py-3 text-xs font-semibold text-muted-foreground">Total ({filteredCities.length} municípios{activeCob ? ` filtrado${filteredCities.length !== 1 ? "s" : ""}` : ""})</td>
                 {ROLE_ORDER.map((r) => (
                   <td key={r} className="text-center px-3 py-3 text-xs font-semibold text-muted-foreground">
-                    {cities.reduce((s, [, m]) => s + (m.roles[r] ?? 0), 0) || "—"}
+                    {filteredCities.reduce((s, [, m]) => s + (m.roles[r] ?? 0), 0) || "—"}
                   </td>
                 ))}
-                <td className="text-center px-3 py-3 text-xs font-semibold text-foreground">{totals.active}</td>
-                <td className="text-center px-3 py-3 text-xs font-semibold text-amber-400">{totals.leads}</td>
-                <td className="text-center px-3 py-3 text-xs font-semibold text-green-400">{totals.confirmados}</td>
+                <td className="text-center px-3 py-3 text-xs font-semibold text-foreground">{filteredCities.reduce((s, [, m]) => s + m.active, 0)}</td>
+                <td className="text-center px-3 py-3 text-xs font-semibold text-amber-400">{filteredCities.reduce((s, [, m]) => s + m.leads, 0) || "—"}</td>
+                <td className="text-center px-3 py-3 text-xs font-semibold text-green-400">{filteredCities.reduce((s, [, m]) => s + m.confirmados, 0) || "—"}</td>
               </tr>
             </tfoot>
           </table>
