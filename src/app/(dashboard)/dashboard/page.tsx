@@ -4,6 +4,7 @@ import { Users, MapPin, MessageCircle, Calendar, TrendingUp, Star, ChevronRight 
 import Link from "next/link";
 import { TIER_LABEL, TIER_THRESHOLDS } from "@/lib/contribution";
 import { CopyButton } from "@/components/dashboard/copy-button";
+import { SocialMetricsWidget } from "@/components/dashboard/social-metrics-widget";
 
 const CID = "andre-santos-2026";
 
@@ -39,7 +40,9 @@ export default async function DashboardPage() {
   const session = await auth();
   const userId = session?.user?.id;
 
-  const [total, byRole, cityRaw, groups, zones, upcomingEvents, myTotal, myActive, myTier] = await Promise.all([
+  const isAdmin = session?.user?.role === "ADMIN";
+
+  const [total, byRole, cityRaw, groups, zones, upcomingEvents, myTotal, myActive, myTier, socialIg, socialYt] = await Promise.all([
     db.collaborator.count({ where: { campaignId: CID, status: "ACTIVE" } }),
     db.collaborator.groupBy({ by: ["campaignRole"], where: { campaignId: CID, status: "ACTIVE" }, _count: { id: true } }),
     db.collaborator.findMany({ where: { campaignId: CID, status: "ACTIVE", city: { not: null } }, select: { city: true, supportStatus: true, campaignRole: true } }),
@@ -49,6 +52,8 @@ export default async function DashboardPage() {
     userId ? db.collaborator.count({ where: { campaignId: CID, registeredById: userId } }) : Promise.resolve(0),
     userId ? db.collaborator.count({ where: { campaignId: CID, registeredById: userId, status: "ACTIVE" } }) : Promise.resolve(0),
     userId ? db.userCampaign.findFirst({ where: { userId, campaignId: CID }, select: { tier: true } }) : Promise.resolve(null),
+    isAdmin ? db.socialMetric.findMany({ where: { platform: "INSTAGRAM" }, orderBy: { recordedAt: "desc" }, take: 10 }) : Promise.resolve([]),
+    isAdmin ? db.socialMetric.findMany({ where: { platform: "YOUTUBE" }, orderBy: { recordedAt: "desc" }, take: 10 }) : Promise.resolve([]),
   ]);
 
   // Agregar cobertura por cidade
@@ -256,6 +261,14 @@ export default async function DashboardPage() {
             <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-slate-600 inline-block" />Sem liderança definida</span>
           </div>
         </div>
+      )}
+
+      {/* Widget de Redes Sociais — apenas ADMIN */}
+      {isAdmin && (
+        <SocialMetricsWidget
+          initialInstagram={socialIg.map((m) => ({ ...m, recordedAt: m.recordedAt.toISOString() }))}
+          initialYoutube={socialYt.map((m) => ({ ...m, recordedAt: m.recordedAt.toISOString() }))}
+        />
       )}
     </div>
   );
