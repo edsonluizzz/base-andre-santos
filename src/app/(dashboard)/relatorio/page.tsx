@@ -44,13 +44,44 @@ const COVERAGE_DOT: Record<string, string> = {
   alta: "bg-green-500", media: "bg-yellow-500", baixa: "bg-slate-500",
 };
 
+const PERIODO_OPTIONS = [
+  { key: "30",  label: "30 dias" },
+  { key: "90",  label: "90 dias" },
+  { key: "180", label: "6 meses" },
+  { key: "all", label: "Tudo"    },
+];
+
+const KEY_PROFILE_OPTIONS = [
+  { key: "PASTOR",                label: "Pastor"            },
+  { key: "VEREADOR",              label: "Vereador"          },
+  { key: "LIDER_POLITICO",        label: "Líder Político"    },
+  { key: "EMPRESARIO",            label: "Empresário"        },
+  { key: "PRESIDENTE_ASSOCIACAO", label: "Pres. Associação"  },
+  { key: "LIDERANCA_COMUNITARIA", label: "Lid. Comunitária"  },
+];
+
 export default async function RelatorioPage({
   searchParams,
 }: {
-  searchParams: { cob?: string };
+  searchParams: { cob?: string; perfil?: string; periodo?: string };
 }) {
   await auth();
-  const activeCob = searchParams.cob ?? null;
+  const activeCob     = searchParams.cob    ?? null;
+  const activeProfile = searchParams.perfil ?? null;
+  const activePeriodo = searchParams.periodo ?? "30";
+
+  function buildUrl(overrides: Record<string, string | null>): string {
+    const p: Record<string, string> = {};
+    if (activeCob)                    p.cob     = activeCob;
+    if (activeProfile)                p.perfil  = activeProfile;
+    if (activePeriodo !== "30")       p.periodo = activePeriodo;
+    for (const [k, v] of Object.entries(overrides)) {
+      if (v === null) delete p[k];
+      else            p[k] = v;
+    }
+    const qs = new URLSearchParams(p).toString();
+    return qs ? `/relatorio?${qs}` : "/relatorio";
+  }
 
   const all = await db.collaborator.findMany({
     where: { campaignId: CID },
@@ -58,23 +89,32 @@ export default async function RelatorioPage({
   });
 
   const active = all.filter((c) => c.status === "ACTIVE");
-  const leads  = all.filter((c) => c.status === "LEAD");
 
-  // Funil de conversão
-  const totalAll     = all.length;
-  const totalLeads   = leads.length;
-  const totalActive  = active.length;
-  const totalConfirm = active.filter((c) => c.supportStatus === "CONFIRMADO").length;
+  // Subconjuntos filtrados por perfil (para funil e insights)
+  const viewAll    = activeProfile ? all.filter((c) => c.profile === activeProfile)    : all;
+  const viewActive = activeProfile ? active.filter((c) => c.profile === activeProfile) : active;
+
+  // Funil de conversão (respeita filtro de perfil)
+  const totalAll     = viewAll.length;
+  const totalLeads   = viewAll.filter((c) => c.status === "LEAD").length;
+  const totalActive  = viewActive.length;
+  const totalConfirm = viewActive.filter((c) => c.supportStatus === "CONFIRMADO").length;
   const pctLeadActive = totalAll > 0 ? Math.round((totalActive / totalAll) * 100) : 0;
   const pctActiveConf = totalActive > 0 ? Math.round((totalConfirm / totalActive) * 100) : 0;
 
-  // Crescimento últimos 30 dias
-  const now    = new Date();
-  const d30    = new Date(now.getTime() - 30 * 86400000);
-  const d60    = new Date(now.getTime() - 60 * 86400000);
-  const new30  = all.filter((c) => new Date(c.createdAt) >= d30).length;
-  const prev30 = all.filter((c) => new Date(c.createdAt) >= d60 && new Date(c.createdAt) < d30).length;
-  const growthDelta = new30 - prev30;
+  // Crescimento — janela dinâmica pelo filtro de período
+  const now = new Date();
+  const periodDays = activePeriodo === "all" ? null : parseInt(activePeriodo);
+  const dStart  = periodDays ? new Date(now.getTime() - periodDays * 86400000) : null;
+  const dPrev   = periodDays ? new Date(now.getTime() - periodDays * 2 * 86400000) : null;
+  const newN  = dStart
+    ? viewAll.filter((c) => new Date(c.createdAt) >= dStart).length
+    : viewAll.length;
+  const prevN = (dStart && dPrev)
+    ? viewAll.filter((c) => new Date(c.createdAt) >= dPrev && new Date(c.createdAt) < dStart).length
+    : 0;
+  const growthDelta = newN - prevN;
+  const growthLabel = activePeriodo === "all" ? "total cadastrado" : `últimos ${PERIODO_OPTIONS.find(p => p.key === activePeriodo)?.label ?? activePeriodo}`;
 
   // Cobertura por cidade
   const cityMap: Record<string, { roles: Record<string, number>; active: number; leads: number; confirmados: number; total: number }> = {};
@@ -109,10 +149,11 @@ export default async function RelatorioPage({
   const orphanCities = cities.filter(([, m]) => coverageScore(m.roles) === "baixa" && m.active > 0);
   const orphanShown  = orphanCities.slice(0, 8);
 
-  // Tabela cruzada: perfil × status de apoio
+  // Tabela cruzada: perfil × status de apoio (filtrada por perfil se selecionado)
   const KEY_PROFILES = ["PASTOR", "VEREADOR", "LIDER_POLITICO", "EMPRESARIO", "PRESIDENTE_ASSOCIACAO", "LIDERANCA_COMUNITARIA"];
   type CrossRow = { confirmado: number; negociando: number; neutro: number; adversario: number; total: number };
   const crossTable: Record<string, CrossRow> = {};
+  const crossSource = activeProfile ? KEY_PROFILES.filter(p => p === activeProfile) : KEY_PROFILES;
   for (const p of KEY_PROFILES) {
     const group = active.filter((c) => c.profile === p);
     crossTable[p] = {
@@ -123,11 +164,11 @@ export default async function RelatorioPage({
       total: group.length,
     };
   }
-  const crossProfiles = KEY_PROFILES.filter((p) => crossTable[p].total > 0);
+  const crossProfiles = crossSource.filter((p) => crossTable[p].total > 0);
 
-  // Formas de contribuição
+  // Formas de contribuição (respeita filtro de perfil)
   const contribMap: Record<string, number> = {};
-  for (const c of active) {
+  for (const c of viewActive) {
     for (const t of c.contributionTypes) {
       contribMap[t] = (contribMap[t] ?? 0) + 1;
     }
@@ -179,6 +220,38 @@ export default async function RelatorioPage({
         </div>
       </div>
 
+      {/* Barra de filtros */}
+      <div className="glass-card rounded-2xl p-4 border border-white/[0.07] flex flex-col sm:flex-row gap-3 no-print">
+        {/* Filtro por perfil */}
+        <div className="flex-1">
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2">Perfil</p>
+          <div className="flex flex-wrap gap-1.5">
+            <Link href={buildUrl({ perfil: null })}
+              className={`text-xs px-2.5 py-1 rounded-full border transition-all ${!activeProfile ? "bg-primary/15 text-primary border-primary/40" : "text-muted-foreground border-white/[0.08] hover:border-white/[0.2]"}`}>
+              Todos
+            </Link>
+            {KEY_PROFILE_OPTIONS.map((o) => (
+              <Link key={o.key} href={buildUrl({ perfil: activeProfile === o.key ? null : o.key })}
+                className={`text-xs px-2.5 py-1 rounded-full border transition-all ${activeProfile === o.key ? "bg-primary/15 text-primary border-primary/40" : "text-muted-foreground border-white/[0.08] hover:border-white/[0.2]"}`}>
+                {o.label}
+              </Link>
+            ))}
+          </div>
+        </div>
+        {/* Filtro por período */}
+        <div className="shrink-0">
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2">Período de crescimento</p>
+          <div className="flex gap-1.5">
+            {PERIODO_OPTIONS.map((o) => (
+              <Link key={o.key} href={buildUrl({ periodo: o.key === "30" ? null : o.key })}
+                className={`text-xs px-2.5 py-1 rounded-full border transition-all ${activePeriodo === o.key ? "bg-primary/15 text-primary border-primary/40" : "text-muted-foreground border-white/[0.08] hover:border-white/[0.2]"}`}>
+                {o.label}
+              </Link>
+            ))}
+          </div>
+        </div>
+      </div>
+
       {/* KPIs clicáveis */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
@@ -191,7 +264,7 @@ export default async function RelatorioPage({
           return (
             <Link
               key={s.label}
-              href={s.key ? `/relatorio?cob=${s.key}` : "/relatorio"}
+              href={buildUrl({ cob: s.key })}
               className={`glass-card rounded-xl p-4 border transition-all hover:border-primary/40 group ${isActive ? "border-primary/50 bg-primary/[0.04]" : "border-white/[0.08]"}`}
             >
               <p className={`text-xs transition-colors ${isActive ? "text-primary/80" : "text-muted-foreground group-hover:text-foreground/70"}`}>{s.label}</p>
@@ -242,16 +315,18 @@ export default async function RelatorioPage({
           <div>
             <div className="flex items-center gap-2 mb-3">
               <Users className="w-4 h-4 text-primary" />
-              <h2 className="text-sm font-semibold text-foreground">Crescimento (30 dias)</h2>
+              <h2 className="text-sm font-semibold text-foreground">Crescimento ({growthLabel})</h2>
             </div>
             <div className="flex items-end gap-3">
               <div>
-                <p className="text-3xl font-bold text-foreground">+{new30}</p>
-                <p className="text-xs text-muted-foreground">novos cadastros</p>
+                <p className="text-3xl font-bold text-foreground">{activePeriodo === "all" ? totalAll : `+${newN}`}</p>
+                <p className="text-xs text-muted-foreground">{activePeriodo === "all" ? "total cadastrado" : "novos cadastros"}</p>
               </div>
-              <div className={`text-xs font-medium mb-1 ${growthDelta >= 0 ? "text-green-400" : "text-red-400"}`}>
-                {growthDelta >= 0 ? "↑" : "↓"} {Math.abs(growthDelta)} vs mês anterior
-              </div>
+              {activePeriodo !== "all" && (
+                <div className={`text-xs font-medium mb-1 ${growthDelta >= 0 ? "text-green-400" : "text-red-400"}`}>
+                  {growthDelta >= 0 ? "↑" : "↓"} {Math.abs(growthDelta)} vs período anterior
+                </div>
+              )}
             </div>
           </div>
           {topContrib.length > 0 && (
@@ -299,7 +374,12 @@ export default async function RelatorioPage({
         <div className="glass-card rounded-2xl border border-white/[0.08] overflow-hidden">
           <div className="px-5 py-4 border-b border-white/[0.06]">
             <h2 className="text-sm font-semibold text-foreground">Capital Político por Perfil</h2>
-            <p className="text-xs text-muted-foreground mt-0.5">Status de apoio dos ativos, segmentado por tipo de liderança</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {activeProfile
+                ? <>Filtrando por <span className="text-primary font-medium">{KEY_PROFILE_OPTIONS.find(o => o.key === activeProfile)?.label ?? activeProfile}</span> — <Link href={buildUrl({ perfil: null })} className="underline hover:text-foreground">ver todos</Link></>
+                : "Status de apoio dos ativos, segmentado por tipo de liderança"
+              }
+            </p>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
