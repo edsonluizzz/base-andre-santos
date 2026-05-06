@@ -11,10 +11,6 @@
     {
       "path": "/api/cron/weekly-report",
       "schedule": "0 10 * * 0"
-    },
-    {
-      "path": "/api/cron/sync-social",
-      "schedule": "0 8 * * *"
     }
   ]
 }

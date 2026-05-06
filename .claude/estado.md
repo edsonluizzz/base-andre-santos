@@ -151,8 +151,12 @@ GOOGLE_CALENDAR_CLIENT_ID / CLIENT_SECRET / REDIRECT_URI / ID
 ## Pendências
 
 - [ ] Google Calendar: configurar env vars `GOOGLE_CALENDAR_*` no Vercel
-- [ ] Resend: verificar domínio + configurar `RESEND_FROM` no Vercel
-- [ ] Comunicados via WhatsApp (Evolution API / Z-API) — integração real de broadcast
+
+## Ideias para o futuro (não prioridade agora)
+
+- Mensagens de boas-vindas pré-configuradas no WhatsApp — admin envia manualmente, sistema gera o texto formatado (nome, link, instruções)
+- Comunicados via WhatsApp em massa (Z-API) — quando a base crescer
+- Resend: domínio verificado para emails transacionais
 
 ---
 

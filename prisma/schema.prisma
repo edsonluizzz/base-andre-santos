@@ -285,19 +285,6 @@ model AuditLog {
   @@index([createdAt])
 }
 
-model SocialMetric {
-  id          String   @id @default(cuid())
-  platform    String   // "INSTAGRAM" | "YOUTUBE"
-  followers   Int?
-  posts       Int?
-  views       Int?
-  engRate     Float?
-  recordedAt  DateTime @default(now())
-  recordedBy  String?
-  @@index([platform])
-  @@index([recordedAt])
-}
-
 enum Role {
   ADMIN
   LEADER
