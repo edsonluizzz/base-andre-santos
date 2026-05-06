@@ -185,11 +185,11 @@ export default function SuperAdminPage() {
     navigator.clipboard.writeText(text).then(() => toast.success("Link copiado!"));
   }
 
-  async function fixCuritibaPastors() {
-    if (!confirm("Definir cidade=Curitiba para todos os pastores sem cidade com DDD 41?")) return;
-    const res = await fetch("/api/admin/fix/curitiba-pastors", { method: "POST" });
+  async function normalizeCities() {
+    if (!confirm("Normalizar nomes de municípios? Ex: 'curitiba' → 'Curitiba', 'SÃO JOSÉ' → 'São José'. Isso afeta todos os colaboradores com cidade cadastrada.")) return;
+    const res = await fetch("/api/admin/fix/normalize-cities", { method: "POST" });
     const d = await res.json();
-    if (res.ok) toast.success(d.message);
+    if (res.ok) toast.success(`${d.updated} município${d.updated !== 1 ? "s" : ""} normalizado${d.updated !== 1 ? "s" : ""} (de ${d.total} registros)`);
     else toast.error(d.error ?? "Erro");
   }
 
@@ -293,8 +293,8 @@ export default function SuperAdminPage() {
           <Button variant="outline" size="sm" onClick={fetchUsers} className="gap-1.5">
             <RefreshCw className="w-3.5 h-3.5" />
           </Button>
-          <Button variant="outline" size="sm" onClick={fixCuritibaPastors} className="gap-1.5 text-amber-400 border-amber-500/30 hover:bg-amber-500/10 hidden sm:flex">
-            Corrigir cidade (pastores CWB)
+          <Button variant="outline" size="sm" onClick={normalizeCities} className="gap-1.5 text-blue-400 border-blue-500/30 hover:bg-blue-500/10 hidden sm:flex">
+            Normalizar municípios
           </Button>
           <Button onClick={() => setInviteOpen(true)} className="bg-primary text-primary-foreground gap-2">
             <Plus className="w-4 h-4" />
