@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Phone, MapPin, Mail, Calendar, Star, UserCheck, ShieldCheck, ShieldAlert, Monitor } from "lucide-react";
 import { InviteToSystem } from "@/components/collaborators/invite-to-system";
+import { EditCollaboratorButton } from "@/components/collaborators/edit-collaborator-button";
 import { CONTRIBUTION_OPTIONS, TIER_LABEL } from "@/lib/contribution";
 
 const CID = "andre-santos-2026";
@@ -255,14 +256,30 @@ export default async function CollaboratorProfilePage({ params }: { params: { id
       )}
 
       {/* Ações */}
-      {isAdmin && (
-        <div className="flex gap-3">
-          <Link href={`/colaboradores`}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl border border-white/[0.08] text-sm text-muted-foreground hover:text-foreground hover:bg-white/[0.04] transition-colors">
-            <ArrowLeft className="w-4 h-4" /> Voltar
-          </Link>
-        </div>
-      )}
+      <div className="flex gap-3">
+        <Link href="/colaboradores"
+          className="flex items-center gap-2 px-4 py-2 rounded-xl border border-white/[0.08] text-sm text-muted-foreground hover:text-foreground hover:bg-white/[0.04] transition-colors">
+          <ArrowLeft className="w-4 h-4" /> Voltar
+        </Link>
+        {isAdmin && (
+          <EditCollaboratorButton collaborator={{
+            id: collaborator.id,
+            name: collaborator.name,
+            email: collaborator.email,
+            phone: collaborator.phone,
+            city: collaborator.city,
+            neighborhood: collaborator.neighborhood,
+            campaignRole: collaborator.campaignRole,
+            status: collaborator.status,
+            notes: collaborator.notes,
+            birthday: collaborator.birthday,
+            profile: collaborator.profile,
+            supportStatus: collaborator.supportStatus,
+            contributionTypes: collaborator.contributionTypes,
+            registeredBy: collaborator.registeredBy,
+          }} />
+        )}
+      </div>
     </div>
   );
 }
