@@ -152,6 +152,11 @@ export function Sidebar({
             <LogOut className="w-3.5 h-3.5" />
             Sair
           </button>
+          <p className="text-[10px] text-muted-foreground/40 text-center mt-2 leading-tight">
+            Desenvolvido por{" "}
+            <span className="text-primary/60 font-medium">Edson Luiz Silva</span>
+            {" · "}SCRYTA
+          </p>
         </div>
       </aside>
     </>

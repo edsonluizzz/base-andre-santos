@@ -681,10 +681,14 @@ export default async function PlanejamentoPage() {
           </div>
         </div>
         <div className="mt-5 pt-4 border-t border-white/[0.06]">
-          <p className="text-xs text-muted-foreground text-center">
-            Análise gerada pela SCRYTA para a Base André Santos · Verificação automática a cada acesso ·{" "}
-            <span className="text-primary">Confidencial — uso interno</span>
-          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-muted-foreground">
+            <span>
+              Sistema desenvolvido por{" "}
+              <strong className="text-foreground">Edson Luiz Silva</strong>
+              {" "}· SCRYTA · Verificação automática a cada acesso
+            </span>
+            <span className="text-primary font-medium">Confidencial — uso interno</span>
+          </div>
         </div>
       </section>
 
