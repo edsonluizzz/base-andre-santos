@@ -261,11 +261,13 @@ export default async function RelatorioPage({
           { key: "confirm", label: "Confirmados",     value: totals.confirmados, color: "text-green-400",  hint: null },
         ].map((s) => {
           const isActive = activeCob === s.key || (s.key === null && activeCob === null);
+          // Toggle: card ativo → limpa filtro; card inativo → aplica filtro
+          const cardHref = buildUrl({ cob: isActive && s.key !== null ? null : s.key });
           return (
             <Link
               key={s.label}
-              href={buildUrl({ cob: s.key })}
-              className={`glass-card rounded-xl p-4 border transition-all hover:border-primary/40 group ${isActive ? "border-primary/50 bg-primary/[0.04]" : "border-white/[0.08]"}`}
+              href={cardHref}
+              className={`glass-card rounded-xl p-4 border transition-all hover:border-primary/40 group cursor-pointer ${isActive ? "border-primary/50 bg-primary/[0.04]" : "border-white/[0.08]"}`}
             >
               <p className={`text-xs transition-colors ${isActive ? "text-primary/80" : "text-muted-foreground group-hover:text-foreground/70"}`}>{s.label}</p>
               {s.hint && <p className="text-[10px] text-muted-foreground/60 mb-0.5">{s.hint}</p>}
