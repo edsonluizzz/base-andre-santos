@@ -46,13 +46,6 @@ export const ATTENDANCE_LABEL: Record<string, string> = {
   JUSTIFIED: "Justificado",
 };
 
-export const TIER_LABEL: Record<string, string> = {
-  APOIADOR:    "Apoiador",
-  ATIVISTA:    "Ativista",
-  LIDER_CELULA:"Líder de Célula",
-  COORDENADOR: "Coordenador",
-};
-
 export const ROLE_ORDER = [
   "COORD_GERAL", "COORD_REGIONAL", "LIDER_MUNICIPAL", "LIDER_BAIRRO", "VOLUNTARIO",
 ] as const;

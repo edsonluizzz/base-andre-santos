@@ -9,16 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { CollaboratorDialog } from "@/components/collaborators/collaborator-dialog";
 import { ChoroplethMap, type CityData } from "@/components/mapa/choropleth-map";
-
-const PROFILE_LABEL: Record<string, string> = {
-  PASTOR: "Pastor",
-  PRESIDENTE_ASSOCIACAO: "Pres. Associação",
-  LIDER_POLITICO: "Líder Político",
-  VEREADOR: "Vereador",
-  EMPRESARIO: "Empresário",
-  LIDERANCA_COMUNITARIA: "Liderança Comunit.",
-  APOIADOR: "Apoiador",
-};
+import { PROFILE_LABEL } from "@/lib/labels";
 
 const PROFILE_COLOR: Record<string, string> = {
   PASTOR: "bg-purple-500/15 text-purple-300 border-purple-500/30",

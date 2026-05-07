@@ -5,6 +5,7 @@ import { Star, Users, UserCheck, UserX, Copy, Check, Phone, MapPin, ChevronDown,
 import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TIER_LABEL, TIER_THRESHOLDS } from "@/lib/contribution";
+import { STATUS_LABEL } from "@/lib/labels";
 
 const TIER_COLOR: Record<string, string> = {
   APOIADOR:    "text-slate-400 border-slate-500/30 bg-slate-500/10",
@@ -12,8 +13,6 @@ const TIER_COLOR: Record<string, string> = {
   LIDER_CELULA:"text-green-400 border-green-500/30 bg-green-500/10",
   COORDENADOR: "text-yellow-400 border-yellow-500/30 bg-yellow-500/10",
 };
-
-const STATUS_LABEL: Record<string, string> = { LEAD: "Lead", ACTIVE: "Ativo", INACTIVE: "Inativo" };
 const STATUS_COLOR: Record<string, string> = {
   ACTIVE:   "bg-green-500/15 text-green-400 border-green-500/30",
   LEAD:     "bg-amber-500/15 text-amber-400 border-amber-500/30",

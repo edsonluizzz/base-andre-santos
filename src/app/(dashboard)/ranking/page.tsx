@@ -3,10 +3,7 @@
 import { useState, useEffect } from "react";
 import { Trophy } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-
-const TIER_LABEL: Record<string, string> = {
-  APOIADOR: "Apoiador", ATIVISTA: "Ativista", LIDER_CELULA: "Líder de Célula", COORDENADOR: "Coordenador",
-};
+import { TIER_LABEL } from "@/lib/contribution";
 const TIER_COLOR: Record<string, string> = {
   APOIADOR: "text-slate-400", ATIVISTA: "text-blue-400", LIDER_CELULA: "text-green-400", COORDENADOR: "text-yellow-400",
 };

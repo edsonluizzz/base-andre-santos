@@ -6,18 +6,10 @@ import { ArrowLeft, Phone, MapPin, Mail, Calendar, Star, UserCheck, ShieldCheck,
 import { InviteToSystem } from "@/components/collaborators/invite-to-system";
 import { EditCollaboratorButton } from "@/components/collaborators/edit-collaborator-button";
 import { CONTRIBUTION_OPTIONS, TIER_LABEL } from "@/lib/contribution";
+import { ROLE_LABEL, PROFILE_LABEL, STATUS_LABEL } from "@/lib/labels";
 
 const CID = "andre-santos-2026";
 
-const ROLE_LABEL: Record<string, string> = {
-  COORD_GERAL: "Coord. Geral", COORD_REGIONAL: "Coord. Regional",
-  LIDER_MUNICIPAL: "Líder Municipal", LIDER_BAIRRO: "Líder de Bairro", VOLUNTARIO: "Voluntário",
-};
-const PROFILE_LABEL: Record<string, string> = {
-  APOIADOR: "Apoiador", PASTOR: "Pastor", PRESIDENTE_ASSOCIACAO: "Pres. Associação",
-  LIDER_POLITICO: "Líder Político", VEREADOR: "Vereador",
-  EMPRESARIO: "Empresário", LIDERANCA_COMUNITARIA: "Liderança Comunit.",
-};
 const SUPPORT_LABEL: Record<string, { label: string; color: string }> = {
   CONFIRMADO: { label: "Confirmado", color: "text-green-400" },
   NEGOCIANDO: { label: "Negociando", color: "text-yellow-400" },
@@ -29,7 +21,6 @@ const STATUS_COLOR: Record<string, string> = {
   LEAD:     "bg-amber-500/15 text-amber-400 border-amber-500/30",
   INACTIVE: "bg-red-500/10 text-red-400 border-red-500/20",
 };
-const STATUS_LABEL: Record<string, string> = { ACTIVE: "Ativo", LEAD: "Lead", INACTIVE: "Inativo" };
 
 const CONTRIB_LABEL = Object.fromEntries(CONTRIBUTION_OPTIONS.map((o) => [o.value, o.label]));
 

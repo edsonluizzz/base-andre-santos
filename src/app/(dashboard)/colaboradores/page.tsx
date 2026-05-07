@@ -11,14 +11,7 @@ import { CollaboratorDialog } from "@/components/collaborators/collaborator-dial
 import { DeleteConfirm } from "@/components/collaborators/delete-confirm";
 import { ImportCsvDialog } from "@/components/collaborators/import-csv-dialog";
 import { CONTRIBUTION_OPTIONS } from "@/lib/contribution";
-
-const ROLE_LABEL: Record<string, string> = {
-  COORD_GERAL:     "Coord. Geral",
-  COORD_REGIONAL:  "Coord. Regional",
-  LIDER_MUNICIPAL: "Líder Municipal",
-  LIDER_BAIRRO:    "Líder de Bairro",
-  VOLUNTARIO:      "Voluntário",
-};
+import { ROLE_LABEL } from "@/lib/labels";
 
 const ROLE_COLOR: Record<string, string> = {
   COORD_GERAL:     "bg-yellow-500/15 text-yellow-400 border-yellow-500/30",

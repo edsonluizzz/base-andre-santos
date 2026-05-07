@@ -3,17 +3,10 @@ import { db } from "@/lib/db";
 import { Users, MapPin, MessageCircle, Calendar, TrendingUp, Star, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { TIER_LABEL, TIER_THRESHOLDS } from "@/lib/contribution";
+import { ROLE_LABEL } from "@/lib/labels";
 import { CopyButton } from "@/components/dashboard/copy-button";
 
 const CID = "andre-santos-2026";
-
-const ROLE_LABEL: Record<string, string> = {
-  COORD_GERAL:     "Coord. Geral",
-  COORD_REGIONAL:  "Coord. Regional",
-  LIDER_MUNICIPAL: "Líder Municipal",
-  LIDER_BAIRRO:    "Líder de Bairro",
-  VOLUNTARIO:      "Voluntário",
-};
 
 const ROLE_COLOR: Record<string, string> = {
   COORD_GERAL:     "text-yellow-400",

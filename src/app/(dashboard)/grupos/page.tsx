@@ -10,11 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-
-const ROLE_LABEL: Record<string, string> = {
-  COORD_GERAL: "Coord. Geral", COORD_REGIONAL: "Coord. Regional",
-  LIDER_MUNICIPAL: "Líder Municipal", LIDER_BAIRRO: "Líder de Bairro", VOLUNTARIO: "Voluntário",
-};
+import { ROLE_LABEL } from "@/lib/labels";
 
 type Group = {
   id: string; name: string; inviteLink?: string; description?: string;
