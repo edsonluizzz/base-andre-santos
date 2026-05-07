@@ -1,6 +1,6 @@
 # Estado — Base André Santos
 
-**Última atualização:** 2026-05-07
+**Última atualização:** 2026-05-07 (sprint /planejamento + autoria)
 **GitHub:** https://github.com/edsonluizzz/base-andre-santos
 **Deploy:** Vercel (ver domínio em vercel.com → projeto → aba Domains)
 
@@ -16,6 +16,7 @@ Sistema funcional e em produção. Terminologia "Base de Apoio" (não "campanha"
 
 | Módulo | Rota | Status |
 |--------|------|--------|
+| Planejamento | `/planejamento` | ✅ ADMIN only · análise STRIDE × sistema · GAPs dinâmicos via $queryRaw |
 | Dashboard | `/dashboard` | ✅ com card "Minha Célula" + cobertura por município |
 | Colaboradores | `/colaboradores` | ✅ CSV import · seleção em massa · bulk status · bulk supportStatus |
 | Mapa de Apoio | `/mapa` | ✅ choropleth PR · zoom/pan · tooltip hover · cards clicáveis por status de apoio |
@@ -176,6 +177,13 @@ GOOGLE_CALENDAR_CLIENT_ID / CLIENT_SECRET / REDIRECT_URI / ID
 ## Pendências
 
 - [ ] Google Calendar: configurar env vars `GOOGLE_CALENDAR_*` no Vercel
+- [ ] GAPs /planejamento — fechar para atingir Cenário 3 (32–48k votos):
+  - [ ] GAP 1: adicionar LIDER_RELIGIOSO, EDUCADOR, FAMILIA, JOVEM ao CollaboratorProfile enum
+  - [ ] GAP 3: adicionar coluna `channel` com enum (INSTAGRAM/WHATSAPP/EVENTO/LINK/OUTRO)
+  - [ ] GAP 4: criar tabela MunicipalityGoal com metas por cidade
+  - [ ] GAP 5: adicionar coluna `mobilizationScore` em Collaborator
+  - [ ] GAP 6: criar src/components/dashboard/funnel-panel.tsx
+  - [ ] GAP 7: admin associar grupos WhatsApp às zonas (campo zoneId já existe)
 
 ## Ideias para o futuro (não prioridade agora)
 
