@@ -1,6 +1,6 @@
 # Estado — Base André Santos
 
-**Última atualização:** 2026-04-29 (sprint 2)
+**Última atualização:** 2026-05-07
 **GitHub:** https://github.com/edsonluizzz/base-andre-santos
 **Deploy:** Vercel (ver domínio em vercel.com → projeto → aba Domains)
 
@@ -18,22 +18,23 @@ Sistema funcional e em produção. Terminologia "Base de Apoio" (não "campanha"
 |--------|------|--------|
 | Dashboard | `/dashboard` | ✅ com card "Minha Célula" + cobertura por município |
 | Colaboradores | `/colaboradores` | ✅ CSV import · seleção em massa · bulk status · bulk supportStatus |
-| Mapa de Apoio | `/mapa` | ✅ choropleth PR · zoom/pan · tooltip hover |
+| Mapa de Apoio | `/mapa` | ✅ choropleth PR · zoom/pan · tooltip hover · cards clicáveis por status de apoio |
 | Zonas | `/zonas` | ✅ |
 | Grupos WhatsApp | `/grupos` | ✅ gerenciamento de membros |
 | Agenda | `/agenda` | ✅ + botão Google Calendar sync |
 | Comunicados | `/comunicados` | ✅ filtro por audiência + contagem em tempo real |
 | Configurações | `/configuracoes` | ✅ logo · join code · Google Calendar |
-| Relatório | `/relatorio` | ✅ cobertura por município + export CSV |
+| Relatório | `/relatorio` | ✅ KPI cards clicáveis (toggle filtro tabela) · filtros perfil/período · funil · crescimento · capital político · CSV + XLSX |
 | Minha Célula | `/minha-celula` | ✅ tier · stats · link de convite · gestão de status |
 | Super Admin | `/super-admin` | ✅ conceder/revogar acesso · role/tier · links de convite reutilizáveis |
 | Onboarding | `/onboarding` | ✅ boas-vindas + tour de features |
-| Perfil colaborador | `/colaboradores/[id]` | ✅ |
+| Perfil colaborador | `/colaboradores/[id]` | ✅ botão Editar funcional (abre CollaboratorDialog, router.refresh()) |
 | Cadastro público | `/cadastro` | ✅ sem auth · ?ref= rastreio · contribuições |
 | Convite por link | `/entrar?token=X` | ✅ email-first flow · Google OAuth · completar-perfil |
 | Completar perfil | `/completar-perfil` | ✅ formulário pós-login via convite |
 | Células | `/celulas` | ✅ visualização hierárquica |
 | Ranking | `/ranking` | ✅ scroll horizontal mobile |
+| Notificações | sidebar | ✅ nav item com badge de não lidas · dropdown · marcar como lida |
 
 ---
 
@@ -50,13 +51,17 @@ Sistema funcional e em produção. Terminologia "Base de Apoio" (não "campanha"
 - `/api/admin/users/[id]` — atualizar role/tier (PUT), revogar acesso (DELETE), remover pendente (PATCH)
 - `/api/broadcasts` + `/api/broadcasts/count` — comunicados + contagem por audiência
 - `/api/relatorio/export` — CSV de cobertura
+- `/api/relatorio/export-xlsx` — XLSX 4 abas com estilos (ExcelJS): Resumo, Cobertura, Colaboradores, Análise Política
 - `/api/google-calendar/connect`, `/callback`, `/sync` — OAuth + sync bidirecional
 - `/api/public/cadastro` — sem auth, rate limit 5/min (in-memory), dedup por telefone
 - `/api/invite-links` — GET/POST (ADMIN only) — listar/criar links de convite reutilizáveis
 - `/api/invite-links/[id]` — DELETE (ADMIN only) — revogar link
-- `/api/invite/validate` — POST sem auth — valida token (não retorna mais status 410 por uso)
+- `/api/invite/validate` — POST sem auth — valida token
 - `/api/invite/pre-auth` — POST sem auth — registra email pendente antes do OAuth
 - `/api/invite/complete-profile` — POST autenticado — cria/atualiza Collaborator pós-login
+- `/api/notifications` — GET lista notificações do usuário
+- `/api/notifications/[id]` — PATCH marcar como lida
+- `/api/notifications/read-all` — PATCH marcar todas como lidas
 
 ---
 
@@ -78,7 +83,7 @@ Sistema funcional e em produção. Terminologia "Base de Apoio" (não "campanha"
 
 ---
 
-## Hierarquia de Acesso (sprint 2026-04-29)
+## Hierarquia de Acesso
 
 | Papel | Módulos visíveis |
 |-------|-----------------|
@@ -88,6 +93,33 @@ Sistema funcional e em produção. Terminologia "Base de Apoio" (não "campanha"
 
 - Proteção dupla: sidebar filtra por `minRole`, middleware redireciona acesso direto por URL para `/dashboard`
 - Super Admin visível apenas para `isSuperAdmin = true` (subset de ADMIN)
+
+---
+
+## Labels centralizados
+
+`src/lib/labels.ts` — exporta: `ROLE_LABEL`, `STATUS_LABEL`, `PROFILE_LABEL`, `SUPPORT_LABEL`, `CONTRIB_LABEL`, `ATTENDANCE_LABEL`, `ROLE_ORDER`, `PROFILE_ORDER`, `SUPPORT_ORDER`
+`src/lib/contribution.ts` — exporta: `CONTRIBUTION_OPTIONS`, `ContributionValue`, `TIER_LABEL`, `TIER_THRESHOLDS`
+
+**Regra:** nunca redefinir essas constantes localmente nos arquivos de página.
+
+---
+
+## Relatório (`/relatorio`)
+
+- Cards KPI clicáveis com toggle: clique ativa filtro, clique novamente desativa
+- Filtros via URL search params: `?cob=alta|media|confirm`, `?perfil=PASTOR|...`, `?periodo=30|90|180|all`
+- `buildUrl()` helper preserva todos os params ativos ao trocar qualquer filtro
+- Tabela de cobertura filtrada server-side pelo Server Component
+- Indicador de filtro ativo com link "Limpar filtro"
+
+## XLSX Export (`/api/relatorio/export-xlsx`)
+
+- Biblioteca: `exceljs` ^4.4.0 (migrado de xlsx community, sem suporte a estilos)
+- 4 abas: Resumo, Cobertura, Colaboradores, Análise Política
+- Cabeçalhos dourados (#D4AF37), linha 1 congelada nas abas de dados
+- Status e Apoio coloridos (verde/âmbar/vermelho/cinza)
+- Análise Política: funil de conversão, crescimento, capital político por perfil, municípios sem liderança, top 10 confirmados
 
 ---
 
@@ -115,7 +147,7 @@ GOOGLE_CALENDAR_CLIENT_ID / CLIENT_SECRET / REDIRECT_URI / ID
 - Link com rastreio de célula: `/cadastro?ref=<userId>`
 - Leads chegam com `status=LEAD`
 
-### Convite por link (novo — sprint 2026-04-29)
+### Convite por link
 - Admin gera link em Super Admin → "Links de Convite" → copia `/entrar?token=X` → envia no WhatsApp
 - Pessoa clica → informa Gmail → pré-auth cria `UserCampaign(pendingEmail)` → Google OAuth → `/completar-perfil` → `/dashboard`
 - Links reutilizáveis: badge mostra `X usos`; admin revoga manualmente
@@ -125,12 +157,9 @@ GOOGLE_CALENDAR_CLIENT_ID / CLIENT_SECRET / REDIRECT_URI / ID
 - Checkboxes em cada linha; "selecionar todos" no topo
 - Barra flutuante: Ativo / Lead / Inativo / Confirmado (supportStatus) em massa
 
-### Conceder acesso ao sistema (fluxo original)
-- Super Admin → "Conceder Acesso" → insere Gmail → convite pendente
-- Ao fazer login com Google, acesso é ativado automaticamente
-
 ### Mapa choropleth
 - `/public/pr-municipalities.json` — GeoJSON IBGE, 399 municípios PR
+- Cards Total/Confirmados/Negociando/Neutros/Adversários são clicáveis → abre lista filtrada com edição em massa de supportStatus
 - Verde degradê (confirmados) · vermelho (adversários) · âmbar (negociando) · cinza (neutro)
 - Zoom por scroll/botões, pan por arrastar, tooltip ao hover
 
@@ -138,15 +167,11 @@ GOOGLE_CALENDAR_CLIENT_ID / CLIENT_SECRET / REDIRECT_URI / ID
 - Recalculados em `recalcTier()` a cada criação/alteração/exclusão de colaborador
 - Exibidos no card "Minha Célula" do dashboard e na página `/minha-celula`
 
+### Normalização de municípios
+- `normalizeCity()` em `src/lib/utils.ts` aplica Title Case e trim em todos os 4 pontos de escrita de `city`
+- Garante que "curitiba", "CURITIBA", " Curitiba " → "Curitiba" sem duplicatas
+
 ---
-
-## Sprint 2026-04-29 (sessão 2) — entregues
-
-- ✅ Fix nome "Usuário" no sidebar: `token.name` e `session.user.name` agora propagados corretamente
-- ✅ Segurança: rate limit em `/api/invite/pre-auth`; `/api/invite/validate` sem metadados públicos; enum validation no bulk; N+1 → groupBy em admin/users; índices em Collaborator.status e .supportStatus
-- ✅ Mobile: fix overflow horizontal (CopyButton `min-w-0`); layout `pl-16` para conteúdo não ficar sob o hamburger; `overflow-x: hidden` em html/body
-- ✅ Labels: `src/lib/labels.ts` centralizado; CSV e XLSX exportam em PT-BR (nunca mais CONFIRMADO/APOIADOR/PASTOR crus)
-- ✅ Relatório: painel "Por Cargo", "Por Perfil" e "Status de Apoio" com barras visuais; exportação XLSX com 3 abas (Resumo, Cobertura, Colaboradores)
 
 ## Pendências
 
@@ -154,46 +179,9 @@ GOOGLE_CALENDAR_CLIENT_ID / CLIENT_SECRET / REDIRECT_URI / ID
 
 ## Ideias para o futuro (não prioridade agora)
 
-- Mensagens de boas-vindas pré-configuradas no WhatsApp — admin envia manualmente, sistema gera o texto formatado (nome, link, instruções)
+- Mensagens de boas-vindas pré-configuradas no WhatsApp — admin envia manualmente, sistema gera o texto formatado
 - Comunicados via WhatsApp em massa (Z-API) — quando a base crescer
 - Resend: domínio verificado para emails transacionais
-
----
-
-## Achados de Segurança (avaliação 2026-04-29)
-
-### MÉDIO — `/api/invite/pre-auth`: sem rate limit
-Cria `UserCampaign(pendingEmail)` sem limitação de requisições. Com token válido, atacante pode poluir o DB com emails aleatórios. Não concede acesso real (Google auth ainda é necessário).
-**Fix recomendado:** Adicionar rate limit por IP (mesmo padrão do `/api/public/cadastro`).
-
-### MÉDIO — `/api/invite/validate`: expõe metadados sem auth
-Retorna `{ role, useCount }` sem autenticação. Qualquer pessoa com o token sabe qual role o link concede.
-**Fix recomendado:** Retornar apenas `{ ok: true }` no endpoint público.
-
-### BAIXO — Bulk update sem validação de enum
-`/api/collaborators/bulk` passa `status`/`campaignRole`/`supportStatus` direto para o Prisma sem checar contra os enums permitidos. Prisma rejeita na DB, mas não é sanitizado pelo app.
-**Fix recomendado:** Whitelist simples antes do `updateMany`.
-
-### BAIXO — Rate limit in-memory (public/cadastro) ineficaz em Vercel
-`rateLimitMap` é estado de módulo. Reseta em cold start e não compartilha estado entre instâncias concorrentes de função serverless.
-**Mitigação atual:** Dedup por telefone no banco ainda previne cadastros duplicados.
-
-### BAIXO — `googleRefreshToken` em texto plano na tabela Settings
-Risco baixo pois Neon usa criptografia em repouso, mas vale monitorar.
-
----
-
-## Achados de Performance (avaliação 2026-04-29)
-
-### MÉDIO — N+1 queries em `/api/admin/users` GET
-Dispara um `COUNT` separado por usuário para calcular `registeredCount`. Com 100+ usuários = 100+ queries.
-**Fix recomendado:** Substituir por `db.collaborator.groupBy({ by: ["registeredById"], _count: true })`.
-
-### BAIXO — Sem índice em `Collaborator.phone`
-Duplicate check usa `phone: { contains: cleanPhone.slice(-8) }` — full scan na tabela. Migrar para `phone @unique` normalizado ou índice trigram.
-
-### BAIXO — Sem índice em `Collaborator.status` e `Collaborator.supportStatus`
-Filtros frequentes sem índice. Considerável ao ter milhares de registros.
 
 ---
 
@@ -206,3 +194,32 @@ Filtros frequentes sem índice. Considerável ao ter milhares de registros.
 - Terminologia: usar "base de apoio" (não "campanha") nos textos visíveis — requisito legal
 - `.catch(() => {})` em vários pontos do JWT callback — erros silenciosos; monitorar via Vercel logs
 - `/entrar` e `/api/invite/*` DEVEM estar na lista `isPublic` em `auth.config.ts` — remover causa 302 loop
+
+---
+
+## Achados de Segurança
+
+### MÉDIO — `/api/invite/pre-auth`: sem rate limit
+Cria `UserCampaign(pendingEmail)` sem limitação. Com token válido, atacante pode poluir o DB.
+**Fix recomendado:** Rate limit por IP (mesmo padrão do `/api/public/cadastro`).
+
+### MÉDIO — `/api/invite/validate`: expõe metadados sem auth
+Retorna `{ role, useCount }` sem autenticação.
+**Fix recomendado:** Retornar apenas `{ ok: true }` no endpoint público.
+
+### BAIXO — Bulk update sem validação de enum
+`/api/collaborators/bulk` não faz whitelist antes do Prisma.
+
+### BAIXO — Rate limit in-memory (public/cadastro) ineficaz em Vercel
+Reseta em cold start, não compartilha estado entre instâncias. Dedup por telefone no banco mitiga.
+
+### BAIXO — `googleRefreshToken` em texto plano na tabela Settings
+
+---
+
+## Achados de Performance
+
+### MÉDIO — N+1 queries em `/api/admin/users` GET
+`COUNT` separado por usuário. Fix: `db.collaborator.groupBy({ by: ["registeredById"], _count: true })`.
+
+### BAIXO — Sem índice em `Collaborator.phone`, `.status`, `.supportStatus`
