@@ -685,7 +685,7 @@ export default async function PlanejamentoPage() {
             <span>
               Sistema desenvolvido por{" "}
               <strong className="text-foreground">Edson Luiz Silva</strong>
-              {" "}· SCRYTA · Verificação automática a cada acesso
+              {" "}· Verificação automática a cada acesso
             </span>
             <span className="text-primary font-medium">Confidencial — uso interno</span>
           </div>

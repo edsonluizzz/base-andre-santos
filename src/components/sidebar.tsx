@@ -155,7 +155,6 @@ export function Sidebar({
           <p className="text-[10px] text-muted-foreground/40 text-center mt-2 leading-tight">
             Desenvolvido por{" "}
             <span className="text-primary/60 font-medium">Edson Luiz Silva</span>
-            {" · "}SCRYTA
           </p>
         </div>
       </aside>
