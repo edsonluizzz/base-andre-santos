@@ -1,6 +1,6 @@
 # Estado — Base André Santos
 
-**Última atualização:** 2026-05-07 (sprint GAPs 1-6 + API CEP/municípios + lookup nos formulários)
+**Última atualização:** 2026-05-07 (fix GAP 6 existsSync→dynamic import + GAP 7 UX territorialização)
 **GitHub:** https://github.com/edsonluizzz/base-andre-santos
 **Deploy:** Vercel (ver domínio em vercel.com → projeto → aba Domains)
 
@@ -193,7 +193,7 @@ GOOGLE_CALENDAR_CLIENT_ID / CLIENT_SECRET / REDIRECT_URI / ID
 - [ ] **P2-A** Contadores dinâmicos no `/cadastro` público — hoje hardcoded `"+"`. Criar `/api/public/stats` (sem auth) retornando `{ apoiadores, municipios, grupos }` e consumir no `CadastroForm`
 
 ### Estratégia / Estrutura
-- [ ] **P3-A** GAP 7: associar grupos WhatsApp às zonas (campo `zoneId` existe) — meta ≥70% territorializados
+- [ ] **P3-A** GAP 7: associar grupos às zonas em `/grupos` — borda âmbar indica pendentes, meta ≥70%
 - [ ] **P3-B** Implementar lógica de cálculo do `mobilizationScore` (campo existe, lógica a definir)
 - [ ] **P3-C** Preencher metas por município via /configuracoes
 
@@ -209,6 +209,8 @@ GOOGLE_CALENDAR_CLIENT_ID / CLIENT_SECRET / REDIRECT_URI / ID
 - [x] GAP 6: src/components/dashboard/funnel-panel.tsx — funil total → ativos → confirmados no dashboard
 - [x] API /api/municipios — 399 municípios PR com cache + autocomplete no CollaboratorDialog
 - [x] API /api/cep/[cep] — proxy ViaCEP público, auto-fill nos formulários de cadastro (admin + público)
+- [x] fix GAP 6: existsSync → dynamic import (compatível com Vercel serverless)
+- [x] GAP 7 UX: banner de territorialização + destaque visual (borda âmbar + ícone ⚠) em grupos sem zona
 
 ## Ideias para o futuro (não prioridade agora)
 
@@ -226,7 +228,8 @@ GOOGLE_CALENDAR_CLIENT_ID / CLIENT_SECRET / REDIRECT_URI / ID
 - `typescript: { ignoreBuildErrors: true }` — erros de tipo não quebram o build
 - Terminologia: usar "base de apoio" (não "campanha") nos textos visíveis — requisito legal
 - `.catch(() => {})` em vários pontos do JWT callback — erros silenciosos; monitorar via Vercel logs
-- `/entrar` e `/api/invite/*` DEVEM estar na lista `isPublic` em `auth.config.ts` — remover causa 302 loop
+- `/entrar`, `/api/invite/*` e `/api/cep/*` DEVEM estar na lista `isPublic` em `auth.config.ts`
+- **`existsSync` não funciona em Vercel serverless** — source `src/` não existe no runtime. Usar dynamic import para detectar presença de módulos
 
 ---
 
