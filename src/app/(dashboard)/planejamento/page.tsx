@@ -474,8 +474,8 @@ export default async function PlanejamentoPage() {
         <div className="grid sm:grid-cols-2 gap-4">
           {[
             { num: "Cenário 1", title: "Inercial / sem estrutura política",           range: "8–14 mil votos",  result: "Suplência ou votação honrosa",      headerBg: "bg-red-600",    resultColor: "text-red-400",     desc: "André mantém apenas o conteúdo religioso, sem territorialização, agenda estadual ou organização de base.",                                   sistemaStatus: "Sistema atual suporta este nível", sistemaColor: "text-slate-400",  sistemaBg: "bg-slate-500/[0.08]"  },
-            { num: "Cenário 2", title: "Base cristã organizada + Curitiba/SJP/RMC",  range: "18–28 mil votos", result: "Suplência forte ou disputa real",    headerBg: "bg-yellow-500", resultColor: "text-yellow-400",  desc: "André ativa sua base religiosa, transforma eventos em rede de apoiadores e produz conteúdo com linguagem pública.",                          sistemaStatus: "Sistema suporta com ajustes de perfil e bairro", sistemaColor: "text-yellow-400", sistemaBg: "bg-yellow-500/[0.08]" },
-            { num: "Cenário 3", title: "Operação completa + NOVO + cauda majoritária",range: "32–48 mil votos", result: "Briga direta por cadeira",           headerBg: "bg-green-600",  resultColor: "text-green-400",   desc: "André se posiciona como candidato cristão preparado, trabalha territórios estratégicos e usa a força do NOVO.",                              sistemaStatus: "Sistema suporta com metas/canal — requer fechar GAPs ALTO", sistemaColor: "text-green-400", sistemaBg: "bg-green-500/[0.08]"  },
+            { num: "Cenário 2", title: "Base cristã organizada + Curitiba/SJP/RMC",  range: "18–28 mil votos", result: "Suplência forte ou disputa real",    headerBg: "bg-yellow-500", resultColor: "text-yellow-400",  desc: "André ativa sua base religiosa, transforma eventos em rede de apoiadores e produz conteúdo com linguagem pública.",                          sistemaStatus: "Sistema suporta completamente — perfis, bairro, canal e metas implementados", sistemaColor: "text-yellow-400", sistemaBg: "bg-yellow-500/[0.08]" },
+            { num: "Cenário 3", title: "Operação completa + NOVO + cauda majoritária",range: "32–48 mil votos", result: "Briga direta por cadeira",           headerBg: "bg-green-600",  resultColor: "text-green-400",   desc: "André se posiciona como candidato cristão preparado, trabalha territórios estratégicos e usa a força do NOVO.",                              sistemaStatus: "Sistema suporta — todos os GAPs fechados. Requer territorialização dos grupos (GAP 7)", sistemaColor: "text-green-400", sistemaBg: "bg-green-500/[0.08]"  },
             { num: "Cenário 4", title: "Onda conservadora + nominata enxuta + recall",range: "50–68 mil votos", result: "Eleito com votação expressiva",      headerBg: "bg-green-800",  resultColor: "text-emerald-400", desc: "André como nome prioritário do NOVO, chapa majoritária cria onda real e rede estadual organizada.",                                           sistemaStatus: "Sistema suporta — fatores externos: nominata e tráfego pago", sistemaColor: "text-emerald-400", sistemaBg: "bg-emerald-500/[0.08]" },
           ].map((c) => (
             <div key={c.num} className="rounded-xl border border-white/[0.08] overflow-hidden">
@@ -518,20 +518,22 @@ export default async function PlanejamentoPage() {
             </thead>
             <tbody className="divide-y divide-white/[0.04]">
               {[
-                { e: "Formulário de apoiadores (cidade, WhatsApp)",                              s: "existe",  o: "Falta campo bairro para territorialização granular" },
-                { e: "Grupos regionais por cidade",                                              s: "existe",  o: "Módulo /grupos ativo; campo zoneId já existe no schema" },
-                { e: "Rastreio de origem do cadastro",                                          s: "existe",  o: "?ref=userId rastreia quem indicou; falta enum de canal" },
-                { e: "Mapeamento por cidade priorizando RMC",                                   s: "existe",  o: "Mapa choropleth ativo; falta metas por município" },
-                { e: "Segmentação: líder cristão, educador, jovem, pai, empreendedor",          s: "parcial", o: "profile enum tem PASTOR/VEREADOR/EMPRESARIO; faltam EDUCADOR, FAMILIA, JOVEM" },
-                { e: "Relatórios de performance mensais",                                       s: "existe",  o: "XLSX 4 abas: Resumo, Cobertura, Colaboradores, Análise Política" },
-                { e: "Funil de conversão",                                                      s: "existe",  o: "Aba Análise Política do XLSX; falta painel em tempo real" },
-                { e: "Ranking de mobilização",                                                  s: "existe",  o: "/ranking em produção com scroll mobile" },
-                { e: "Células por território",                                                  s: "existe",  o: "/celulas e /minha-celula com tiers automáticos" },
-                { e: "Comunicados segmentados",                                                  s: "existe",  o: "/comunicados com filtro por audiência em tempo real" },
-                { e: "Análise neural preditiva contínua",                                       s: "externo", o: "Core da oferta STRIDE — este relatório é a análise; não é infraestrutura" },
-                { e: "Gestão de tráfego pago (Meta/Google Ads)",                                s: "externo", o: "Serviço de agência de mídia paga — não é sistema de CRM" },
-                { e: "Copywriting político mensal",                                             s: "externo", o: "Produção criativa externa, não infraestrutura de CRM" },
-                { e: "Estrutura de mobilização digital",                                        s: "existe",  o: "= Este sistema. CRM, células, grupos WA, ranking, mapa — em produção" },
+                { e: "Formulário de apoiadores (cidade, WhatsApp, bairro)",                     s: "existe",  o: "CEP auto-fill + bairro + autocomplete 399 municípios PR em ambos os formulários" },
+                { e: "Grupos regionais por cidade",                                             s: "existe",  o: "/grupos com banner de territorialização — borda âmbar indica grupos sem zona (meta ≥70%)" },
+                { e: "Rastreio de origem do cadastro",                                          s: "existe",  o: "?ref= rastreia quem indicou + CollaboratorChannel enum (INSTAGRAM/WHATSAPP/EVENTO/LINK/OUTRO)" },
+                { e: "Mapeamento por cidade priorizando RMC",                                   s: "existe",  o: "Mapa choropleth + /metas com Meta × Realizado por município + barra de progresso" },
+                { e: "Segmentação: líder cristão, educador, jovem, família, empreendedor",      s: "existe",  o: "CollaboratorProfile completo: PASTOR · LIDER_RELIGIOSO · EDUCADOR · JOVEM · FAMILIA · EMPRESARIO · VEREADOR + mais" },
+                { e: "Relatórios de performance mensais",                                       s: "existe",  o: "XLSX 4 abas: Resumo, Cobertura, Colaboradores, Análise Política + CSV" },
+                { e: "Funil de conversão",                                                      s: "existe",  o: "FunnelPanel em tempo real no dashboard + Análise Política no XLSX" },
+                { e: "Ranking de mobilização",                                                  s: "existe",  o: "/ranking em produção + mobilizationScore por colaborador (recalculável em /configuracoes)" },
+                { e: "Células por território",                                                  s: "existe",  o: "/celulas e /minha-celula com tiers automáticos (APOIADOR→ATIVISTA→LIDER→COORDENADOR)" },
+                { e: "Comunicados segmentados",                                                 s: "existe",  o: "/comunicados com filtro por audiência e contagem em tempo real" },
+                { e: "Política de Privacidade / LGPD",                                         s: "existe",  o: "/privacidade (LGPD Art. 9) — linkada no termo do cadastro público" },
+                { e: "Contadores públicos de base",                                             s: "existe",  o: "/api/public/stats retorna apoiadores, municípios e grupos em tempo real no /cadastro" },
+                { e: "Análise neural preditiva contínua",                                       s: "externo", o: "Core da oferta STRIDE — este relatório é a análise; não é infraestrutura recorrente" },
+                { e: "Gestão de tráfego pago (Meta/Google Ads)",                               s: "externo", o: "Serviço de agência de mídia paga — não é sistema de CRM" },
+                { e: "Copywriting político mensal",                                             s: "externo", o: "Produção criativa externa — não é infraestrutura de CRM" },
+                { e: "Estrutura de mobilização digital",                                        s: "existe",  o: "= Este sistema. CRM, células, grupos WA, ranking, mapa, metas, score — em produção" },
               ].map((row) => {
                 const badge =
                   row.s === "existe"  ? { label: "Existe",  cls: "bg-green-500/15 text-green-400 border-green-500/30"  } :
