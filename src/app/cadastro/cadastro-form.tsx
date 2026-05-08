@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { Star, CheckCircle2, ChevronRight, Users, MapPin, Smartphone } from "lucide-react";
 import { CONTRIBUTION_OPTIONS } from "@/lib/contribution";
@@ -14,6 +14,14 @@ export function CadastroForm() {
   const [step, setStep] = useState<Step>("form");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [stats, setStats] = useState({ apoiadores: 0, municipios: 0, grupos: 0 });
+
+  useEffect(() => {
+    fetch("/api/public/stats")
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => { if (d) setStats(d); })
+      .catch(() => {});
+  }, []);
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -150,9 +158,9 @@ export function CadastroForm() {
         {/* Counters */}
         <div className="grid grid-cols-3 gap-3">
           {[
-            { icon: Users,      label: "Apoiadores", value: "+" },
-            { icon: MapPin,     label: "Municípios", value: "+" },
-            { icon: Smartphone, label: "Grupos WA",  value: "+" },
+            { icon: Users,      label: "Apoiadores", value: stats.apoiadores > 0 ? `+${stats.apoiadores}` : "+" },
+            { icon: MapPin,     label: "Municípios", value: stats.municipios  > 0 ? `+${stats.municipios}`  : "+" },
+            { icon: Smartphone, label: "Grupos WA",  value: stats.grupos      > 0 ? `+${stats.grupos}`      : "+" },
           ].map(({ icon: Icon, label, value }) => (
             <div key={label} className="rounded-xl p-3 text-center" style={{ background: "rgba(13,27,42,0.70)", border: "1px solid rgba(255,255,255,0.07)" }}>
               <Icon className="w-4 h-4 mx-auto mb-1 text-slate-500" />
@@ -301,7 +309,10 @@ export function CadastroForm() {
             <p className="text-xs leading-relaxed" style={{ color: lgpdConsent ? "rgba(212,175,55,0.9)" : "#94a3b8" }}>
               Autorizo o uso dos meus dados pessoais (nome, WhatsApp, cidade) pela Base de Apoio André Santos 2026
               para fins de comunicação política, conforme a{" "}
-              <span style={{ color: lgpdConsent ? "#d4af37" : "#64748b" }}>LGPD — Lei 13.709/2018</span>.
+              <a href="/privacidade" target="_blank" rel="noopener noreferrer"
+                style={{ color: lgpdConsent ? "#d4af37" : "#64748b", textDecoration: "underline" }}>
+                Política de Privacidade (LGPD)
+              </a>.
               Poderei solicitar a exclusão dos meus dados a qualquer momento pelo WhatsApp ou e-mail da equipe.{" "}
               <span style={{ color: "#d4af37" }}>*</span>
             </p>
