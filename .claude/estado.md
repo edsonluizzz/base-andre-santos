@@ -1,6 +1,6 @@
 # Estado — Base André Santos
 
-**Última atualização:** 2026-05-07 (sprint completo: /privacidade · /metas · stats · score · /planejamento atualizado)
+**Última atualização:** 2026-05-07 (correlação STRIDE×Sistema e cenários de votos atualizados em /planejamento)
 **GitHub:** https://github.com/edsonluizzz/base-andre-santos
 **Deploy:** Vercel (ver domínio em vercel.com → projeto → aba Domains)
 
@@ -215,6 +215,8 @@ GOOGLE_CALENDAR_CLIENT_ID / CLIENT_SECRET / REDIRECT_URI / ID
 - [x] /configuracoes: botão "Recalcular scores agora" + seção Score de Mobilização
 - [x] /planejamento: seção "Sprint de Implantação" + GAPs 5-7 descrições atualizadas
 - [x] P1-B + P1-C: já estavam implementados (validate → { ok: true }, pre-auth → rate limit 10/min)
+- [x] /planejamento: correlação STRIDE×Sistema atualizada (2 linhas "parcial"→"existe", 2 linhas novas)
+- [x] /planejamento: Cenários 2 e 3 atualizados — sistema suporta completamente
 
 ## Ideias para o futuro (não prioridade agora)
 
