@@ -1,6 +1,6 @@
 # Estado — Base André Santos
 
-**Última atualização:** 2026-05-07 (fix GAP 6 existsSync→dynamic import + GAP 7 UX territorialização)
+**Última atualização:** 2026-05-07 (sprint completo: /privacidade · /metas · stats · score · /planejamento atualizado)
 **GitHub:** https://github.com/edsonluizzz/base-andre-santos
 **Deploy:** Vercel (ver domínio em vercel.com → projeto → aba Domains)
 
@@ -36,6 +36,8 @@ Sistema funcional e em produção. Terminologia "Base de Apoio" (não "campanha"
 | Células | `/celulas` | ✅ visualização hierárquica |
 | Ranking | `/ranking` | ✅ scroll horizontal mobile |
 | Notificações | sidebar | ✅ nav item com badge de não lidas · dropdown · marcar como lida |
+| Metas | `/metas` | ✅ Meta × Realizado por município · barra de progresso · KPIs globais (LEADER+) |
+| Privacidade | `/privacidade` | ✅ Política de Privacidade LGPD Art. 9 · público · linkada no /cadastro |
 
 ---
 
@@ -183,22 +185,16 @@ GOOGLE_CALENDAR_CLIENT_ID / CLIENT_SECRET / REDIRECT_URI / ID
 
 ## Pendências
 
-### Compliance (PRIORIDADE — fazer antes de qualquer ação pública)
-- [ ] **P1-A** Criar `/privacidade` com Política de Privacidade formal (LGPD Art. 9) e linkar no termo do cadastro público e na página de leads
-- [ ] **P1-B** Fix `/api/invite/validate`: retornar apenas `{ ok: true }` — hoje vaza `{ role, useCount }` sem auth
-- [ ] **P1-C** Rate limit em `/api/invite/pre-auth` — copiar padrão do `rateLimitMap` do `/api/public/cadastro`
-- [ ] **P1-D** Checklist para registro de candidatura (agosto 2026): CNPJ da coligação em TODO material digital + SPCE
-
-### Branding / Dados
-- [ ] **P2-A** Contadores dinâmicos no `/cadastro` público — hoje hardcoded `"+"`. Criar `/api/public/stats` (sem auth) retornando `{ apoiadores, municipios, grupos }` e consumir no `CadastroForm`
-
-### Estratégia / Estrutura
-- [ ] **P3-A** GAP 7: associar grupos às zonas em `/grupos` — borda âmbar indica pendentes, meta ≥70%
-- [ ] **P3-B** Implementar lógica de cálculo do `mobilizationScore` (campo existe, lógica a definir)
-- [ ] **P3-C** Preencher metas por município via /configuracoes
+### Ações manuais do admin
+- [ ] **GAP 7:** /grupos → editar grupos com borda âmbar → selecionar zona (meta ≥ 70%)
+- [ ] **Scores:** /configuracoes → "Recalcular scores agora" (após popular colaboradores)
+- [ ] **Metas:** /configuracoes → "Metas por Município" → cadastrar meta de votos/líderes por cidade
 
 ### Infraestrutura
-- [ ] Google Calendar: configurar env vars `GOOGLE_CALENDAR_*` no Vercel
+- [ ] Google Calendar: configurar `GOOGLE_CALENDAR_*` no Vercel + conectar com equipeandresantos@gmail.com
+
+### Compliance futuro
+- [ ] Checklist candidatura (agosto 2026): CNPJ coligação em TODO material digital + registro SPCE
 
 ## GAPs concluídos (sprint 2026-05-07)
 
@@ -211,6 +207,14 @@ GOOGLE_CALENDAR_CLIENT_ID / CLIENT_SECRET / REDIRECT_URI / ID
 - [x] API /api/cep/[cep] — proxy ViaCEP público, auto-fill nos formulários de cadastro (admin + público)
 - [x] fix GAP 6: existsSync → dynamic import (compatível com Vercel serverless)
 - [x] GAP 7 UX: banner de territorialização + destaque visual (borda âmbar + ícone ⚠) em grupos sem zona
+- [x] P1-A: /privacidade com Política de Privacidade LGPD + link no /cadastro
+- [x] P2-A: /api/public/stats + contadores reais no /cadastro (apoiadores, municípios, grupos)
+- [x] /metas: dashboard Meta × Realizado por município (LEADER+) + sidebar
+- [x] src/lib/mobilization.ts: fórmula de score (perfil × apoio × status + contribuições)
+- [x] POST /api/admin/recalc-scores: recalcula todos em batches de 50
+- [x] /configuracoes: botão "Recalcular scores agora" + seção Score de Mobilização
+- [x] /planejamento: seção "Sprint de Implantação" + GAPs 5-7 descrições atualizadas
+- [x] P1-B + P1-C: já estavam implementados (validate → { ok: true }, pre-auth → rate limit 10/min)
 
 ## Ideias para o futuro (não prioridade agora)
 
