@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Loader2 } from "lucide-react";
 import { CONTRIBUTION_OPTIONS } from "@/lib/contribution";
 
 const ROLES = [
@@ -72,6 +73,45 @@ export function CollaboratorDialog({ open, onOpenChange, collaborator, onSuccess
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
+  const [cep, setCep] = useState("");
+  const [cepLoading, setCepLoading] = useState(false);
+  const [cepError, setCepError] = useState("");
+  const [cities, setCities] = useState<string[]>([]);
+  const citiesLoadedRef = useRef(false);
+
+  // Carrega lista de municípios uma vez
+  useEffect(() => {
+    if (citiesLoadedRef.current) return;
+    citiesLoadedRef.current = true;
+    fetch("/api/municipios")
+      .then((r) => r.ok ? r.json() : [])
+      .then(setCities)
+      .catch(() => {});
+  }, []);
+
+  async function lookupCep(rawCep: string) {
+    const digits = rawCep.replace(/\D/g, "");
+    if (digits.length !== 8) return;
+    setCepLoading(true);
+    setCepError("");
+    try {
+      const res = await fetch(`/api/cep/${digits}`);
+      if (!res.ok) { setCepError("CEP não encontrado"); return; }
+      const d = await res.json();
+      if (d.city) set("city", d.city);
+      if (d.neighborhood && !form.neighborhood) set("neighborhood", d.neighborhood);
+    } catch {
+      setCepError("Erro ao consultar CEP");
+    } finally {
+      setCepLoading(false);
+    }
+  }
+
+  function formatCep(val: string) {
+    const d = val.replace(/\D/g, "").slice(0, 8);
+    return d.length > 5 ? `${d.slice(0, 5)}-${d.slice(5)}` : d;
+  }
+
   useEffect(() => {
     if (collaborator) {
       setForm({
@@ -94,6 +134,8 @@ export function CollaboratorDialog({ open, onOpenChange, collaborator, onSuccess
       setSelectedTypes([]);
     }
     setError("");
+    setCep("");
+    setCepError("");
   }, [collaborator, open]);
 
   const set = (k: string, v: string | null) => { if (v !== null) setForm((f) => ({ ...f, [k]: v })); };
@@ -146,9 +188,38 @@ export function CollaboratorDialog({ open, onOpenChange, collaborator, onSuccess
               <Label>E-mail</Label>
               <Input value={form.email} onChange={(e) => set("email", e.target.value)} type="email" placeholder="email@dominio.com" />
             </div>
+            <div className="col-span-2">
+              <Label>CEP <span className="text-muted-foreground font-normal">(preenche cidade e bairro)</span></Label>
+              <div className="relative">
+                <Input
+                  value={cep}
+                  onChange={(e) => {
+                    const v = formatCep(e.target.value);
+                    setCep(v);
+                    if (v.replace(/\D/g, "").length === 8) lookupCep(v);
+                  }}
+                  placeholder="00000-000"
+                  inputMode="numeric"
+                  maxLength={9}
+                  className="pr-8"
+                />
+                {cepLoading && <Loader2 className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 animate-spin text-muted-foreground" />}
+              </div>
+              {cepError && <p className="text-[11px] text-destructive mt-0.5">{cepError}</p>}
+            </div>
             <div>
               <Label>Município</Label>
-              <Input value={form.city} onChange={(e) => set("city", e.target.value)} placeholder="Curitiba" />
+              <Input
+                value={form.city}
+                onChange={(e) => set("city", e.target.value)}
+                placeholder="Curitiba"
+                list="pr-cities-list"
+              />
+              {cities.length > 0 && (
+                <datalist id="pr-cities-list">
+                  {cities.map((c) => <option key={c} value={c} />)}
+                </datalist>
+              )}
             </div>
             <div>
               <Label>Bairro</Label>

@@ -47,6 +47,7 @@ export const authConfig: NextAuthConfig = {
         pathname.startsWith("/api/invite/") ||
         pathname.startsWith("/api/cron/") ||
         pathname.startsWith("/api/join") ||
+        pathname.startsWith("/api/cep/") ||
         pathname === "/api/onboarding";
 
       if (isPublic) return true;

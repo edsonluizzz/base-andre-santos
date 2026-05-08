@@ -17,11 +17,37 @@ export function CadastroForm() {
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [cep, setCep] = useState("");
+  const [cepLoading, setCepLoading] = useState(false);
+  const [cepError, setCepError] = useState("");
   const [city, setCity] = useState("");
   const [neighborhood, setNeighborhood] = useState("");
   const [email, setEmail] = useState("");
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [lgpdConsent, setLgpdConsent] = useState(false);
+
+  function formatCep(val: string) {
+    const d = val.replace(/\D/g, "").slice(0, 8);
+    return d.length > 5 ? `${d.slice(0, 5)}-${d.slice(5)}` : d;
+  }
+
+  async function lookupCep(rawCep: string) {
+    const digits = rawCep.replace(/\D/g, "");
+    if (digits.length !== 8) return;
+    setCepLoading(true);
+    setCepError("");
+    try {
+      const res = await fetch(`/api/cep/${digits}`);
+      if (!res.ok) { setCepError("CEP não encontrado"); return; }
+      const d = await res.json();
+      if (d.city) setCity(d.city);
+      if (d.neighborhood && !neighborhood) setNeighborhood(d.neighborhood);
+    } catch {
+      setCepError("Erro ao consultar CEP");
+    } finally {
+      setCepLoading(false);
+    }
+  }
 
   function formatPhone(val: string) {
     const d = val.replace(/\D/g, "").slice(0, 11);
@@ -66,7 +92,7 @@ export function CadastroForm() {
 
   function resetForm() {
     setStep("form");
-    setName(""); setPhone(""); setCity(""); setNeighborhood(""); setEmail(""); setSelectedTypes([]); setLgpdConsent(false);
+    setName(""); setPhone(""); setCep(""); setCity(""); setNeighborhood(""); setEmail(""); setSelectedTypes([]); setLgpdConsent(false); setCepError("");
   }
 
   if (step === "success") {
@@ -158,6 +184,35 @@ export function CadastroForm() {
                 onFocus={(e) => e.target.style.borderColor = "rgba(212,175,55,0.5)"}
                 onBlur={(e) => e.target.style.borderColor = "rgba(255,255,255,0.07)"}
               />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-slate-300">CEP <span className="text-slate-500">(preenche cidade e bairro)</span></label>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={cep}
+                  onChange={(e) => {
+                    const v = formatCep(e.target.value);
+                    setCep(v);
+                    if (v.replace(/\D/g, "").length === 8) lookupCep(v);
+                  }}
+                  placeholder="00000-000"
+                  inputMode="numeric"
+                  maxLength={9}
+                  className="w-full rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 outline-none transition-all pr-10"
+                  style={{ background: "#1a2f4e", border: "1px solid rgba(255,255,255,0.07)" }}
+                  onFocus={(e) => e.target.style.borderColor = "rgba(212,175,55,0.5)"}
+                  onBlur={(e) => e.target.style.borderColor = cepError ? "rgba(239,68,68,0.5)" : "rgba(255,255,255,0.07)"}
+                />
+                {cepLoading && (
+                  <svg className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-slate-400" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                )}
+              </div>
+              {cepError && <p className="text-[11px]" style={{ color: "#ef4444" }}>{cepError}</p>}
             </div>
 
             <div className="grid grid-cols-2 gap-3">
