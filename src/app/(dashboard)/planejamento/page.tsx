@@ -208,17 +208,17 @@ export default async function PlanejamentoPage() {
     {
       num: "05", impacto: "MÉDIO",
       titulo: "Score de Potencial do Colaborador",
-      desc: "Coluna mobilizationScore calculada automaticamente: status ativo +2, WhatsApp confirmado +1, indicações +1 cada, cidade RMC +1. Permite priorizar contatos.",
+      desc: "mobilizationScore calculado por fórmula: perfil_base × apoio_mult × status_mult + bônus contribuições. Recalcule em Configurações → Score de Mobilização.",
     },
     {
       num: "06", impacto: "MÉDIO",
       titulo: "Painel Funil em Tempo Real",
-      desc: "Widget no dashboard mostrando: Instagram → Cadastro → Ativo → Célula. Necessita componente funnel-panel.tsx no dashboard.",
+      desc: "FunnelPanel ativo no dashboard: Total cadastrados → Ativos → Confirmados, com barra de progresso e taxa de conversão em tempo real.",
     },
     {
       num: "07", impacto: "MÉDIO",
       titulo: "Grupos WhatsApp por Território",
-      desc: "≥ 70% dos grupos devem ter zoneId atribuído. O campo já existe no schema — o admin precisa associar cada grupo à sua cidade/zona.",
+      desc: "Acesse /grupos — grupos sem zona aparecem com borda âmbar e ícone ⚠. Edite cada um e selecione a zona correspondente. Meta: ≥ 70%.",
     },
   ];
 
@@ -636,6 +636,39 @@ export default async function PlanejamentoPage() {
               </div>
             );
           })}
+        </div>
+      </section>
+
+      {/* ── Status de implantação ────────────────────────────────────────── */}
+      <section className="glass-card rounded-2xl p-6 border border-white/[0.08] space-y-4">
+        <div className="flex items-center gap-2 mb-1">
+          <CheckCircle2 className="w-4 h-4 text-green-400" />
+          <h2 className="text-base font-bold text-foreground">Sprint de Implantação — Concluídos</h2>
+          <span className="ml-auto text-[10px] text-muted-foreground">2026-05-07</span>
+        </div>
+        <div className="grid sm:grid-cols-2 gap-3">
+          {[
+            { label: "GAPs 1-6 fechados", desc: "Novos perfis, canal origem, metas, score, funil no dashboard" },
+            { label: "API de municípios PR", desc: "399 cidades com autocomplete no formulário de colaboradores" },
+            { label: "Lookup de CEP", desc: "Auto-fill cidade + bairro nos dois formulários (admin e público)" },
+            { label: "Política de Privacidade", desc: "/privacidade com LGPD Art. 9 — linkada no /cadastro" },
+            { label: "Contadores reais no /cadastro", desc: "Apoiadores, municípios e grupos atualizados em tempo real" },
+            { label: "Página /metas", desc: "Dashboard Meta × Realizado por município com progresso visual" },
+            { label: "Score de Mobilização", desc: "Fórmula perfil × apoio × status — recalcule em /configuracoes" },
+            { label: "Territorialização /grupos", desc: "Banner de progresso + borda âmbar nos grupos sem zona" },
+          ].map((item) => (
+            <div key={item.label} className="flex items-start gap-2 rounded-xl bg-green-500/[0.05] border border-green-500/15 px-3 py-2.5">
+              <CheckCircle2 className="w-3.5 h-3.5 text-green-400 shrink-0 mt-0.5" />
+              <div>
+                <p className="text-xs font-semibold text-foreground">{item.label}</p>
+                <p className="text-[11px] text-muted-foreground">{item.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="rounded-xl bg-amber-500/[0.06] border border-amber-500/20 px-4 py-3">
+          <p className="text-xs font-semibold text-amber-400 mb-1">Única pendência operacional</p>
+          <p className="text-[11px] text-muted-foreground">GAP 7: acesse <strong className="text-foreground">/grupos</strong> → edite os grupos com borda âmbar → selecione a zona. Meta: ≥ 70% territorializados.</p>
         </div>
       </section>
 
