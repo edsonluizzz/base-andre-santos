@@ -1,6 +1,6 @@
 # Estado — Base André Santos
 
-**Última atualização:** 2026-05-07 (sprint GAPs 1-6 do /planejamento)
+**Última atualização:** 2026-05-07 (sprint GAPs 1-6 + API CEP/municípios + lookup nos formulários)
 **GitHub:** https://github.com/edsonluizzz/base-andre-santos
 **Deploy:** Vercel (ver domínio em vercel.com → projeto → aba Domains)
 
@@ -63,6 +63,9 @@ Sistema funcional e em produção. Terminologia "Base de Apoio" (não "campanha"
 - `/api/notifications` — GET lista notificações do usuário
 - `/api/notifications/[id]` — PATCH marcar como lida
 - `/api/notifications/read-all` — PATCH marcar todas como lidas
+- `/api/municipios` — GET (auth) lista 399 municípios PR com cache 24h
+- `/api/cep/[cep]` — GET (público) proxy ViaCEP → `{ city, neighborhood, street, state }`
+- `/api/municipality-goals` — GET/PUT/DELETE (ADMIN) metas de votos/líderes por cidade
 
 ---
 
@@ -180,10 +183,22 @@ GOOGLE_CALENDAR_CLIENT_ID / CLIENT_SECRET / REDIRECT_URI / ID
 
 ## Pendências
 
+### Compliance (PRIORIDADE — fazer antes de qualquer ação pública)
+- [ ] **P1-A** Criar `/privacidade` com Política de Privacidade formal (LGPD Art. 9) e linkar no termo do cadastro público e na página de leads
+- [ ] **P1-B** Fix `/api/invite/validate`: retornar apenas `{ ok: true }` — hoje vaza `{ role, useCount }` sem auth
+- [ ] **P1-C** Rate limit em `/api/invite/pre-auth` — copiar padrão do `rateLimitMap` do `/api/public/cadastro`
+- [ ] **P1-D** Checklist para registro de candidatura (agosto 2026): CNPJ da coligação em TODO material digital + SPCE
+
+### Branding / Dados
+- [ ] **P2-A** Contadores dinâmicos no `/cadastro` público — hoje hardcoded `"+"`. Criar `/api/public/stats` (sem auth) retornando `{ apoiadores, municipios, grupos }` e consumir no `CadastroForm`
+
+### Estratégia / Estrutura
+- [ ] **P3-A** GAP 7: associar grupos WhatsApp às zonas (campo `zoneId` existe) — meta ≥70% territorializados
+- [ ] **P3-B** Implementar lógica de cálculo do `mobilizationScore` (campo existe, lógica a definir)
+- [ ] **P3-C** Preencher metas por município via /configuracoes
+
+### Infraestrutura
 - [ ] Google Calendar: configurar env vars `GOOGLE_CALENDAR_*` no Vercel
-- [ ] GAP 7 (único restante): admin associar grupos WhatsApp às zonas — ir em /grupos → Editar cada grupo → selecionar zona
-- [ ] Preencher `mobilizationScore` nos colaboradores (campo existe, lógica de cálculo a definir)
-- [ ] Definir metas por município em /configuracoes → "Metas por Município"
 
 ## GAPs concluídos (sprint 2026-05-07)
 
@@ -192,6 +207,8 @@ GOOGLE_CALENDAR_CLIENT_ID / CLIENT_SECRET / REDIRECT_URI / ID
 - [x] GAP 4: tabela MunicipalityGoal + API /municipality-goals (GET/PUT/DELETE) + UI em /configuracoes
 - [x] GAP 5: coluna `mobilizationScore Float?` em Collaborator
 - [x] GAP 6: src/components/dashboard/funnel-panel.tsx — funil total → ativos → confirmados no dashboard
+- [x] API /api/municipios — 399 municípios PR com cache + autocomplete no CollaboratorDialog
+- [x] API /api/cep/[cep] — proxy ViaCEP público, auto-fill nos formulários de cadastro (admin + público)
 
 ## Ideias para o futuro (não prioridade agora)
 
