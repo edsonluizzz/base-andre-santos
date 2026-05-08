@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { MessageCircle, Plus, ExternalLink, Users, Copy, Settings2, Phone, Search, UserPlus, X } from "lucide-react";
+import { MessageCircle, Plus, ExternalLink, Users, Copy, Settings2, Phone, Search, UserPlus, X, AlertTriangle, MapPin } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -168,6 +168,27 @@ export default function GruposPage() {
         </Button>
       </div>
 
+      {/* Banner de territorialização */}
+      {!loading && groups.length > 0 && (() => {
+        const withZone = groups.filter((g) => !!g.zoneId).length;
+        const pct = Math.round((withZone / groups.length) * 100);
+        const ok = pct >= 70;
+        return (
+          <div className={`rounded-xl px-4 py-3 flex items-center gap-3 border ${ok ? "bg-green-500/[0.06] border-green-500/20" : "bg-amber-500/[0.06] border-amber-500/20"}`}>
+            {ok
+              ? <MapPin className="w-4 h-4 text-green-400 shrink-0" />
+              : <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />}
+            <div className="flex-1 min-w-0">
+              <p className={`text-xs font-medium ${ok ? "text-green-400" : "text-amber-400"}`}>
+                {ok ? `Territorialização ✓ — ${pct}% dos grupos com zona` : `Territorialização: ${withZone} de ${groups.length} grupos com zona (meta ≥ 70%)`}
+              </p>
+              {!ok && <p className="text-[11px] text-muted-foreground mt-0.5">Clique em <strong>Editar</strong> nos grupos marcados com ⚠ para atribuir a zona correspondente.</p>}
+            </div>
+            <span className={`text-sm font-bold shrink-0 ${ok ? "text-green-400" : "text-amber-400"}`}>{pct}%</span>
+          </div>
+        );
+      })()}
+
       {loading ? (
         <div className="text-center py-12 text-muted-foreground">Carregando...</div>
       ) : groups.length === 0 ? (
@@ -178,11 +199,16 @@ export default function GruposPage() {
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {groups.map((g) => (
-            <div key={g.id} className="glass-card rounded-xl p-5 border border-white/[0.08] hover:border-primary/20 transition-colors space-y-3">
+            <div key={g.id} className={`glass-card rounded-xl p-5 border transition-colors space-y-3 ${g.zoneId ? "border-white/[0.08] hover:border-primary/20" : "border-amber-500/20 hover:border-amber-500/40"}`}>
               <div className="flex items-start justify-between gap-2">
                 <div>
-                  <p className="font-semibold text-foreground">{g.name}</p>
-                  {g.zone && <p className="text-xs text-muted-foreground mt-0.5">{g.zone.name}</p>}
+                  <div className="flex items-center gap-1.5">
+                    <p className="font-semibold text-foreground">{g.name}</p>
+                    {!g.zoneId && <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0" title="Sem zona atribuída" />}
+                  </div>
+                  {g.zone
+                    ? <p className="text-xs text-muted-foreground mt-0.5">{g.zone.name}</p>
+                    : <p className="text-xs text-amber-400/70 mt-0.5">Sem zona — edite para atribuir</p>}
                 </div>
                 <span className="flex items-center gap-1 text-xs text-muted-foreground whitespace-nowrap">
                   <Users className="w-3 h-3" /> {g._count.members}

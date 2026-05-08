@@ -1,8 +1,6 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { redirect } from "next/navigation";
-import { existsSync } from "fs";
-import { join } from "path";
 import {
   TrendingUp, CheckCircle2, XCircle, Clock,
   Target, BarChart2, Users, MapPin, Zap, Shield, Star,
@@ -90,9 +88,10 @@ async function checkAllGaps(): Promise<GapResult[]> {
     groupsTerritorialized(),
   ]);
 
-  const hasFunnelPanel = existsSync(
-    join(process.cwd(), "src/components/dashboard/funnel-panel.tsx")
-  );
+  // Dynamic import: resolve em build time — true se o módulo existe no bundle
+  const hasFunnelPanel = await import("@/components/dashboard/funnel-panel")
+    .then(() => true)
+    .catch(() => false);
 
   return [
     // 0 — GAP 1: Tipo de liderança
