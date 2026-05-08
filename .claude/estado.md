@@ -1,6 +1,6 @@
 # Estado — Base André Santos
 
-**Última atualização:** 2026-05-07 (correlação STRIDE×Sistema e cenários de votos atualizados em /planejamento)
+**Última atualização:** 2026-05-08 (encerramento sprint · análise estratégica · roadmap Metricool planejado)
 **GitHub:** https://github.com/edsonluizzz/base-andre-santos
 **Deploy:** Vercel (ver domínio em vercel.com → projeto → aba Domains)
 
@@ -218,10 +218,58 @@ GOOGLE_CALENDAR_CLIENT_ID / CLIENT_SECRET / REDIRECT_URI / ID
 - [x] /planejamento: correlação STRIDE×Sistema atualizada (2 linhas "parcial"→"existe", 2 linhas novas)
 - [x] /planejamento: Cenários 2 e 3 atualizados — sistema suporta completamente
 
-## Ideias para o futuro (não prioridade agora)
+## Próximo Sprint — Inteligência Digital (Metricool + Instagram)
 
-- Mensagens de boas-vindas pré-configuradas no WhatsApp — admin envia manualmente, sistema gera o texto formatado
-- Comunicados via WhatsApp em massa (Z-API) — quando a base crescer
+### Lacunas estratégicas identificadas (visão de estrategista de campanha)
+
+1. **Cego ao Instagram** — sistema não sabe o que acontece no digital; sem correlação conteúdo→cadastros
+2. **Atribuição manual** — `channel` preenchido na mão; precisa ser automático via UTM → cadastro
+3. **Sem reativação de inativos** — nenhum alerta de colaboradores sem interação há 30d+
+4. **Sem velocidade por município** — mapa mostra estado atual, não crescimento/ritmo
+5. **Sem projeção** — nenhuma linha de "se continuar assim, chega no Cenário 3 quando?"
+6. **Sem tarefas para líderes** — líderes de célula não têm lista de ações atribuídas
+7. **Pipeline evento→cadastro** — conversão pós-evento é 100% manual; falta QR Code pré-preenchido
+8. **Sem monitoramento de concorrentes** por município
+
+### Roadmap Metricool + Instagram (6 sprints)
+
+| Sprint | Entregável | Pré-requisito |
+|--------|------------|---------------|
+| **1** | `Settings.metricoolApiKey` + `/api/instagram/metrics` (proxy) + widget no dashboard | API key do Metricool |
+| **2** | Página `/instagram` — gráficos crescimento + top posts + performance por pilar | Sprint 1 |
+| **3** | Atribuição automática — `/r?src=instagram&post=X` → `channel` preenchido automaticamente | Sprint 1 |
+| **4** | Correlação posts × cadastros no /planejamento — "posts desta semana geraram N cadastros" | Sprint 3 |
+| **5** | Alertas de inativos — colaboradores sem interação há 30d+ com sugestão de reativação | — |
+| **6** | Projeção de crescimento × meta de cenário — linha de tendência no dashboard | — |
+
+### Arquitetura Metricool planejada
+
+```
+Settings.metricoolApiKey  (criptografada)
+  ↓
+GET /api/instagram/metrics  → proxy server-side, Next.js cache 3600s
+GET /api/instagram/posts    → últimos 30 posts com métricas
+  ↓
+src/components/dashboard/instagram-panel.tsx  (widget dashboard)
+src/app/(dashboard)/instagram/page.tsx        (análise completa, LEADER+)
+```
+
+**Campos que o Metricool retorna:** seguidores · engajamento · alcance · impressões · dados demográficos · métricas por post
+
+**O que exibir no widget (Sprint 1):**
+- Seguidores hoje + delta semanal
+- Taxa de engajamento (últimos 30 posts)
+- Melhor post da semana por alcance
+- Cadastros via Instagram esta semana (cruzar `channel=INSTAGRAM` + data)
+
+**Próximo passo para iniciar:** confirmar acesso à API do Metricool e conta do Instagram conectada
+
+## Ideias para o futuro
+
+- WhatsApp broadcast em massa (Z-API) — quando base > 500 contatos
+- Monitoramento de concorrentes por município
+- QR Code de evento → pré-preenchimento do formulário com `source=EVENTO&event_id=X`
+- Gestão de tarefas para líderes de célula ("recrutar 5 em Colombo até 15/jun")
 - Resend: domínio verificado para emails transacionais
 
 ---
