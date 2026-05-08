@@ -1,6 +1,6 @@
 # Estado — Base André Santos
 
-**Última atualização:** 2026-05-07 (sprint /planejamento + autoria)
+**Última atualização:** 2026-05-07 (sprint GAPs 1-6 do /planejamento)
 **GitHub:** https://github.com/edsonluizzz/base-andre-santos
 **Deploy:** Vercel (ver domínio em vercel.com → projeto → aba Domains)
 
@@ -69,7 +69,11 @@ Sistema funcional e em produção. Terminologia "Base de Apoio" (não "campanha"
 ## Schema
 
 ### Collaborator
-`campaignRole`, `status` (LEAD/ACTIVE/INACTIVE), `profile`, `supportStatus`, `source`, `contributionTypes String[]`, `registeredById String?`, `lgpdConsent`, `lgpdConsentAt`
+`campaignRole`, `status` (LEAD/ACTIVE/INACTIVE), `profile`, `supportStatus`, `source`, `channel CollaboratorChannel?`, `mobilizationScore Float?`, `contributionTypes String[]`, `registeredById String?`, `lgpdConsent`, `lgpdConsentAt`
+
+### MunicipalityGoal
+`campaignId`, `city` (unique por campaign), `targetVotes Int`, `targetLeaders Int`
+API: `GET/PUT/DELETE /api/municipality-goals` — ADMIN only
 
 ### UserCampaign
 `tier CollaboratorTier` (APOIADOR/ATIVISTA/LIDER_CELULA/COORDENADOR) — recalculado por `src/lib/tier.ts`
@@ -177,13 +181,17 @@ GOOGLE_CALENDAR_CLIENT_ID / CLIENT_SECRET / REDIRECT_URI / ID
 ## Pendências
 
 - [ ] Google Calendar: configurar env vars `GOOGLE_CALENDAR_*` no Vercel
-- [ ] GAPs /planejamento — fechar para atingir Cenário 3 (32–48k votos):
-  - [ ] GAP 1: adicionar LIDER_RELIGIOSO, EDUCADOR, FAMILIA, JOVEM ao CollaboratorProfile enum
-  - [ ] GAP 3: adicionar coluna `channel` com enum (INSTAGRAM/WHATSAPP/EVENTO/LINK/OUTRO)
-  - [ ] GAP 4: criar tabela MunicipalityGoal com metas por cidade
-  - [ ] GAP 5: adicionar coluna `mobilizationScore` em Collaborator
-  - [ ] GAP 6: criar src/components/dashboard/funnel-panel.tsx
-  - [ ] GAP 7: admin associar grupos WhatsApp às zonas (campo zoneId já existe)
+- [ ] GAP 7 (único restante): admin associar grupos WhatsApp às zonas — ir em /grupos → Editar cada grupo → selecionar zona
+- [ ] Preencher `mobilizationScore` nos colaboradores (campo existe, lógica de cálculo a definir)
+- [ ] Definir metas por município em /configuracoes → "Metas por Município"
+
+## GAPs concluídos (sprint 2026-05-07)
+
+- [x] GAP 1: LIDER_RELIGIOSO, EDUCADOR, FAMILIA, JOVEM adicionados ao CollaboratorProfile
+- [x] GAP 3: coluna `channel CollaboratorChannel?` em Collaborator (enum INSTAGRAM/WHATSAPP/EVENTO/LINK/OUTRO)
+- [x] GAP 4: tabela MunicipalityGoal + API /municipality-goals (GET/PUT/DELETE) + UI em /configuracoes
+- [x] GAP 5: coluna `mobilizationScore Float?` em Collaborator
+- [x] GAP 6: src/components/dashboard/funnel-panel.tsx — funil total → ativos → confirmados no dashboard
 
 ## Ideias para o futuro (não prioridade agora)
 
