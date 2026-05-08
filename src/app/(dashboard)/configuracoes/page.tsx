@@ -3,12 +3,14 @@
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
-import { Settings, Upload, Key, X, Calendar, CheckCircle2, AlertCircle, RefreshCw, Unlink } from "lucide-react";
+import { Settings, Upload, Key, X, Calendar, CheckCircle2, AlertCircle, RefreshCw, Unlink, Target, Trash2, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Image from "next/image";
+
+type MunicipalityGoal = { id: string; city: string; targetVotes: number; targetLeaders: number };
 
 function ConfiguracoesContent() {
   const searchParams = useSearchParams();
@@ -20,6 +22,11 @@ function ConfiguracoesContent() {
   const [gcalConnected, setGcalConnected] = useState(false);
   const [gcalSyncing, setGcalSyncing] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  // Metas por município
+  const [goals, setGoals] = useState<MunicipalityGoal[]>([]);
+  const [goalForm, setGoalForm] = useState({ city: "", targetVotes: "", targetLeaders: "" });
+  const [savingGoal, setSavingGoal] = useState(false);
 
   useEffect(() => {
     const gcalParam = searchParams.get("gcal");
@@ -40,6 +47,11 @@ function ConfiguracoesContent() {
       .then((r) => r.json())
       .then((c) => { if (c.joinCode) setJoinCode(c.joinCode); })
       .catch(() => {});
+
+    fetch("/api/municipality-goals")
+      .then((r) => r.ok ? r.json() : [])
+      .then(setGoals)
+      .catch(() => {});
   }, [searchParams]);
 
   function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
@@ -59,6 +71,36 @@ function ConfiguracoesContent() {
     setLogoPreview(null);
     setLogoBase64(null);
     if (fileRef.current) fileRef.current.value = "";
+  }
+
+  async function handleSaveGoal() {
+    if (!goalForm.city.trim()) { toast.error("Informe o município"); return; }
+    setSavingGoal(true);
+    const res = await fetch("/api/municipality-goals", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ city: goalForm.city.trim(), targetVotes: goalForm.targetVotes, targetLeaders: goalForm.targetLeaders }),
+    });
+    setSavingGoal(false);
+    if (res.ok) {
+      const updated = await res.json();
+      setGoals((prev) => {
+        const idx = prev.findIndex((g) => g.city === updated.city);
+        return idx >= 0 ? prev.map((g, i) => i === idx ? updated : g) : [...prev, updated].sort((a, b) => a.city.localeCompare(b.city));
+      });
+      setGoalForm({ city: "", targetVotes: "", targetLeaders: "" });
+      toast.success("Meta salva");
+    } else toast.error("Erro ao salvar meta");
+  }
+
+  async function handleDeleteGoal(city: string) {
+    const res = await fetch("/api/municipality-goals", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ city }),
+    });
+    if (res.ok) { setGoals((prev) => prev.filter((g) => g.city !== city)); toast.success("Meta removida"); }
+    else toast.error("Erro ao remover");
   }
 
   async function handleSave() {
@@ -213,6 +255,76 @@ function ConfiguracoesContent() {
             <p className="text-[11px] text-muted-foreground">
               Sincroniza os eventos da agenda com o Google Calendar da conta autorizada.
             </p>
+          </div>
+        )}
+      </div>
+
+      {/* Metas por Município */}
+      <div className="glass-card rounded-2xl p-6 border border-white/[0.08] space-y-4">
+        <div className="flex items-center gap-2 mb-2">
+          <Target className="w-4 h-4 text-primary" />
+          <h2 className="text-sm font-semibold">Metas por Município</h2>
+        </div>
+        <p className="text-[11px] text-muted-foreground">Defina metas de votos e lideranças por cidade para acompanhar no relatório.</p>
+
+        {/* Formulário nova meta */}
+        <div className="grid grid-cols-3 gap-2">
+          <div className="col-span-3 sm:col-span-1">
+            <Input
+              value={goalForm.city}
+              onChange={(e) => setGoalForm((f) => ({ ...f, city: e.target.value }))}
+              placeholder="Município"
+            />
+          </div>
+          <div>
+            <Input
+              type="number"
+              value={goalForm.targetVotes}
+              onChange={(e) => setGoalForm((f) => ({ ...f, targetVotes: e.target.value }))}
+              placeholder="Meta votos"
+              min={0}
+            />
+          </div>
+          <div>
+            <Input
+              type="number"
+              value={goalForm.targetLeaders}
+              onChange={(e) => setGoalForm((f) => ({ ...f, targetLeaders: e.target.value }))}
+              placeholder="Meta líderes"
+              min={0}
+            />
+          </div>
+        </div>
+        <Button onClick={handleSaveGoal} disabled={savingGoal} size="sm" className="bg-primary text-primary-foreground gap-1.5 text-xs">
+          <Plus className="w-3.5 h-3.5" />
+          {savingGoal ? "Salvando..." : "Adicionar / Atualizar meta"}
+        </Button>
+
+        {/* Lista de metas */}
+        {goals.length > 0 && (
+          <div className="rounded-xl border border-white/[0.08] divide-y divide-white/[0.05] overflow-hidden">
+            {goals.map((g) => (
+              <div key={g.id} className="flex items-center justify-between px-4 py-2.5 hover:bg-white/[0.02]">
+                <div>
+                  <p className="text-sm text-foreground font-medium">{g.city}</p>
+                  <p className="text-[10px] text-muted-foreground">{g.targetVotes} votos · {g.targetLeaders} líderes</p>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setGoalForm({ city: g.city, targetVotes: String(g.targetVotes), targetLeaders: String(g.targetLeaders) })}
+                    className="text-xs px-2.5 py-1 rounded-lg bg-white/[0.04] text-muted-foreground border border-white/[0.08] hover:bg-white/[0.08] transition-colors"
+                  >
+                    Editar
+                  </button>
+                  <button
+                    onClick={() => handleDeleteGoal(g.city)}
+                    className="p-1.5 rounded-lg hover:bg-red-500/10 text-muted-foreground hover:text-red-400 transition-colors"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>

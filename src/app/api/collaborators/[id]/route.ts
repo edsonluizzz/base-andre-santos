@@ -42,7 +42,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     }
 
     const body = await req.json();
-    const { name, email, phone, city, neighborhood, campaignRole, status, notes, birthday, zoneIds, profile, supportStatus, contributionTypes } = body;
+    const { name, email, phone, city, neighborhood, campaignRole, status, notes, birthday, zoneIds, profile, supportStatus, channel, contributionTypes } = body;
 
     // Líderes de célula só podem alterar status e contributionTypes
     const data: Record<string, unknown> = {};
@@ -55,6 +55,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
       if (campaignRole) data.campaignRole = campaignRole;
       if (profile) data.profile = profile;
       if (supportStatus) data.supportStatus = supportStatus;
+      if (channel !== undefined) data.channel = channel || null;
       if (notes !== undefined) data.notes = notes?.trim() || null;
       if (birthday !== undefined) data.birthday = birthday || null;
     }

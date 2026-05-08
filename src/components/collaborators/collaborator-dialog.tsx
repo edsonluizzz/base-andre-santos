@@ -20,11 +20,24 @@ const ROLES = [
 const PROFILES = [
   { value: "APOIADOR",              label: "Apoiador"             },
   { value: "PASTOR",                label: "Pastor"               },
+  { value: "LIDER_RELIGIOSO",       label: "Líder Religioso"      },
   { value: "PRESIDENTE_ASSOCIACAO", label: "Pres. Associação"     },
   { value: "LIDER_POLITICO",        label: "Líder Político"       },
   { value: "VEREADOR",              label: "Vereador"             },
   { value: "EMPRESARIO",            label: "Empresário"           },
   { value: "LIDERANCA_COMUNITARIA", label: "Liderança Comunit."   },
+  { value: "EDUCADOR",              label: "Educador"             },
+  { value: "JOVEM",                 label: "Jovem"                },
+  { value: "FAMILIA",               label: "Família"              },
+];
+
+const CHANNELS = [
+  { value: "NONE",      label: "Não informado"    },
+  { value: "INSTAGRAM", label: "Instagram"        },
+  { value: "WHATSAPP",  label: "WhatsApp"         },
+  { value: "EVENTO",    label: "Evento"           },
+  { value: "LINK",      label: "Link de cadastro" },
+  { value: "OUTRO",     label: "Outro"            },
 ];
 
 const SUPPORT_STATUSES = [
@@ -37,7 +50,7 @@ const SUPPORT_STATUSES = [
 type Collaborator = {
   id?: string; name?: string; email?: string; phone?: string; city?: string;
   neighborhood?: string; campaignRole?: string; status?: string; notes?: string;
-  birthday?: string; profile?: string; supportStatus?: string;
+  birthday?: string; profile?: string; supportStatus?: string; channel?: string;
   contributionTypes?: string[];
   registeredBy?: { name: string | null; email: string | null } | null;
 };
@@ -53,7 +66,7 @@ export function CollaboratorDialog({ open, onOpenChange, collaborator, onSuccess
   const [form, setForm] = useState({
     name: "", email: "", phone: "", city: "", neighborhood: "",
     campaignRole: "VOLUNTARIO", status: "ACTIVE", notes: "", birthday: "",
-    profile: "APOIADOR", supportStatus: "NEUTRO",
+    profile: "APOIADOR", supportStatus: "NEUTRO", channel: "NONE",
   });
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
@@ -73,10 +86,11 @@ export function CollaboratorDialog({ open, onOpenChange, collaborator, onSuccess
         birthday: collaborator.birthday ?? "",
         profile: collaborator.profile ?? "APOIADOR",
         supportStatus: collaborator.supportStatus ?? "NEUTRO",
+        channel: collaborator.channel ?? "NONE",
       });
       setSelectedTypes(collaborator.contributionTypes ?? []);
     } else {
-      setForm({ name: "", email: "", phone: "", city: "", neighborhood: "", campaignRole: "VOLUNTARIO", status: "ACTIVE", notes: "", birthday: "", profile: "APOIADOR", supportStatus: "NEUTRO" });
+      setForm({ name: "", email: "", phone: "", city: "", neighborhood: "", campaignRole: "VOLUNTARIO", status: "ACTIVE", notes: "", birthday: "", profile: "APOIADOR", supportStatus: "NEUTRO", channel: "NONE" });
       setSelectedTypes([]);
     }
     setError("");
@@ -98,7 +112,7 @@ export function CollaboratorDialog({ open, onOpenChange, collaborator, onSuccess
     const res = await fetch(url, {
       method,
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...form, contributionTypes: selectedTypes }),
+      body: JSON.stringify({ ...form, channel: form.channel === "NONE" ? null : form.channel, contributionTypes: selectedTypes }),
     });
     setSaving(false);
     if (res.ok) { onSuccess(); }
@@ -174,6 +188,13 @@ export function CollaboratorDialog({ open, onOpenChange, collaborator, onSuccess
               <Select value={form.supportStatus} onValueChange={(v) => set("supportStatus", v)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>{SUPPORT_STATUSES.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Canal de origem</Label>
+              <Select value={form.channel} onValueChange={(v) => set("channel", v)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>{CHANNELS.map((c) => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div className="col-span-2">

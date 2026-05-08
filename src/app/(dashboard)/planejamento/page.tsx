@@ -4,9 +4,9 @@ import { redirect } from "next/navigation";
 import { existsSync } from "fs";
 import { join } from "path";
 import {
-  TrendingUp, AlertTriangle, CheckCircle2, XCircle, Clock,
+  TrendingUp, CheckCircle2, XCircle, Clock,
   Target, BarChart2, Users, MapPin, Zap, Shield, Star,
-  ChevronRight, Info, Brain, Megaphone, Heart,
+  ChevronRight, Info, Brain, Heart,
   BookOpen, Lightbulb, Globe, Activity,
 } from "lucide-react";
 

@@ -20,6 +20,18 @@ export const PROFILE_LABEL: Record<string, string> = {
   VEREADOR:              "Vereador",
   EMPRESARIO:            "Empresário",
   LIDERANCA_COMUNITARIA: "Liderança Comunitária",
+  LIDER_RELIGIOSO:       "Líder Religioso",
+  EDUCADOR:              "Educador",
+  FAMILIA:               "Família",
+  JOVEM:                 "Jovem",
+};
+
+export const CHANNEL_LABEL: Record<string, string> = {
+  INSTAGRAM: "Instagram",
+  WHATSAPP:  "WhatsApp",
+  EVENTO:    "Evento",
+  LINK:      "Link de cadastro",
+  OUTRO:     "Outro",
 };
 
 export const SUPPORT_LABEL: Record<string, string> = {
@@ -51,8 +63,12 @@ export const ROLE_ORDER = [
 ] as const;
 
 export const PROFILE_ORDER = [
-  "PASTOR", "VEREADOR", "EMPRESARIO", "LIDER_POLITICO",
-  "PRESIDENTE_ASSOCIACAO", "LIDERANCA_COMUNITARIA", "APOIADOR",
+  "PASTOR", "LIDER_RELIGIOSO", "VEREADOR", "EMPRESARIO", "LIDER_POLITICO",
+  "PRESIDENTE_ASSOCIACAO", "LIDERANCA_COMUNITARIA", "EDUCADOR", "JOVEM", "FAMILIA", "APOIADOR",
+] as const;
+
+export const CHANNEL_ORDER = [
+  "INSTAGRAM", "WHATSAPP", "EVENTO", "LINK", "OUTRO",
 ] as const;
 
 export const SUPPORT_ORDER = [

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { TIER_LABEL, TIER_THRESHOLDS } from "@/lib/contribution";
 import { ROLE_LABEL } from "@/lib/labels";
 import { CopyButton } from "@/components/dashboard/copy-button";
+import { FunnelPanel } from "@/components/dashboard/funnel-panel";
 
 const CID = "andre-santos-2026";
 
@@ -211,6 +212,9 @@ export default async function DashboardPage() {
           )}
         </div>
       </div>
+
+      {/* Funil de conversão */}
+      <FunnelPanel />
 
       {/* Cobertura por município */}
       {topCities.length > 0 && (

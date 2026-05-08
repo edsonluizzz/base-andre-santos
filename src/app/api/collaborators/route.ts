@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
     if (!["ADMIN", "LEADER"].includes(session.user.role ?? "")) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
     const body = await req.json();
-    const { name, email, phone, city, neighborhood, campaignRole, notes, birthday, zoneIds, contributionTypes } = body;
+    const { name, email, phone, city, neighborhood, campaignRole, status, notes, birthday, zoneIds, profile, supportStatus, channel, contributionTypes } = body;
     if (!name?.trim()) return NextResponse.json({ error: "Nome obrigatório" }, { status: 400 });
 
     const collaborator = await db.collaborator.create({
@@ -71,6 +71,10 @@ export async function POST(req: NextRequest) {
         city: normalizeCity(city),
         neighborhood: neighborhood?.trim() || null,
         campaignRole: campaignRole ?? "VOLUNTARIO",
+        status: status ?? "ACTIVE",
+        profile: profile ?? "APOIADOR",
+        supportStatus: supportStatus ?? "NEUTRO",
+        channel: channel || null,
         notes: notes?.trim() || null,
         birthday: birthday || null,
         contributionTypes: Array.isArray(contributionTypes) ? contributionTypes : [],

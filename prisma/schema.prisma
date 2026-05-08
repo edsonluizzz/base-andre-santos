@@ -115,13 +115,15 @@ model Collaborator {
   birthday     String?
   createdAt    DateTime           @default(now())
   updatedAt    DateTime           @updatedAt
-  source        String?
-  profile       CollaboratorProfile @default(APOIADOR)
-  supportStatus SupportStatus       @default(NEUTRO)
-  contributionTypes String[]
-  registeredById    String?
-  lgpdConsent       Boolean   @default(false)
-  lgpdConsentAt     DateTime?
+  source             String?
+  channel            CollaboratorChannel?
+  profile            CollaboratorProfile @default(APOIADOR)
+  supportStatus      SupportStatus       @default(NEUTRO)
+  mobilizationScore  Float?
+  contributionTypes  String[]
+  registeredById     String?
+  lgpdConsent        Boolean   @default(false)
+  lgpdConsentAt      DateTime?
   userId String? @unique
   inviteRecord UserCampaign? @relation("InvitedAs")
   user         User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
@@ -274,6 +276,18 @@ model Settings {
   updatedAt           DateTime @updatedAt
 }
 
+model MunicipalityGoal {
+  id            String   @id @default(cuid())
+  campaignId    String   @default("andre-santos-2026")
+  city          String
+  targetVotes   Int      @default(0)
+  targetLeaders Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  @@unique([campaignId, city])
+  @@index([campaignId])
+}
+
 model AuditLog {
   id        String   @id @default(cuid())
   action    String
@@ -338,7 +352,19 @@ enum CollaboratorProfile {
   VEREADOR
   EMPRESARIO
   LIDERANCA_COMUNITARIA
+  LIDER_RELIGIOSO
+  EDUCADOR
+  FAMILIA
+  JOVEM
   APOIADOR
+}
+
+enum CollaboratorChannel {
+  INSTAGRAM
+  WHATSAPP
+  EVENTO
+  LINK
+  OUTRO
 }
 
 enum SupportStatus {
