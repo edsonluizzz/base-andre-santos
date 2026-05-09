@@ -17,7 +17,7 @@ export async function GET() {
   return NextResponse.json({
     bot: me.result ?? me,
     webhook: webhook.result ?? webhook,
-    expectedUrl: appUrl ? `${appUrl}/api/telegram/webhook` : "(APP_URL não configurado)",
-    urlMatch: webhook.result?.url === `${appUrl}/api/telegram/webhook`,
+    expectedUrl: appUrl ? `${appUrl.replace(/\/$/, "")}/api/telegram/webhook` : "(APP_URL não configurado)",
+    urlMatch: webhook.result?.url === `${appUrl.replace(/\/$/, "")}/api/telegram/webhook`,
   });
 }

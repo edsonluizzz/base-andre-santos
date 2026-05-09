@@ -8,7 +8,7 @@ export async function GET() {
     return NextResponse.json({ error: "TELEGRAM_BOT_TOKEN ou APP_URL não configurados" }, { status: 400 });
   }
 
-  const webhookUrl = `${appUrl}/api/telegram/webhook`;
+  const webhookUrl = `${appUrl.replace(/\/$/, "")}/api/telegram/webhook`;
 
   // Usa POST com JSON — correto para Telegram API
   const res = await fetch(`https://api.telegram.org/bot${token}/setWebhook`, {
