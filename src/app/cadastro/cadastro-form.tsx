@@ -6,7 +6,7 @@ import { Star, CheckCircle2, ChevronRight, Users, MapPin, Smartphone, Copy, Chec
 import { CONTRIBUTION_OPTIONS } from "@/lib/contribution";
 
 // Substitua pelo ID real do vídeo do YouTube do André (parte final da URL: youtube.com/watch?v=ISSO)
-const YT_VIDEO_ID = "aqz-KE-bpKQ"; // demo — trocar pelo vídeo do André
+const YT_VIDEO_ID = "yYV-Z78sKC0";
 
 type Step = "form" | "success";
 
