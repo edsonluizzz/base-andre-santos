@@ -204,9 +204,15 @@ export default function AgendaPage() {
 
             {/* Day names */}
             <div className="grid grid-cols-7 border-b border-white/[0.08]">
-              {["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"].map((d) => (
-                <div key={d} className="py-2 text-center text-[10px] font-semibold uppercase text-muted-foreground/60 tracking-wider">{d}</div>
-              ))}
+              {(["D","S","T","Q","Q","S","S"] as const).map((short, i) => {
+                const full = ["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"][i];
+                return (
+                  <div key={i} className="py-2 text-center text-[10px] font-semibold uppercase text-muted-foreground/60 tracking-wider">
+                    <span className="sm:hidden">{short}</span>
+                    <span className="hidden sm:inline">{full}</span>
+                  </div>
+                );
+              })}
             </div>
 
             {/* Day cells */}
@@ -223,19 +229,29 @@ export default function AgendaPage() {
                     key={idx}
                     onClick={() => setSelectedDay(isSelected ? null : day)}
                     className={cn(
-                      "min-h-[80px] p-2 text-left border-b border-r border-white/[0.05] transition-all hover:bg-white/[0.03]",
+                      "min-h-[52px] sm:min-h-[80px] p-1 sm:p-2 text-left border-b border-r border-white/[0.05] transition-all hover:bg-white/[0.03]",
                       !isCurrentMonth && "opacity-30",
                       isSelected && "bg-primary/[0.08] border-primary/20",
                       idx % 7 === 6 && "border-r-0",
                     )}
                   >
                     <span className={cn(
-                      "inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium mb-1",
+                      "inline-flex h-5 w-5 sm:h-6 sm:w-6 items-center justify-center rounded-full text-[11px] sm:text-xs font-medium mb-0.5 sm:mb-1",
                       isTodayDay ? "bg-primary text-primary-foreground font-bold" : "text-foreground",
                     )}>
                       {format(day, "d")}
                     </span>
-                    <div className="space-y-0.5">
+                    {/* Mobile: colored dots */}
+                    {dayEvs.length > 0 && (
+                      <div className="flex gap-0.5 flex-wrap sm:hidden">
+                        {visible.map((ev) => (
+                          <span key={ev.id} className={cn("w-1.5 h-1.5 rounded-full shrink-0", TYPE_DOT[ev.type])} />
+                        ))}
+                        {more > 0 && <span className="text-[8px] text-muted-foreground leading-none">+{more}</span>}
+                      </div>
+                    )}
+                    {/* Desktop: text chips */}
+                    <div className="hidden sm:block space-y-0.5">
                       {visible.map((ev) => (
                         <div
                           key={ev.id}
