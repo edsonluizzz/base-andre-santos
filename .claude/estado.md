@@ -1,6 +1,6 @@
 # Estado — Base André Santos
 
-**Última atualização:** 2026-05-08 (encerramento sprint · análise estratégica · roadmap Metricool planejado)
+**Última atualização:** 2026-05-08 (link compartilhável pós-cadastro + embed vídeo YouTube)
 **GitHub:** https://github.com/edsonluizzz/base-andre-santos
 **Deploy:** Vercel (ver domínio em vercel.com → projeto → aba Domains)
 
@@ -30,7 +30,7 @@ Sistema funcional e em produção. Terminologia "Base de Apoio" (não "campanha"
 | Super Admin | `/super-admin` | ✅ conceder/revogar acesso · role/tier · links de convite reutilizáveis |
 | Onboarding | `/onboarding` | ✅ boas-vindas + tour de features |
 | Perfil colaborador | `/colaboradores/[id]` | ✅ botão Editar funcional (abre CollaboratorDialog, router.refresh()) |
-| Cadastro público | `/cadastro` | ✅ sem auth · ?ref= rastreio · contribuições |
+| Cadastro público | `/cadastro` | ✅ sem auth · ?ref= rastreio · contribuições · link compartilhável pós-cadastro · embed vídeo YouTube |
 | Convite por link | `/entrar?token=X` | ✅ email-first flow · Google OAuth · completar-perfil |
 | Completar perfil | `/completar-perfil` | ✅ formulário pós-login via convite |
 | Células | `/celulas` | ✅ visualização hierárquica |
@@ -154,8 +154,11 @@ GOOGLE_CALENDAR_CLIENT_ID / CLIENT_SECRET / REDIRECT_URI / ID
 
 ### Cadastro público com rastreio
 - Link simples: `/cadastro`
-- Link com rastreio de célula: `/cadastro?ref=<userId>`
+- Link com rastreio de célula (usuário logado): `/cadastro?ref=<userId>`
+- Link de indicação por colaborador público: `/cadastro?refc=<collaboratorId>` — leads indicados recebem `source="INDICACAO"` no banco
 - Leads chegam com `status=LEAD`
+- Após o cadastro: tela de sucesso exibe embed YouTube (autoplay, nocookie) + card com link compartilhável (botão copiar + compartilhar via WhatsApp)
+- ID do vídeo configurado em `YT_VIDEO_ID` no topo de `src/app/cadastro/cadastro-form.tsx` — substituir pelo ID real
 
 ### Convite por link
 - Admin gera link em Super Admin → "Links de Convite" → copia `/entrar?token=X` → envia no WhatsApp
