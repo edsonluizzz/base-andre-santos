@@ -608,18 +608,20 @@ export default async function PlanejamentoPage() {
             <span className="text-xs text-primary font-semibold">{resolved}/{gaps.length} resolvidos</span>
           </div>
         </div>
+
+        {/* Pendentes e parciais primeiro */}
         <div className="space-y-3">
           {GAP_DEFS.map((gap, i) => {
             const gapResult = gaps[i];
-            const rowBg =
-              gapResult.status === "resolved" ? "bg-green-500/[0.04] border-green-500/15" :
-              gapResult.status === "partial"  ? "bg-yellow-500/[0.04] border-yellow-500/15" :
-                                               "bg-white/[0.02] border-white/[0.06]";
-            const impactoCls =
-              gap.impacto === "ALTO"  ? "bg-red-500/15 text-red-400 border-red-500/30" :
-                                        "bg-yellow-500/15 text-yellow-400 border-yellow-500/30";
+            if (gapResult.status === "resolved") return null;
+            const rowBg = gapResult.status === "partial"
+              ? "bg-yellow-500/[0.04] border-yellow-500/15"
+              : "bg-white/[0.02] border-white/[0.06]";
+            const impactoCls = gap.impacto === "ALTO"
+              ? "bg-red-500/15 text-red-400 border-red-500/30"
+              : "bg-yellow-500/15 text-yellow-400 border-yellow-500/30";
             return (
-              <div key={gap.num} className={`flex items-start gap-4 rounded-xl border p-4 ${rowBg} transition-colors`}>
+              <div key={gap.num} className={`flex items-start gap-4 rounded-xl border p-4 ${rowBg}`}>
                 <div className="text-2xl font-black text-muted-foreground/25 leading-none shrink-0 w-8 text-center">{gap.num}</div>
                 <div className="flex-1 min-w-0">
                   <div className="flex flex-wrap items-center gap-2 mb-1">
@@ -628,51 +630,84 @@ export default async function PlanejamentoPage() {
                     <StatusBadge status={gapResult.status} />
                   </div>
                   <p className="text-xs text-muted-foreground leading-relaxed mb-1.5">{gap.desc}</p>
-                  <p className={`text-xs font-medium italic ${
-                    gapResult.status === "resolved" ? "text-green-400" :
-                    gapResult.status === "partial"  ? "text-yellow-400" : "text-slate-500"
-                  }`}>
-                    → {gapResult.detail}
-                  </p>
+                  <p className="text-xs font-medium italic text-yellow-400">→ {gapResult.detail}</p>
                 </div>
               </div>
             );
           })}
+
+          {pending === 0 && partial === 0 && (
+            <p className="text-sm text-green-400 text-center py-4">✓ Todos os GAPs foram resolvidos</p>
+          )}
         </div>
+
+        {/* Resolvidos colapsados */}
+        {resolved > 0 && (
+          <details className="mt-4 group">
+            <summary className="flex items-center gap-2 cursor-pointer list-none select-none rounded-xl border border-green-500/20 bg-green-500/[0.04] px-4 py-2.5 text-xs font-medium text-green-400 hover:bg-green-500/[0.07] transition-colors">
+              <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+              <span>{resolved} GAP{resolved !== 1 ? "s" : ""} já resolvido{resolved !== 1 ? "s" : ""} — clique para ver</span>
+              <ChevronRight className="w-3.5 h-3.5 ml-auto transition-transform group-open:rotate-90" />
+            </summary>
+            <div className="mt-3 space-y-3">
+              {GAP_DEFS.map((gap, i) => {
+                const gapResult = gaps[i];
+                if (gapResult.status !== "resolved") return null;
+                return (
+                  <div key={gap.num} className="flex items-start gap-4 rounded-xl border bg-green-500/[0.04] border-green-500/15 p-4 opacity-70">
+                    <div className="text-2xl font-black text-muted-foreground/20 leading-none shrink-0 w-8 text-center">{gap.num}</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-2 mb-1">
+                        <p className="text-sm font-semibold text-foreground line-through decoration-green-500/40">{gap.titulo}</p>
+                        <StatusBadge status="resolved" />
+                      </div>
+                      <p className="text-xs font-medium italic text-green-400">→ {gapResult.detail}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </details>
+        )}
       </section>
 
-      {/* ── Status de implantação ────────────────────────────────────────── */}
-      <section className="glass-card rounded-2xl p-6 border border-white/[0.08] space-y-4">
-        <div className="flex items-center gap-2 mb-1">
-          <CheckCircle2 className="w-4 h-4 text-green-400" />
-          <h2 className="text-base font-bold text-foreground">Sprint de Implantação — Concluídos</h2>
-          <span className="ml-auto text-[10px] text-muted-foreground">2026-05-07</span>
-        </div>
-        <div className="grid sm:grid-cols-2 gap-3">
-          {[
-            { label: "GAPs 1-6 fechados", desc: "Novos perfis, canal origem, metas, score, funil no dashboard" },
-            { label: "API de municípios PR", desc: "399 cidades com autocomplete no formulário de colaboradores" },
-            { label: "Lookup de CEP", desc: "Auto-fill cidade + bairro nos dois formulários (admin e público)" },
-            { label: "Política de Privacidade", desc: "/privacidade com LGPD Art. 9 — linkada no /cadastro" },
-            { label: "Contadores reais no /cadastro", desc: "Apoiadores, municípios e grupos atualizados em tempo real" },
-            { label: "Página /metas", desc: "Dashboard Meta × Realizado por município com progresso visual" },
-            { label: "Score de Mobilização", desc: "Fórmula perfil × apoio × status — recalcule em /configuracoes" },
-            { label: "Territorialização /grupos", desc: "Banner de progresso + borda âmbar nos grupos sem zona" },
-          ].map((item) => (
-            <div key={item.label} className="flex items-start gap-2 rounded-xl bg-green-500/[0.05] border border-green-500/15 px-3 py-2.5">
-              <CheckCircle2 className="w-3.5 h-3.5 text-green-400 shrink-0 mt-0.5" />
-              <div>
-                <p className="text-xs font-semibold text-foreground">{item.label}</p>
-                <p className="text-[11px] text-muted-foreground">{item.desc}</p>
+      {/* ── Status de implantação (colapsado por padrão) ─────────────────── */}
+      <details className="glass-card rounded-2xl border border-white/[0.08] group">
+        <summary className="flex items-center gap-3 cursor-pointer list-none select-none px-6 py-4 hover:bg-white/[0.02] rounded-2xl transition-colors">
+          <CheckCircle2 className="w-4 h-4 text-green-400 shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold text-foreground">Sprint de Implantação — Concluídos</p>
+            <p className="text-xs text-muted-foreground">8 itens entregues em 2026-05-07 · clique para expandir</p>
+          </div>
+          <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0 transition-transform group-open:rotate-90" />
+        </summary>
+        <div className="px-6 pb-6 space-y-4 border-t border-white/[0.05] pt-4">
+          <div className="grid sm:grid-cols-2 gap-3">
+            {[
+              { label: "GAPs 1-6 fechados", desc: "Novos perfis, canal origem, metas, score, funil no dashboard" },
+              { label: "API de municípios PR", desc: "399 cidades com autocomplete no formulário de colaboradores" },
+              { label: "Lookup de CEP", desc: "Auto-fill cidade + bairro nos dois formulários (admin e público)" },
+              { label: "Política de Privacidade", desc: "/privacidade com LGPD Art. 9 — linkada no /cadastro" },
+              { label: "Contadores reais no /cadastro", desc: "Apoiadores, municípios e grupos atualizados em tempo real" },
+              { label: "Página /metas", desc: "Dashboard Meta × Realizado por município com progresso visual" },
+              { label: "Score de Mobilização", desc: "Fórmula perfil × apoio × status — recalcule em /configuracoes" },
+              { label: "Territorialização /grupos", desc: "Banner de progresso + borda âmbar nos grupos sem zona" },
+            ].map((item) => (
+              <div key={item.label} className="flex items-start gap-2 rounded-xl bg-green-500/[0.05] border border-green-500/15 px-3 py-2.5">
+                <CheckCircle2 className="w-3.5 h-3.5 text-green-400 shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-xs font-semibold text-foreground">{item.label}</p>
+                  <p className="text-[11px] text-muted-foreground">{item.desc}</p>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
+          <div className="rounded-xl bg-amber-500/[0.06] border border-amber-500/20 px-4 py-3">
+            <p className="text-xs font-semibold text-amber-400 mb-1">Única pendência operacional</p>
+            <p className="text-[11px] text-muted-foreground">GAP 7: acesse <strong className="text-foreground">/grupos</strong> → edite os grupos com borda âmbar → selecione a zona. Meta: ≥ 70% territorializados.</p>
+          </div>
         </div>
-        <div className="rounded-xl bg-amber-500/[0.06] border border-amber-500/20 px-4 py-3">
-          <p className="text-xs font-semibold text-amber-400 mb-1">Única pendência operacional</p>
-          <p className="text-[11px] text-muted-foreground">GAP 7: acesse <strong className="text-foreground">/grupos</strong> → edite os grupos com borda âmbar → selecione a zona. Meta: ≥ 70% territorializados.</p>
-        </div>
-      </section>
+      </details>
 
       {/* ── Recomendação estratégica ─────────────────────────────────────── */}
       <section className="glass-card rounded-2xl p-6 border border-primary/20 gold-glow">
