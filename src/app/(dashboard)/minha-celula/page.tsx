@@ -1,11 +1,18 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Star, Users, UserCheck, UserX, Copy, Check, Phone, MapPin, ChevronDown, MessageCircle } from "lucide-react";
+import { Star, Users, UserCheck, UserX, Copy, Check, Phone, MapPin, ChevronDown, MessageCircle, ClipboardList, Plus, Trash2, Circle, CheckCircle2, Calendar } from "lucide-react";
 import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { TIER_LABEL, TIER_THRESHOLDS } from "@/lib/contribution";
 import { STATUS_LABEL } from "@/lib/labels";
+import { cn } from "@/lib/utils";
+import { differenceInDays, format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 const TIER_COLOR: Record<string, string> = {
   APOIADOR:    "text-slate-400 border-slate-500/30 bg-slate-500/10",
@@ -26,12 +33,28 @@ type Collaborator = {
   status: string; campaignRole: string; contributionTypes?: string[];
 };
 
+type Task = {
+  id: string; title: string; description?: string | null;
+  dueDate?: string | null; status: "PENDING" | "DONE"; priority: "LOW" | "NORMAL" | "HIGH";
+  createdAt: string;
+};
+
+const PRIORITY_DOT: Record<string, string> = {
+  HIGH: "bg-red-400", NORMAL: "bg-amber-400", LOW: "bg-slate-500",
+};
+const PRIORITY_LABEL: Record<string, string> = { HIGH: "Alta", NORMAL: "Normal", LOW: "Baixa" };
+
 export default function MinhaCelulaPage() {
   const [stats, setStats] = useState<CellStats | null>(null);
   const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [taskDialog, setTaskDialog] = useState(false);
+  const [taskForm, setTaskForm] = useState({ title: "", description: "", dueDate: "", priority: "NORMAL" });
+  const [taskSaving, setTaskSaving] = useState(false);
 
   const referralLink =
     typeof window !== "undefined" && stats?.userId
@@ -40,12 +63,14 @@ export default function MinhaCelulaPage() {
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
-    const [sr, cr] = await Promise.all([
+    const [sr, cr, tr] = await Promise.all([
       fetch("/api/my-cell"),
       fetch("/api/collaborators?mine=true&status=ALL"),
+      fetch("/api/tasks"),
     ]);
     if (sr.ok) setStats(await sr.json());
     if (cr.ok) setCollaborators(await cr.json());
+    if (tr.ok) setTasks(await tr.json());
     setLoading(false);
   }, []);
 
@@ -70,6 +95,46 @@ export default function MinhaCelulaPage() {
     navigator.clipboard?.writeText(referralLink);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  }
+
+  async function toggleTask(id: string) {
+    const res = await fetch(`/api/tasks/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({}) });
+    if (res.ok) {
+      const updated: Task = await res.json();
+      setTasks((prev) => prev.map((t) => t.id === id ? updated : t));
+    }
+  }
+
+  async function deleteTask(id: string) {
+    const res = await fetch(`/api/tasks/${id}`, { method: "DELETE" });
+    if (res.ok) setTasks((prev) => prev.filter((t) => t.id !== id));
+  }
+
+  async function createTask() {
+    if (!taskForm.title.trim()) { toast.error("Título obrigatório"); return; }
+    setTaskSaving(true);
+    const res = await fetch("/api/tasks", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: taskForm.title, description: taskForm.description || null, dueDate: taskForm.dueDate || null, priority: taskForm.priority }),
+    });
+    setTaskSaving(false);
+    if (res.ok) {
+      const t: Task = await res.json();
+      setTasks((prev) => [t, ...prev]);
+      setTaskDialog(false);
+      setTaskForm({ title: "", description: "", dueDate: "", priority: "NORMAL" });
+      toast.success("Tarefa criada");
+    } else toast.error("Erro ao criar tarefa");
+  }
+
+  function dueDateLabel(dateStr: string | null | undefined): { label: string; color: string } | null {
+    if (!dateStr) return null;
+    const days = differenceInDays(new Date(dateStr), new Date());
+    if (days < 0) return { label: `${Math.abs(days)}d atrasado`, color: "text-red-400" };
+    if (days === 0) return { label: "Hoje", color: "text-amber-400" };
+    if (days <= 3) return { label: `${days}d`, color: "text-amber-400" };
+    return { label: format(new Date(dateStr), "dd/MM", { locale: ptBR }), color: "text-muted-foreground" };
   }
 
   const tier = stats?.tier ?? "APOIADOR";
@@ -174,6 +239,98 @@ export default function MinhaCelulaPage() {
               )}
             </div>
           </div>
+
+          {/* Tarefas */}
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <h2 className="text-sm font-semibold text-foreground">Minhas Tarefas</h2>
+                {tasks.filter((t) => t.status === "PENDING").length > 0 && (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/30">
+                    {tasks.filter((t) => t.status === "PENDING").length}
+                  </span>
+                )}
+              </div>
+              <Button size="sm" variant="outline" className="h-7 text-xs gap-1.5" onClick={() => setTaskDialog(true)}>
+                <Plus className="w-3 h-3" /> Nova
+              </Button>
+            </div>
+
+            {tasks.length === 0 ? (
+              <div className="glass-card rounded-xl p-6 text-center border border-white/[0.08]">
+                <ClipboardList className="w-7 h-7 text-muted-foreground/30 mx-auto mb-2" />
+                <p className="text-xs text-muted-foreground">Nenhuma tarefa pendente</p>
+              </div>
+            ) : (
+              <div className="space-y-1.5">
+                {tasks.map((t) => {
+                  const due = dueDateLabel(t.dueDate);
+                  return (
+                    <div key={t.id} className={cn("flex items-start gap-3 rounded-xl px-3 py-2.5 border transition-colors", t.status === "DONE" ? "border-white/[0.04] bg-white/[0.01] opacity-50" : "border-white/[0.08] bg-white/[0.03]")}>
+                      <button onClick={() => toggleTask(t.id)} className="mt-0.5 shrink-0 text-muted-foreground hover:text-primary transition-colors">
+                        {t.status === "DONE" ? <CheckCircle2 className="w-4 h-4 text-green-400" /> : <Circle className="w-4 h-4" />}
+                      </button>
+                      <div className="flex-1 min-w-0">
+                        <p className={cn("text-sm text-foreground", t.status === "DONE" && "line-through text-muted-foreground")}>{t.title}</p>
+                        {t.description && <p className="text-[10px] text-muted-foreground mt-0.5 truncate">{t.description}</p>}
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", PRIORITY_DOT[t.priority])} title={PRIORITY_LABEL[t.priority]} />
+                          {due && (
+                            <span className={cn("flex items-center gap-0.5 text-[10px]", due.color)}>
+                              <Calendar className="w-2.5 h-2.5" /> {due.label}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <button onClick={() => deleteTask(t.id)} className="shrink-0 text-muted-foreground/40 hover:text-red-400 transition-colors mt-0.5">
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Modal nova tarefa */}
+          <Dialog open={taskDialog} onOpenChange={setTaskDialog}>
+            <DialogContent className="max-w-sm">
+              <DialogHeader><DialogTitle>Nova Tarefa</DialogTitle></DialogHeader>
+              <div className="space-y-3">
+                <div>
+                  <Label>Título *</Label>
+                  <Input value={taskForm.title} onChange={(e) => setTaskForm((f) => ({ ...f, title: e.target.value }))} placeholder="Ex: Recrutar 5 apoiadores em Colombo" />
+                </div>
+                <div>
+                  <Label>Descrição</Label>
+                  <Input value={taskForm.description} onChange={(e) => setTaskForm((f) => ({ ...f, description: e.target.value }))} placeholder="Detalhes opcionais..." />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label>Prazo</Label>
+                    <Input type="date" value={taskForm.dueDate} onChange={(e) => setTaskForm((f) => ({ ...f, dueDate: e.target.value }))} />
+                  </div>
+                  <div>
+                    <Label>Prioridade</Label>
+                    <Select value={taskForm.priority} onValueChange={(v) => setTaskForm((f) => ({ ...f, priority: v }))}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="HIGH">Alta</SelectItem>
+                        <SelectItem value="NORMAL">Normal</SelectItem>
+                        <SelectItem value="LOW">Baixa</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="flex justify-end gap-2 pt-1">
+                  <Button variant="outline" size="sm" onClick={() => setTaskDialog(false)}>Cancelar</Button>
+                  <Button size="sm" onClick={createTask} disabled={taskSaving} className="bg-primary text-primary-foreground">
+                    {taskSaving ? "Criando..." : "Criar Tarefa"}
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
 
           {/* Lista de cadastrados */}
           <div>

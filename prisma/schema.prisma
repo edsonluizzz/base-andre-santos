@@ -381,3 +381,31 @@ enum CollaboratorTier {
   LIDER_CELULA
   COORDENADOR
 }
+
+model Task {
+  id           String       @id @default(cuid())
+  campaignId   String       @default("andre-santos-2026")
+  title        String
+  description  String?
+  assignedToId String
+  createdById  String
+  dueDate      DateTime?
+  status       TaskStatus   @default(PENDING)
+  priority     TaskPriority @default(NORMAL)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  @@index([campaignId])
+  @@index([assignedToId])
+  @@index([status])
+}
+
+enum TaskStatus {
+  PENDING
+  DONE
+}
+
+enum TaskPriority {
+  LOW
+  NORMAL
+  HIGH
+}
