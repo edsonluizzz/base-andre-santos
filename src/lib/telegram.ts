@@ -66,6 +66,48 @@ export function buildAgendaMessage(events: EventLike[], isUpdate = false): strin
   return `${header}\n\n${lines.join("\n\n")}\n\n<i>Enviado às ${timeStr}</i>`;
 }
 
+export function buildDailyDigestMessage(
+  todayEvents: EventLike[],
+  nextDaysEvents: { date: Date; events: EventLike[] }[],
+): string {
+  const now     = new Date();
+  const timeStr = format(now, "HH:mm");
+
+  let msg = `🌅 <b>Bom dia! Agenda — ${format(now, "dd/MM (EEEE)", { locale: ptBR })}</b>\n\n`;
+
+  // Hoje
+  if (todayEvents.length === 0) {
+    msg += `📭 Nenhum evento hoje.\n`;
+  } else {
+    msg += todayEvents.map((ev) => {
+      const time  = format(new Date(ev.date), "HH:mm");
+      const emoji = TYPE_EMOJI[ev.type] ?? "📌";
+      let line    = `${emoji} <b>${time}</b> · ${ev.title}`;
+      if (ev.location) line += `\n   📍 ${ev.location}`;
+      return line;
+    }).join("\n");
+  }
+
+  // Próximos dias
+  const diasComEventos = nextDaysEvents.filter((d) => d.events.length > 0);
+  if (diasComEventos.length > 0) {
+    msg += `\n\n<b>📆 Próximos dias</b>`;
+    for (const { date, events } of diasComEventos) {
+      const dayLabel = format(date, "EEEE, dd/MM", { locale: ptBR });
+      msg += `\n\n<i>${dayLabel.charAt(0).toUpperCase() + dayLabel.slice(1)}</i>`;
+      for (const ev of events) {
+        const time  = format(new Date(ev.date), "HH:mm");
+        const emoji = TYPE_EMOJI[ev.type] ?? "📌";
+        msg += `\n${emoji} ${time} · ${ev.title}`;
+        if (ev.location) msg += ` · 📍 ${ev.location}`;
+      }
+    }
+  }
+
+  msg += `\n\n<i>Enviado às ${timeStr}</i>`;
+  return msg;
+}
+
 export function buildEventNotification(
   action: "criado" | "atualizado" | "removido",
   event: EventLike,
