@@ -163,7 +163,7 @@ CRON_SECRET             → valida chamadas dos cron jobs (opcional, recomendado
 - **Notificação de mudança:** `buildAgendaMessage(isUpdate=true)` — disparado ao criar/editar/deletar evento do dia via `/api/events` e `/api/events/[id]`
 - **Comando /novo:** POST `/api/telegram/webhook` — parser de mensagens no canal: `/novo Título | dd/mm | HH:MM | Local` cria evento no banco
 - **Registro do webhook:** GET `/api/telegram/register-webhook` — chamada única pós-deploy para ativar o /novo
-  - **⚠ PENDENTE:** visitar `https://base-andre-santos.vercel.app/api/telegram/register-webhook` para ativar
+  - ✅ Webhook registrado em 2026-05-09
 - Tipos de evento: REUNIAO 🤝 · CULTO ⛪ · PANFLETAGEM 📋 · TREINAMENTO 📚 · VISITA 🚗 · OUTRO 📌
 - **Nota:** enum `CampaignEventType` — COMÍCIO foi substituído por CULTO (migration com `--accept-data-loss`)
 
@@ -229,7 +229,7 @@ Revisados em iPhone 13 Pro (390×844px). Correções aplicadas:
 
 ### Ações manuais do admin
 - [ ] **YouTube:** substituir `YT_VIDEO_ID = "yYV-Z78sKC0"` pelo ID definitivo em `src/app/cadastro/cadastro-form.tsx:9`
-- [ ] **Telegram webhook:** visitar `/api/telegram/register-webhook` uma vez para ativar comando /novo no canal
+- [x] **Telegram webhook:** registrado em 2026-05-09 — comando /novo ativo no canal
 - [ ] **GAP 7:** /grupos → editar grupos com borda âmbar → selecionar zona (meta ≥ 70%)
 - [ ] **Scores:** /configuracoes → "Recalcular scores agora" (após popular colaboradores)
 - [ ] **Metas:** /configuracoes → "Metas por Município" → cadastrar meta de votos/líderes por cidade
