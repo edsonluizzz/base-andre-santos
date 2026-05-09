@@ -110,6 +110,38 @@ export async function POST(req: NextRequest) {
       }).catch(() => {});
     }
 
+    // Auto-atribuição: se a cidade tem um líder de zona, notifica esse líder
+    if (city?.trim() && !registeredById) {
+      const normalizedCity = city.trim();
+      const zoneLeader = await db.zoneCollaborator.findFirst({
+        where: {
+          isLeader: true,
+          zone: {
+            campaignId: CID,
+            type: "MUNICIPAL",
+            name: { contains: normalizedCity, mode: "insensitive" },
+          },
+          collaborator: { userId: { not: null } },
+        },
+        select: {
+          collaborator: { select: { userId: true } },
+          zone: { select: { name: true } },
+        },
+      }).catch(() => null);
+
+      if (zoneLeader?.collaborator?.userId) {
+        await db.notification.create({
+          data: {
+            userId: zoneLeader.collaborator.userId,
+            title: "Novo lead em sua zona",
+            body: `${name.trim()} de ${normalizedCity} se cadastrou — aguarda seu contato`,
+            type: "NEW_LEAD",
+            link: "/colaboradores?status=LEAD",
+          },
+        }).catch(() => {});
+      }
+    }
+
     return NextResponse.json({ message: "Cadastro realizado com sucesso!", collaboratorId: created.id }, { status: 201 });
   } catch (err) {
     console.error("[public/cadastro POST]", err);

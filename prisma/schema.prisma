@@ -124,6 +124,7 @@ model Collaborator {
   registeredById     String?
   lgpdConsent        Boolean   @default(false)
   lgpdConsentAt      DateTime?
+  lastContactedAt    DateTime?
   userId String? @unique
   inviteRecord UserCampaign? @relation("InvitedAs")
   user         User?     @relation(fields: [userId], references: [id], onDelete: SetNull)

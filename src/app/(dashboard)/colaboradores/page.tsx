@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Users, Plus, Search, Filter, Phone, MapPin, ChevronDown, Upload, UserCheck, ExternalLink, CheckSquare, Square, X, ArrowUpCircle, UserMinus, ThumbsUp } from "lucide-react";
+import { Users, Plus, Search, Filter, Phone, MapPin, ChevronDown, Upload, UserCheck, ExternalLink, CheckSquare, Square, X, ArrowUpCircle, UserMinus, ThumbsUp, PhoneCall, AlertTriangle } from "lucide-react";
+import { differenceInDays } from "date-fns";
 import Link from "next/link";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -26,7 +27,7 @@ const CONTRIBUTION_LABEL = Object.fromEntries(CONTRIBUTION_OPTIONS.map((o) => [o
 type Collaborator = {
   id: string; name: string; email?: string; phone?: string; city?: string;
   neighborhood?: string; campaignRole: string; status: string; notes?: string;
-  birthday?: string; contributionTypes?: string[];
+  birthday?: string; contributionTypes?: string[]; lastContactedAt?: string | null;
   registeredBy?: { name: string | null; email: string | null } | null;
   zones: { zone: { id: string; name: string } }[];
   whatsappGroups: { group: { id: string; name: string } }[];
@@ -145,6 +146,24 @@ export default function ColaboradoresPage() {
     toast.success(editing ? "Colaborador atualizado" : "Colaborador adicionado");
   }
 
+  async function markContact(id: string) {
+    const res = await fetch(`/api/collaborators/${id}/contact`, { method: "POST" });
+    if (res.ok) {
+      const data = await res.json();
+      setCollaborators((prev) =>
+        prev.map((c) => c.id === id ? { ...c, lastContactedAt: data.lastContactedAt } : c)
+      );
+      toast.success("Contato registrado hoje");
+    } else {
+      toast.error("Erro ao registrar contato");
+    }
+  }
+
+  function daysSince(date: string | null | undefined): number | null {
+    if (!date) return null;
+    return differenceInDays(new Date(), new Date(date));
+  }
+
   const whatsappHref = (phone: string) => {
     const digits = phone.replace(/\D/g, "");
     return `https://wa.me/${digits.startsWith("55") ? digits : `55${digits}`}`;
@@ -152,6 +171,12 @@ export default function ColaboradoresPage() {
 
   const allSelected = collaborators.length > 0 && selected.size === collaborators.length;
   const someSelected = selected.size > 0 && !allSelected;
+
+  const staleLeads = collaborators.filter((c) => {
+    if (c.status !== "LEAD") return false;
+    const d = daysSince(c.lastContactedAt);
+    return d === null || d > 30;
+  });
 
   return (
     <div className="space-y-6">
@@ -244,6 +269,22 @@ export default function ColaboradoresPage() {
           )}
         </div>
       </div>
+
+      {/* Banner leads sem contato */}
+      {!loading && staleLeads.length > 0 && filterStatus !== "ACTIVE" && (
+        <button
+          onClick={() => setFilterStatus("LEAD")}
+          className="w-full flex items-center gap-3 rounded-xl px-4 py-3 border border-amber-500/30 bg-amber-500/[0.07] hover:bg-amber-500/[0.12] transition-colors text-left"
+        >
+          <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-amber-300">
+              {staleLeads.length} lead{staleLeads.length !== 1 ? "s" : ""} sem contato há 30+ dias
+            </p>
+            <p className="text-xs text-amber-400/70">Clique para filtrar e registrar contato</p>
+          </div>
+        </button>
+      )}
 
       {/* Header de seleção em massa */}
       {!loading && collaborators.length > 0 && (
@@ -360,6 +401,17 @@ export default function ColaboradoresPage() {
                       {c.registeredBy && (
                         <div><span className="text-foreground/60">Cadastrado por:</span> {c.registeredBy.name ?? c.registeredBy.email}</div>
                       )}
+                      {/* Último contato */}
+                      <div className="flex items-center gap-2">
+                        <span className="text-foreground/60">Último contato:</span>
+                        {c.lastContactedAt ? (
+                          <span className={daysSince(c.lastContactedAt)! > 30 ? "text-amber-400" : "text-green-400"}>
+                            {daysSince(c.lastContactedAt) === 0 ? "Hoje" : `${daysSince(c.lastContactedAt)}d atrás`}
+                          </span>
+                        ) : (
+                          <span className="text-red-400/80">Nunca registrado</span>
+                        )}
+                      </div>
                       {c.contributionTypes && c.contributionTypes.length > 0 && (
                         <div className="sm:col-span-2">
                           <span className="text-foreground/60">Contribuições:</span>{" "}
@@ -374,9 +426,13 @@ export default function ColaboradoresPage() {
                       )}
                       {c.notes && <div className="sm:col-span-2"><span className="text-foreground/60">Obs:</span> {c.notes}</div>}
                     </div>
-                    <div className="flex gap-2 sm:hidden">
-                      <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => openEdit(c)}>Editar</Button>
-                      <Button size="sm" variant="ghost" className="h-7 text-xs text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => setDeleting(c)}>Excluir</Button>
+                    <div className="flex gap-2 flex-wrap">
+                      <Button size="sm" variant="outline" className="h-7 text-xs gap-1.5 border-green-500/30 text-green-400 hover:bg-green-500/10"
+                        onClick={() => markContact(c.id)}>
+                        <PhoneCall className="w-3 h-3" /> Marcar contato hoje
+                      </Button>
+                      <Button size="sm" variant="outline" className="h-7 text-xs sm:hidden" onClick={() => openEdit(c)}>Editar</Button>
+                      <Button size="sm" variant="ghost" className="h-7 text-xs text-destructive hover:text-destructive hover:bg-destructive/10 sm:hidden" onClick={() => setDeleting(c)}>Excluir</Button>
                     </div>
                   </div>
                 )}
