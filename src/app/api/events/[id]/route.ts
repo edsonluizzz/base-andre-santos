@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { sendTelegram, buildEventNotification } from "@/lib/telegram";
 
 const CID = "andre-santos-2026";
 
@@ -24,7 +25,16 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
         notes: notes?.trim() || null,
         zoneId: zoneId || null,
       },
+      include: { zone: { select: { name: true } } },
     });
+
+    // Notifica Telegram se o evento for hoje
+    const today = new Date();
+    const evDate = new Date(updated.date);
+    if (evDate.toDateString() === today.toDateString()) {
+      sendTelegram(buildEventNotification("atualizado", { ...updated, date: updated.date.toISOString() })).catch(() => {});
+    }
+
     return NextResponse.json(updated);
   } catch (err) {
     console.error("[event PUT]", err);
@@ -40,6 +50,12 @@ export async function DELETE(_req: NextRequest, { params }: { params: { id: stri
 
     const existing = await db.event.findFirst({ where: { id: params.id, campaignId: CID } });
     if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+    // Notifica Telegram se o evento for hoje (antes de deletar)
+    const today = new Date();
+    if (existing.date.toDateString() === today.toDateString()) {
+      sendTelegram(buildEventNotification("removido", { ...existing, date: existing.date.toISOString() })).catch(() => {});
+    }
 
     await db.event.delete({ where: { id: params.id } });
     return NextResponse.json({ ok: true });

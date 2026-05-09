@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { sendTelegram, buildEventNotification } from "@/lib/telegram";
 
 const CID = "andre-santos-2026";
 
@@ -52,6 +53,15 @@ export async function POST(req: NextRequest) {
       },
       include: { zone: { select: { id: true, name: true } } },
     });
+
+    // Notifica Telegram se o evento for hoje
+    const today = new Date();
+    const evDate = new Date(date);
+    const isToday = evDate.toDateString() === today.toDateString();
+    if (isToday) {
+      sendTelegram(buildEventNotification("criado", { ...event, date: event.date.toISOString() })).catch(() => {});
+    }
+
     return NextResponse.json(event, { status: 201 });
   } catch (err) {
     console.error("[events POST]", err);
