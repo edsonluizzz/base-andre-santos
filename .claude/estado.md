@@ -1,6 +1,6 @@
 # Estado — Base André Santos
 
-**Última atualização:** 2026-05-09 (Google Calendar conectado · agenda com calendário mensal + modal detalhe · planejamento compacto)
+**Última atualização:** 2026-05-09 (Telegram bot · mobile UI sprint · agenda calendário responsivo · cadastro link compartilhável + YouTube · planejamento colapsa itens concluídos)
 **GitHub:** https://github.com/edsonluizzz/base-andre-santos
 **Deploy:** Vercel (ver domínio em vercel.com → projeto → aba Domains)
 
@@ -22,7 +22,7 @@ Sistema funcional e em produção. Terminologia "Base de Apoio" (não "campanha"
 | Mapa de Apoio | `/mapa` | ✅ choropleth PR · zoom/pan · tooltip hover · cards clicáveis por status de apoio |
 | Zonas | `/zonas` | ✅ |
 | Grupos WhatsApp | `/grupos` | ✅ gerenciamento de membros |
-| Agenda | `/agenda` | ✅ calendário mensal + lista · modal detalhe · painel do dia · sync Google Calendar bidirecional |
+| Agenda | `/agenda` | ✅ calendário mensal + lista · modal detalhe · painel do dia · sync Google Calendar bidirecional · mobile: dots coloridos por tipo |
 | Comunicados | `/comunicados` | ✅ filtro por audiência + contagem em tempo real |
 | Configurações | `/configuracoes` | ✅ logo · join code · Google Calendar |
 | Relatório | `/relatorio` | ✅ KPI cards clicáveis (toggle filtro tabela) · filtros perfil/período · funil · crescimento · capital político · CSV + XLSX |
@@ -30,7 +30,7 @@ Sistema funcional e em produção. Terminologia "Base de Apoio" (não "campanha"
 | Super Admin | `/super-admin` | ✅ conceder/revogar acesso · role/tier · links de convite reutilizáveis |
 | Onboarding | `/onboarding` | ✅ boas-vindas + tour de features |
 | Perfil colaborador | `/colaboradores/[id]` | ✅ botão Editar funcional (abre CollaboratorDialog, router.refresh()) |
-| Cadastro público | `/cadastro` | ✅ sem auth · ?ref= rastreio · contribuições · link compartilhável pós-cadastro · embed vídeo YouTube (ID: yYV-Z78sKC0 — temporário) |
+| Cadastro público | `/cadastro` | ✅ sem auth · ?ref= rastreio · contribuições · link compartilhável pós-cadastro (copiar + WhatsApp) · embed vídeo YouTube (ID: yYV-Z78sKC0 — **substituir pelo ID definitivo**) |
 | Convite por link | `/entrar?token=X` | ✅ email-first flow · Google OAuth · completar-perfil |
 | Completar perfil | `/completar-perfil` | ✅ formulário pós-login via convite |
 | Células | `/celulas` | ✅ visualização hierárquica |
@@ -146,11 +146,26 @@ RESEND_API_KEY          → emails de convite e notificação de leads
 RESEND_FROM             → "Base André Santos <noreply@seudominio.com.br>"
 BLOB_READ_WRITE_TOKEN   → upload de logo
 GOOGLE_CALENDAR_CLIENT_ID / CLIENT_SECRET / REDIRECT_URI / ID
+TELEGRAM_BOT_TOKEN      → notificações no canal Telegram
+TELEGRAM_CHAT_ID        → ID do canal (ex: -1002xxxxx)
+CRON_SECRET             → valida chamadas dos cron jobs (opcional, recomendado)
 ```
 
 ---
 
 ## Recursos-chave
+
+### Telegram Bot — notificações e comandos
+
+- **Env vars:** `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID` (opcional — desabilita sem erros se ausente)
+- **Crons (vercel.json):** 10h UTC (7h BRT) digest completo · 14h, 18h, 22h UTC (11h/15h/19h BRT) agenda do dia se houver eventos
+- **Digest matinal:** `buildDailyDigestMessage` — hoje + 3 próximos dias
+- **Notificação de mudança:** `buildAgendaMessage(isUpdate=true)` — disparado ao criar/editar/deletar evento do dia via `/api/events` e `/api/events/[id]`
+- **Comando /novo:** POST `/api/telegram/webhook` — parser de mensagens no canal: `/novo Título | dd/mm | HH:MM | Local` cria evento no banco
+- **Registro do webhook:** GET `/api/telegram/register-webhook` — chamada única pós-deploy para ativar o /novo
+  - **⚠ PENDENTE:** visitar `https://base-andre-santos.vercel.app/api/telegram/register-webhook` para ativar
+- Tipos de evento: REUNIAO 🤝 · CULTO ⛪ · PANFLETAGEM 📋 · TREINAMENTO 📚 · VISITA 🚗 · OUTRO 📌
+- **Nota:** enum `CampaignEventType` — COMÍCIO foi substituído por CULTO (migration com `--accept-data-loss`)
 
 ### Google Calendar — sync bidirecional
 - Botão "Google Calendar" na /agenda → POST /api/google-calendar/sync
@@ -165,6 +180,16 @@ GOOGLE_CALENDAR_CLIENT_ID / CLIENT_SECRET / REDIRECT_URI / ID
 - Vista lista: próximos + passados, clicáveis
 - Modal de detalhe: data/hora, local, tipo, zona, presenças, observações, badge Google Calendar
 - Criar evento: botão "+ Novo Evento" ou "+ Criar evento neste dia" no painel do dia
+
+### Mobile UI — sprint 2026-05-09
+
+Revisados em iPhone 13 Pro (390×844px). Correções aplicadas:
+- **Ranking**: grid `cols-[1.5rem_1fr_4rem]` mobile · 6 colunas desktop com `hidden sm:block`
+- **Relatório**: colunas Role/Leads `hidden sm:table-cell` · padding `p-3 sm:p-4`
+- **Colaboradores**: filtros de `flex-col` para `grid grid-cols-2` no mobile (busca full-width)
+- **Super Admin**: dois selects `w-36` migrados para `grid grid-cols-2 gap-1` + `w-full sm:w-36`
+- **Agenda calendário**: `min-h-[52px] sm:min-h-[80px]` · dia abreviado 1 letra no mobile · eventos como dots coloridos mobile / chips texto desktop
+- **Mapa**: legend com `flex-wrap`
 
 ### Cadastro público com rastreio
 - Link simples: `/cadastro`
@@ -203,6 +228,8 @@ GOOGLE_CALENDAR_CLIENT_ID / CLIENT_SECRET / REDIRECT_URI / ID
 ## Pendências
 
 ### Ações manuais do admin
+- [ ] **YouTube:** substituir `YT_VIDEO_ID = "yYV-Z78sKC0"` pelo ID definitivo em `src/app/cadastro/cadastro-form.tsx:9`
+- [ ] **Telegram webhook:** visitar `/api/telegram/register-webhook` uma vez para ativar comando /novo no canal
 - [ ] **GAP 7:** /grupos → editar grupos com borda âmbar → selecionar zona (meta ≥ 70%)
 - [ ] **Scores:** /configuracoes → "Recalcular scores agora" (após popular colaboradores)
 - [ ] **Metas:** /configuracoes → "Metas por Município" → cadastrar meta de votos/líderes por cidade
