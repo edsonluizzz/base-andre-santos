@@ -221,7 +221,7 @@ export default async function RelatorioPage({
       </div>
 
       {/* Barra de filtros */}
-      <div className="glass-card rounded-2xl p-4 border border-white/[0.07] flex flex-col sm:flex-row gap-3 no-print">
+      <div className="glass-card rounded-2xl p-3 sm:p-4 border border-white/[0.07] flex flex-col sm:flex-row gap-3 no-print">
         {/* Filtro por perfil */}
         <div className="flex-1">
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2">Perfil</p>

@@ -173,71 +173,76 @@ export default function ColaboradoresPage() {
       </div>
 
       {/* Filtros */}
-      <div className="flex flex-col sm:flex-row gap-3 flex-wrap">
-        <div className="relative flex-1 min-w-0">
+      <div className="space-y-2">
+        {/* Busca — largura total */}
+        <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar por nome, telefone, cidade..." className="pl-9" />
         </div>
-        <Select value={filterRole} onValueChange={setFilterRole}>
-          <SelectTrigger className="w-full sm:w-44">
-            <Filter className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="ALL">Todos os cargos</SelectItem>
-            {Object.entries(ROLE_LABEL).map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}
-          </SelectContent>
-        </Select>
-        <Select value={filterStatus} onValueChange={setFilterStatus}>
-          <SelectTrigger className="w-full sm:w-36">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="ACTIVE">Ativos</SelectItem>
-            <SelectItem value="LEAD">Leads</SelectItem>
-            <SelectItem value="INACTIVE">Inativos</SelectItem>
-            <SelectItem value="ALL">Todos</SelectItem>
-          </SelectContent>
-        </Select>
-        <button
-          onClick={() => setFilterMine((v) => !v)}
-          className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium border transition-colors ${
-            filterMine
-              ? "bg-primary/10 text-primary border-primary/30"
-              : "bg-white/[0.03] text-muted-foreground border-white/[0.08] hover:border-white/[0.15]"
-          }`}
-        >
-          <UserCheck className="w-3.5 h-3.5" />
-          Meus cadastros
-        </button>
-        {leaders.length > 0 && (
-          <Select value={filterLeader} onValueChange={(v) => { setFilterLeader(v); setFilterMine(false); }}>
-            <SelectTrigger className="w-full sm:w-52">
-              <UserCheck className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
-              <SelectValue placeholder="Por líder" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">Todos os líderes</SelectItem>
-              {leaders.map((l) => (
-                <SelectItem key={l.id} value={l.id}>{l.name} ({l.count})</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
-        {cities.length > 0 && (
-          <Select value={filterCity} onValueChange={setFilterCity}>
+        {/* Cargo + Status — 2 colunas no mobile */}
+        <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
+          <Select value={filterRole} onValueChange={setFilterRole}>
             <SelectTrigger className="w-full sm:w-44">
-              <MapPin className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
-              <SelectValue placeholder="Por cidade" />
+              <Filter className="w-3.5 h-3.5 mr-1.5 text-muted-foreground shrink-0" />
+              <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="ALL">Todas as cidades</SelectItem>
-              {cities.map((c) => (
-                <SelectItem key={c} value={c}>{c}</SelectItem>
-              ))}
+              <SelectItem value="ALL">Todos os cargos</SelectItem>
+              {Object.entries(ROLE_LABEL).map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}
             </SelectContent>
           </Select>
-        )}
+          <Select value={filterStatus} onValueChange={setFilterStatus}>
+            <SelectTrigger className="w-full sm:w-36">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ACTIVE">Ativos</SelectItem>
+              <SelectItem value="LEAD">Leads</SelectItem>
+              <SelectItem value="INACTIVE">Inativos</SelectItem>
+              <SelectItem value="ALL">Todos</SelectItem>
+            </SelectContent>
+          </Select>
+          {/* Meus cadastros + Líder — 2 colunas no mobile */}
+          <button
+            onClick={() => setFilterMine((v) => !v)}
+            className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium border transition-colors ${
+              filterMine
+                ? "bg-primary/10 text-primary border-primary/30"
+                : "bg-white/[0.03] text-muted-foreground border-white/[0.08] hover:border-white/[0.15]"
+            }`}
+          >
+            <UserCheck className="w-3.5 h-3.5 shrink-0" />
+            Meus cadastros
+          </button>
+          {leaders.length > 0 ? (
+            <Select value={filterLeader} onValueChange={(v) => { setFilterLeader(v); setFilterMine(false); }}>
+              <SelectTrigger className="w-full sm:w-52">
+                <UserCheck className="w-3.5 h-3.5 mr-1.5 text-muted-foreground shrink-0" />
+                <SelectValue placeholder="Por líder" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">Todos os líderes</SelectItem>
+                {leaders.map((l) => (
+                  <SelectItem key={l.id} value={l.id}>{l.name} ({l.count})</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : null}
+          {cities.length > 0 && (
+            <Select value={filterCity} onValueChange={setFilterCity}>
+              <SelectTrigger className="w-full col-span-2 sm:w-44">
+                <MapPin className="w-3.5 h-3.5 mr-1.5 text-muted-foreground shrink-0" />
+                <SelectValue placeholder="Por cidade" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">Todas as cidades</SelectItem>
+                {cities.map((c) => (
+                  <SelectItem key={c} value={c}>{c}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        </div>
       </div>
 
       {/* Header de seleção em massa */}
