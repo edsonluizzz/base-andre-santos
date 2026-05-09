@@ -5,8 +5,8 @@ import { useSearchParams } from "next/navigation";
 import { Star, CheckCircle2, ChevronRight, Users, MapPin, Smartphone, Copy, Check, Share2 } from "lucide-react";
 import { CONTRIBUTION_OPTIONS } from "@/lib/contribution";
 
-// Substitua pelo ID real do vídeo do YouTube do André
-const YT_VIDEO_ID = "COLE_O_ID_AQUI";
+// Substitua pelo ID real do vídeo do YouTube do André (parte final da URL: youtube.com/watch?v=ISSO)
+const YT_VIDEO_ID = "aqz-KE-bpKQ"; // demo — trocar pelo vídeo do André
 
 type Step = "form" | "success";
 
