@@ -1,6 +1,6 @@
 # Estado — Base André Santos
 
-**Última atualização:** 2026-05-08 (link compartilhável pós-cadastro + embed vídeo YouTube)
+**Última atualização:** 2026-05-09 (Google Calendar conectado · agenda com calendário mensal + modal detalhe · planejamento compacto)
 **GitHub:** https://github.com/edsonluizzz/base-andre-santos
 **Deploy:** Vercel (ver domínio em vercel.com → projeto → aba Domains)
 
@@ -22,7 +22,7 @@ Sistema funcional e em produção. Terminologia "Base de Apoio" (não "campanha"
 | Mapa de Apoio | `/mapa` | ✅ choropleth PR · zoom/pan · tooltip hover · cards clicáveis por status de apoio |
 | Zonas | `/zonas` | ✅ |
 | Grupos WhatsApp | `/grupos` | ✅ gerenciamento de membros |
-| Agenda | `/agenda` | ✅ + botão Google Calendar sync |
+| Agenda | `/agenda` | ✅ calendário mensal + lista · modal detalhe · painel do dia · sync Google Calendar bidirecional |
 | Comunicados | `/comunicados` | ✅ filtro por audiência + contagem em tempo real |
 | Configurações | `/configuracoes` | ✅ logo · join code · Google Calendar |
 | Relatório | `/relatorio` | ✅ KPI cards clicáveis (toggle filtro tabela) · filtros perfil/período · funil · crescimento · capital político · CSV + XLSX |
@@ -30,7 +30,7 @@ Sistema funcional e em produção. Terminologia "Base de Apoio" (não "campanha"
 | Super Admin | `/super-admin` | ✅ conceder/revogar acesso · role/tier · links de convite reutilizáveis |
 | Onboarding | `/onboarding` | ✅ boas-vindas + tour de features |
 | Perfil colaborador | `/colaboradores/[id]` | ✅ botão Editar funcional (abre CollaboratorDialog, router.refresh()) |
-| Cadastro público | `/cadastro` | ✅ sem auth · ?ref= rastreio · contribuições · link compartilhável pós-cadastro · embed vídeo YouTube |
+| Cadastro público | `/cadastro` | ✅ sem auth · ?ref= rastreio · contribuições · link compartilhável pós-cadastro · embed vídeo YouTube (ID: yYV-Z78sKC0 — temporário) |
 | Convite por link | `/entrar?token=X` | ✅ email-first flow · Google OAuth · completar-perfil |
 | Completar perfil | `/completar-perfil` | ✅ formulário pós-login via convite |
 | Células | `/celulas` | ✅ visualização hierárquica |
@@ -152,6 +152,20 @@ GOOGLE_CALENDAR_CLIENT_ID / CLIENT_SECRET / REDIRECT_URI / ID
 
 ## Recursos-chave
 
+### Google Calendar — sync bidirecional
+- Botão "Google Calendar" na /agenda → POST /api/google-calendar/sync
+- Push: eventos nossos sem googleCalendarEventId → criados no Google (calendarId = andrelnsantos.as@gmail.com)
+- Pull: eventos do Google não existentes no banco → importados com type="OUTRO"
+- Refresh token salvo em Settings.googleRefreshToken
+- Sync é manual (botão) — automático ainda não implementado
+
+### Agenda — visões
+- Toggle Calendário / Lista no header
+- Vista calendário: grid mensal, chips coloridos por tipo, painel lateral do dia, navegação mês anterior/próximo
+- Vista lista: próximos + passados, clicáveis
+- Modal de detalhe: data/hora, local, tipo, zona, presenças, observações, badge Google Calendar
+- Criar evento: botão "+ Novo Evento" ou "+ Criar evento neste dia" no painel do dia
+
 ### Cadastro público com rastreio
 - Link simples: `/cadastro`
 - Link com rastreio de célula (usuário logado): `/cadastro?ref=<userId>`
@@ -194,7 +208,12 @@ GOOGLE_CALENDAR_CLIENT_ID / CLIENT_SECRET / REDIRECT_URI / ID
 - [ ] **Metas:** /configuracoes → "Metas por Município" → cadastrar meta de votos/líderes por cidade
 
 ### Infraestrutura
-- [ ] Google Calendar: configurar `GOOGLE_CALENDAR_*` no Vercel + conectar com equipeandresantos@gmail.com
+- [x] Google Calendar: configurado e conectado com andrelnsantos.as@gmail.com (2026-05-09)
+  - Projeto GCP: "Calendario Andre Santos"
+  - Client ID: 375239227006-edgpcjo9o037dcs8kf4h1806vln6r9q6.apps.googleusercontent.com
+  - Vars no Vercel: GOOGLE_CALENDAR_CLIENT_ID · CLIENT_SECRET · REDIRECT_URI · ID
+  - Sync bidirecional manual via botão na /agenda
+  - [ ] Opcional: sync automático em background (a implementar se solicitado)
 
 ### Compliance futuro
 - [ ] Checklist candidatura (agosto 2026): CNPJ coligação em TODO material digital + registro SPCE
