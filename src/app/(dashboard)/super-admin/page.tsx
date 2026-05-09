@@ -392,35 +392,37 @@ export default function SuperAdminPage() {
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-2 shrink-0 flex-wrap">
-                          <Select
-                            value={uc.role}
-                            onValueChange={(v) => uc.userId && updateUser(uc.userId, { role: v })}
-                            disabled={isCurrent}
-                          >
-                            <SelectTrigger className="h-7 w-36 text-xs"><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="MEMBER">Colaborador</SelectItem>
-                              <SelectItem value="LEADER">Coordenador</SelectItem>
-                              <SelectItem value="ADMIN">Administrador</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <Select
-                            value={uc.tier ?? "APOIADOR"}
-                            onValueChange={(v) => uc.userId && updateUser(uc.userId, { tier: v })}
-                          >
-                            <SelectTrigger className="h-7 w-36 text-xs"><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="APOIADOR">Apoiador</SelectItem>
-                              <SelectItem value="ATIVISTA">Ativista</SelectItem>
-                              <SelectItem value="LIDER_CELULA">Líder de Célula</SelectItem>
-                              <SelectItem value="COORDENADOR">Coordenador</SelectItem>
-                            </SelectContent>
-                          </Select>
+                        <div className="flex items-center gap-1 w-full sm:w-auto sm:shrink-0">
+                          <div className="grid grid-cols-2 gap-1 flex-1 sm:flex sm:gap-2">
+                            <Select
+                              value={uc.role}
+                              onValueChange={(v) => uc.userId && updateUser(uc.userId, { role: v })}
+                              disabled={isCurrent}
+                            >
+                              <SelectTrigger className="h-7 w-full sm:w-36 text-xs"><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="MEMBER">Colaborador</SelectItem>
+                                <SelectItem value="LEADER">Coordenador</SelectItem>
+                                <SelectItem value="ADMIN">Administrador</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <Select
+                              value={uc.tier ?? "APOIADOR"}
+                              onValueChange={(v) => uc.userId && updateUser(uc.userId, { tier: v })}
+                            >
+                              <SelectTrigger className="h-7 w-full sm:w-36 text-xs"><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="APOIADOR">Apoiador</SelectItem>
+                                <SelectItem value="ATIVISTA">Ativista</SelectItem>
+                                <SelectItem value="LIDER_CELULA">Líder de Célula</SelectItem>
+                                <SelectItem value="COORDENADOR">Coordenador</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
                           {!isCurrent && (
                             <Button
                               size="sm" variant="ghost" onClick={() => revoke(uc)}
-                              className="h-7 w-7 p-0 text-destructive hover:bg-destructive/10"
+                              className="h-7 w-7 p-0 text-destructive hover:bg-destructive/10 shrink-0"
                               title="Revogar acesso"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
@@ -450,7 +452,7 @@ export default function SuperAdminPage() {
               <div className="glass-card rounded-2xl border border-white/[0.08] overflow-hidden">
                 <div className="divide-y divide-white/[0.05]">
                   {pending.map((uc) => (
-                    <div key={uc.id} className="flex items-center gap-3 p-4">
+                    <div key={uc.id} className="flex items-start gap-3 p-4 flex-wrap sm:flex-nowrap">
                       <div className="w-9 h-9 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0">
                         <Clock className="w-4 h-4 text-amber-400" />
                       </div>
@@ -467,7 +469,7 @@ export default function SuperAdminPage() {
                           <span className="text-[10px] text-muted-foreground/70">{fmtDate(uc.invitedAt)}</span>
                         </div>
                       </div>
-                      <div className="flex items-center gap-1 shrink-0">
+                      <div className="flex items-center gap-1 shrink-0 self-start sm:self-center">
                         {uc.pendingEmail && (
                           <a
                             href={`https://wa.me/?text=${encodeURIComponent(`Olá! Você recebeu acesso ao sistema da Base de Apoio André Santos 2026.\n\nAcesse com seu Gmail (${uc.pendingEmail}) pelo link:\n${typeof window !== "undefined" ? window.location.origin : ""}/login`)}`}
