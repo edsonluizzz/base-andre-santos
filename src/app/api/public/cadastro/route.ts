@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { name, phone, city, neighborhood, email, contributionTypes, refUserId, lgpdConsent } = body;
+    const { name, phone, city, neighborhood, email, contributionTypes, refUserId, refc, lgpdConsent } = body;
 
     if (!name?.trim()) return NextResponse.json({ error: "Nome é obrigatório" }, { status: 400 });
     if (!phone?.trim()) return NextResponse.json({ error: "WhatsApp é obrigatório" }, { status: 400 });
@@ -45,8 +45,6 @@ export async function POST(req: NextRequest) {
     if (existing) {
       return NextResponse.json({ message: "Cadastro já realizado! Entraremos em contato.", collaboratorId: existing.id }, { status: 200 });
     }
-
-    const { refUserId, refc } = body;
 
     // Valida refUserId se fornecido (usuário logado que indicou)
     let registeredById: string | null = null;
