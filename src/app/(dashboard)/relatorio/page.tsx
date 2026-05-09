@@ -511,10 +511,10 @@ export default async function RelatorioPage({
               <tr className="border-b border-white/[0.08]" style={{ background: "rgba(13,27,42,0.5)" }}>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground">Município</th>
                 {ROLE_ORDER.map((r) => (
-                  <th key={r} className="text-center px-3 py-3 text-xs font-semibold text-muted-foreground">{ROLE_LABEL_SHORT[r]}</th>
+                  <th key={r} className="text-center px-3 py-3 text-xs font-semibold text-muted-foreground hidden sm:table-cell">{ROLE_LABEL_SHORT[r]}</th>
                 ))}
                 <th className="text-center px-3 py-3 text-xs font-semibold text-muted-foreground">Ativos</th>
-                <th className="text-center px-3 py-3 text-xs font-semibold text-muted-foreground">Leads</th>
+                <th className="text-center px-3 py-3 text-xs font-semibold text-muted-foreground hidden sm:table-cell">Leads</th>
                 <th className="text-center px-3 py-3 text-xs font-semibold text-green-400/80">Confirm.</th>
               </tr>
             </thead>
@@ -530,12 +530,12 @@ export default async function RelatorioPage({
                       </div>
                     </td>
                     {ROLE_ORDER.map((r) => (
-                      <td key={r} className="text-center px-3 py-3">
+                      <td key={r} className="text-center px-3 py-3 hidden sm:table-cell">
                         {m.roles[r] ? <span className="font-semibold text-foreground">{m.roles[r]}</span> : <span className="text-muted-foreground/30">—</span>}
                       </td>
                     ))}
                     <td className="text-center px-3 py-3 font-semibold text-foreground">{m.active}</td>
-                    <td className="text-center px-3 py-3 text-amber-400">{m.leads || <span className="text-muted-foreground/30">—</span>}</td>
+                    <td className="text-center px-3 py-3 text-amber-400 hidden sm:table-cell">{m.leads || <span className="text-muted-foreground/30">—</span>}</td>
                     <td className="text-center px-3 py-3 text-green-400 font-semibold">{m.confirmados || <span className="text-muted-foreground/30">—</span>}</td>
                   </tr>
                 );
@@ -545,12 +545,12 @@ export default async function RelatorioPage({
               <tr className="border-t border-white/[0.08]" style={{ background: "rgba(13,27,42,0.5)" }}>
                 <td className="px-4 py-3 text-xs font-semibold text-muted-foreground">Total ({filteredCities.length} municípios{activeCob ? ` filtrado${filteredCities.length !== 1 ? "s" : ""}` : ""})</td>
                 {ROLE_ORDER.map((r) => (
-                  <td key={r} className="text-center px-3 py-3 text-xs font-semibold text-muted-foreground">
+                  <td key={r} className="text-center px-3 py-3 text-xs font-semibold text-muted-foreground hidden sm:table-cell">
                     {filteredCities.reduce((s, [, m]) => s + (m.roles[r] ?? 0), 0) || "—"}
                   </td>
                 ))}
                 <td className="text-center px-3 py-3 text-xs font-semibold text-foreground">{filteredCities.reduce((s, [, m]) => s + m.active, 0)}</td>
-                <td className="text-center px-3 py-3 text-xs font-semibold text-amber-400">{filteredCities.reduce((s, [, m]) => s + m.leads, 0) || "—"}</td>
+                <td className="text-center px-3 py-3 text-xs font-semibold text-amber-400 hidden sm:table-cell">{filteredCities.reduce((s, [, m]) => s + m.leads, 0) || "—"}</td>
                 <td className="text-center px-3 py-3 text-xs font-semibold text-green-400">{filteredCities.reduce((s, [, m]) => s + m.confirmados, 0) || "—"}</td>
               </tr>
             </tfoot>

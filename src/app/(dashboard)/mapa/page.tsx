@@ -238,7 +238,7 @@ export default function MapaPage() {
             {stats.negociando > 0 && <div className="h-full bg-yellow-500 transition-all" style={{ width: `${(stats.negociando / stats.total) * 100}%` }} />}
             {stats.adversario > 0 && <div className="h-full bg-red-500 transition-all" style={{ width: `${(stats.adversario / stats.total) * 100}%` }} />}
           </div>
-          <div className="flex gap-4 text-[10px] text-muted-foreground">
+          <div className="flex flex-wrap gap-3 text-[10px] text-muted-foreground">
             <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-500 inline-block" />Confirmado</span>
             <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-yellow-500 inline-block" />Negociando</span>
             <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-slate-500 inline-block" />Neutro</span>

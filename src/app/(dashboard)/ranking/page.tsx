@@ -45,57 +45,53 @@ export default function RankingPage() {
         </div>
       ) : (
         <div className="glass-card rounded-2xl border border-white/[0.08] overflow-hidden">
-          <div className="overflow-x-auto">
-            <div className="min-w-[420px]">
-              {/* Header */}
-              <div className="grid grid-cols-[1.5rem_1fr_4.5rem_4.5rem_4.5rem_4.5rem] gap-2 px-4 py-2.5 border-b border-white/[0.08] text-[11px] font-semibold text-muted-foreground uppercase tracking-wider"
-                style={{ background: "rgba(13,27,42,0.5)" }}>
-                <span>#</span>
-                <span>Líder</span>
-                <span className="text-center">Cadastros</span>
-                <span className="text-center text-green-400/80">Ativos</span>
-                <span className="text-center text-amber-400/80">Leads</span>
-                <span className="text-center">Conv.</span>
-              </div>
+          {/* Header */}
+          <div className="grid grid-cols-[1.5rem_1fr_4rem] sm:grid-cols-[1.5rem_1fr_4.5rem_4.5rem_4.5rem_4.5rem] gap-2 px-4 py-2.5 border-b border-white/[0.08] text-[11px] font-semibold text-muted-foreground uppercase tracking-wider"
+            style={{ background: "rgba(13,27,42,0.5)" }}>
+            <span>#</span>
+            <span>Líder</span>
+            <span className="text-center text-green-400/80">Ativos</span>
+            <span className="text-center hidden sm:block">Cadastros</span>
+            <span className="text-center text-amber-400/80 hidden sm:block">Leads</span>
+            <span className="text-center hidden sm:block">Conv.</span>
+          </div>
 
-              <div className="divide-y divide-white/[0.04]">
-                {leaders.map((l, i) => (
-                  <div
-                    key={l.id}
-                    className={`grid grid-cols-[1.5rem_1fr_4.5rem_4.5rem_4.5rem_4.5rem] gap-2 px-4 py-3 items-center transition-colors hover:bg-white/[0.02] ${i < 3 ? "bg-primary/[0.02]" : ""}`}
-                  >
-                    <span className="text-sm font-bold text-center">
-                      {MEDAL[i] ?? <span className="text-muted-foreground text-xs">{i + 1}</span>}
-                    </span>
+          <div className="divide-y divide-white/[0.04]">
+            {leaders.map((l, i) => (
+              <div
+                key={l.id}
+                className={`grid grid-cols-[1.5rem_1fr_4rem] sm:grid-cols-[1.5rem_1fr_4.5rem_4.5rem_4.5rem_4.5rem] gap-2 px-4 py-3 items-center transition-colors hover:bg-white/[0.02] ${i < 3 ? "bg-primary/[0.02]" : ""}`}
+              >
+                <span className="text-sm font-bold text-center">
+                  {MEDAL[i] ?? <span className="text-muted-foreground text-xs">{i + 1}</span>}
+                </span>
 
-                    <div className="flex items-center gap-2 min-w-0">
-                      <Avatar className="w-7 h-7 shrink-0">
-                        <AvatarImage src={l.image ?? ""} referrerPolicy="no-referrer" />
-                        <AvatarFallback className="bg-primary/10 text-primary text-xs">
-                          {l.name?.[0]?.toUpperCase() ?? "?"}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium text-foreground truncate">{l.name ?? "—"}</p>
-                        <p className={`text-[10px] ${TIER_COLOR[l.tier]}`}>{TIER_LABEL[l.tier]}</p>
-                      </div>
-                    </div>
-
-                    <span className="text-center text-sm font-semibold text-foreground">{l.total}</span>
-                    <div className="flex flex-col items-center gap-0.5">
-                      <span className="text-sm font-bold text-green-400">{l.active}</span>
-                      <div className="w-full h-1 rounded-full bg-white/[0.06] overflow-hidden">
-                        <div className="h-full bg-green-500/70 rounded-full" style={{ width: `${Math.min(100, (l.active / maxActive) * 100)}%` }} />
-                      </div>
-                    </div>
-                    <span className="text-center text-sm text-amber-400">{l.leads}</span>
-                    <span className={`text-center text-sm font-semibold ${l.conv >= 50 ? "text-green-400" : l.conv >= 25 ? "text-yellow-400" : "text-slate-400"}`}>
-                      {l.conv}%
-                    </span>
+                <div className="flex items-center gap-2 min-w-0">
+                  <Avatar className="w-7 h-7 shrink-0">
+                    <AvatarImage src={l.image ?? ""} referrerPolicy="no-referrer" />
+                    <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                      {l.name?.[0]?.toUpperCase() ?? "?"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">{l.name ?? "—"}</p>
+                    <p className={`text-[10px] ${TIER_COLOR[l.tier]}`}>{TIER_LABEL[l.tier]}</p>
                   </div>
-                ))}
+                </div>
+
+                <div className="flex flex-col items-center gap-0.5">
+                  <span className="text-sm font-bold text-green-400">{l.active}</span>
+                  <div className="w-full h-1 rounded-full bg-white/[0.06] overflow-hidden">
+                    <div className="h-full bg-green-500/70 rounded-full" style={{ width: `${Math.min(100, (l.active / maxActive) * 100)}%` }} />
+                  </div>
+                </div>
+                <span className="text-center text-sm font-semibold text-foreground hidden sm:block">{l.total}</span>
+                <span className="text-center text-sm text-amber-400 hidden sm:block">{l.leads}</span>
+                <span className={`text-center text-sm font-semibold hidden sm:block ${l.conv >= 50 ? "text-green-400" : l.conv >= 25 ? "text-yellow-400" : "text-slate-400"}`}>
+                  {l.conv}%
+                </span>
               </div>
-            </div>
+            ))}
           </div>
         </div>
       )}
