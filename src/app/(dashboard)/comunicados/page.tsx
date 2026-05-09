@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Megaphone, Plus, Clock, Users } from "lucide-react";
+import { Megaphone, Plus, Clock, Users, Mail, Send } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
@@ -67,8 +67,18 @@ export default function ComunicadosPage() {
       body: JSON.stringify(form),
     });
     setSaving(false);
-    if (res.ok) { setDialogOpen(false); fetchBroadcasts(); toast.success("Comunicado registrado"); }
-    else toast.error("Erro ao salvar");
+    if (res.ok) {
+      const data = await res.json();
+      const parts: string[] = [];
+      if (data.telegramSent) parts.push("Telegram");
+      if (data.emailsSent > 0) parts.push(`${data.emailsSent} e-mail${data.emailsSent !== 1 ? "s" : ""}`);
+      const detail = parts.length > 0 ? ` · ${parts.join(" + ")}` : "";
+      toast.success(`Comunicado enviado${detail}`);
+      setDialogOpen(false);
+      fetchBroadcasts();
+    } else {
+      toast.error("Erro ao enviar comunicado");
+    }
   }
 
   return (
@@ -109,6 +119,12 @@ export default function ComunicadosPage() {
                       <Users className="w-3 h-3" />
                       {audienceLabel(b.audience)}
                     </span>
+                    {b.sentCount > 0 && (
+                      <span className="text-xs flex items-center gap-1 text-green-400/80">
+                        <Mail className="w-3 h-3" />
+                        {b.sentCount} e-mail{b.sentCount !== 1 ? "s" : ""} enviado{b.sentCount !== 1 ? "s" : ""}
+                      </span>
+                    )}
                   </div>
                   <p className="text-sm text-muted-foreground mt-3 whitespace-pre-line">{b.message}</p>
                 </div>
@@ -145,10 +161,16 @@ export default function ComunicadosPage() {
               <Label>Mensagem *</Label>
               <Textarea value={form.message} onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))} rows={5} placeholder="Conteúdo do comunicado..." />
             </div>
+            {audienceCount !== null && audienceCount > 0 && (
+              <p className="text-[11px] text-muted-foreground/70 -mt-2">
+                Será enviado para o canal Telegram + e-mails cadastrados neste grupo.
+              </p>
+            )}
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
-              <Button onClick={handleSave} disabled={saving} className="bg-primary text-primary-foreground">
-                {saving ? "Salvando..." : "Registrar"}
+              <Button onClick={handleSave} disabled={saving} className="bg-primary text-primary-foreground gap-2">
+                <Send className="w-3.5 h-3.5" />
+                {saving ? "Enviando..." : "Enviar Comunicado"}
               </Button>
             </div>
           </div>

@@ -108,6 +108,12 @@ export function buildDailyDigestMessage(
   return msg;
 }
 
+export function buildBroadcastMessage(title: string, message: string): string {
+  const now     = new Date();
+  const timeStr = format(now, "dd/MM 'às' HH:mm");
+  return `📢 <b>${title}</b>\n\n${message}\n\n<i>${timeStr}</i>`;
+}
+
 export function buildEventNotification(
   action: "criado" | "atualizado" | "removido",
   event: EventLike,

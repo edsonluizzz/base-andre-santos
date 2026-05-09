@@ -23,6 +23,60 @@ const btnStyle = `
   padding:12px 24px;border-radius:10px;font-size:14px;font-weight:700;
 `;
 
+export function isEmailConfigured(): boolean {
+  return Boolean(process.env.RESEND_API_KEY);
+}
+
+// ─── Broadcast — comunicado em massa ─────────────────────────────────────────
+
+export async function sendBroadcastEmails(
+  recipients: { email: string; name: string }[],
+  title: string,
+  message: string,
+): Promise<number> {
+  const resend = getResend();
+  if (!resend || recipients.length === 0) return 0;
+
+  const safe = message
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\n/g, "<br>");
+
+  const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head><meta charset="UTF-8"></head>
+<body style="${baseStyle}">
+<p style="${tagStyle}">Comunicado — Base de Apoio 2026</p>
+<h1 style="font-size:20px;font-weight:700;color:#fff;margin:0 0 20px">${title}</h1>
+<div style="background:#0f1a2e;border-radius:8px;padding:20px;font-size:15px;line-height:1.7;color:#cbd5e1">${safe}</div>
+<p style="color:#475569;font-size:12px;margin-top:28px">Base André Santos 2026 — comunicação interna da base de apoio.</p>
+</body>
+</html>`;
+
+  const BATCH = 50;
+  let sent = 0;
+
+  for (let i = 0; i < recipients.length; i += BATCH) {
+    const batch = recipients.slice(i, i + BATCH);
+    try {
+      await resend.batch.send(
+        batch.map((r) => ({
+          from: FROM,
+          to: r.email,
+          subject: `[Comunicado] ${title}`,
+          html,
+        })),
+      );
+      sent += batch.length;
+    } catch (err) {
+      console.error("[resend] broadcast batch error:", err);
+    }
+  }
+
+  return sent;
+}
+
 // ─── Convite de acesso ao sistema ─────────────────────────────────────────────
 
 export async function sendAccessGrantedEmail({
