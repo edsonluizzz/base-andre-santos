@@ -12,8 +12,10 @@ type Step = "form" | "success";
 
 export function CadastroForm() {
   const searchParams = useSearchParams();
-  const refUserId = searchParams.get("ref") ?? "";
-  const refc = searchParams.get("refc") ?? "";
+  const refUserId  = searchParams.get("ref") ?? "";
+  const refc       = searchParams.get("refc") ?? "";
+  const sourceParam = searchParams.get("source") ?? "";
+  const eventId    = searchParams.get("event_id") ?? "";
 
   const [step, setStep] = useState<Step>("form");
   const [loading, setLoading] = useState(false);
@@ -89,7 +91,7 @@ export function CadastroForm() {
       const res = await fetch("/api/public/cadastro", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, phone, city, neighborhood, email, contributionTypes: selectedTypes, refUserId, refc, lgpdConsent }),
+        body: JSON.stringify({ name, phone, city, neighborhood, email, contributionTypes: selectedTypes, refUserId, refc, lgpdConsent, source: sourceParam || undefined, eventId: eventId || undefined }),
       });
       const data = await res.json();
       if (!res.ok && res.status !== 200) {
@@ -225,10 +227,17 @@ export function CadastroForm() {
             <h1 className="text-2xl font-bold text-white mt-1">André Santos</h1>
             <p className="text-slate-400 text-sm mt-1">Pré-candidato a Deputado Estadual · PR</p>
           </div>
-          <div className="rounded-2xl px-4 py-3" style={{ background: "rgba(212,175,55,0.08)", border: "1px solid rgba(212,175,55,0.15)" }}>
-            <p className="text-sm font-medium" style={{ color: "#d4af37" }}>Faça parte da nossa base!</p>
-            <p className="text-xs text-slate-400 mt-0.5">Cadastre-se e ajude a transformar o Paraná</p>
-          </div>
+          {sourceParam === "EVENTO" ? (
+            <div className="rounded-2xl px-4 py-3" style={{ background: "rgba(212,175,55,0.08)", border: "1px solid rgba(212,175,55,0.15)" }}>
+              <p className="text-sm font-medium" style={{ color: "#d4af37" }}>📍 Cadastro presencial</p>
+              <p className="text-xs text-slate-400 mt-0.5">Você está em um evento da Base de Apoio</p>
+            </div>
+          ) : (
+            <div className="rounded-2xl px-4 py-3" style={{ background: "rgba(212,175,55,0.08)", border: "1px solid rgba(212,175,55,0.15)" }}>
+              <p className="text-sm font-medium" style={{ color: "#d4af37" }}>Faça parte da nossa base!</p>
+              <p className="text-xs text-slate-400 mt-0.5">Cadastre-se e ajude a transformar o Paraná</p>
+            </div>
+          )}
         </div>
 
         {/* Counters */}

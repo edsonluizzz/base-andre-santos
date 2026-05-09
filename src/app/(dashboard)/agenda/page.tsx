@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   Calendar, List, MapPin, Clock, RefreshCw, Plus,
   ChevronLeft, ChevronRight, X, Users, Tag, FileText,
-  ExternalLink, ClipboardList, Search,
+  ExternalLink, ClipboardList, Search, QrCode, Copy, Check,
 } from "lucide-react";
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isSameDay, isToday, addMonths, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -63,6 +63,8 @@ export default function AgendaPage() {
   const [syncing, setSyncing]         = useState(false);
   const [attendanceOpen, setAttendanceOpen] = useState(false);
   const [attendanceEvent, setAttendanceEvent] = useState<Event | null>(null);
+  const [qrOpen, setQrOpen] = useState(false);
+  const [qrEvent, setQrEvent] = useState<Event | null>(null);
 
   const fetchEvents = useCallback(async () => {
     setLoading(true);
@@ -412,14 +414,24 @@ export default function AgendaPage() {
                 )}
               </div>
               <div className="flex flex-wrap justify-between gap-2 pt-2 border-t border-white/[0.08]">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => { setAttendanceEvent(detailEvent); setAttendanceOpen(true); setDetailEvent(null); }}
-                  className="text-xs gap-1.5"
-                >
-                  <ClipboardList className="w-3.5 h-3.5" /> Presenças
-                </Button>
+                <div className="flex gap-1.5 flex-wrap">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => { setAttendanceEvent(detailEvent); setAttendanceOpen(true); setDetailEvent(null); }}
+                    className="text-xs gap-1.5"
+                  >
+                    <ClipboardList className="w-3.5 h-3.5" /> Presenças
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => { setQrEvent(detailEvent); setQrOpen(true); setDetailEvent(null); }}
+                    className="text-xs gap-1.5"
+                  >
+                    <QrCode className="w-3.5 h-3.5" /> QR Code
+                  </Button>
+                </div>
                 <div className="flex gap-2">
                   <Button size="sm" variant="ghost" onClick={() => handleDelete(detailEvent.id, detailEvent.title)} className="text-xs text-destructive hover:text-destructive hover:bg-destructive/10">
                     Excluir
@@ -432,10 +444,20 @@ export default function AgendaPage() {
                   </Button>
                 </div>
               </div>
+
             </>
           )}
         </DialogContent>
       </Dialog>
+
+      {/* ─── QR Code modal ────────────────────────────────────────────────── */}
+      {qrEvent && (
+        <QrCodeDialog
+          event={qrEvent}
+          open={qrOpen}
+          onClose={() => { setQrOpen(false); setQrEvent(null); }}
+        />
+      )}
 
       {/* ─── Attendance modal ─────────────────────────────────────────────── */}
       {attendanceEvent && (
@@ -482,6 +504,78 @@ export default function AgendaPage() {
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+// ─── QR Code Dialog ───────────────────────────────────────────────────────────
+
+function QrCodeDialog({ event, open, onClose }: { event: Event; open: boolean; onClose: () => void }) {
+  const [copied, setCopied] = useState(false);
+
+  const cadastroUrl = typeof window !== "undefined"
+    ? `${window.location.origin}/cadastro?source=EVENTO&event_id=${event.id}`
+    : "";
+
+  const qrImageUrl = cadastroUrl
+    ? `https://api.qrserver.com/v1/create-qr-code/?size=260x260&format=png&qzone=1&data=${encodeURIComponent(cadastroUrl)}`
+    : "";
+
+  function copyLink() {
+    navigator.clipboard.writeText(cadastroUrl).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle className="text-base flex items-center gap-2">
+            <QrCode className="w-4 h-4 text-primary" /> QR Code do Evento
+          </DialogTitle>
+          <p className="text-xs text-muted-foreground truncate">{event.title}</p>
+        </DialogHeader>
+
+        <div className="flex flex-col items-center gap-4 py-2">
+          {/* QR Code image */}
+          {qrImageUrl && (
+            <div className="rounded-2xl border border-white/[0.10] overflow-hidden bg-white p-3">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={qrImageUrl}
+                alt="QR Code de cadastro"
+                width={240}
+                height={240}
+                className="block"
+              />
+            </div>
+          )}
+
+          <p className="text-xs text-muted-foreground text-center leading-relaxed">
+            Apresente este QR Code no evento para que apoiadores se cadastrem diretamente pelo celular.
+          </p>
+
+          {/* Link com botão copiar */}
+          <div className="w-full flex items-center gap-2 rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-2">
+            <p className="text-[10px] font-mono text-muted-foreground truncate flex-1">
+              /cadastro?source=EVENTO&event_id={event.id.slice(0, 12)}…
+            </p>
+            <button
+              onClick={copyLink}
+              className="shrink-0 text-muted-foreground hover:text-primary transition-colors"
+              title="Copiar link"
+            >
+              {copied ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5" />}
+            </button>
+          </div>
+        </div>
+
+        <div className="flex justify-end pt-1">
+          <Button size="sm" onClick={onClose} className="text-xs bg-primary text-primary-foreground">Fechar</Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 

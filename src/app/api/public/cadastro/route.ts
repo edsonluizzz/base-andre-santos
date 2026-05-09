@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { name, phone, city, neighborhood, email, contributionTypes, refUserId, refc, lgpdConsent } = body;
+    const { name, phone, city, neighborhood, email, contributionTypes, refUserId, refc, lgpdConsent, source: sourceParam, eventId } = body;
 
     if (!name?.trim()) return NextResponse.json({ error: "Nome é obrigatório" }, { status: 400 });
     if (!phone?.trim()) return NextResponse.json({ error: "WhatsApp é obrigatório" }, { status: 400 });
@@ -53,8 +53,9 @@ export async function POST(req: NextRequest) {
       if (refUser) registeredById = refUser.id;
     }
 
-    // Resolve source — refc indica indicação por colaborador público
-    let source = "CADASTRO_PUBLICO";
+    // Resolve source — prioridade: INDICACAO > EVENTO > CADASTRO_PUBLICO
+    const VALID_SOURCES = new Set(["EVENTO", "INSTAGRAM", "WHATSAPP"]);
+    let source = VALID_SOURCES.has(sourceParam) ? sourceParam : "CADASTRO_PUBLICO";
     if (refc) {
       const refCollab = await db.collaborator.findFirst({
         where: { id: refc, campaignId: CID },
