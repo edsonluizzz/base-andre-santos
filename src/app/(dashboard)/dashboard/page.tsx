@@ -25,7 +25,7 @@ const TIER_COLOR: Record<string, string> = {
 };
 
 const EVENT_TYPE_LABEL: Record<string, string> = {
-  REUNIAO: "Reunião", COMICIO: "Comício", PANFLETAGEM: "Panfletagem",
+  REUNIAO: "Reunião", CULTO: "Culto", PANFLETAGEM: "Panfletagem",
   TREINAMENTO: "Treinamento", VISITA: "Visita", OUTRO: "Outro",
 };
 

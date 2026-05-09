@@ -30,19 +30,19 @@ type Zone = { id: string; name: string };
 type View = "calendar" | "list";
 
 const TYPE_LABEL: Record<string, string> = {
-  REUNIAO: "Reunião", COMICIO: "Comício", PANFLETAGEM: "Panfletagem",
+  REUNIAO: "Reunião", CULTO: "Culto", PANFLETAGEM: "Panfletagem",
   TREINAMENTO: "Treinamento", VISITA: "Visita", OUTRO: "Outro",
 };
 const TYPE_COLOR: Record<string, string> = {
   REUNIAO:     "bg-blue-500/15 text-blue-400 border-blue-500/30",
-  COMICIO:     "bg-yellow-500/15 text-yellow-400 border-yellow-500/30",
+  CULTO:       "bg-yellow-500/15 text-yellow-400 border-yellow-500/30",
   PANFLETAGEM: "bg-green-500/15 text-green-400 border-green-500/30",
   TREINAMENTO: "bg-purple-500/15 text-purple-400 border-purple-500/30",
   VISITA:      "bg-orange-500/15 text-orange-400 border-orange-500/30",
   OUTRO:       "bg-slate-500/15 text-slate-400 border-slate-500/30",
 };
 const TYPE_DOT: Record<string, string> = {
-  REUNIAO: "bg-blue-400", COMICIO: "bg-yellow-400", PANFLETAGEM: "bg-green-400",
+  REUNIAO: "bg-blue-400", CULTO: "bg-yellow-400", PANFLETAGEM: "bg-green-400",
   TREINAMENTO: "bg-purple-400", VISITA: "bg-orange-400", OUTRO: "bg-slate-400",
 };
 

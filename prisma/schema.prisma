@@ -332,7 +332,7 @@ enum ZoneType {
 
 enum CampaignEventType {
   REUNIAO
-  COMICIO
+  CULTO
   PANFLETAGEM
   TREINAMENTO
   VISITA

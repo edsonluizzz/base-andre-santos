@@ -29,7 +29,7 @@ export async function sendTelegram(text: string): Promise<void> {
 // ─── Formatadores ─────────────────────────────────────────────────────────────
 
 const TYPE_EMOJI: Record<string, string> = {
-  REUNIAO: "🤝", COMICIO: "📣", PANFLETAGEM: "📋",
+  REUNIAO: "🤝", CULTO: "⛪", PANFLETAGEM: "📋",
   TREINAMENTO: "📚", VISITA: "🚗", OUTRO: "📌",
 };
 
