@@ -16,6 +16,16 @@ export async function POST() {
       select: { id: true, profile: true, supportStatus: true, status: true, contributionTypes: true },
     });
 
+    // Count PRESENT attendances per collaborator in one query
+    const attendanceCounts = await db.attendance.groupBy({
+      by: ["collaboratorId"],
+      where: { collaboratorId: { not: null }, status: "PRESENT" },
+      _count: { id: true },
+    });
+    const attendanceMap = Object.fromEntries(
+      attendanceCounts.map((a) => [a.collaboratorId!, a._count.id]),
+    );
+
     let updated = 0;
     const BATCH = 50;
     for (let i = 0; i < collaborators.length; i += BATCH) {
@@ -30,6 +40,7 @@ export async function POST() {
                 supportStatus: c.supportStatus,
                 status: c.status,
                 contributionTypes: c.contributionTypes,
+                attendanceCount: attendanceMap[c.id] ?? 0,
               }),
             },
           })

@@ -30,11 +30,13 @@ export function calcMobilizationScore(params: {
   supportStatus: string;
   status: string;
   contributionTypes: string[];
+  attendanceCount?: number;
 }): number {
   const base = PROFILE_BASE[params.profile] ?? 20;
   const sMult = STATUS_MULT[params.status] ?? 0;
   const suppMult = SUPPORT_MULT[params.supportStatus] ?? 0.5;
   const contribBonus = params.contributionTypes.length * 3;
-  const score = base * sMult * suppMult + contribBonus;
+  const attendanceBonus = Math.min(20, (params.attendanceCount ?? 0) * 2);
+  const score = base * sMult * suppMult + contribBonus + attendanceBonus;
   return Math.min(100, Math.max(0, Math.round(score)));
 }

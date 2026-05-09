@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   Calendar, List, MapPin, Clock, RefreshCw, Plus,
   ChevronLeft, ChevronRight, X, Users, Tag, FileText,
-  ExternalLink,
+  ExternalLink, ClipboardList, Search,
 } from "lucide-react";
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isSameDay, isToday, addMonths, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -61,6 +61,8 @@ export default function AgendaPage() {
   const [form, setForm]               = useState({ title: "", type: "REUNIAO", date: "", time: "09:00", location: "", notes: "", zoneId: "" });
   const [saving, setSaving]           = useState(false);
   const [syncing, setSyncing]         = useState(false);
+  const [attendanceOpen, setAttendanceOpen] = useState(false);
+  const [attendanceEvent, setAttendanceEvent] = useState<Event | null>(null);
 
   const fetchEvents = useCallback(async () => {
     setLoading(true);
@@ -409,21 +411,41 @@ export default function AgendaPage() {
                   </div>
                 )}
               </div>
-              <div className="flex justify-end gap-2 pt-2 border-t border-white/[0.08]">
-                <Button size="sm" variant="ghost" onClick={() => handleDelete(detailEvent.id, detailEvent.title)} className="text-xs text-destructive hover:text-destructive hover:bg-destructive/10">
-                  Excluir
+              <div className="flex flex-wrap justify-between gap-2 pt-2 border-t border-white/[0.08]">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => { setAttendanceEvent(detailEvent); setAttendanceOpen(true); setDetailEvent(null); }}
+                  className="text-xs gap-1.5"
+                >
+                  <ClipboardList className="w-3.5 h-3.5" /> Presenças
                 </Button>
-                <Button size="sm" variant="outline" onClick={() => openEdit(detailEvent)} className="text-xs">
-                  Editar
-                </Button>
-                <Button size="sm" onClick={() => setDetailEvent(null)} className="text-xs bg-primary text-primary-foreground">
-                  Fechar
-                </Button>
+                <div className="flex gap-2">
+                  <Button size="sm" variant="ghost" onClick={() => handleDelete(detailEvent.id, detailEvent.title)} className="text-xs text-destructive hover:text-destructive hover:bg-destructive/10">
+                    Excluir
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => openEdit(detailEvent)} className="text-xs">
+                    Editar
+                  </Button>
+                  <Button size="sm" onClick={() => setDetailEvent(null)} className="text-xs bg-primary text-primary-foreground">
+                    Fechar
+                  </Button>
+                </div>
               </div>
             </>
           )}
         </DialogContent>
       </Dialog>
+
+      {/* ─── Attendance modal ─────────────────────────────────────────────── */}
+      {attendanceEvent && (
+        <AttendanceDialog
+          event={attendanceEvent}
+          open={attendanceOpen}
+          onClose={() => { setAttendanceOpen(false); setAttendanceEvent(null); }}
+          onSaved={fetchEvents}
+        />
+      )}
 
       {/* ─── Edit / New modal ──────────────────────────────────────────────── */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
@@ -460,6 +482,204 @@ export default function AgendaPage() {
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+// ─── Attendance Dialog ────────────────────────────────────────────────────────
+
+type AttendanceStatus = "PRESENT" | "ABSENT" | "JUSTIFIED";
+
+type AttendanceEntry = {
+  collaboratorId: string;
+  status: AttendanceStatus;
+  collaborator: { id: string; name: string; city?: string | null; campaignRole: string };
+};
+
+type CollabResult = { id: string; name: string; city?: string | null; campaignRole: string };
+
+const STATUS_LABEL: Record<AttendanceStatus, string> = { PRESENT: "✓", ABSENT: "✗", JUSTIFIED: "J" };
+const STATUS_COLOR: Record<AttendanceStatus, string> = {
+  PRESENT:   "bg-green-500/20 text-green-400 border-green-500/30",
+  ABSENT:    "bg-red-500/20 text-red-400 border-red-500/30",
+  JUSTIFIED: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
+};
+
+function AttendanceDialog({
+  event, open, onClose, onSaved,
+}: { event: Event; open: boolean; onClose: () => void; onSaved: () => void }) {
+  const [entries, setEntries]         = useState<AttendanceEntry[]>([]);
+  const [search, setSearch]           = useState("");
+  const [results, setResults]         = useState<CollabResult[]>([]);
+  const [searching, setSearching]     = useState(false);
+  const [loadingData, setLoadingData] = useState(false);
+  const [saving, setSaving]           = useState(false);
+
+  useEffect(() => {
+    if (!open) { setEntries([]); setSearch(""); setResults([]); return; }
+    setLoadingData(true);
+    fetch(`/api/events/${event.id}/attendance`)
+      .then((r) => r.json())
+      .then((data: { collaboratorId: string; status: AttendanceStatus; collaborator: CollabResult }[]) => {
+        setEntries(
+          data
+            .filter((a) => a.collaborator)
+            .map((a) => ({ collaboratorId: a.collaboratorId, status: a.status, collaborator: a.collaborator })),
+        );
+      })
+      .catch(() => {})
+      .finally(() => setLoadingData(false));
+  }, [open, event.id]);
+
+  useEffect(() => {
+    if (search.length < 2) { setResults([]); return; }
+    const t = setTimeout(async () => {
+      setSearching(true);
+      try {
+        const r = await fetch(`/api/collaborators?q=${encodeURIComponent(search)}&status=ALL`);
+        if (r.ok) {
+          const data: CollabResult[] = await r.json();
+          const existing = new Set(entries.map((e) => e.collaboratorId));
+          setResults(data.filter((c) => !existing.has(c.id)).slice(0, 8));
+        }
+      } finally {
+        setSearching(false);
+      }
+    }, 300);
+    return () => clearTimeout(t);
+  }, [search, entries]);
+
+  function addCollab(c: CollabResult) {
+    setEntries((prev) => [...prev, { collaboratorId: c.id, status: "PRESENT", collaborator: c }]);
+    setSearch("");
+    setResults([]);
+  }
+
+  function setStatus(collaboratorId: string, status: AttendanceStatus) {
+    setEntries((prev) => prev.map((e) => e.collaboratorId === collaboratorId ? { ...e, status } : e));
+  }
+
+  function removeEntry(collaboratorId: string) {
+    setEntries((prev) => prev.filter((e) => e.collaboratorId !== collaboratorId));
+  }
+
+  async function handleSave() {
+    setSaving(true);
+    const res = await fetch(`/api/events/${event.id}/attendance`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ attendances: entries.map((e) => ({ collaboratorId: e.collaboratorId, status: e.status })) }),
+    });
+    setSaving(false);
+    if (res.ok) {
+      const presentCount = entries.filter((e) => e.status === "PRESENT").length;
+      toast.success(`${presentCount} presença${presentCount !== 1 ? "s" : ""} registrada${presentCount !== 1 ? "s" : ""}`);
+      onSaved();
+      onClose();
+    } else {
+      toast.error("Erro ao salvar presenças");
+    }
+  }
+
+  const presentCount = entries.filter((e) => e.status === "PRESENT").length;
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="text-base flex items-center gap-2">
+            <ClipboardList className="w-4 h-4 text-primary" /> Presenças — {event.title}
+          </DialogTitle>
+          <p className="text-xs text-muted-foreground capitalize">
+            {format(new Date(event.date), "EEEE, d 'de' MMMM 'às' HH:mm", { locale: ptBR })}
+          </p>
+        </DialogHeader>
+
+        {/* Search */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
+          <Input
+            placeholder="Buscar colaborador por nome..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-9 text-sm"
+          />
+          {(searching || results.length > 0 || (search.length >= 2 && !searching)) && (
+            <div className="absolute z-10 top-full left-0 right-0 mt-1 rounded-lg border border-border bg-card shadow-lg max-h-44 overflow-y-auto">
+              {searching && <p className="p-3 text-xs text-muted-foreground text-center">Buscando...</p>}
+              {!searching && results.map((c) => (
+                <button
+                  key={c.id}
+                  onClick={() => addCollab(c)}
+                  className="w-full text-left px-3 py-2.5 hover:bg-secondary transition-colors border-b border-border last:border-0"
+                >
+                  <span className="text-sm font-medium text-foreground">{c.name}</span>
+                  {c.city && <span className="ml-2 text-xs text-muted-foreground">{c.city}</span>}
+                </button>
+              ))}
+              {!searching && results.length === 0 && search.length >= 2 && (
+                <p className="p-3 text-xs text-muted-foreground text-center">Nenhum resultado</p>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* List */}
+        <div className="max-h-60 overflow-y-auto space-y-1.5 pr-0.5">
+          {loadingData && (
+            <div className="flex items-center justify-center py-8">
+              <RefreshCw className="w-4 h-4 animate-spin text-muted-foreground" />
+            </div>
+          )}
+          {!loadingData && entries.length === 0 && (
+            <div className="text-center py-8">
+              <Users className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
+              <p className="text-xs text-muted-foreground">Nenhum colaborador registrado.</p>
+              <p className="text-xs text-muted-foreground">Use a busca acima para adicionar.</p>
+            </div>
+          )}
+          {entries.map((e) => (
+            <div key={e.collaboratorId} className="flex items-center gap-2 p-2.5 rounded-lg bg-white/[0.03] border border-white/[0.06]">
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-foreground truncate">{e.collaborator.name}</p>
+                {e.collaborator.city && <p className="text-[10px] text-muted-foreground">{e.collaborator.city}</p>}
+              </div>
+              <div className="flex gap-1 shrink-0">
+                {(["PRESENT", "ABSENT", "JUSTIFIED"] as const).map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => setStatus(e.collaboratorId, s)}
+                    className={cn(
+                      "w-7 h-7 rounded text-xs font-bold border transition-all",
+                      e.status === s ? STATUS_COLOR[s] : "bg-secondary text-muted-foreground border-transparent hover:border-border",
+                    )}
+                    title={s === "PRESENT" ? "Presente" : s === "ABSENT" ? "Ausente" : "Justificado"}
+                  >
+                    {STATUS_LABEL[s]}
+                  </button>
+                ))}
+              </div>
+              <button onClick={() => removeEntry(e.collaboratorId)} className="text-muted-foreground/50 hover:text-muted-foreground transition-colors shrink-0">
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ))}
+        </div>
+
+        {/* Footer */}
+        <div className="flex items-center justify-between pt-3 border-t border-white/[0.08]">
+          <p className="text-xs text-muted-foreground">
+            <span className="text-green-400 font-semibold">{presentCount}</span> presente{presentCount !== 1 ? "s" : ""}{" "}
+            de {entries.length} registrado{entries.length !== 1 ? "s" : ""}
+          </p>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={onClose} className="text-xs">Cancelar</Button>
+            <Button size="sm" onClick={handleSave} disabled={saving || loadingData} className="text-xs bg-primary text-primary-foreground">
+              {saving ? "Salvando..." : "Salvar"}
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
