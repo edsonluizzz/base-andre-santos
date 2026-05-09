@@ -2,19 +2,25 @@
 
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { Star, CheckCircle2, ChevronRight, Users, MapPin, Smartphone } from "lucide-react";
+import { Star, CheckCircle2, ChevronRight, Users, MapPin, Smartphone, Copy, Check, Share2 } from "lucide-react";
 import { CONTRIBUTION_OPTIONS } from "@/lib/contribution";
+
+// Substitua pelo ID real do vídeo do YouTube do André
+const YT_VIDEO_ID = "COLE_O_ID_AQUI";
 
 type Step = "form" | "success";
 
 export function CadastroForm() {
   const searchParams = useSearchParams();
   const refUserId = searchParams.get("ref") ?? "";
+  const refc = searchParams.get("refc") ?? "";
 
   const [step, setStep] = useState<Step>("form");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [stats, setStats] = useState({ apoiadores: 0, municipios: 0, grupos: 0 });
+  const [collaboratorId, setCollaboratorId] = useState("");
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     fetch("/api/public/stats")
@@ -83,13 +89,14 @@ export function CadastroForm() {
       const res = await fetch("/api/public/cadastro", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, phone, city, neighborhood, email, contributionTypes: selectedTypes, refUserId, lgpdConsent }),
+        body: JSON.stringify({ name, phone, city, neighborhood, email, contributionTypes: selectedTypes, refUserId, refc, lgpdConsent }),
       });
       const data = await res.json();
       if (!res.ok && res.status !== 200) {
         setError(data.error ?? "Erro ao cadastrar. Tente novamente.");
         return;
       }
+      if (data.collaboratorId) setCollaboratorId(data.collaboratorId);
       setStep("success");
     } catch {
       setError("Erro de conexão. Tente novamente.");
@@ -100,32 +107,101 @@ export function CadastroForm() {
 
   function resetForm() {
     setStep("form");
-    setName(""); setPhone(""); setCep(""); setCity(""); setNeighborhood(""); setEmail(""); setSelectedTypes([]); setLgpdConsent(false); setCepError("");
+    setName(""); setPhone(""); setCep(""); setCity(""); setNeighborhood(""); setEmail(""); setSelectedTypes([]); setLgpdConsent(false); setCepError(""); setCollaboratorId(""); setCopied(false);
   }
+
+  const shareUrl = collaboratorId
+    ? `${typeof window !== "undefined" ? window.location.origin : ""}/cadastro?refc=${collaboratorId}`
+    : "";
+
+  async function copyLink() {
+    if (!shareUrl) return;
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    } catch {
+      // fallback
+    }
+  }
+
+  const waShareUrl = shareUrl
+    ? `https://wa.me/?text=${encodeURIComponent(`Apoiei André Santos para Deputado Estadual! Faça seu cadastro também: ${shareUrl}`)}`
+    : "";
 
   if (step === "success") {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4" style={{ background: "#0a1220", backgroundImage: "radial-gradient(ellipse 80% 50% at 50% -10%, #1a2f4e 0%, #0a1220 65%)" }}>
-        <div className="w-full max-w-sm text-center space-y-6">
-          <div className="flex justify-center">
-            <div className="w-20 h-20 rounded-full flex items-center justify-center" style={{ background: "rgba(212,175,55,0.15)", border: "1px solid rgba(212,175,55,0.3)" }}>
-              <CheckCircle2 className="w-10 h-10" style={{ color: "#d4af37" }} />
+      <div className="min-h-screen p-4 pb-10" style={{ background: "#0a1220", backgroundImage: "radial-gradient(ellipse 80% 50% at 50% -10%, #1a2f4e 0%, #0a1220 65%)" }}>
+        <div className="max-w-sm mx-auto pt-8 space-y-6">
+
+          {/* Header de sucesso */}
+          <div className="text-center space-y-3">
+            <div className="flex justify-center">
+              <div className="w-20 h-20 rounded-full flex items-center justify-center" style={{ background: "rgba(212,175,55,0.15)", border: "1px solid rgba(212,175,55,0.3)" }}>
+                <CheckCircle2 className="w-10 h-10" style={{ color: "#d4af37" }} />
+              </div>
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-white">Cadastro realizado!</h1>
+              <p className="text-slate-400 mt-2 leading-relaxed text-sm">
+                Obrigado por apoiar André Santos.<br />
+                Nossa equipe entrará em contato pelo WhatsApp em breve.
+              </p>
             </div>
           </div>
-          <div>
-            <h1 className="text-2xl font-bold text-white">Cadastro realizado!</h1>
-            <p className="text-slate-400 mt-2 leading-relaxed">
-              Obrigado por apoiar André Santos.<br />
-              Nossa equipe entrará em contato pelo WhatsApp em breve.
-            </p>
-          </div>
-          <div className="rounded-2xl px-4 py-3 text-sm text-slate-400 space-y-1" style={{ background: "rgba(13,27,42,0.70)", border: "1px solid rgba(255,255,255,0.07)" }}>
-            <p className="font-medium text-white">Enquanto isso, você pode:</p>
-            <p>• Compartilhar este cadastro com amigos</p>
-            <p>• Seguir André Santos nas redes sociais</p>
-            <p>• Indicar outras pessoas da sua região</p>
-          </div>
-          <button onClick={resetForm} className="text-sm underline underline-offset-2" style={{ color: "rgba(212,175,55,0.7)" }}>
+
+          {/* Vídeo do André */}
+          {YT_VIDEO_ID && YT_VIDEO_ID !== "COLE_O_ID_AQUI" && (
+            <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid rgba(212,175,55,0.2)" }}>
+              <iframe
+                src={`https://www.youtube-nocookie.com/embed/${YT_VIDEO_ID}?autoplay=1&rel=0&modestbranding=1`}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                className="w-full aspect-video"
+                title="André Santos — Mensagem"
+              />
+            </div>
+          )}
+
+          {/* Link compartilhável */}
+          {shareUrl && (
+            <div className="rounded-2xl p-4 space-y-3" style={{ background: "rgba(212,175,55,0.06)", border: "1px solid rgba(212,175,55,0.2)" }}>
+              <div className="flex items-center gap-2">
+                <Share2 className="w-4 h-4 shrink-0" style={{ color: "#d4af37" }} />
+                <p className="text-sm font-medium" style={{ color: "#d4af37" }}>Indique para sua família!</p>
+              </div>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                Compartilhe seu link personalizado. Cada cadastro feito por ele fica vinculado a você.
+              </p>
+              <div className="rounded-xl px-3 py-2 flex items-center gap-2" style={{ background: "rgba(13,27,42,0.8)", border: "1px solid rgba(255,255,255,0.07)" }}>
+                <span className="text-xs text-slate-400 truncate flex-1 font-mono">{shareUrl}</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={copyLink}
+                  className="flex items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-medium transition-all active:scale-95"
+                  style={{ background: copied ? "rgba(34,197,94,0.15)" : "rgba(212,175,55,0.12)", border: `1px solid ${copied ? "rgba(34,197,94,0.3)" : "rgba(212,175,55,0.3)"}`, color: copied ? "#22c55e" : "#d4af37" }}
+                >
+                  {copied ? <><Check className="w-3.5 h-3.5" /> Copiado!</> : <><Copy className="w-3.5 h-3.5" /> Copiar link</>}
+                </button>
+                <a
+                  href={waShareUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-medium transition-all active:scale-95"
+                  style={{ background: "rgba(37,211,102,0.12)", border: "1px solid rgba(37,211,102,0.3)", color: "#25d366" }}
+                >
+                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+                    <path d="M12 0C5.373 0 0 5.373 0 12c0 2.121.553 4.112 1.52 5.843L0 24l6.335-1.482A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.006-1.37l-.36-.214-3.727.872.936-3.625-.235-.373A9.818 9.818 0 012.182 12C2.182 6.57 6.57 2.182 12 2.182S21.818 6.57 21.818 12 17.43 21.818 12 21.818z"/>
+                  </svg>
+                  WhatsApp
+                </a>
+              </div>
+            </div>
+          )}
+
+          <button onClick={resetForm} className="w-full text-sm underline underline-offset-2 py-2" style={{ color: "rgba(212,175,55,0.6)" }}>
             Cadastrar outra pessoa
           </button>
         </div>

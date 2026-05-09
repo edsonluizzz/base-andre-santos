@@ -40,19 +40,32 @@ export async function POST(req: NextRequest) {
 
     const existing = await db.collaborator.findFirst({
       where: { campaignId: CID, phone: { contains: cleanPhone.slice(-8) } },
+      select: { id: true },
     });
     if (existing) {
-      return NextResponse.json({ message: "Cadastro já realizado! Entraremos em contato." }, { status: 200 });
+      return NextResponse.json({ message: "Cadastro já realizado! Entraremos em contato.", collaboratorId: existing.id }, { status: 200 });
     }
 
-    // Valida refUserId se fornecido
+    const { refUserId, refc } = body;
+
+    // Valida refUserId se fornecido (usuário logado que indicou)
     let registeredById: string | null = null;
     if (refUserId) {
       const refUser = await db.user.findUnique({ where: { id: refUserId }, select: { id: true } });
       if (refUser) registeredById = refUser.id;
     }
 
-    await db.collaborator.create({
+    // Resolve source — refc indica indicação por colaborador público
+    let source = "CADASTRO_PUBLICO";
+    if (refc) {
+      const refCollab = await db.collaborator.findFirst({
+        where: { id: refc, campaignId: CID },
+        select: { id: true },
+      });
+      if (refCollab) source = "INDICACAO";
+    }
+
+    const created = await db.collaborator.create({
       data: {
         campaignId: CID,
         name: name.trim(),
@@ -62,7 +75,7 @@ export async function POST(req: NextRequest) {
         neighborhood: neighborhood?.trim() || null,
         campaignRole: "VOLUNTARIO",
         status: "LEAD",
-        source: "CADASTRO_PUBLICO",
+        source,
         contributionTypes: Array.isArray(contributionTypes) ? contributionTypes : [],
         registeredById,
         lgpdConsent: true,
@@ -99,7 +112,7 @@ export async function POST(req: NextRequest) {
       }).catch(() => {});
     }
 
-    return NextResponse.json({ message: "Cadastro realizado com sucesso!" }, { status: 201 });
+    return NextResponse.json({ message: "Cadastro realizado com sucesso!", collaboratorId: created.id }, { status: 201 });
   } catch (err) {
     console.error("[public/cadastro POST]", err);
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });
