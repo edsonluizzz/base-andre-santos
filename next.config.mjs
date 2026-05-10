@@ -1,4 +1,5 @@
 /** @type {import("next").NextConfig} */
+// build: 2026-05-10
 const nextConfig = {
   typescript: { ignoreBuildErrors: true },
   eslint: { ignoreDuringBuilds: true },
