@@ -1,8 +1,10 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { redirect } from "next/navigation";
-import { Target, TrendingUp, Users, CheckCircle2, AlertTriangle, MapPin } from "lucide-react";
+import { Target, TrendingUp, Users, CheckCircle2, AlertTriangle, MapPin, Clock } from "lucide-react";
 import Link from "next/link";
+import { addWeeks, format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 const CID = "andre-santos-2026";
 
@@ -11,11 +13,19 @@ export default async function MetasPage() {
   const role = (session?.user as { role?: string })?.role ?? "MEMBER";
   if (!["LEADER", "ADMIN"].includes(role)) redirect("/dashboard");
 
-  const [goals, cityRaw] = await Promise.all([
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+  const [goals, cityRaw, recentGrowthRaw] = await Promise.all([
     db.municipalityGoal.findMany({ where: { campaignId: CID }, orderBy: { city: "asc" } }),
     db.collaborator.findMany({
       where: { campaignId: CID, status: "ACTIVE", city: { not: null } },
       select: { city: true, supportStatus: true, campaignRole: true },
+    }),
+    db.collaborator.groupBy({
+      by: ["city"],
+      where: { campaignId: CID, status: "ACTIVE", createdAt: { gte: thirtyDaysAgo }, city: { not: null } },
+      _count: { id: true },
     }),
   ]);
 
@@ -30,6 +40,27 @@ export default async function MetasPage() {
     if (["COORD_GERAL", "COORD_REGIONAL", "LIDER_MUNICIPAL", "LIDER_BAIRRO"].includes(c.campaignRole)) {
       cityAgg[city].hasLeader = true;
     }
+  }
+
+  // Crescimento semanal médio (últimos 30 dias / 4,3 semanas) por cidade
+  const weeklyGrowthMap = Object.fromEntries(
+    recentGrowthRaw.map((r) => [r.city!, +(r._count.id / 4.3).toFixed(1)])
+  );
+
+  // Projeção por cidade: semanas até atingir targetVotes com ativos atuais
+  function projection(city: string, targetVotes: number): { label: string; color: string } {
+    const current = cityAgg[city]?.ativos ?? 0;
+    const remaining = targetVotes - current;
+    if (remaining <= 0) return { label: "Meta atingida!", color: "text-green-400" };
+    const rate = weeklyGrowthMap[city] ?? 0;
+    if (rate <= 0) return { label: "Sem crescimento", color: "text-red-400/70" };
+    const weeks = Math.ceil(remaining / rate);
+    const date = addWeeks(new Date(), weeks);
+    const label = weeks <= 4
+      ? `~${weeks} sem. (${format(date, "dd/MM", { locale: ptBR })})`
+      : `~${Math.ceil(weeks / 4)} meses (${format(date, "MM/yyyy", { locale: ptBR })})`;
+    const color = weeks <= 8 ? "text-green-400" : weeks <= 20 ? "text-amber-400" : "text-red-400/80";
+    return { label, color };
   }
 
   const totalGoalVotes = goals.reduce((s, g) => s + g.targetVotes, 0);
@@ -49,12 +80,18 @@ export default async function MetasPage() {
       </div>
 
       {/* KPIs globais */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         {[
           { label: "Municípios com meta", value: goals.length, icon: Target, color: "text-primary" },
           { label: "Meta total de votos", value: totalGoalVotes.toLocaleString("pt-BR"), icon: TrendingUp, color: "text-blue-400" },
           { label: "Confirmados agora", value: totalConfirmados, icon: CheckCircle2, color: "text-green-400" },
           { label: "Cidades com liderança", value: citiesWithLeader, icon: Users, color: "text-purple-400" },
+          {
+            label: "Crescendo (últimos 30d)",
+            value: recentGrowthRaw.filter((r) => r._count.id > 0).length,
+            icon: Clock,
+            color: "text-amber-400",
+          },
         ].map((k) => (
           <div key={k.label} className="glass-card rounded-2xl p-5 border border-white/[0.08]">
             <div className="flex items-center justify-between mb-3">
@@ -108,7 +145,7 @@ export default async function MetasPage() {
                       <p className="text-[10px] text-muted-foreground">{real.ativos} ativo{real.ativos !== 1 ? "s" : ""} · {real.hasLeader ? "com liderança" : "sem liderança"}</p>
                     </div>
                   </div>
-                  <div className="space-y-1">
+                  <div className="space-y-1.5">
                     <div className="flex justify-between text-[10px] text-muted-foreground">
                       <span>Confirmados vs meta de votos</span>
                       <span className={textColor}>{votePct}%</span>
@@ -116,6 +153,20 @@ export default async function MetasPage() {
                     <div className="h-1.5 bg-white/[0.06] rounded-full overflow-hidden">
                       <div className={`h-full ${barColor} rounded-full transition-all`} style={{ width: `${votePct}%` }} />
                     </div>
+                    {/* Projeção */}
+                    {(() => {
+                      const proj = projection(g.city, g.targetVotes);
+                      const rate = weeklyGrowthMap[g.city] ?? 0;
+                      return (
+                        <div className="flex items-center justify-between text-[10px]">
+                          <span className="text-muted-foreground/60 flex items-center gap-1">
+                            <Clock className="w-2.5 h-2.5" />
+                            {rate > 0 ? `+${rate.toFixed(1)}/sem` : "sem atividade"}
+                          </span>
+                          <span className={proj.color}>{proj.label}</span>
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
               );
