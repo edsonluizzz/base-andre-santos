@@ -4,17 +4,28 @@ import { db } from "@/lib/db";
 
 const CID = "andre-santos-2026";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+    const all = req.nextUrl.searchParams.get("all") === "true" && session.user.role === "ADMIN";
+
     const tasks = await db.task.findMany({
-      where: { campaignId: CID, assignedToId: session.user.id },
+      where: { campaignId: CID, ...(all ? {} : { assignedToId: session.user.id }) },
       orderBy: [{ status: "asc" }, { priority: "desc" }, { dueDate: "asc" }],
     });
 
-    return NextResponse.json(tasks);
+    if (!all) return NextResponse.json(tasks);
+
+    // Para admin: enriquece com nome do usuário atribuído
+    const userIds = [...new Set(tasks.map((t) => t.assignedToId))];
+    const users = userIds.length > 0
+      ? await db.user.findMany({ where: { id: { in: userIds } }, select: { id: true, name: true, email: true } })
+      : [];
+    const userMap = Object.fromEntries(users.map((u) => [u.id, { name: u.name, email: u.email }]));
+
+    return NextResponse.json(tasks.map((t) => ({ ...t, assignedTo: userMap[t.assignedToId] ?? null })));
   } catch (err) {
     console.error("[tasks GET]", err);
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });

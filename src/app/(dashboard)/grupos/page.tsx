@@ -146,6 +146,18 @@ export default function GruposPage() {
     else toast.error("Erro ao excluir");
   }
 
+  async function quickAssignZone(groupId: string, zoneId: string) {
+    const g = groups.find((x) => x.id === groupId);
+    if (!g) return;
+    const res = await fetch(`/api/groups/${groupId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: g.name, inviteLink: g.inviteLink ?? null, description: g.description ?? null, zoneId }),
+    });
+    if (res.ok) { fetchGroups(); toast.success("Zona atribuída!"); }
+    else toast.error("Erro ao atribuir zona");
+  }
+
   function copyLink(link: string) {
     navigator.clipboard.writeText(link);
     toast.success("Link copiado!");
@@ -215,6 +227,20 @@ export default function GruposPage() {
                 </span>
               </div>
               {g.description && <p className="text-xs text-muted-foreground line-clamp-2">{g.description}</p>}
+
+              {/* Quick zone assign — só para grupos sem zona */}
+              {!g.zoneId && zones.length > 0 && (
+                <Select onValueChange={(v) => quickAssignZone(g.id, v)}>
+                  <SelectTrigger className="h-8 text-xs w-full border-amber-500/30 text-amber-400">
+                    <MapPin className="w-3 h-3 mr-1.5 shrink-0" />
+                    <SelectValue placeholder="Atribuir zona..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {zones.map((z) => <SelectItem key={z.id} value={z.id}>{z.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              )}
+
               <div className="flex gap-2 flex-wrap">
                 {g.inviteLink && (
                   <>
