@@ -2,11 +2,14 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Phone, MapPin, Mail, Calendar, Star, UserCheck, ShieldCheck, ShieldAlert, Monitor } from "lucide-react";
+import { ArrowLeft, Phone, MapPin, Mail, Calendar, Star, UserCheck, ShieldCheck, ShieldAlert, Monitor, Zap, Radio, PhoneCall } from "lucide-react";
 import { InviteToSystem } from "@/components/collaborators/invite-to-system";
 import { EditCollaboratorButton } from "@/components/collaborators/edit-collaborator-button";
 import { CONTRIBUTION_OPTIONS, TIER_LABEL } from "@/lib/contribution";
 import { ROLE_LABEL, PROFILE_LABEL, STATUS_LABEL } from "@/lib/labels";
+import { calcMobilizationScore } from "@/lib/mobilization";
+import { differenceInDays, format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 const CID = "andre-santos-2026";
 
@@ -33,13 +36,22 @@ export default async function CollaboratorProfilePage({ params }: { params: { id
     include: {
       zones:          { include: { zone: true } },
       whatsappGroups: { include: { group: true } },
-      attendances:    { include: { event: { select: { title: true, date: true, type: true } } }, orderBy: { event: { date: "desc" } }, take: 5 },
+      attendances:    { include: { event: { select: { title: true, date: true, type: true } } }, orderBy: { event: { date: "desc" } } },
       registeredBy:   { select: { name: true, email: true } },
       user:           { select: { id: true, name: true, email: true, userCampaigns: { where: { campaignId: CID }, select: { tier: true, role: true } } } },
     },
   });
 
   if (!collaborator) notFound();
+
+  const attendanceCount = collaborator.attendances.filter((a) => a.status === "PRESENT").length;
+  const computedScore = calcMobilizationScore({
+    profile: collaborator.profile,
+    supportStatus: collaborator.supportStatus,
+    status: collaborator.status,
+    contributionTypes: collaborator.contributionTypes,
+    attendanceCount,
+  });
 
   const tier = collaborator.user?.userCampaigns?.[0]?.tier;
   const whatsappHref = collaborator.phone
@@ -100,6 +112,32 @@ export default async function CollaboratorProfilePage({ params }: { params: { id
             </span>
           </div>
         )}
+
+        {/* Canal, fonte e último contato */}
+        <div className="grid sm:grid-cols-3 gap-2 pt-1 border-t border-white/[0.06]">
+          {collaborator.channel && (
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Radio className="w-3.5 h-3.5 shrink-0" />
+              <span>Canal: <span className="text-foreground">{collaborator.channel}</span></span>
+            </div>
+          )}
+          {collaborator.source && (
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Zap className="w-3.5 h-3.5 shrink-0" />
+              <span>Fonte: <span className="text-foreground">{collaborator.source.replace("_", " ")}</span></span>
+            </div>
+          )}
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <PhoneCall className="w-3.5 h-3.5 shrink-0" />
+            {collaborator.lastContactedAt ? (
+              <span>Contato: <span className={differenceInDays(new Date(), new Date(collaborator.lastContactedAt)) > 30 ? "text-amber-400" : "text-green-400"}>
+                {differenceInDays(new Date(), new Date(collaborator.lastContactedAt)) === 0 ? "hoje" : `${differenceInDays(new Date(), new Date(collaborator.lastContactedAt))}d atrás`}
+              </span></span>
+            ) : (
+              <span className="text-red-400/70">Nunca contatado</span>
+            )}
+          </div>
+        </div>
 
         {collaborator.notes && (
           <div className="pt-1 border-t border-white/[0.06]">
@@ -193,24 +231,56 @@ export default async function CollaboratorProfilePage({ params }: { params: { id
         </div>
       )}
 
-      {/* Presenças recentes */}
+      {/* Score de mobilização explicado */}
+      {isAdmin && (
+        <div className="glass-card rounded-2xl p-6 border border-white/[0.08]">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
+              <Zap className="w-4 h-4 text-primary" /> Score de Mobilização
+            </h2>
+            <span className="text-2xl font-bold text-primary">{computedScore}<span className="text-xs text-muted-foreground font-normal">/100</span></span>
+          </div>
+          <div className="h-2 bg-white/[0.06] rounded-full mb-4">
+            <div className="h-full bg-primary/60 rounded-full" style={{ width: `${computedScore}%` }} />
+          </div>
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            {[
+              { label: "Perfil", detail: PROFILE_LABEL[collaborator.profile] },
+              { label: "Status", detail: STATUS_LABEL[collaborator.status] },
+              { label: "Apoio", detail: SUPPORT_LABEL[collaborator.supportStatus]?.label ?? collaborator.supportStatus },
+              { label: "Contribuições", detail: `${collaborator.contributionTypes.length} tipo${collaborator.contributionTypes.length !== 1 ? "s" : ""} (+${collaborator.contributionTypes.length * 3} pts)` },
+              { label: "Presenças", detail: `${attendanceCount} evento${attendanceCount !== 1 ? "s" : ""} (+${Math.min(20, attendanceCount * 2)} pts)` },
+            ].map(({ label, detail }) => (
+              <div key={label} className="flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-white/[0.03]">
+                <span className="text-muted-foreground">{label}</span>
+                <span className="text-foreground font-medium truncate ml-2">{detail}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Presenças em eventos */}
       {collaborator.attendances.length > 0 && (
         <div className="glass-card rounded-2xl p-6 border border-white/[0.08]">
-          <h2 className="text-sm font-semibold text-foreground mb-3">Eventos Recentes</h2>
-          <div className="space-y-2">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-semibold text-foreground">Eventos</h2>
+            <span className="text-xs text-muted-foreground">{attendanceCount} presença{attendanceCount !== 1 ? "s" : ""} confirmada{attendanceCount !== 1 ? "s" : ""}</span>
+          </div>
+          <div className="space-y-2 max-h-64 overflow-y-auto">
             {collaborator.attendances.map((a) => (
               <div key={a.id} className="flex items-center justify-between text-sm">
                 <span className="text-foreground truncate">{a.event.title}</span>
                 <div className="flex items-center gap-3 shrink-0 ml-3">
                   <span className="text-xs text-muted-foreground">
-                    {new Date(a.event.date).toLocaleDateString("pt-BR")}
+                    {format(new Date(a.event.date), "dd/MM/yy", { locale: ptBR })}
                   </span>
                   <span className={`text-[10px] px-2 py-0.5 rounded-full border ${
-                    a.status === "PRESENT" ? "bg-green-500/15 text-green-400 border-green-500/30" :
+                    a.status === "PRESENT"   ? "bg-green-500/15 text-green-400 border-green-500/30" :
                     a.status === "JUSTIFIED" ? "bg-blue-500/15 text-blue-400 border-blue-500/30" :
                     "bg-red-500/10 text-red-400 border-red-500/20"
                   }`}>
-                    {a.status === "PRESENT" ? "Presente" : a.status === "JUSTIFIED" ? "Justificado" : "Ausente"}
+                    {a.status === "PRESENT" ? "✓" : a.status === "JUSTIFIED" ? "J" : "✗"}
                   </span>
                 </div>
               </div>
