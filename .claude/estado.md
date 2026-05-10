@@ -1,6 +1,6 @@
 # Estado — Base André Santos
 
-**Última atualização:** 2026-05-09 (Telegram bot · mobile UI sprint · agenda calendário responsivo · cadastro link compartilhável + YouTube · planejamento colapsa itens concluídos)
+**Última atualização:** 2026-05-10 (Sprint A+B+C autônomo: presença em eventos · broadcast real · pipeline leads · QR code · Telegram interativo · velocidade municípios · tarefas · projeção · perfil completo)
 **GitHub:** https://github.com/edsonluizzz/base-andre-santos
 **Deploy:** Vercel (ver domínio em vercel.com → projeto → aba Domains)
 
@@ -17,6 +17,7 @@ Sistema funcional e em produção. Terminologia "Base de Apoio" (não "campanha"
 | Módulo | Rota | Status |
 |--------|------|--------|
 | Planejamento | `/planejamento` | ✅ ADMIN only · análise STRIDE × sistema · GAPs dinâmicos via $queryRaw |
+| Tarefas | `/minha-celula` (seção) | ✅ Task model · CRUD API · checkbox · prazo colorido · prioridade |
 | Dashboard | `/dashboard` | ✅ com card "Minha Célula" + cobertura por município |
 | Colaboradores | `/colaboradores` | ✅ CSV import · seleção em massa · bulk status · bulk supportStatus |
 | Mapa de Apoio | `/mapa` | ✅ choropleth PR · zoom/pan · tooltip hover · cards clicáveis por status de apoio |
@@ -229,7 +230,8 @@ Revisados em iPhone 13 Pro (390×844px). Correções aplicadas:
 
 ### Ações manuais do admin
 - [ ] **YouTube:** substituir `YT_VIDEO_ID = "yYV-Z78sKC0"` pelo ID definitivo em `src/app/cadastro/cadastro-form.tsx:9`
-- [x] **Telegram webhook:** registrado em 2026-05-09 — comando /novo ativo no canal
+- [x] **Telegram webhook:** registrado e funcional — /lista /stats /municipio /ajuda /novo ativos
+- [x] **Telegram fix:** URL sem barra dupla + `/api/telegram/*` liberado no middleware auth
 - [ ] **GAP 7:** /grupos → editar grupos com borda âmbar → selecionar zona (meta ≥ 70%)
 - [ ] **Scores:** /configuracoes → "Recalcular scores agora" (após popular colaboradores)
 - [ ] **Metas:** /configuracoes → "Metas por Município" → cadastrar meta de votos/líderes por cidade
@@ -266,6 +268,26 @@ Revisados em iPhone 13 Pro (390×844px). Correções aplicadas:
 - [x] P1-B + P1-C: já estavam implementados (validate → { ok: true }, pre-auth → rate limit 10/min)
 - [x] /planejamento: correlação STRIDE×Sistema atualizada (2 linhas "parcial"→"existe", 2 linhas novas)
 - [x] /planejamento: Cenários 2 e 3 atualizados — sistema suporta completamente
+
+## Sprint 2026-05-10 — Auditoria e Melhorias (concluído)
+
+### Sprint A — Fechar loops críticos
+- [x] **Presença em eventos**: GET/POST `/api/events/[id]/attendance` · dialog com busca, toggle P/A/J · mobilizationScore atualizado (+2pts/presença, máx +20)
+- [x] **Broadcast funcional**: `sendBroadcastEmails()` via Resend batch · `buildBroadcastMessage()` Telegram · `sentCount` real · botão "Enviar Comunicado" com stats no toast
+- [x] **Pipeline de leads**: campo `lastContactedAt` no schema · `POST /api/collaborators/[id]/contact` · banner amber 30d+ na /colaboradores · "Marcar contato hoje" · auto-notifica líder da zona municipal
+- [x] **UI duplicatas**: já existia completa no super-admin (falso negativo na auditoria)
+- [x] **Segurança**: já estava corrigida — `/pre-auth` com rate limit, `/validate` retorna só `{ ok: true }`, `/bulk` com whitelist, `/admin/users` com groupBy
+
+### Sprint B — Operações de campo
+- [x] **QR Code de evento**: botão no modal de detalhe → QrCodeDialog · `api.qrserver.com` sem dependência · `/cadastro?source=EVENTO&event_id=X` · banner "Cadastro presencial"
+- [x] **Telegram interativo**: `/lista` (agenda 7d) · `/stats` (resumo base) · `/municipio <cidade>` (cobertura) · `/ajuda` · dispatch pattern refatorado
+- [x] **Fix webhook Telegram**: POST JSON correto (replace GET querystring) · `drop_pending_updates` · remove barra dupla APP_URL · liberar `/api/telegram/*` no middleware auth
+- [x] **Velocidade por município**: `VelocityPanel` Server Component com Suspense · top 6 crescendo + estagnadas (0 novos esta semana) · delta vs semana anterior
+- [x] **Tarefas para líderes**: modelo `Task` (title, dueDate, priority, status) + enums · GET/POST/PATCH/DELETE `/api/tasks` · seção "Minhas Tarefas" em /minha-celula com checkbox, prazo colorido, modal criar
+
+### Sprint C — Inteligência estratégica
+- [x] **Projeção de crescimento**: `/metas` com `weeklyGrowthMap` (últimos 30d / 4,3 sem) · `projection()` com data estimada e cor · taxa "+X/sem" por cidade · KPI "Crescendo"
+- [x] **Perfil completo do colaborador**: score de mobilização com breakdown (5 componentes) · canal/fonte/lastContactedAt · histórico completo de eventos com contagem de presenças
 
 ## Próximo Sprint — Inteligência Digital (Metricool + Instagram)
 
