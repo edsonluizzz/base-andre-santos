@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { recalcTier } from "@/lib/tier";
 import { sendNewLeadNotificationEmail } from "@/lib/email";
+import { sendTelegram } from "@/lib/telegram";
 
 const CID = "andre-santos-2026";
 
@@ -142,6 +143,14 @@ export async function POST(req: NextRequest) {
         }).catch(() => {});
       }
     }
+
+    // Notifica Telegram (canal central)
+    const sourceLabel: Record<string, string> = {
+      EVENTO: "📍 Evento", INDICACAO: "🤝 Indicação", INSTAGRAM: "📸 Instagram",
+      WHATSAPP: "💬 WhatsApp", CADASTRO_PUBLICO: "🌐 Site",
+    };
+    const cityLine = city?.trim() ? ` · 📍 ${city.trim()}` : "";
+    sendTelegram(`📥 <b>Novo lead:</b> ${name.trim()}${cityLine}\n<i>${sourceLabel[source] ?? source}</i>`).catch(() => {});
 
     return NextResponse.json({ message: "Cadastro realizado com sucesso!", collaboratorId: created.id }, { status: 201 });
   } catch (err) {

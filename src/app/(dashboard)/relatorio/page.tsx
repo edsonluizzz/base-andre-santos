@@ -3,6 +3,8 @@ import { db } from "@/lib/db";
 import { BarChart2, Download, FileSpreadsheet, AlertTriangle, TrendingUp, Users } from "lucide-react";
 import Link from "next/link";
 import { PrintButton } from "@/components/relatorio/print-button";
+import { EngagementPanel } from "@/components/relatorio/engagement-panel";
+import { Suspense } from "react";
 import { ROLE_LABEL, PROFILE_LABEL, SUPPORT_LABEL, ROLE_ORDER, PROFILE_ORDER, SUPPORT_ORDER } from "@/lib/labels";
 
 const CID = "andre-santos-2026";
@@ -480,6 +482,11 @@ export default async function RelatorioPage({
           </div>
         </div>
       </div>
+
+      {/* Engajamento */}
+      <Suspense fallback={<div className="glass-card rounded-2xl p-6 border border-white/[0.08] h-40 animate-pulse" />}>
+        <EngagementPanel />
+      </Suspense>
 
       {/* Legenda */}
       <div className="flex gap-4 flex-wrap text-xs text-muted-foreground no-print">
