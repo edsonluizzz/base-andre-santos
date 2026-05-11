@@ -18,7 +18,8 @@ function parseFile(file: File): Promise<Row[]> {
       try {
         const data = e.target?.result;
         const wb = XLSX.read(data, { type: "array" });
-        const ws = wb.Sheets[wb.SheetNames[0]];
+        const sheetName = wb.SheetNames.find(n => !n.startsWith("_")) ?? wb.SheetNames[0];
+        const ws = wb.Sheets[sheetName];
         const json: Row[] = XLSX.utils.sheet_to_json(ws, { defval: "" });
         // Normaliza chaves: remove *, trim, lowercase
         const normalized = json.map((row) => {
