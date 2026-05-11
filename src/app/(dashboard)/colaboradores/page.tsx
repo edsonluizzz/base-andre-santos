@@ -67,7 +67,7 @@ export default function ColaboradoresPage() {
     const params = new URLSearchParams();
     if (search) params.set("q", search);
     if (filterRole) params.set("role", filterRole);
-    if (filterStatus) params.set("status", filterStatus);
+    params.set("status", filterStatus || "ALL");
     if (filterMine) params.set("mine", "true");
     if (filterLeader) params.set("registeredBy", filterLeader);
     if (filterCity) params.set("city", filterCity);

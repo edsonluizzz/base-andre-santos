@@ -119,7 +119,7 @@ export function ImportCsvDialog({ open, onOpenChange, onSuccess }: Props) {
       status:       ["LEAD", "ACTIVE", "INACTIVE"],
       perfil:       ["PASTOR", "LIDER_RELIGIOSO", "PRESIDENTE_ASSOCIACAO", "LIDER_POLITICO", "VEREADOR", "EMPRESARIO", "LIDERANCA_COMUNITARIA", "EDUCADOR", "JOVEM", "FAMILIA", "APOIADOR"],
       status_apoio: ["CONFIRMADO", "NEGOCIANDO", "NEUTRO", "ADVERSARIO"],
-      canal:        ["INSTAGRAM", "WHATSAPP", "EVENTO", "LINK", "OUTRO"],
+      canal:        ["Instagram", "WhatsApp", "Evento", "Link de cadastro", "Outro"],
       lgpd:         ["SIM", "NAO"],
     };
     const listData: Record<string, string[]> = listas;

@@ -44,12 +44,19 @@ function parseRole(val: string): string {
 }
 
 const CHANNEL_MAP: Record<string, string> = {
-  "instagram": "INSTAGRAM", "whatsapp": "WHATSAPP", "evento": "EVENTO",
-  "link": "LINK", "outro": "OUTRO",
+  "instagram": "INSTAGRAM",
+  "whatsapp": "WHATSAPP",
+  "evento": "EVENTO",
+  "link": "LINK",
+  "link de cadastro": "LINK",
+  "outro": "OUTRO",
+  // valores internos também aceitos
+  "INSTAGRAM": "INSTAGRAM", "WHATSAPP": "WHATSAPP",
+  "EVENTO": "EVENTO", "LINK": "LINK", "OUTRO": "OUTRO",
 };
 
 function parseChannel(val: string): string | null {
-  return CHANNEL_MAP[val.toLowerCase().trim()] ?? null;
+  return CHANNEL_MAP[val.trim()] ?? CHANNEL_MAP[val.trim().toLowerCase()] ?? null;
 }
 
 const SUPPORT_MAP: Record<string, string> = {
