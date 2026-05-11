@@ -104,6 +104,17 @@ export async function POST(req: NextRequest) {
     let skipped = 0;
     const errors: string[] = [];
     const cepCache = new Map<string, { city: string; neighborhood: string }>();
+    // Cache de email → userId para o campo responsavel_email
+    const userCache = new Map<string, string | null>();
+
+    async function resolveResponsavel(email: string): Promise<string | null> {
+      if (!email) return null;
+      if (userCache.has(email)) return userCache.get(email)!;
+      const u = await db.user.findUnique({ where: { email }, select: { id: true } });
+      const id = u?.id ?? null;
+      userCache.set(email, id);
+      return id;
+    }
 
     for (const row of rows) {
       const name = (row.nome || row.name || row.Nome || "").trim();
@@ -130,6 +141,8 @@ export async function POST(req: NextRequest) {
 
       const campaignRole = parseRole((row.cargo || row.Cargo || row.role || "").trim());
       const profile = parseProfile((row.perfil || row.profile || row.Perfil || "").trim());
+      const responsavelEmail = (row.responsavel_email || row["responsavel email"] || "").trim();
+      const responsavelId = responsavelEmail ? await resolveResponsavel(responsavelEmail) : null;
       const statusRaw = (row.status || row.Status || "").trim();
       const status = statusRaw ? parseStatus(statusRaw) : "ACTIVE";
       // source = marcador fixo do sistema (para o filtro "Importado" funcionar)
@@ -189,7 +202,7 @@ export async function POST(req: NextRequest) {
               ...payload,
               lgpdConsent,
               lgpdConsentAt: lgpdConsent ? new Date() : null,
-              registeredById: session.user.id,
+              registeredById: responsavelId ?? session.user.id,
             },
           });
           created++;
