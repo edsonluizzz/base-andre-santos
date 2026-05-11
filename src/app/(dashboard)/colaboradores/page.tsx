@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Users, Plus, Search, Filter, Phone, MapPin, ChevronDown, Upload, UserCheck, ExternalLink, CheckSquare, Square, X, ArrowUpCircle, UserMinus, ThumbsUp, PhoneCall, AlertTriangle, SlidersHorizontal } from "lucide-react";
+import { Users, Plus, Search, Phone, MapPin, ChevronDown, Upload, UserCheck, ExternalLink, CheckSquare, Square, X, ArrowUpCircle, UserMinus, ThumbsUp, PhoneCall, AlertTriangle, SlidersHorizontal } from "lucide-react";
 import { differenceInDays } from "date-fns";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -37,15 +37,15 @@ export default function ColaboradoresPage() {
   const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [filterRole, setFilterRole] = useState("ALL");
+  const [filterRole, setFilterRole] = useState("");
   const [filterStatus, setFilterStatus] = useState("ACTIVE");
   const [filterMine, setFilterMine] = useState(false);
-  const [filterLeader, setFilterLeader] = useState("ALL");
-  const [filterCity, setFilterCity] = useState("ALL");
-  const [filterSourceType, setFilterSourceType] = useState("ALL");
-  const [filterProfile, setFilterProfile] = useState("ALL");
-  const [filterChannel, setFilterChannel] = useState("ALL");
-  const [filterSupportStatus, setFilterSupportStatus] = useState("ALL");
+  const [filterLeader, setFilterLeader] = useState("");
+  const [filterCity, setFilterCity] = useState("");
+  const [filterSourceType, setFilterSourceType] = useState("");
+  const [filterProfile, setFilterProfile] = useState("");
+  const [filterChannel, setFilterChannel] = useState("");
+  const [filterSupportStatus, setFilterSupportStatus] = useState("");
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [leaders, setLeaders] = useState<{ id: string; name: string; count: number }[]>([]);
   const [cities, setCities] = useState<string[]>([]);
@@ -66,15 +66,15 @@ export default function ColaboradoresPage() {
     setLoading(true);
     const params = new URLSearchParams();
     if (search) params.set("q", search);
-    if (filterRole !== "ALL") params.set("role", filterRole);
-    if (filterStatus !== "ALL") params.set("status", filterStatus);
+    if (filterRole) params.set("role", filterRole);
+    if (filterStatus) params.set("status", filterStatus);
     if (filterMine) params.set("mine", "true");
-    if (filterLeader !== "ALL") params.set("registeredBy", filterLeader);
-    if (filterCity !== "ALL") params.set("city", filterCity);
-    if (filterSourceType !== "ALL") params.set("sourceType", filterSourceType);
-    if (filterProfile !== "ALL") params.set("profile", filterProfile);
-    if (filterChannel !== "ALL") params.set("channel", filterChannel);
-    if (filterSupportStatus !== "ALL") params.set("supportStatus", filterSupportStatus);
+    if (filterLeader) params.set("registeredBy", filterLeader);
+    if (filterCity) params.set("city", filterCity);
+    if (filterSourceType) params.set("sourceType", filterSourceType);
+    if (filterProfile) params.set("profile", filterProfile);
+    if (filterChannel) params.set("channel", filterChannel);
+    if (filterSupportStatus) params.set("supportStatus", filterSupportStatus);
     const res = await fetch(`/api/collaborators?${params.toString()}`);
     if (res.ok) setCollaborators(await res.json());
     setLoading(false);
@@ -208,43 +208,54 @@ export default function ColaboradoresPage() {
 
       {/* Filtros */}
       {(() => {
-        const advancedActive = [filterSourceType, filterProfile, filterChannel, filterSupportStatus, filterLeader, filterCity].filter(v => v !== "ALL").length;
+        const advancedActive = [filterSourceType, filterProfile, filterChannel, filterSupportStatus, filterLeader, filterCity].filter(Boolean).length;
+        function FilterLabel({ children }: { children: string }) {
+          return <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/50 pl-0.5 mb-0.5">{children}</p>;
+        }
         return (
         <div className="space-y-2">
-          {/* Linha 1: busca */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar por nome, telefone, cidade, origem..." className="pl-9" />
+          {/* Busca */}
+          <div>
+            <FilterLabel>Buscar</FilterLabel>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Nome, telefone, cidade, origem..." className="pl-9" />
+            </div>
           </div>
 
-          {/* Linha 2: filtros principais */}
-          <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
-            <Select value={filterRole} onValueChange={setFilterRole}>
-              <SelectTrigger className="w-full sm:w-44">
-                <Filter className="w-3.5 h-3.5 mr-1.5 text-muted-foreground shrink-0" />
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">Todos os cargos</SelectItem>
-                {Object.entries(ROLE_LABEL).map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}
-              </SelectContent>
-            </Select>
+          {/* Filtros principais */}
+          <div className="flex flex-wrap gap-x-2 gap-y-1 items-end">
+            <div>
+              <FilterLabel>Cargo</FilterLabel>
+              <Select value={filterRole} onValueChange={setFilterRole}>
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="Todos os cargos" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Todos os cargos</SelectItem>
+                  {Object.entries(ROLE_LABEL).map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
 
-            <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger className="w-full sm:w-36">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ACTIVE">Ativos</SelectItem>
-                <SelectItem value="LEAD">Leads</SelectItem>
-                <SelectItem value="INACTIVE">Inativos</SelectItem>
-                <SelectItem value="ALL">Todos</SelectItem>
-              </SelectContent>
-            </Select>
+            <div>
+              <FilterLabel>Status</FilterLabel>
+              <Select value={filterStatus} onValueChange={setFilterStatus}>
+                <SelectTrigger className="w-32">
+                  <SelectValue placeholder="Todos" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ACTIVE">Ativos</SelectItem>
+                  <SelectItem value="LEAD">Leads</SelectItem>
+                  <SelectItem value="INACTIVE">Inativos</SelectItem>
+                  <SelectItem value="">Todos</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
             <button
               onClick={() => setFilterMine((v) => !v)}
-              className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium border transition-colors ${
+              className={`flex items-center justify-center gap-1.5 px-3 h-9 rounded-lg text-xs font-medium border transition-colors self-end ${
                 filterMine
                   ? "bg-primary/10 text-primary border-primary/30"
                   : "bg-white/[0.03] text-muted-foreground border-white/[0.08] hover:border-white/[0.15]"
@@ -254,10 +265,9 @@ export default function ColaboradoresPage() {
               Meus cadastros
             </button>
 
-            {/* Botão Mais filtros */}
             <button
               onClick={() => setShowAdvanced((v) => !v)}
-              className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium border transition-colors ${
+              className={`flex items-center justify-center gap-1.5 px-3 h-9 rounded-lg text-xs font-medium border transition-colors self-end ${
                 showAdvanced || advancedActive > 0
                   ? "bg-primary/10 text-primary border-primary/30"
                   : "bg-white/[0.03] text-muted-foreground border-white/[0.08] hover:border-white/[0.15]"
@@ -275,102 +285,112 @@ export default function ColaboradoresPage() {
 
           {/* Filtros avançados */}
           {showAdvanced && (
-            <div className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-3 space-y-2">
-              <div className="flex items-center justify-between mb-1">
-                <p className="text-xs font-medium text-muted-foreground">Filtros avançados</p>
+            <div className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-3 space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-semibold text-muted-foreground">Filtros avançados</p>
                 {advancedActive > 0 && (
                   <button
-                    onClick={() => { setFilterSourceType("ALL"); setFilterProfile("ALL"); setFilterChannel("ALL"); setFilterSupportStatus("ALL"); setFilterLeader("ALL"); setFilterCity("ALL"); }}
+                    onClick={() => { setFilterSourceType(""); setFilterProfile(""); setFilterChannel(""); setFilterSupportStatus(""); setFilterLeader(""); setFilterCity(""); }}
                     className="text-xs text-destructive/70 hover:text-destructive flex items-center gap-1"
                   >
-                    <X className="w-3 h-3" /> Limpar filtros
+                    <X className="w-3 h-3" /> Limpar tudo
                   </button>
                 )}
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                {/* Origem */}
-                <Select value={filterSourceType} onValueChange={setFilterSourceType}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Origem do lead" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ALL">Qualquer origem</SelectItem>
-                    <SelectItem value="IMPORTADO">Importado (planilha)</SelectItem>
-                    <SelectItem value="MANUAL">Cadastro manual</SelectItem>
-                    <SelectItem value="PUBLICO">Formulário público</SelectItem>
-                  </SelectContent>
-                </Select>
-
-                {/* Perfil */}
-                <Select value={filterProfile} onValueChange={setFilterProfile}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Perfil" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ALL">Todos os perfis</SelectItem>
-                    {PROFILE_ORDER.map((v) => (
-                      <SelectItem key={v} value={v}>{PROFILE_LABEL[v]}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                {/* Canal */}
-                <Select value={filterChannel} onValueChange={setFilterChannel}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Canal" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ALL">Todos os canais</SelectItem>
-                    {CHANNEL_ORDER.map((v) => (
-                      <SelectItem key={v} value={v}>{CHANNEL_LABEL[v]}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                {/* Status de apoio */}
-                <Select value={filterSupportStatus} onValueChange={setFilterSupportStatus}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Status de apoio" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ALL">Qualquer apoio</SelectItem>
-                    {SUPPORT_ORDER.map((v) => (
-                      <SelectItem key={v} value={v}>{SUPPORT_LABEL[v]}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                {/* Líder */}
-                {leaders.length > 0 && (
-                  <Select value={filterLeader} onValueChange={(v) => { setFilterLeader(v); setFilterMine(false); }}>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-2 gap-y-3">
+                <div>
+                  <FilterLabel>Forma de entrada</FilterLabel>
+                  <Select value={filterSourceType} onValueChange={setFilterSourceType}>
                     <SelectTrigger className="w-full">
-                      <UserCheck className="w-3.5 h-3.5 mr-1.5 text-muted-foreground shrink-0" />
-                      <SelectValue placeholder="Por líder" />
+                      <SelectValue placeholder="Qualquer origem" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="ALL">Todos os líderes</SelectItem>
-                      {leaders.map((l) => (
-                        <SelectItem key={l.id} value={l.id}>{l.name} ({l.count})</SelectItem>
+                      <SelectItem value="">Qualquer origem</SelectItem>
+                      <SelectItem value="IMPORTADO">Importado (planilha)</SelectItem>
+                      <SelectItem value="MANUAL">Cadastro manual</SelectItem>
+                      <SelectItem value="PUBLICO">Formulário público</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <FilterLabel>Perfil</FilterLabel>
+                  <Select value={filterProfile} onValueChange={setFilterProfile}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Todos os perfis" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">Todos os perfis</SelectItem>
+                      {PROFILE_ORDER.map((v) => (
+                        <SelectItem key={v} value={v}>{PROFILE_LABEL[v]}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
+                </div>
+
+                <div>
+                  <FilterLabel>Canal</FilterLabel>
+                  <Select value={filterChannel} onValueChange={setFilterChannel}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Todos os canais" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">Todos os canais</SelectItem>
+                      {CHANNEL_ORDER.map((v) => (
+                        <SelectItem key={v} value={v}>{CHANNEL_LABEL[v]}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <FilterLabel>Apoio</FilterLabel>
+                  <Select value={filterSupportStatus} onValueChange={setFilterSupportStatus}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Qualquer apoio" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">Qualquer apoio</SelectItem>
+                      {SUPPORT_ORDER.map((v) => (
+                        <SelectItem key={v} value={v}>{SUPPORT_LABEL[v]}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {leaders.length > 0 && (
+                  <div>
+                    <FilterLabel>Cadastrado por</FilterLabel>
+                    <Select value={filterLeader} onValueChange={(v) => { setFilterLeader(v); setFilterMine(false); }}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Qualquer líder" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">Qualquer líder</SelectItem>
+                        {leaders.map((l) => (
+                          <SelectItem key={l.id} value={l.id}>{l.name} ({l.count})</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 )}
 
-                {/* Cidade */}
                 {cities.length > 0 && (
-                  <Select value={filterCity} onValueChange={setFilterCity}>
-                    <SelectTrigger className="w-full">
-                      <MapPin className="w-3.5 h-3.5 mr-1.5 text-muted-foreground shrink-0" />
-                      <SelectValue placeholder="Por cidade" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="ALL">Todas as cidades</SelectItem>
-                      {cities.map((c) => (
-                        <SelectItem key={c} value={c}>{c}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div>
+                    <FilterLabel>Cidade</FilterLabel>
+                    <Select value={filterCity} onValueChange={setFilterCity}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Todas as cidades" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">Todas as cidades</SelectItem>
+                        {cities.map((c) => (
+                          <SelectItem key={c} value={c}>{c}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 )}
               </div>
             </div>

@@ -124,7 +124,14 @@ export async function POST(req: NextRequest) {
       const profile = parseProfile((row.perfil || row.profile || row.Perfil || "").trim());
       const statusRaw = (row.status || row.Status || "").trim();
       const status = statusRaw ? parseStatus(statusRaw) : "ACTIVE";
-      const source = (row.origem || row.source || row.Origem || "").trim() || "IMPORTACAO_XLSX";
+      // source = marcador fixo do sistema (para o filtro "Importado" funcionar)
+      const source = "IMPORTACAO_XLSX";
+      // origem do lead vai para notes, para aparecer no card do colaborador
+      const origemText = (row.origem || row.source || row.Origem || "").trim();
+      const notesRaw = (row.observacoes || row.notes || row.Observacoes || "").trim();
+      const notesParts = [origemText ? `Origem: ${origemText}` : null, notesRaw || null].filter(Boolean);
+      const notes = notesParts.length > 0 ? notesParts.join("\n") : null;
+
       const channelRaw = (row.canal || row.channel || row.Canal || "").trim();
       const channel = parseChannel(channelRaw);
       const supportStatusRaw = (row.status_apoio || row["status apoio"] || row.supportStatus || "").trim();
@@ -150,10 +157,12 @@ export async function POST(req: NextRequest) {
             profile: profile as never,
             status: status as never,
             source,
+            notes,
             channel: channel as never ?? undefined,
             supportStatus: supportStatus as never,
             lgpdConsent,
             lgpdConsentAt: lgpdConsent ? new Date() : null,
+            registeredById: session.user.id,
           },
         });
         created++;

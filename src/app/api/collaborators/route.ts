@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
     const collaborators = await db.collaborator.findMany({
       where: {
         campaignId: CID,
-        status: status === "ALL" ? undefined : (status as CollaboratorStatus),
+        status: (status === "ALL" || status === "") ? undefined : (status as CollaboratorStatus),
         ...(role && { campaignRole: role as CollaboratorRole }),
         ...(city && { city }),
         ...(mine && { registeredById: session.user.id }),
@@ -38,9 +38,13 @@ export async function GET(req: NextRequest) {
         ...(channel && { channel: channel as never }),
         ...(supportStatus && { supportStatus: supportStatus as never }),
         ...(sourceType === "IMPORTADO" && { source: { in: IMPORT_SOURCES } }),
-        ...(sourceType === "MANUAL" && { registeredById: { not: null } }),
+        ...(sourceType === "MANUAL" && {
+          registeredById: { not: null },
+          source: { notIn: IMPORT_SOURCES },
+        }),
         ...(sourceType === "PUBLICO" && {
-          AND: [{ registeredById: null }, { source: { notIn: IMPORT_SOURCES } }],
+          registeredById: null,
+          source: { notIn: IMPORT_SOURCES },
         }),
         ...(search && {
           OR: [
