@@ -9,7 +9,7 @@ import * as XLSX from "xlsx";
 type Props = { open: boolean; onOpenChange: (v: boolean) => void; onSuccess: () => void };
 type Step = "upload" | "preview" | "done";
 type Row = Record<string, string>;
-type Result = { created: number; skipped: number; errors: string[] };
+type Result = { created: number; updated: number; skipped: number; errors: string[] };
 
 function parseFile(file: File): Promise<Row[]> {
   return new Promise((resolve, reject) => {
@@ -244,10 +244,17 @@ export function ImportCsvDialog({ open, onOpenChange, onSuccess }: Props) {
             <CheckCircle2 className="w-12 h-12 text-green-400 mx-auto" />
             <div>
               <p className="text-lg font-bold text-foreground">Importação concluída</p>
-              <p className="text-sm text-muted-foreground mt-1">
-                <span className="text-green-400 font-medium">{result.created} criados</span>
-                {result.skipped > 0 && <span className="ml-2 text-muted-foreground">{result.skipped} ignorados (duplicatas)</span>}
-              </p>
+              <div className="flex items-center justify-center gap-3 mt-2 flex-wrap">
+                {result.created > 0 && (
+                  <span className="text-sm text-green-400 font-medium">{result.created} criado{result.created !== 1 ? "s" : ""}</span>
+                )}
+                {result.updated > 0 && (
+                  <span className="text-sm text-blue-400 font-medium">{result.updated} atualizado{result.updated !== 1 ? "s" : ""}</span>
+                )}
+                {result.skipped > 0 && (
+                  <span className="text-sm text-muted-foreground">{result.skipped} ignorado{result.skipped !== 1 ? "s" : ""}</span>
+                )}
+              </div>
             </div>
             {result.errors.length > 0 && (
               <div className="rounded-xl border border-red-500/20 bg-red-500/[0.07] p-3 text-left">

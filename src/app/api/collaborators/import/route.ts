@@ -93,6 +93,7 @@ export async function POST(req: NextRequest) {
     }
 
     let created = 0;
+    let updated = 0;
     let skipped = 0;
     const errors: string[] = [];
     const cepCache = new Map<string, { city: string; neighborhood: string }>();
@@ -140,38 +141,58 @@ export async function POST(req: NextRequest) {
       const lgpdConsent = lgpdRaw === "sim" || lgpdRaw === "yes" || lgpdRaw === "true";
 
       try {
-        // Pula duplicatas por telefone
+        // Verifica duplicata por telefone
+        let dup: { id: string; lgpdConsent: boolean } | null = null;
         if (phone) {
           const cleanPhone = phone.replace(/\D/g, "");
-          const dup = await db.collaborator.findFirst({
+          dup = await db.collaborator.findFirst({
             where: { campaignId: CID, phone: { contains: cleanPhone.slice(-8) } },
-            select: { id: true },
+            select: { id: true, lgpdConsent: true },
           });
-          if (dup) { skipped++; continue; }
         }
 
-        await db.collaborator.create({
-          data: {
-            campaignId: CID, name, phone: phone || null, email, city, neighborhood,
-            campaignRole: campaignRole as never,
-            profile: profile as never,
-            status: status as never,
-            source,
-            notes,
-            channel: channel as never ?? undefined,
-            supportStatus: supportStatus as never,
-            lgpdConsent,
-            lgpdConsentAt: lgpdConsent ? new Date() : null,
-            registeredById: session.user.id,
-          },
-        });
-        created++;
+        const payload = {
+          name, phone: phone || null, email, city, neighborhood,
+          campaignRole: campaignRole as never,
+          profile: profile as never,
+          status: status as never,
+          source,
+          notes,
+          channel: channel as never ?? undefined,
+          supportStatus: supportStatus as never,
+        };
+
+        if (dup) {
+          await db.collaborator.update({
+            where: { id: dup.id },
+            data: {
+              ...payload,
+              // Consentimento LGPD só avança — não revoga via importação
+              ...(lgpdConsent && !dup.lgpdConsent && {
+                lgpdConsent: true,
+                lgpdConsentAt: new Date(),
+              }),
+            },
+          });
+          updated++;
+        } else {
+          await db.collaborator.create({
+            data: {
+              campaignId: CID,
+              ...payload,
+              lgpdConsent,
+              lgpdConsentAt: lgpdConsent ? new Date() : null,
+              registeredById: session.user.id,
+            },
+          });
+          created++;
+        }
       } catch {
         errors.push(name);
       }
     }
 
-    return NextResponse.json({ created, skipped, errors: errors.slice(0, 10) });
+    return NextResponse.json({ created, updated, skipped, errors: errors.slice(0, 10) });
   } catch (err) {
     console.error("[collaborators/import]", err);
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });
