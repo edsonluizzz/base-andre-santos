@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Users, Plus, Search, Filter, Phone, MapPin, ChevronDown, Upload, UserCheck, ExternalLink, CheckSquare, Square, X, ArrowUpCircle, UserMinus, ThumbsUp, PhoneCall, AlertTriangle } from "lucide-react";
+import { Users, Plus, Search, Filter, Phone, MapPin, ChevronDown, Upload, UserCheck, ExternalLink, CheckSquare, Square, X, ArrowUpCircle, UserMinus, ThumbsUp, PhoneCall, AlertTriangle, SlidersHorizontal } from "lucide-react";
 import { differenceInDays } from "date-fns";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -12,7 +12,7 @@ import { CollaboratorDialog } from "@/components/collaborators/collaborator-dial
 import { DeleteConfirm } from "@/components/collaborators/delete-confirm";
 import { ImportCsvDialog } from "@/components/collaborators/import-csv-dialog";
 import { CONTRIBUTION_OPTIONS } from "@/lib/contribution";
-import { ROLE_LABEL } from "@/lib/labels";
+import { ROLE_LABEL, PROFILE_LABEL, CHANNEL_LABEL, SUPPORT_LABEL, PROFILE_ORDER, CHANNEL_ORDER, SUPPORT_ORDER } from "@/lib/labels";
 
 const ROLE_COLOR: Record<string, string> = {
   COORD_GERAL:     "bg-yellow-500/15 text-yellow-400 border-yellow-500/30",
@@ -42,6 +42,11 @@ export default function ColaboradoresPage() {
   const [filterMine, setFilterMine] = useState(false);
   const [filterLeader, setFilterLeader] = useState("ALL");
   const [filterCity, setFilterCity] = useState("ALL");
+  const [filterSourceType, setFilterSourceType] = useState("ALL");
+  const [filterProfile, setFilterProfile] = useState("ALL");
+  const [filterChannel, setFilterChannel] = useState("ALL");
+  const [filterSupportStatus, setFilterSupportStatus] = useState("ALL");
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const [leaders, setLeaders] = useState<{ id: string; name: string; count: number }[]>([]);
   const [cities, setCities] = useState<string[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -66,11 +71,15 @@ export default function ColaboradoresPage() {
     if (filterMine) params.set("mine", "true");
     if (filterLeader !== "ALL") params.set("registeredBy", filterLeader);
     if (filterCity !== "ALL") params.set("city", filterCity);
+    if (filterSourceType !== "ALL") params.set("sourceType", filterSourceType);
+    if (filterProfile !== "ALL") params.set("profile", filterProfile);
+    if (filterChannel !== "ALL") params.set("channel", filterChannel);
+    if (filterSupportStatus !== "ALL") params.set("supportStatus", filterSupportStatus);
     const res = await fetch(`/api/collaborators?${params.toString()}`);
     if (res.ok) setCollaborators(await res.json());
     setLoading(false);
     setSelected(new Set());
-  }, [search, filterRole, filterStatus, filterMine, filterLeader, filterCity]);
+  }, [search, filterRole, filterStatus, filterMine, filterLeader, filterCity, filterSourceType, filterProfile, filterChannel, filterSupportStatus]);
 
   useEffect(() => {
     const t = setTimeout(fetchCollaborators, 300);
@@ -187,7 +196,7 @@ export default function ColaboradoresPage() {
         </div>
         <div className="flex gap-2">
           <Button onClick={() => setImportOpen(true)} variant="outline" className="gap-2 hidden sm:flex">
-            <Upload className="w-4 h-4" /> Importar CSV
+            <Upload className="w-4 h-4" /> Importar
           </Button>
           <Button onClick={openNew} className="bg-primary text-primary-foreground hover:bg-primary/90 gap-2">
             <Plus className="w-4 h-4" />
@@ -198,77 +207,177 @@ export default function ColaboradoresPage() {
       </div>
 
       {/* Filtros */}
-      <div className="space-y-2">
-        {/* Busca — largura total */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar por nome, telefone, cidade..." className="pl-9" />
-        </div>
-        {/* Cargo + Status — 2 colunas no mobile */}
-        <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
-          <Select value={filterRole} onValueChange={setFilterRole}>
-            <SelectTrigger className="w-full sm:w-44">
-              <Filter className="w-3.5 h-3.5 mr-1.5 text-muted-foreground shrink-0" />
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">Todos os cargos</SelectItem>
-              {Object.entries(ROLE_LABEL).map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <Select value={filterStatus} onValueChange={setFilterStatus}>
-            <SelectTrigger className="w-full sm:w-36">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ACTIVE">Ativos</SelectItem>
-              <SelectItem value="LEAD">Leads</SelectItem>
-              <SelectItem value="INACTIVE">Inativos</SelectItem>
-              <SelectItem value="ALL">Todos</SelectItem>
-            </SelectContent>
-          </Select>
-          {/* Meus cadastros + Líder — 2 colunas no mobile */}
-          <button
-            onClick={() => setFilterMine((v) => !v)}
-            className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium border transition-colors ${
-              filterMine
-                ? "bg-primary/10 text-primary border-primary/30"
-                : "bg-white/[0.03] text-muted-foreground border-white/[0.08] hover:border-white/[0.15]"
-            }`}
-          >
-            <UserCheck className="w-3.5 h-3.5 shrink-0" />
-            Meus cadastros
-          </button>
-          {leaders.length > 0 ? (
-            <Select value={filterLeader} onValueChange={(v) => { setFilterLeader(v); setFilterMine(false); }}>
-              <SelectTrigger className="w-full sm:w-52">
-                <UserCheck className="w-3.5 h-3.5 mr-1.5 text-muted-foreground shrink-0" />
-                <SelectValue placeholder="Por líder" />
+      {(() => {
+        const advancedActive = [filterSourceType, filterProfile, filterChannel, filterSupportStatus, filterLeader, filterCity].filter(v => v !== "ALL").length;
+        return (
+        <div className="space-y-2">
+          {/* Linha 1: busca */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar por nome, telefone, cidade, origem..." className="pl-9" />
+          </div>
+
+          {/* Linha 2: filtros principais */}
+          <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
+            <Select value={filterRole} onValueChange={setFilterRole}>
+              <SelectTrigger className="w-full sm:w-44">
+                <Filter className="w-3.5 h-3.5 mr-1.5 text-muted-foreground shrink-0" />
+                <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="ALL">Todos os líderes</SelectItem>
-                {leaders.map((l) => (
-                  <SelectItem key={l.id} value={l.id}>{l.name} ({l.count})</SelectItem>
-                ))}
+                <SelectItem value="ALL">Todos os cargos</SelectItem>
+                {Object.entries(ROLE_LABEL).map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}
               </SelectContent>
             </Select>
-          ) : null}
-          {cities.length > 0 && (
-            <Select value={filterCity} onValueChange={setFilterCity}>
-              <SelectTrigger className="w-full col-span-2 sm:w-44">
-                <MapPin className="w-3.5 h-3.5 mr-1.5 text-muted-foreground shrink-0" />
-                <SelectValue placeholder="Por cidade" />
+
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger className="w-full sm:w-36">
+                <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="ALL">Todas as cidades</SelectItem>
-                {cities.map((c) => (
-                  <SelectItem key={c} value={c}>{c}</SelectItem>
-                ))}
+                <SelectItem value="ACTIVE">Ativos</SelectItem>
+                <SelectItem value="LEAD">Leads</SelectItem>
+                <SelectItem value="INACTIVE">Inativos</SelectItem>
+                <SelectItem value="ALL">Todos</SelectItem>
               </SelectContent>
             </Select>
+
+            <button
+              onClick={() => setFilterMine((v) => !v)}
+              className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium border transition-colors ${
+                filterMine
+                  ? "bg-primary/10 text-primary border-primary/30"
+                  : "bg-white/[0.03] text-muted-foreground border-white/[0.08] hover:border-white/[0.15]"
+              }`}
+            >
+              <UserCheck className="w-3.5 h-3.5 shrink-0" />
+              Meus cadastros
+            </button>
+
+            {/* Botão Mais filtros */}
+            <button
+              onClick={() => setShowAdvanced((v) => !v)}
+              className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium border transition-colors ${
+                showAdvanced || advancedActive > 0
+                  ? "bg-primary/10 text-primary border-primary/30"
+                  : "bg-white/[0.03] text-muted-foreground border-white/[0.08] hover:border-white/[0.15]"
+              }`}
+            >
+              <SlidersHorizontal className="w-3.5 h-3.5 shrink-0" />
+              Mais filtros
+              {advancedActive > 0 && (
+                <span className="ml-1 flex items-center justify-center w-4 h-4 rounded-full bg-primary text-primary-foreground text-[10px] font-bold">
+                  {advancedActive}
+                </span>
+              )}
+            </button>
+          </div>
+
+          {/* Filtros avançados */}
+          {showAdvanced && (
+            <div className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-3 space-y-2">
+              <div className="flex items-center justify-between mb-1">
+                <p className="text-xs font-medium text-muted-foreground">Filtros avançados</p>
+                {advancedActive > 0 && (
+                  <button
+                    onClick={() => { setFilterSourceType("ALL"); setFilterProfile("ALL"); setFilterChannel("ALL"); setFilterSupportStatus("ALL"); setFilterLeader("ALL"); setFilterCity("ALL"); }}
+                    className="text-xs text-destructive/70 hover:text-destructive flex items-center gap-1"
+                  >
+                    <X className="w-3 h-3" /> Limpar filtros
+                  </button>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {/* Origem */}
+                <Select value={filterSourceType} onValueChange={setFilterSourceType}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Origem do lead" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL">Qualquer origem</SelectItem>
+                    <SelectItem value="IMPORTADO">Importado (planilha)</SelectItem>
+                    <SelectItem value="MANUAL">Cadastro manual</SelectItem>
+                    <SelectItem value="PUBLICO">Formulário público</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                {/* Perfil */}
+                <Select value={filterProfile} onValueChange={setFilterProfile}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Perfil" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL">Todos os perfis</SelectItem>
+                    {PROFILE_ORDER.map((v) => (
+                      <SelectItem key={v} value={v}>{PROFILE_LABEL[v]}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                {/* Canal */}
+                <Select value={filterChannel} onValueChange={setFilterChannel}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Canal" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL">Todos os canais</SelectItem>
+                    {CHANNEL_ORDER.map((v) => (
+                      <SelectItem key={v} value={v}>{CHANNEL_LABEL[v]}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                {/* Status de apoio */}
+                <Select value={filterSupportStatus} onValueChange={setFilterSupportStatus}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Status de apoio" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL">Qualquer apoio</SelectItem>
+                    {SUPPORT_ORDER.map((v) => (
+                      <SelectItem key={v} value={v}>{SUPPORT_LABEL[v]}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                {/* Líder */}
+                {leaders.length > 0 && (
+                  <Select value={filterLeader} onValueChange={(v) => { setFilterLeader(v); setFilterMine(false); }}>
+                    <SelectTrigger className="w-full">
+                      <UserCheck className="w-3.5 h-3.5 mr-1.5 text-muted-foreground shrink-0" />
+                      <SelectValue placeholder="Por líder" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ALL">Todos os líderes</SelectItem>
+                      {leaders.map((l) => (
+                        <SelectItem key={l.id} value={l.id}>{l.name} ({l.count})</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+
+                {/* Cidade */}
+                {cities.length > 0 && (
+                  <Select value={filterCity} onValueChange={setFilterCity}>
+                    <SelectTrigger className="w-full">
+                      <MapPin className="w-3.5 h-3.5 mr-1.5 text-muted-foreground shrink-0" />
+                      <SelectValue placeholder="Por cidade" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ALL">Todas as cidades</SelectItem>
+                      {cities.map((c) => (
+                        <SelectItem key={c} value={c}>{c}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
+            </div>
           )}
         </div>
-      </div>
+        );
+      })()}
 
       {/* Banner leads sem contato */}
       {!loading && staleLeads.length > 0 && filterStatus !== "ACTIVE" && (

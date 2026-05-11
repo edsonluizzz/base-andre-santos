@@ -19,6 +19,12 @@ export async function GET(req: NextRequest) {
     const status = searchParams.get("status") ?? "ACTIVE";
     const mine = searchParams.get("mine") === "true";
     const registeredBy = searchParams.get("registeredBy") ?? "";
+    const sourceType = searchParams.get("sourceType") ?? "";
+    const profile = searchParams.get("profile") ?? "";
+    const channel = searchParams.get("channel") ?? "";
+    const supportStatus = searchParams.get("supportStatus") ?? "";
+
+    const IMPORT_SOURCES = ["IMPORTACAO_CSV", "IMPORTACAO_XLSX"];
 
     const collaborators = await db.collaborator.findMany({
       where: {
@@ -28,12 +34,21 @@ export async function GET(req: NextRequest) {
         ...(city && { city }),
         ...(mine && { registeredById: session.user.id }),
         ...(registeredBy && { registeredById: registeredBy }),
+        ...(profile && { profile: profile as never }),
+        ...(channel && { channel: channel as never }),
+        ...(supportStatus && { supportStatus: supportStatus as never }),
+        ...(sourceType === "IMPORTADO" && { source: { in: IMPORT_SOURCES } }),
+        ...(sourceType === "MANUAL" && { registeredById: { not: null } }),
+        ...(sourceType === "PUBLICO" && {
+          AND: [{ registeredById: null }, { source: { notIn: IMPORT_SOURCES } }],
+        }),
         ...(search && {
           OR: [
             { name: { contains: search, mode: "insensitive" } },
             { email: { contains: search, mode: "insensitive" } },
             { phone: { contains: search, mode: "insensitive" } },
             { city: { contains: search, mode: "insensitive" } },
+            { source: { contains: search, mode: "insensitive" } },
           ],
         }),
       },
