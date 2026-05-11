@@ -3,26 +3,45 @@
 import { useState, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Upload, FileText, CheckCircle2, AlertCircle, Download } from "lucide-react";
+import { Upload, FileText, CheckCircle2, AlertCircle, Download, MapPin } from "lucide-react";
+import * as XLSX from "xlsx";
 
 type Props = { open: boolean; onOpenChange: (v: boolean) => void; onSuccess: () => void };
 type Step = "upload" | "preview" | "done";
 type Row = Record<string, string>;
 type Result = { created: number; skipped: number; errors: string[] };
 
-const TEMPLATE = "nome,telefone,email,cidade,bairro,cargo\nJoão Silva,(41) 99999-9999,joao@email.com,Curitiba,Centro,VOLUNTARIO\nMaria Souza,(41) 98888-8888,,São José dos Pinhais,Afonso Pena,LIDER_BAIRRO\n";
-
-function parseCSV(text: string): Row[] {
-  const lines = text.trim().split(/\r?\n/).filter(Boolean);
-  if (lines.length < 2) return [];
-  const headers = lines[0].split(",").map((h) => h.trim().toLowerCase().replace(/['"]/g, ""));
-  return lines.slice(1).map((line) => {
-    const vals = line.split(",").map((v) => v.trim().replace(/^"|"$/g, ""));
-    const row: Row = {};
-    headers.forEach((h, i) => { row[h] = vals[i] ?? ""; });
-    return row;
-  }).filter((r) => Object.values(r).some(Boolean));
+function parseFile(file: File): Promise<Row[]> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = e.target?.result;
+        const wb = XLSX.read(data, { type: "array" });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const json: Row[] = XLSX.utils.sheet_to_json(ws, { defval: "" });
+        // Normaliza chaves: remove *, trim, lowercase
+        const normalized = json.map((row) => {
+          const out: Row = {};
+          for (const [k, v] of Object.entries(row)) {
+            const key = k.replace(/\s*\*\s*$/, "").trim().toLowerCase()
+              .normalize("NFD").replace(/[̀-ͯ]/g, "")
+              .replace(/\s+/g, "_");
+            out[key] = String(v ?? "").trim();
+          }
+          return out;
+        }).filter((r) => Object.values(r).some(Boolean));
+        resolve(normalized);
+      } catch {
+        reject(new Error("Falha ao ler o arquivo. Verifique se é um XLSX válido."));
+      }
+    };
+    reader.onerror = () => reject(new Error("Erro ao ler o arquivo"));
+    reader.readAsArrayBuffer(file);
+  });
 }
+
+const DISPLAY_HEADERS = ["nome", "telefone", "cidade", "bairro", "cep", "origem", "canal", "status"];
 
 export function ImportCsvDialog({ open, onOpenChange, onSuccess }: Props) {
   const [step, setStep] = useState<Step>("upload");
@@ -47,20 +66,21 @@ export function ImportCsvDialog({ open, onOpenChange, onSuccess }: Props) {
     onOpenChange(v);
   }
 
-  function handleFile(file: File) {
-    if (!file.name.endsWith(".csv")) { setError("Apenas arquivos .csv são aceitos"); return; }
+  async function handleFile(file: File) {
+    const isXlsx = file.name.endsWith(".xlsx") || file.name.endsWith(".xls");
+    const isCsv = file.name.endsWith(".csv");
+    if (!isXlsx && !isCsv) { setError("Apenas arquivos .xlsx ou .csv são aceitos"); return; }
     setError("");
     setFileName(file.name);
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const text = e.target?.result as string;
-      const parsed = parseCSV(text);
-      if (parsed.length === 0) { setError("Arquivo vazio ou formato inválido"); return; }
+    try {
+      const parsed = await parseFile(file);
+      if (parsed.length === 0) { setError("Arquivo vazio ou sem dados válidos"); return; }
       if (parsed.length > 500) { setError("Máximo 500 linhas por importação"); return; }
       setRows(parsed);
       setStep("preview");
-    };
-    reader.readAsText(file, "UTF-8");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao processar arquivo");
+    }
   }
 
   function onDrop(e: React.DragEvent) {
@@ -90,22 +110,50 @@ export function ImportCsvDialog({ open, onOpenChange, onSuccess }: Props) {
   }
 
   function downloadTemplate() {
-    const blob = new Blob([TEMPLATE], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url; a.download = "modelo-colaboradores.csv"; a.click();
-    URL.revokeObjectURL(url);
+    const wb = XLSX.utils.book_new();
+
+    // Aba de listas (hidden)
+    const listas = {
+      cargo:        ["COORD_GERAL", "COORD_REGIONAL", "LIDER_MUNICIPAL", "LIDER_BAIRRO", "VOLUNTARIO"],
+      status:       ["LEAD", "ACTIVE", "INACTIVE"],
+      perfil:       ["PASTOR", "LIDER_RELIGIOSO", "PRESIDENTE_ASSOCIACAO", "LIDER_POLITICO", "VEREADOR", "EMPRESARIO", "LIDERANCA_COMUNITARIA", "EDUCADOR", "JOVEM", "FAMILIA", "APOIADOR"],
+      status_apoio: ["CONFIRMADO", "NEGOCIANDO", "NEUTRO", "ADVERSARIO"],
+      canal:        ["INSTAGRAM", "WHATSAPP", "EVENTO", "LINK", "OUTRO"],
+      lgpd:         ["SIM", "NAO"],
+    };
+    const listData: Record<string, string[]> = listas;
+    const maxLen = Math.max(...Object.values(listData).map((a) => a.length));
+    const listaRows: string[][] = [Object.keys(listData)];
+    for (let i = 0; i < maxLen; i++) {
+      listaRows.push(Object.values(listData).map((a) => a[i] ?? ""));
+    }
+    const wsLista = XLSX.utils.aoa_to_sheet(listaRows);
+    XLSX.utils.book_append_sheet(wb, wsLista, "_listas");
+
+    // Aba principal
+    const headers = ["nome *", "email", "telefone", "cep", "cidade", "bairro", "origem *", "canal", "perfil", "cargo", "status", "status_apoio", "aniversario", "lgpd_consentimento", "observacoes"];
+    const example = ["João Silva", "joao@email.com", "(41) 99999-9999", "80010-010", "", "", "Culto Assembleia Centro", "EVENTO", "APOIADOR", "VOLUNTARIO", "LEAD", "NEUTRO", "15/03/1985", "SIM", ""];
+    const wsMain = XLSX.utils.aoa_to_sheet([headers, example]);
+    wsMain["!cols"] = headers.map((h) => ({ wch: h.length < 10 ? 14 : h.length + 4 }));
+    XLSX.utils.book_append_sheet(wb, wsMain, "Leads");
+
+    XLSX.writeFile(wb, "leads-importacao.xlsx");
   }
 
+  // Colunas para preview: só as que existem no arquivo
+  const allHeaders = rows[0] ? Object.keys(rows[0]) : [];
+  const previewHeaders = DISPLAY_HEADERS.filter((h) => allHeaders.includes(h)).concat(
+    allHeaders.filter((h) => !DISPLAY_HEADERS.includes(h))
+  ).slice(0, 8);
   const preview = rows.slice(0, 5);
-  const headers = rows[0] ? Object.keys(rows[0]) : [];
+  const hasCep = rows.some((r) => r.cep && r.cep.replace(/\D/g, "").length === 8);
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Upload className="w-4 h-4 text-primary" /> Importar Colaboradores via CSV
+            <Upload className="w-4 h-4 text-primary" /> Importar Colaboradores
           </DialogTitle>
         </DialogHeader>
 
@@ -118,15 +166,25 @@ export function ImportCsvDialog({ open, onOpenChange, onSuccess }: Props) {
               onDragOver={(e) => e.preventDefault()}
             >
               <FileText className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
-              <p className="text-sm font-medium text-foreground">Arraste o CSV aqui ou clique para selecionar</p>
-              <p className="text-xs text-muted-foreground mt-1">Máximo 500 linhas · UTF-8</p>
-              <input ref={inputRef} type="file" accept=".csv" className="hidden" onChange={(e) => { if (e.target.files?.[0]) handleFile(e.target.files[0]); }} />
+              <p className="text-sm font-medium text-foreground">Arraste o arquivo aqui ou clique para selecionar</p>
+              <p className="text-xs text-muted-foreground mt-1">XLSX ou CSV · máximo 500 linhas</p>
+              <input ref={inputRef} type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={(e) => { if (e.target.files?.[0]) handleFile(e.target.files[0]); }} />
             </div>
+
             {error && <p className="text-xs text-destructive flex items-center gap-1"><AlertCircle className="w-3.5 h-3.5" />{error}</p>}
-            <div className="flex items-center justify-between">
-              <p className="text-xs text-muted-foreground">Colunas: <span className="text-foreground">nome, telefone, email, cidade, bairro, cargo</span></p>
+
+            <div className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-3 space-y-1">
+              <p className="text-xs font-medium text-foreground/70">Colunas reconhecidas</p>
+              <p className="text-xs text-muted-foreground">
+                <span className="text-amber-400">nome *</span> · email · telefone ·{" "}
+                <span className="text-blue-400">cep</span> (preenche cidade/bairro automaticamente) ·{" "}
+                cidade · bairro · <span className="text-amber-400">origem *</span> · canal · perfil · cargo · status · status_apoio · aniversario · lgpd_consentimento · observacoes
+              </p>
+            </div>
+
+            <div className="flex justify-end">
               <button onClick={downloadTemplate} className="flex items-center gap-1 text-xs text-primary hover:underline">
-                <Download className="w-3 h-3" /> Baixar modelo
+                <Download className="w-3 h-3" /> Baixar planilha modelo (.xlsx)
               </button>
             </div>
           </div>
@@ -136,22 +194,33 @@ export function ImportCsvDialog({ open, onOpenChange, onSuccess }: Props) {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <p className="text-sm text-muted-foreground">
-                <span className="text-foreground font-medium">{fileName}</span> — {rows.length} linha{rows.length !== 1 ? "s" : ""} encontrada{rows.length !== 1 ? "s" : ""}
+                <span className="text-foreground font-medium">{fileName}</span> — {rows.length} linha{rows.length !== 1 ? "s" : ""}
               </p>
               <button onClick={reset} className="text-xs text-muted-foreground hover:text-foreground">Trocar arquivo</button>
             </div>
+
+            {hasCep && (
+              <div className="flex items-center gap-2 rounded-lg border border-blue-500/20 bg-blue-500/[0.07] px-3 py-2">
+                <MapPin className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+                <p className="text-xs text-blue-300">CEP detectado — cidade e bairro serão preenchidos automaticamente via ViaCEP durante a importação.</p>
+              </div>
+            )}
 
             <div className="overflow-x-auto rounded-xl border border-white/[0.08]">
               <table className="w-full text-xs">
                 <thead>
                   <tr className="border-b border-white/[0.07]" style={{ background: "rgba(13,27,42,0.5)" }}>
-                    {headers.map((h) => <th key={h} className="px-3 py-2 text-left text-muted-foreground font-medium capitalize">{h}</th>)}
+                    {previewHeaders.map((h) => <th key={h} className="px-3 py-2 text-left text-muted-foreground font-medium capitalize">{h}</th>)}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/[0.04]">
                   {preview.map((row, i) => (
                     <tr key={i} className="hover:bg-white/[0.02]">
-                      {headers.map((h) => <td key={h} className="px-3 py-2 text-foreground/80 truncate max-w-[120px]">{row[h] || <span className="text-muted-foreground/40">—</span>}</td>)}
+                      {previewHeaders.map((h) => (
+                        <td key={h} className="px-3 py-2 text-foreground/80 truncate max-w-[120px]">
+                          {row[h] || <span className="text-muted-foreground/40">—</span>}
+                        </td>
+                      ))}
                     </tr>
                   ))}
                 </tbody>

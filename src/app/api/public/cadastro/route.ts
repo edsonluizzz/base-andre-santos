@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { name, phone, city, neighborhood, email, contributionTypes, refUserId, refc, lgpdConsent, source: sourceParam, eventId } = body;
+    const { name, phone, city, neighborhood, email, contributionTypes, refUserId, refc, lgpdConsent, source: sourceParam } = body;
 
     if (!name?.trim()) return NextResponse.json({ error: "Nome é obrigatório" }, { status: 400 });
     if (!phone?.trim()) return NextResponse.json({ error: "WhatsApp é obrigatório" }, { status: 400 });

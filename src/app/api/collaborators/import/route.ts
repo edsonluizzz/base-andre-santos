@@ -12,6 +12,8 @@ const PROFILE_MAP: Record<string, string> = {
   "vereador": "VEREADOR",
   "empresario": "EMPRESARIO", "empresário": "EMPRESARIO",
   "lideranca comunitaria": "LIDERANCA_COMUNITARIA", "liderança comunitária": "LIDERANCA_COMUNITARIA",
+  "lider religioso": "LIDER_RELIGIOSO", "líder religioso": "LIDER_RELIGIOSO",
+  "educador": "EDUCADOR", "jovem": "JOVEM", "familia": "FAMILIA", "família": "FAMILIA",
   "apoiador": "APOIADOR",
 };
 
@@ -41,6 +43,41 @@ function parseRole(val: string): string {
   return ROLE_MAP[val.toLowerCase().trim()] ?? "VOLUNTARIO";
 }
 
+const CHANNEL_MAP: Record<string, string> = {
+  "instagram": "INSTAGRAM", "whatsapp": "WHATSAPP", "evento": "EVENTO",
+  "link": "LINK", "outro": "OUTRO",
+};
+
+function parseChannel(val: string): string | null {
+  return CHANNEL_MAP[val.toLowerCase().trim()] ?? null;
+}
+
+const SUPPORT_MAP: Record<string, string> = {
+  "confirmado": "CONFIRMADO", "negociando": "NEGOCIANDO", "neutro": "NEUTRO", "adversario": "ADVERSARIO", "adversário": "ADVERSARIO",
+};
+
+function parseSupportStatus(val: string): string {
+  return SUPPORT_MAP[val.toLowerCase().trim()] ?? "NEUTRO";
+}
+
+// Cache de CEP dentro da requisição para evitar chamadas duplicadas
+async function lookupCep(cep: string, cache: Map<string, { city: string; neighborhood: string }>): Promise<{ city: string; neighborhood: string } | null> {
+  const clean = cep.replace(/\D/g, "");
+  if (clean.length !== 8) return null;
+  if (cache.has(clean)) return cache.get(clean)!;
+  try {
+    const res = await fetch(`https://viacep.com.br/ws/${clean}/json/`, { signal: AbortSignal.timeout(4000) });
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (data.erro) return null;
+    const result = { city: data.localidade ?? "", neighborhood: data.bairro ?? "" };
+    cache.set(clean, result);
+    return result;
+  } catch {
+    return null;
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const session = await auth();
@@ -58,6 +95,7 @@ export async function POST(req: NextRequest) {
     let created = 0;
     let skipped = 0;
     const errors: string[] = [];
+    const cepCache = new Map<string, { city: string; neighborhood: string }>();
 
     for (const row of rows) {
       const name = (row.nome || row.name || row.Nome || "").trim();
@@ -65,17 +103,37 @@ export async function POST(req: NextRequest) {
 
       const phone = (row.telefone || row.whatsapp || row.Telefone || row.WhatsApp || "").trim();
       const email = (row.email || row.Email || "").trim() || null;
-      const city = normalizeCity(row.cidade || row.municipio || row.Cidade || row.Município || "");
-      const neighborhood = (row.bairro || row.Bairro || "").trim() || null;
-      const roleRaw = (row.cargo || row.Cargo || row.role || "").trim();
-      const campaignRole = parseRole(roleRaw);
-      const profileRaw = (row.perfil || row.profile || row.Perfil || "").trim();
-      const profile = parseProfile(profileRaw);
+
+      // CEP → preenche cidade/bairro automaticamente se os campos estiverem vazios
+      const cepRaw = (row.cep || row.CEP || row.Cep || "").trim();
+      let cityRaw = (row.cidade || row.municipio || row.Cidade || row.Município || "").trim();
+      let neighborhoodRaw = (row.bairro || row.Bairro || "").trim();
+
+      if (cepRaw && (!cityRaw || !neighborhoodRaw)) {
+        const fromCep = await lookupCep(cepRaw, cepCache);
+        if (fromCep) {
+          if (!cityRaw) cityRaw = fromCep.city;
+          if (!neighborhoodRaw) neighborhoodRaw = fromCep.neighborhood;
+        }
+      }
+
+      const city = normalizeCity(cityRaw);
+      const neighborhood = neighborhoodRaw || null;
+
+      const campaignRole = parseRole((row.cargo || row.Cargo || row.role || "").trim());
+      const profile = parseProfile((row.perfil || row.profile || row.Perfil || "").trim());
       const statusRaw = (row.status || row.Status || "").trim();
       const status = statusRaw ? parseStatus(statusRaw) : "ACTIVE";
+      const source = (row.origem || row.source || row.Origem || "").trim() || "IMPORTACAO_XLSX";
+      const channelRaw = (row.canal || row.channel || row.Canal || "").trim();
+      const channel = parseChannel(channelRaw);
+      const supportStatusRaw = (row.status_apoio || row["status apoio"] || row.supportStatus || "").trim();
+      const supportStatus = supportStatusRaw ? parseSupportStatus(supportStatusRaw) : "NEUTRO";
+      const lgpdRaw = (row.lgpd_consentimento || row.lgpd || row.LGPD || "").trim().toLowerCase();
+      const lgpdConsent = lgpdRaw === "sim" || lgpdRaw === "yes" || lgpdRaw === "true";
 
       try {
-        // Pula duplicatas por nome+telefone
+        // Pula duplicatas por telefone
         if (phone) {
           const cleanPhone = phone.replace(/\D/g, "");
           const dup = await db.collaborator.findFirst({
@@ -91,7 +149,11 @@ export async function POST(req: NextRequest) {
             campaignRole: campaignRole as never,
             profile: profile as never,
             status: status as never,
-            source: "IMPORTACAO_CSV",
+            source,
+            channel: channel as never ?? undefined,
+            supportStatus: supportStatus as never,
+            lgpdConsent,
+            lgpdConsentAt: lgpdConsent ? new Date() : null,
           },
         });
         created++;
