@@ -7,6 +7,7 @@ import { ROLE_LABEL } from "@/lib/labels";
 import { CopyButton } from "@/components/dashboard/copy-button";
 import { FunnelPanel } from "@/components/dashboard/funnel-panel";
 import { VelocityPanel } from "@/components/dashboard/velocity-panel";
+import { ElectionCountdown } from "@/components/dashboard/election-countdown";
 import { Suspense } from "react";
 
 const CID = "andre-santos-2026";
@@ -80,6 +81,8 @@ export default async function DashboardPage() {
           Bem-vindo, {session?.user?.name?.split(" ")[0]}. Visão geral da base de apoio.
         </p>
       </div>
+
+      <ElectionCountdown />
 
       {/* Banner de boas-vindas para quem ainda não cadastrou ninguém */}
       {myTotal === 0 && (
