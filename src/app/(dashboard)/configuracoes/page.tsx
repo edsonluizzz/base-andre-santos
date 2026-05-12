@@ -28,7 +28,6 @@ function ConfiguracoesContent() {
   const [goals, setGoals] = useState<MunicipalityGoal[]>([]);
   const [goalForm, setGoalForm] = useState({ city: "", targetVotes: "", targetLeaders: "" });
   const [savingGoal, setSavingGoal] = useState(false);
-  const [importingTse, setImportingTse] = useState(false);
 
   useEffect(() => {
     const gcalParam = searchParams.get("gcal");
@@ -93,41 +92,6 @@ function ConfiguracoesContent() {
       setGoalForm({ city: "", targetVotes: "", targetLeaders: "" });
       toast.success("Meta salva");
     } else toast.error("Erro ao salvar meta");
-  }
-
-  async function importTseGoals() {
-    setImportingTse(true);
-    try {
-      const res = await fetch("/api/tse/municipios-pr");
-      if (!res.ok) { toast.error("Erro ao buscar dados TSE"); return; }
-      const suggestions: { city: string; metaSugerida: number; metaLideres: number }[] = await res.json();
-
-      // Só importa cidades que ainda não têm meta definida
-      const existing = new Set(goals.map((g) => g.city.toLowerCase()));
-      const toImport = suggestions.filter((s) => !existing.has(s.city.toLowerCase())).slice(0, 20);
-
-      if (toImport.length === 0) { toast.info("Todas as cidades sugeridas já têm meta"); return; }
-
-      let count = 0;
-      for (const s of toImport) {
-        const r = await fetch("/api/municipality-goals", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ city: s.city, targetVotes: s.metaSugerida, targetLeaders: s.metaLideres }),
-        });
-        if (r.ok) {
-          const updated = await r.json();
-          setGoals((prev) => {
-            const idx = prev.findIndex((g) => g.city === updated.city);
-            return idx >= 0 ? prev.map((g, i) => i === idx ? updated : g) : [...prev, updated].sort((a, b) => a.city.localeCompare(b.city));
-          });
-          count++;
-        }
-      }
-      toast.success(`${count} metas importadas com base no eleitorado PR 2022`);
-    } finally {
-      setImportingTse(false);
-    }
   }
 
   async function handleDeleteGoal(city: string) {
@@ -302,16 +266,7 @@ function ConfiguracoesContent() {
           <Target className="w-4 h-4 text-primary" />
           <h2 className="text-sm font-semibold">Metas por Município</h2>
         </div>
-        <p className="text-[11px] text-muted-foreground">Defina metas de votos e lideranças por cidade para acompanhar no relatório.</p>
-        <Button
-          size="sm" variant="outline"
-          onClick={importTseGoals}
-          disabled={importingTse}
-          className="gap-1.5 text-xs h-8 border-blue-500/30 text-blue-400 hover:bg-blue-500/10"
-        >
-          <RefreshCw className={`w-3.5 h-3.5 ${importingTse ? "animate-spin" : ""}`} />
-          {importingTse ? "Importando..." : "Sugerir metas por eleitorado PR 2022"}
-        </Button>
+        <p className="text-[11px] text-muted-foreground">Defina metas de votos e lideranças por cidade. Novas cidades com colaboradores recebem metas automaticamente todo dia às 7h com base no eleitorado TSE 2022.</p>
 
         {/* Formulário nova meta */}
         <div className="grid grid-cols-3 gap-2">

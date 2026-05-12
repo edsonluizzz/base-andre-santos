@@ -4,7 +4,7 @@ import { getMunicipioPR } from "@/lib/tse";
 
 const CID = "andre-santos-2026";
 
-// Roda toda segunda-feira às 3h UTC (vercel.json: "0 3 * * 1")
+// Roda todo dia às 10h UTC = 7h BRT (vercel.json: "0 10 * * *")
 // Cria MunicipalityGoal para cidades com colaboradores que ainda não têm meta.
 // NÃO sobrescreve metas já existentes — preserva ajustes manuais.
 export async function GET(req: NextRequest) {
