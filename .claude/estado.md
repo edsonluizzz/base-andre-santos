@@ -168,7 +168,7 @@ gcal-sync:              0 4 * * *             (1×/dia — Hobby plan limit)
 - [ ] **YouTube:** substituir `YT_VIDEO_ID = "yYV-Z78sKC0"` pelo ID definitivo em `src/app/cadastro/cadastro-form.tsx:9`
 - [ ] **Scores:** /configuracoes → "Recalcular scores agora" (após popular colaboradores)
 - [ ] **Metas TSE:** /configuracoes → "Sugerir metas por eleitorado PR 2022" → revisa e salva
-- [ ] **Importação Gospel Class:** 4 lotes prontos em `Downloads/gospel-class-lote{1-4}-de4.xlsx` (1652 leads · responsavel_email=institutomarcospires@gmail.com · canal=Outro · origem=GOSPEL CLASS)
+- [x] **Importação Gospel Class:** 1652 leads importados em 2026-05-12 · canal=Outro · origem=GOSPEL CLASS · vinculados ao Marcos (institutomarcospires@gmail.com)
 - [ ] **Leads pré-fix:** colaboradores importados antes de 2026-05-11 têm `source` com o texto da origem em vez de "IMPORTACAO_XLSX" — o filtro "Importado" não os encontra. Atualizar via SQL ou reimportar se necessário.
 
 ### Integrações pendentes
