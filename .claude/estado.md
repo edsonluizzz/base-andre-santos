@@ -1,6 +1,6 @@
 # Estado — Base André Santos
 
-**Última atualização:** 2026-05-10 (Sprint completo: presença · broadcast · pipeline leads · QR code · Telegram · velocidade · tarefas · projeção · perfil · GAP7 · /tarefas admin · EngagementPanel · TSE/IBGE metas · gcal sync auto)
+**Última atualização:** 2026-05-11 (Sprint importação XLSX · filtros avançados colaboradores · lookup CEP automático · upsert duplicatas · vinculação por responsavel_email · conversão Gospel Class)
 **GitHub:** https://github.com/edsonluizzz/base-andre-santos
 **Deploy:** Vercel — base-andre-santos.vercel.app · último deploy: `8801898` (READY)
 
@@ -18,7 +18,7 @@ Sistema funcional e em produção. Terminologia "Base de Apoio" (não "campanha"
 |--------|------|--------|
 | Planejamento | `/planejamento` | ✅ ADMIN only · análise STRIDE × sistema · GAPs dinâmicos via $queryRaw |
 | Dashboard | `/dashboard` | ✅ KPIs + VelocityPanel (crescimento/semana por cidade) + FunnelPanel |
-| Colaboradores | `/colaboradores` | ✅ CSV import · seleção em massa · bulk status · alerta 30d+ sem contato · "Marcar contato hoje" |
+| Colaboradores | `/colaboradores` | ✅ XLSX/CSV import (upsert duplicatas · CEP auto · responsavel_email) · filtros avançados (origem, perfil, canal, apoio, cidade, líder) · seleção em massa · bulk status · alerta 30d+ sem contato · "Marcar contato hoje" |
 | Perfil colaborador | `/colaboradores/[id]` | ✅ score breakdown (5 componentes) · canal/fonte/lastContactedAt · histórico completo presenças |
 | Mapa de Apoio | `/mapa` | ✅ choropleth PR · zoom/pan · tooltip hover · cards clicáveis por status de apoio |
 | Zonas | `/zonas` | ✅ |
@@ -43,10 +43,10 @@ Sistema funcional e em produção. Terminologia "Base de Apoio" (não "campanha"
 
 ## APIs
 
-- `/api/collaborators` — CRUD + filtros + `?mine=true`
+- `/api/collaborators` — CRUD + filtros (role, status, city, mine, registeredBy, sourceType, profile, channel, supportStatus) · search inclui `source`
 - `/api/collaborators/[id]` — GET/PUT/DELETE
 - `/api/collaborators/[id]/contact` — POST: marca `lastContactedAt = now()`
-- `/api/collaborators/import` — bulk CSV (max 500 linhas)
+- `/api/collaborators/import` — bulk XLSX/CSV (max 500 linhas) · upsert por telefone · lookup CEP automático · `responsavel_email` para atribuir a outro usuário · `source` sempre "IMPORTACAO_XLSX" · origem vai para `notes`
 - `/api/collaborators/bulk` — PATCH status/campaignRole/supportStatus em massa (max 500)
 - `/api/events/[id]/attendance` — GET lista presenças · POST batch (delete+createMany, recalcula score)
 - `/api/tasks` — GET (`?all=true` para ADMIN retorna todas com nome) · POST cria tarefa
@@ -168,6 +168,8 @@ gcal-sync:              0 4 * * *             (1×/dia — Hobby plan limit)
 - [ ] **YouTube:** substituir `YT_VIDEO_ID = "yYV-Z78sKC0"` pelo ID definitivo em `src/app/cadastro/cadastro-form.tsx:9`
 - [ ] **Scores:** /configuracoes → "Recalcular scores agora" (após popular colaboradores)
 - [ ] **Metas TSE:** /configuracoes → "Sugerir metas por eleitorado PR 2022" → revisa e salva
+- [ ] **Importação Gospel Class:** 4 lotes prontos em `Downloads/gospel-class-lote{1-4}-de4.xlsx` (1652 leads · responsavel_email=institutomarcospires@gmail.com · canal=Outro · origem=GOSPEL CLASS)
+- [ ] **Leads pré-fix:** colaboradores importados antes de 2026-05-11 têm `source` com o texto da origem em vez de "IMPORTACAO_XLSX" — o filtro "Importado" não os encontra. Atualizar via SQL ou reimportar se necessário.
 
 ### Integrações pendentes
 - [ ] **Metricool:** analytics + concorrentes (aguardando API key)
