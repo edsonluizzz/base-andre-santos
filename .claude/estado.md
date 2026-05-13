@@ -1,7 +1,8 @@
 # Estado — Base André Santos
 
-**Última atualização:** 2026-05-13 (fix source leads antigos · planejamento ISSACAR.IA multi-tenant)
+**Última atualização:** 2026-05-13 (fix source leads antigos · plano ISSACAR.IA 5 sprints · landing page issacar-landing.vercel.app)
 **Plano de produto:** `.claude/issacar-plano.md` — transformar em SaaS multi-tenant (issacar.app)
+**Landing page:** https://issacar-landing.vercel.app · domínio issacar.app pendente configuração DNS
 **GitHub:** https://github.com/edsonluizzz/base-andre-santos
 **Deploy:** Vercel — base-andre-santos.vercel.app · último deploy: `8801898` (READY)
 
