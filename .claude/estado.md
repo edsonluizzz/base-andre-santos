@@ -1,6 +1,7 @@
 # Estado — Base André Santos
 
-**Última atualização:** 2026-05-13 (fix source leads antigos · botão manutenção em /configuracoes · planejamento Evolution API)
+**Última atualização:** 2026-05-13 (fix source leads antigos · planejamento ISSACAR.IA multi-tenant)
+**Plano de produto:** `.claude/issacar-plano.md` — transformar em SaaS multi-tenant (issacar.app)
 **GitHub:** https://github.com/edsonluizzz/base-andre-santos
 **Deploy:** Vercel — base-andre-santos.vercel.app · último deploy: `8801898` (READY)
 
