@@ -1,6 +1,6 @@
 # Estado — Base André Santos
 
-**Última atualização:** 2026-05-11 (Sprint importação XLSX · filtros avançados colaboradores · lookup CEP automático · upsert duplicatas · vinculação por responsavel_email · conversão Gospel Class)
+**Última atualização:** 2026-05-13 (fix source leads antigos · botão manutenção em /configuracoes · planejamento Evolution API)
 **GitHub:** https://github.com/edsonluizzz/base-andre-santos
 **Deploy:** Vercel — base-andre-santos.vercel.app · último deploy: `8801898` (READY)
 
@@ -169,15 +169,34 @@ gcal-sync:              0 4 * * *             (1×/dia — Hobby plan limit)
 - [ ] **Scores:** /configuracoes → "Recalcular scores agora" (após popular colaboradores)
 - [ ] **Metas TSE:** /configuracoes → "Sugerir metas por eleitorado PR 2022" → revisa e salva
 - [x] **Importação Gospel Class:** 1652 leads importados em 2026-05-12 · canal=Outro · origem=GOSPEL CLASS · vinculados ao Marcos (institutomarcospires@gmail.com)
-- [ ] **Leads pré-fix:** colaboradores importados antes de 2026-05-11 têm `source` com o texto da origem em vez de "IMPORTACAO_XLSX" — o filtro "Importado" não os encontra. Atualizar via SQL ou reimportar se necessário.
+- [ ] **Leads pré-fix:** /configuracoes → "Corrigir origem de leads antigos" (`POST /api/admin/fix-import-source` · adicionado 2026-05-13). Executar uma vez para normalizar `source` de leads importados antes de 2026-05-11.
 
 ### Integrações pendentes
+- [ ] **Evolution API:** WhatsApp para ativação da base — decisão 2026-05-13 (ver seção abaixo)
 - [ ] **Metricool:** analytics + concorrentes (aguardando API key)
 - [ ] **Compliance ago/2026:** CNPJ coligação + registro SPCE
 
 ---
 
-## Próximo Sprint — Inteligência Digital (Metricool)
+## Próximo Sprint — Comunicação WhatsApp (Evolution API)
+
+**Decisão (2026-05-13):** Evolution API escolhida como ferramenta de WhatsApp para ativar a base.
+
+| Fase | Escopo |
+|------|--------|
+| Fase 1 — Infraestrutura | Subir instância Evolution API (cloud ou self-hosted) · número dedicado · conectar via QR Code |
+| Fase 2 — Integração básica | Botão "Enviar WhatsApp" no card do colaborador (wa.me) · broadcast manual via painel /comunicados |
+| Fase 3 — API completa | Webhook Evolution → CRM (mensagens recebidas) · templates de ativação · histórico de contato |
+| Fase 4 — Compliance | Avaliar migração para Meta Cloud API antes do registro de candidatura (ago/2026) |
+
+**Pré-requisitos antes de implementar:**
+- Definir número dedicado para a campanha (não usar pessoal)
+- Instância Evolution API: cloud (evolutionapi.com ~R$80/mês) ou self-hosted (VPS ~R$30/mês)
+- Testar envio manual antes de integrar ao código
+
+---
+
+## Sprint anterior — Inteligência Digital (Metricool)
 
 **Pré-requisito:** API key Metricool + conta Instagram conectada
 
