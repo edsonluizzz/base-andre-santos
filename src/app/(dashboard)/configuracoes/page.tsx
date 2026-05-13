@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
-import { Settings, Upload, Key, X, Calendar, CheckCircle2, AlertCircle, RefreshCw, Unlink, Target, Trash2, Plus, Zap } from "lucide-react";
+import { Settings, Upload, Key, X, Calendar, CheckCircle2, AlertCircle, RefreshCw, Unlink, Target, Trash2, Plus, Zap, Database } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,6 +22,7 @@ function ConfiguracoesContent() {
   const [gcalConnected, setGcalConnected] = useState(false);
   const [gcalSyncing, setGcalSyncing] = useState(false);
   const [recalcLoading, setRecalcLoading] = useState(false);
+  const [fixSourceLoading, setFixSourceLoading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   // Metas por município
@@ -356,6 +357,36 @@ function ConfiguracoesContent() {
         >
           <Zap className={`w-3.5 h-3.5 ${recalcLoading ? "animate-pulse" : ""}`} />
           {recalcLoading ? "Calculando..." : "Recalcular scores agora"}
+        </Button>
+      </div>
+
+      {/* Manutenção de Dados */}
+      <div className="glass-card rounded-2xl p-6 border border-white/[0.08] space-y-3">
+        <div className="flex items-center gap-2 mb-1">
+          <Database className="w-4 h-4 text-primary" />
+          <h2 className="text-sm font-semibold">Manutenção de Dados</h2>
+        </div>
+        <p className="text-[11px] text-muted-foreground">
+          Corrige leads importados antes de 11/05/2026 que possuem texto livre no campo &quot;origem&quot; — move o texto para as notas e padroniza o source para IMPORTACAO_XLSX, fazendo-os aparecer no filtro &quot;Importado&quot;.
+        </p>
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={fixSourceLoading}
+          className="gap-1.5 text-xs"
+          onClick={async () => {
+            setFixSourceLoading(true);
+            const res = await fetch("/api/admin/fix-import-source", { method: "POST" });
+            setFixSourceLoading(false);
+            if (res.ok) {
+              const d = await res.json();
+              if (d.updated === 0) toast.success("Nenhum lead precisava de correção");
+              else toast.success(`${d.updated} leads corrigidos com sucesso`);
+            } else toast.error("Erro ao corrigir leads");
+          }}
+        >
+          <Database className={`w-3.5 h-3.5 ${fixSourceLoading ? "animate-pulse" : ""}`} />
+          {fixSourceLoading ? "Corrigindo..." : "Corrigir origem de leads antigos"}
         </Button>
       </div>
 
