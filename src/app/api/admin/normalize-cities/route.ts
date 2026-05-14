@@ -6,6 +6,15 @@ import { join } from "path";
 
 const CID = "andre-santos-2026";
 
+// Correções curadas: variações conhecidas que não constam na lista canônica
+const CURATED: Record<string, string> = {
+  "ctba": "Curitiba",
+  "curityba": "Curitiba",
+  "parana": "Curitiba",      // estado digitado no lugar da cidade
+  "pinhas": "Pinhais",
+  "campo largo parana": "Campo Largo",
+};
+
 function normalizeStr(s: string) {
   return s.trim().toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 }
@@ -40,7 +49,7 @@ export async function POST() {
 
     for (const city of cities) {
       const key = normalizeStr(city);
-      const match = canonical.get(key);
+      const match = canonical.get(key) ?? CURATED[key] ?? null;
       if (match && match !== city) {
         toUpdate.push({ original: city, corrected: match });
       } else if (!match) {
