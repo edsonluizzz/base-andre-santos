@@ -24,7 +24,7 @@ export function CadastroForm() {
   const [stats, setStats] = useState({ apoiadores: 0, municipios: 0, grupos: 0 });
   const [collaboratorId, setCollaboratorId] = useState("");
   const [copied, setCopied] = useState(false);
-  const [countdown, setCountdown] = useState(5);
+  const [countdown, setCountdown] = useState(30);
   const [redirectCancelled, setRedirectCancelled] = useState(false);
 
   const shareUrl = collaboratorId
@@ -132,7 +132,7 @@ export function CadastroForm() {
 
   function resetForm() {
     setStep("form");
-    setName(""); setPhone(""); setCep(""); setCity(""); setNeighborhood(""); setEmail(""); setSelectedTypes([]); setLgpdConsent(false); setCepError(""); setCollaboratorId(""); setCopied(false); setCountdown(5); setRedirectCancelled(false);
+    setName(""); setPhone(""); setCep(""); setCity(""); setNeighborhood(""); setEmail(""); setSelectedTypes([]); setLgpdConsent(false); setCepError(""); setCollaboratorId(""); setCopied(false); setCountdown(30); setRedirectCancelled(false);
   }
 
   async function copyLink() {
