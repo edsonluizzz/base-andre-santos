@@ -6,7 +6,7 @@ import { Star, CheckCircle2, ChevronRight, Users, MapPin, Smartphone, Copy, Chec
 import { CONTRIBUTION_OPTIONS } from "@/lib/contribution";
 
 // Substitua pelo ID real do vídeo do YouTube do André (parte final da URL: youtube.com/watch?v=ISSO)
-const YT_VIDEO_ID = "yYV-Z78sKC0";
+const YT_VIDEO_ID = "z_9zver8iN0";
 
 type Step = "form" | "success";
 
@@ -154,12 +154,12 @@ export function CadastroForm() {
 
           {/* Vídeo do André */}
           {YT_VIDEO_ID && YT_VIDEO_ID !== "COLE_O_ID_AQUI" && (
-            <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid rgba(212,175,55,0.2)" }}>
+            <div className="flex justify-center rounded-2xl overflow-hidden" style={{ border: "1px solid rgba(212,175,55,0.2)" }}>
               <iframe
                 src={`https://www.youtube-nocookie.com/embed/${YT_VIDEO_ID}?autoplay=1&rel=0&modestbranding=1`}
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
-                className="w-full aspect-video"
+                className="w-full max-w-xs aspect-[9/16]"
                 title="André Santos — Mensagem"
               />
             </div>
