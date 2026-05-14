@@ -1,6 +1,6 @@
 # Estado — Base André Santos
 
-**Última atualização:** 2026-05-13 (fix source leads antigos · plano ISSACAR.IA 5 sprints · landing page issacar-landing.vercel.app)
+**Última atualização:** 2026-05-14 (fluxo pós-cadastro · filtro data colaboradores · telas de erro rebrandeadas)
 **Plano de produto:** `.claude/issacar-plano.md` — transformar em SaaS multi-tenant (issacar.app)
 **Landing page:** https://issacar-landing.vercel.app · domínio issacar.app pendente configuração DNS
 **GitHub:** https://github.com/edsonluizzz/base-andre-santos
@@ -167,11 +167,11 @@ gcal-sync:              0 4 * * *             (1×/dia — Hobby plan limit)
 ## Pendências
 
 ### Ações manuais do admin
-- [x] **YouTube:** vídeo definitivo `z_9zver8iN0` (Shorts) · aspecto corrigido para 9:16 · `src/app/cadastro/cadastro-form.tsx:9` (2026-05-14)
+- [x] **YouTube:** vídeo definitivo `z_9zver8iN0` (Shorts) · aspecto 9:16 · countdown 60s antes do redirect WA (2026-05-14)
 - [ ] **Scores:** /configuracoes → "Recalcular scores agora" (após popular colaboradores)
 - [ ] **Metas TSE:** /configuracoes → "Sugerir metas por eleitorado PR 2022" → revisa e salva
-- [x] **Importação Gospel Class:** 1652 leads importados em 2026-05-12 · canal=Outro · origem=GOSPEL CLASS · vinculados ao Marcos (institutomarcospires@gmail.com)
-- [ ] **Leads pré-fix:** /configuracoes → "Corrigir origem de leads antigos" (`POST /api/admin/fix-import-source` · adicionado 2026-05-13). Executar uma vez para normalizar `source` de leads importados antes de 2026-05-11.
+- [x] **Importação Gospel Class:** 1652 leads importados em 2026-05-12 · canal=Outro · origem=GOSPEL CLASS · vinculados ao Marcos
+- [ ] **Leads pré-fix:** /configuracoes → "Corrigir origem de leads antigos" (`POST /api/admin/fix-import-source`). Executar uma vez.
 
 ### Integrações pendentes
 - [ ] **Evolution API:** WhatsApp para ativação da base — decisão 2026-05-13 (ver seção abaixo)
