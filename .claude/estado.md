@@ -168,10 +168,11 @@ gcal-sync:              0 4 * * *             (1×/dia — Hobby plan limit)
 
 ### Ações manuais do admin
 - [x] **YouTube:** vídeo definitivo `z_9zver8iN0` (Shorts) · aspecto 9:16 · countdown 60s antes do redirect WA (2026-05-14)
-- [ ] **Scores:** /configuracoes → "Recalcular scores agora" (após popular colaboradores)
+- [x] **Scores:** /configuracoes → "Recalcular scores agora" — executado em 2026-05-14
 - [ ] **Metas TSE:** /configuracoes → "Sugerir metas por eleitorado PR 2022" → revisa e salva
+- [x] **Normalização de cidades:** endpoint `POST /api/admin/normalize-cities` · botão em /configuracoes · usa lista oficial 399 municípios PR · exibe cidades sem correspondência para revisão
 - [x] **Importação Gospel Class:** 1652 leads importados em 2026-05-12 · canal=Outro · origem=GOSPEL CLASS · vinculados ao Marcos
-- [ ] **Leads pré-fix:** /configuracoes → "Corrigir origem de leads antigos" (`POST /api/admin/fix-import-source`). Executar uma vez.
+- [x] **Leads pré-fix:** /configuracoes → "Corrigir origem de leads antigos" — executado em 2026-05-14
 
 ### Integrações pendentes
 - [ ] **Evolution API:** WhatsApp para ativação da base — decisão 2026-05-13 (ver seção abaixo)

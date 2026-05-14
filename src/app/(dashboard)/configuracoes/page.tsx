@@ -23,6 +23,8 @@ function ConfiguracoesContent() {
   const [gcalSyncing, setGcalSyncing] = useState(false);
   const [recalcLoading, setRecalcLoading] = useState(false);
   const [fixSourceLoading, setFixSourceLoading] = useState(false);
+  const [normCitiesLoading, setNormCitiesLoading] = useState(false);
+  const [unmatchedCities, setUnmatchedCities] = useState<string[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
 
   // Metas por município
@@ -388,6 +390,43 @@ function ConfiguracoesContent() {
           <Database className={`w-3.5 h-3.5 ${fixSourceLoading ? "animate-pulse" : ""}`} />
           {fixSourceLoading ? "Corrigindo..." : "Corrigir origem de leads antigos"}
         </Button>
+
+        <div className="border-t border-white/[0.06] pt-3 space-y-2">
+          <p className="text-[11px] text-muted-foreground">
+            Normaliza os nomes de cidades no banco usando a lista oficial dos 399 municípios do Paraná — corrige variações de caixa, acentuação e espaços. Cidades sem correspondência são listadas para revisão manual.
+          </p>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={normCitiesLoading}
+            className="gap-1.5 text-xs"
+            onClick={async () => {
+              setNormCitiesLoading(true);
+              setUnmatchedCities([]);
+              const res = await fetch("/api/admin/normalize-cities", { method: "POST" });
+              setNormCitiesLoading(false);
+              if (res.ok) {
+                const d = await res.json();
+                if (d.corrections === 0) toast.success("Todas as cidades já estavam normalizadas");
+                else toast.success(`${d.corrections} nome(s) corrigido(s) · ${d.updated} colaborador(es) atualizados`);
+                if (d.unmatched?.length) setUnmatchedCities(d.unmatched);
+              } else toast.error("Erro ao normalizar cidades");
+            }}
+          >
+            <Database className={`w-3.5 h-3.5 ${normCitiesLoading ? "animate-pulse" : ""}`} />
+            {normCitiesLoading ? "Normalizando..." : "Normalizar nomes de cidades"}
+          </Button>
+          {unmatchedCities.length > 0 && (
+            <div className="rounded-lg border border-amber-500/25 bg-amber-500/[0.06] p-3 space-y-1.5">
+              <p className="text-[11px] font-medium text-amber-400">Cidades sem correspondência — revisar manualmente:</p>
+              <ul className="space-y-0.5">
+                {unmatchedCities.map((c) => (
+                  <li key={c} className="text-[11px] text-muted-foreground font-mono">{c}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
       </div>
 
       <Button onClick={handleSave} disabled={saving} className="bg-primary text-primary-foreground">
