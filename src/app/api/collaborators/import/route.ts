@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { normalizeCity } from "@/lib/utils";
+import { ensureCityGoal } from "@/lib/municipality-goals";
 
 const CID = "andre-santos-2026";
 
@@ -211,6 +212,10 @@ export async function POST(req: NextRequest) {
         errors.push(name);
       }
     }
+
+    // Garante metas automáticas para todas as cidades importadas
+    const importedCities = [...new Set(rows.map((r) => normalizeCity((r.cidade || r.municipio || r.Cidade || r.Município || "").trim())).filter(Boolean))];
+    await Promise.allSettled(importedCities.map((c) => ensureCityGoal(c)));
 
     return NextResponse.json({ created, updated, skipped, errors: errors.slice(0, 10) });
   } catch (err) {

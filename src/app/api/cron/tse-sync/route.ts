@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getMunicipioPR } from "@/lib/tse";
+import { ensureCityGoal } from "@/lib/municipality-goals";
 
 const CID = "andre-santos-2026";
 
-// Roda todo dia às 10h UTC = 7h BRT (vercel.json: "0 10 * * *")
-// Cria MunicipalityGoal para cidades com colaboradores que ainda não têm meta.
-// NÃO sobrescreve metas já existentes — preserva ajustes manuais.
+// Safety net diário — 10h UTC (7h BRT). Metas já são criadas inline ao cadastrar colaboradores.
 export async function GET(req: NextRequest) {
   const secret = req.headers.get("x-vercel-cron-signature") ??
     req.nextUrl.searchParams.get("secret");
@@ -15,46 +13,22 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    // Cidades distintas com pelo menos 1 colaborador
     const citiesInDB = await db.collaborator.findMany({
       where: { campaignId: CID, city: { not: null } },
       select: { city: true },
       distinct: ["city"],
     });
 
-    // Metas já cadastradas
-    const existing = await db.municipalityGoal.findMany({
-      where: { campaignId: CID },
-      select: { city: true },
-    });
-    const withGoal = new Set(existing.map((g) => g.city));
-
     let created = 0;
-    const skipped: string[] = [];
-    const noData: string[] = [];
-
     for (const { city } of citiesInDB) {
-      if (!city) continue;
-      if (withGoal.has(city)) { skipped.push(city); continue; }
-
-      const suggestion = getMunicipioPR(city);
-      if (!suggestion) { noData.push(city); continue; }
-
-      await db.municipalityGoal.create({
-        data: {
-          campaignId: CID,
-          city,
-          targetVotes:   suggestion.metaSugerida,
-          targetLeaders: suggestion.metaLideres,
-        },
-      });
-      created++;
+      const before = await db.municipalityGoal.count({ where: { campaignId: CID, city: city! } });
+      await ensureCityGoal(city);
+      const after = await db.municipalityGoal.count({ where: { campaignId: CID, city: city! } });
+      if (after > before) created++;
     }
 
-    console.log(`[tse-sync] criadas=${created} | ja-tinham-meta=${skipped.length} | sem-dado-tse=${noData.length}`);
-    if (noData.length > 0) console.log(`[tse-sync] cidades sem dado TSE:`, noData);
-
-    return NextResponse.json({ created, skipped: skipped.length, noData });
+    console.log(`[tse-sync] criadas=${created} | total-cidades=${citiesInDB.length}`);
+    return NextResponse.json({ created, total: citiesInDB.length });
   } catch (err) {
     console.error("[tse-sync]", err);
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });

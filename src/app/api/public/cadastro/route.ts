@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { recalcTier } from "@/lib/tier";
 import { sendNewLeadNotificationEmail } from "@/lib/email";
 import { sendTelegram } from "@/lib/telegram";
+import { ensureCityGoal } from "@/lib/municipality-goals";
 
 const CID = "andre-santos-2026";
 
@@ -82,6 +83,9 @@ export async function POST(req: NextRequest) {
         lgpdConsentAt: new Date(),
       },
     });
+
+    // Garante meta automática para a cidade (idempotente, sem bloquear resposta)
+    ensureCityGoal(city?.trim() || null).catch(() => {});
 
     // Leads não contam para tier (status=LEAD) — recalc só ao ativar
     if (registeredById) {

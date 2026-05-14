@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { recalcTier } from "@/lib/tier";
 import { normalizeCity } from "@/lib/utils";
+import { ensureCityGoal } from "@/lib/municipality-goals";
 import { CollaboratorRole, CollaboratorStatus } from "@prisma/client";
 
 const CID = "andre-santos-2026";
@@ -115,6 +116,9 @@ export async function POST(req: NextRequest) {
         registeredBy: { select: { name: true, email: true } },
       },
     });
+
+    // Garante meta automática para a cidade (idempotente)
+    ensureCityGoal(collaborator.city).catch(() => {});
 
     // status padrão é ACTIVE → recalcula tier do registrador
     await recalcTier(session.user.id).catch(() => {});
