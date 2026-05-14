@@ -24,7 +24,7 @@ export function CadastroForm() {
   const [stats, setStats] = useState({ apoiadores: 0, municipios: 0, grupos: 0 });
   const [collaboratorId, setCollaboratorId] = useState("");
   const [copied, setCopied] = useState(false);
-  const [countdown, setCountdown] = useState(30);
+  const [countdown, setCountdown] = useState(60);
   const [redirectCancelled, setRedirectCancelled] = useState(false);
 
   const shareUrl = collaboratorId
