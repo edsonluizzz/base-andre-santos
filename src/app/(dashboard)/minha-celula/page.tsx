@@ -219,7 +219,24 @@ export default function MinhaCelulaPage() {
                 Compartilhe este link. Quem se cadastrar por ele ficará vinculado à sua célula e contará para sua progressão de nível.
               </p>
               {referralLink && (
-                <div className="mt-auto">
+                <div className="mt-auto space-y-3">
+                  <div className="flex flex-col items-center gap-1.5">
+                    <img
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&bgcolor=ffffff&color=070a10&data=${encodeURIComponent(referralLink)}`}
+                      alt="QR Code do link de cadastro"
+                      width={180}
+                      height={180}
+                      className="rounded-xl bg-white p-1.5"
+                    />
+                    <a
+                      href={`https://api.qrserver.com/v1/create-qr-code/?size=800x800&bgcolor=ffffff&color=070a10&data=${encodeURIComponent(referralLink)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[10px] text-primary/70 hover:text-primary transition-colors underline underline-offset-2"
+                    >
+                      Abrir maior para imprimir
+                    </a>
+                  </div>
                   <div className="flex items-center gap-2 rounded-lg px-3 py-2.5 bg-white/[0.04] border border-white/[0.08] overflow-hidden">
                     <span className="flex-1 min-w-0 text-xs text-muted-foreground font-mono truncate">{referralLink}</span>
                     <button onClick={copyLink} className="shrink-0 text-muted-foreground hover:text-primary transition-colors">
@@ -234,7 +251,7 @@ export default function MinhaCelulaPage() {
                   >
                     <MessageCircle className="w-4 h-4" /> Compartilhar no WhatsApp
                   </a>
-                  <p className="text-[10px] text-muted-foreground mt-1.5">Clique no ícone para copiar o link</p>
+                  <p className="text-[10px] text-muted-foreground">Clique no ícone para copiar o link</p>
                 </div>
               )}
             </div>
