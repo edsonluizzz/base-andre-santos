@@ -171,6 +171,7 @@ gcal-sync:              0 4 * * *             (1×/dia — Hobby plan limit)
 - [x] **Scores:** /configuracoes → "Recalcular scores agora" — executado em 2026-05-14
 - [ ] **Metas TSE:** /configuracoes → "Sugerir metas por eleitorado PR 2022" → revisa e salva
 - [x] **Normalização de cidades:** endpoint `POST /api/admin/normalize-cities` · botão em /configuracoes · usa lista oficial 399 municípios PR · exibe cidades sem correspondência para revisão
+- [x] **Metas sincronizadas:** "Sincronizar metas agora" executado em 2026-05-14 · metas criadas para todas as cidades com colaboradores
 - [x] **Importação Gospel Class:** 1652 leads importados em 2026-05-12 · canal=Outro · origem=GOSPEL CLASS · vinculados ao Marcos
 - [x] **Leads pré-fix:** /configuracoes → "Corrigir origem de leads antigos" — executado em 2026-05-14
 
