@@ -46,6 +46,8 @@ export default function ColaboradoresPage() {
   const [filterProfile, setFilterProfile] = useState("");
   const [filterChannel, setFilterChannel] = useState("");
   const [filterSupportStatus, setFilterSupportStatus] = useState("");
+  const [filterDateFrom, setFilterDateFrom] = useState("");
+  const [filterDateTo, setFilterDateTo] = useState("");
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [leaders, setLeaders] = useState<{ id: string; name: string; count: number }[]>([]);
   const [cities, setCities] = useState<string[]>([]);
@@ -75,11 +77,13 @@ export default function ColaboradoresPage() {
     if (filterProfile) params.set("profile", filterProfile);
     if (filterChannel) params.set("channel", filterChannel);
     if (filterSupportStatus) params.set("supportStatus", filterSupportStatus);
+    if (filterDateFrom) params.set("dateFrom", filterDateFrom);
+    if (filterDateTo) params.set("dateTo", filterDateTo);
     const res = await fetch(`/api/collaborators?${params.toString()}`);
     if (res.ok) setCollaborators(await res.json());
     setLoading(false);
     setSelected(new Set());
-  }, [search, filterRole, filterStatus, filterMine, filterLeader, filterCity, filterSourceType, filterProfile, filterChannel, filterSupportStatus]);
+  }, [search, filterRole, filterStatus, filterMine, filterLeader, filterCity, filterSourceType, filterProfile, filterChannel, filterSupportStatus, filterDateFrom, filterDateTo]);
 
   useEffect(() => {
     const t = setTimeout(fetchCollaborators, 300);
@@ -208,7 +212,7 @@ export default function ColaboradoresPage() {
 
       {/* Filtros */}
       {(() => {
-        const advancedActive = [filterSourceType, filterProfile, filterChannel, filterSupportStatus, filterLeader, filterCity].filter(Boolean).length;
+        const advancedActive = [filterSourceType, filterProfile, filterChannel, filterSupportStatus, filterLeader, filterCity, filterDateFrom, filterDateTo].filter(Boolean).length;
         function FilterLabel({ children }: { children: string }) {
           return <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/50 pl-0.5 mb-0.5">{children}</p>;
         }
@@ -290,7 +294,7 @@ export default function ColaboradoresPage() {
                 <p className="text-xs font-semibold text-muted-foreground">Filtros avançados</p>
                 {advancedActive > 0 && (
                   <button
-                    onClick={() => { setFilterSourceType(""); setFilterProfile(""); setFilterChannel(""); setFilterSupportStatus(""); setFilterLeader(""); setFilterCity(""); }}
+                    onClick={() => { setFilterSourceType(""); setFilterProfile(""); setFilterChannel(""); setFilterSupportStatus(""); setFilterLeader(""); setFilterCity(""); setFilterDateFrom(""); setFilterDateTo(""); }}
                     className="text-xs text-destructive/70 hover:text-destructive flex items-center gap-1"
                   >
                     <X className="w-3 h-3" /> Limpar tudo
@@ -392,6 +396,26 @@ export default function ColaboradoresPage() {
                     </Select>
                   </div>
                 )}
+
+                <div>
+                  <FilterLabel>Cadastrado de</FilterLabel>
+                  <Input
+                    type="date"
+                    value={filterDateFrom}
+                    onChange={(e) => setFilterDateFrom(e.target.value)}
+                    className="w-full"
+                  />
+                </div>
+
+                <div>
+                  <FilterLabel>Cadastrado até</FilterLabel>
+                  <Input
+                    type="date"
+                    value={filterDateTo}
+                    onChange={(e) => setFilterDateTo(e.target.value)}
+                    className="w-full"
+                  />
+                </div>
               </div>
             </div>
           )}

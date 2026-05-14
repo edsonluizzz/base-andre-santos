@@ -23,6 +23,8 @@ export async function GET(req: NextRequest) {
     const profile = searchParams.get("profile") ?? "";
     const channel = searchParams.get("channel") ?? "";
     const supportStatus = searchParams.get("supportStatus") ?? "";
+    const dateFrom = searchParams.get("dateFrom") ?? "";
+    const dateTo = searchParams.get("dateTo") ?? "";
 
     const IMPORT_SOURCES = ["IMPORTACAO_CSV", "IMPORTACAO_XLSX"];
 
@@ -45,6 +47,12 @@ export async function GET(req: NextRequest) {
         ...(sourceType === "PUBLICO" && {
           registeredById: null,
           source: { notIn: IMPORT_SOURCES },
+        }),
+        ...((dateFrom || dateTo) && {
+          createdAt: {
+            ...(dateFrom && { gte: new Date(dateFrom) }),
+            ...(dateTo && { lte: new Date(`${dateTo}T23:59:59`) }),
+          },
         }),
         ...(search && {
           OR: [
