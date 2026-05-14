@@ -27,6 +27,10 @@ export function CadastroForm() {
   const [countdown, setCountdown] = useState(5);
   const [redirectCancelled, setRedirectCancelled] = useState(false);
 
+  const shareUrl = collaboratorId
+    ? `${typeof window !== "undefined" ? window.location.origin : ""}/cadastro?refc=${collaboratorId}`
+    : "";
+
   useEffect(() => {
     fetch("/api/public/stats")
       .then((r) => r.ok ? r.json() : null)
@@ -130,10 +134,6 @@ export function CadastroForm() {
     setStep("form");
     setName(""); setPhone(""); setCep(""); setCity(""); setNeighborhood(""); setEmail(""); setSelectedTypes([]); setLgpdConsent(false); setCepError(""); setCollaboratorId(""); setCopied(false); setCountdown(5); setRedirectCancelled(false);
   }
-
-  const shareUrl = collaboratorId
-    ? `${typeof window !== "undefined" ? window.location.origin : ""}/cadastro?refc=${collaboratorId}`
-    : "";
 
   async function copyLink() {
     if (!shareUrl) return;
