@@ -167,7 +167,7 @@ gcal-sync:              0 4 * * *             (1×/dia — Hobby plan limit)
 ## Pendências
 
 ### Ações manuais do admin
-- [ ] **YouTube:** substituir `YT_VIDEO_ID = "yYV-Z78sKC0"` pelo ID definitivo em `src/app/cadastro/cadastro-form.tsx:9`
+- [x] **YouTube:** vídeo definitivo `z_9zver8iN0` (Shorts) · aspecto corrigido para 9:16 · `src/app/cadastro/cadastro-form.tsx:9` (2026-05-14)
 - [ ] **Scores:** /configuracoes → "Recalcular scores agora" (após popular colaboradores)
 - [ ] **Metas TSE:** /configuracoes → "Sugerir metas por eleitorado PR 2022" → revisa e salva
 - [x] **Importação Gospel Class:** 1652 leads importados em 2026-05-12 · canal=Outro · origem=GOSPEL CLASS · vinculados ao Marcos (institutomarcospires@gmail.com)
