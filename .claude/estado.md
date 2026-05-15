@@ -1,10 +1,10 @@
 # Estado — Base André Santos
 
-**Última atualização:** 2026-05-14 (fluxo pós-cadastro · filtro data colaboradores · telas de erro rebrandeadas)
+**Última atualização:** 2026-05-15 (ensureCityGoal no POST · estado sincronizado)
 **Plano de produto:** `.claude/issacar-plano.md` — transformar em SaaS multi-tenant (issacar.app)
 **Landing page:** https://issacar-landing.vercel.app · domínio issacar.app pendente configuração DNS
 **GitHub:** https://github.com/edsonluizzz/base-andre-santos
-**Deploy:** Vercel — base-andre-santos.vercel.app · último deploy: `8801898` (READY)
+**Deploy:** Vercel — base-andre-santos.vercel.app · último deploy: `7ebe11f` (READY)
 
 ---
 
@@ -35,7 +35,7 @@ Sistema funcional e em produção. Terminologia "Base de Apoio" (não "campanha"
 | Células | `/celulas` | ✅ visualização hierárquica |
 | Ranking | `/ranking` | ✅ scroll horizontal mobile |
 | Super Admin | `/super-admin` | ✅ conceder/revogar acesso · role/tier · links de convite reutilizáveis |
-| Cadastro público | `/cadastro` | ✅ sem auth · QR Code de evento (source=EVENTO) · link compartilhável · embed YouTube (ID: **yYV-Z78sKC0 — substituir**) |
+| Cadastro público | `/cadastro` | ✅ sem auth · Short YouTube `z_9zver8iN0` (9:16 autoplay) · auto-copia link pessoal · redirect automático grupo WA em 60s · link compartilhável |
 | Convite por link | `/entrar?token=X` | ✅ email-first flow · Google OAuth · completar-perfil |
 | Privacidade | `/privacidade` | ✅ LGPD Art. 9 · público |
 | Notificações | sidebar | ✅ badge de não lidas · dropdown · marcar como lida |
@@ -45,7 +45,7 @@ Sistema funcional e em produção. Terminologia "Base de Apoio" (não "campanha"
 
 ## APIs
 
-- `/api/collaborators` — CRUD + filtros (role, status, city, mine, registeredBy, sourceType, profile, channel, supportStatus) · search inclui `source`
+- `/api/collaborators` — CRUD + filtros (role, status, city, mine, registeredBy, sourceType, profile, channel, supportStatus, **dateFrom/dateTo** por createdAt) · search inclui `source` · POST chama `ensureCityGoal` automaticamente
 - `/api/collaborators/[id]` — GET/PUT/DELETE
 - `/api/collaborators/[id]/contact` — POST: marca `lastContactedAt = now()`
 - `/api/collaborators/import` — bulk XLSX/CSV (max 500 linhas) · upsert por telefone · lookup CEP automático · `responsavel_email` para atribuir a outro usuário · `source` sempre "IMPORTACAO_XLSX" · origem vai para `notes`
