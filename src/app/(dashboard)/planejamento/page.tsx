@@ -5,8 +5,9 @@ import {
   TrendingUp, CheckCircle2, XCircle, Clock,
   Target, BarChart2, Users, MapPin, Zap, Shield, Star,
   ChevronRight, Info, Brain, Heart,
-  BookOpen, Lightbulb, Globe, Activity,
+  BookOpen, Lightbulb, Globe, Activity, Swords,
 } from "lucide-react";
+import maraLimaData from "@/data/mara-lima-2022.json";
 
 // ── Gap status ────────────────────────────────────────────────────────────────
 type GapStatus = "resolved" | "partial" | "pending";
@@ -178,11 +179,44 @@ export default async function PlanejamentoPage() {
   if (!session?.user) redirect("/login");
   if ((session.user.role ?? "MEMBER") !== "ADMIN") redirect("/dashboard");
 
-  const gaps = await checkAllGaps();
+  const [gaps, cityRaw, goals] = await Promise.all([
+    checkAllGaps(),
+    db.collaborator.findMany({
+      where: { campaignId: "andre-santos-2026", status: "ACTIVE", city: { not: null } },
+      select: { city: true },
+    }),
+    db.municipalityGoal.findMany({ where: { campaignId: "andre-santos-2026" } }),
+  ]);
+
   const resolved = gaps.filter((g) => g.status === "resolved").length;
   const partial  = gaps.filter((g) => g.status === "partial").length;
   const pending  = gaps.filter((g) => g.status === "pending").length;
   const progressPct = Math.round(((resolved + partial * 0.5) / gaps.length) * 100);
+
+  // Monta mapa: cidade_lower → ativos
+  const ativosMap: Record<string, number> = {};
+  for (const c of cityRaw) {
+    const k = c.city!.toLowerCase().trim();
+    ativosMap[k] = (ativosMap[k] ?? 0) + 1;
+  }
+  const goalsMap: Record<string, number> = {};
+  for (const g of goals) {
+    goalsMap[g.city.toLowerCase().trim()] = g.targetLeaders;
+  }
+
+  // Cruza com dados da Mara Lima
+  const adversaryRows = (maraLimaData.municipios as { municipio: string; votos: number }[])
+    .filter((m) => m.votos > 0)
+    .map((m) => {
+      const k = m.municipio.toLowerCase().trim();
+      const ativos = ativosMap[k] ?? 0;
+      const meta   = goalsMap[k] ?? 0;
+      const cobertura = m.votos > 0 ? +((ativos / m.votos) * 100).toFixed(2) : 0;
+      const prioridade = cobertura === 0 ? "critica" : cobertura < 1 ? "alta" : cobertura < 3 ? "media" : "ok";
+      return { municipio: m.municipio, votos: m.votos, ativos, meta, cobertura, prioridade };
+    })
+    .sort((a, b) => a.cobertura - b.cobertura)
+    .slice(0, 50);
 
   const GAP_DEFS = [
     {
@@ -758,6 +792,94 @@ export default async function PlanejamentoPage() {
             </span>
             <span className="text-primary font-medium">Confidencial — uso interno</span>
           </div>
+        </div>
+      </section>
+
+      {/* ── Análise Adversária — Mara Lima 2022 ─────────────────────────── */}
+      <section className="glass-card rounded-2xl p-6 border border-red-500/20">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <Swords className="w-5 h-5 text-red-400" />
+              <h2 className="text-lg font-bold text-foreground">Análise Adversária — Mara Lima</h2>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Deputada Estadual PR · {maraLimaData.totalVotos.toLocaleString("pt-BR")} votos em 2022 · Fonte: TSE
+            </p>
+          </div>
+          <div className="flex gap-3 text-xs shrink-0">
+            <span className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400">Crítica: 0 ativos</span>
+            <span className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400">Alta: &lt;1%</span>
+            <span className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-yellow-500/10 border border-yellow-500/20 text-yellow-400">Média: 1–3%</span>
+          </div>
+        </div>
+
+        <p className="text-xs text-muted-foreground mb-4">
+          Top 50 municípios ordenados por <strong className="text-foreground">menor cobertura</strong> (Ativos ÷ Votos dela × 100) — quanto menor, mais urgente mobilizar.
+        </p>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="border-b border-white/[0.08]">
+                <th className="text-left text-muted-foreground font-semibold uppercase tracking-wider pb-2 pr-3">#</th>
+                <th className="text-left text-muted-foreground font-semibold uppercase tracking-wider pb-2 pr-3">Município</th>
+                <th className="text-right text-muted-foreground font-semibold uppercase tracking-wider pb-2 px-3">Votos Mara</th>
+                <th className="text-right text-muted-foreground font-semibold uppercase tracking-wider pb-2 px-3">Nossa Meta</th>
+                <th className="text-right text-muted-foreground font-semibold uppercase tracking-wider pb-2 px-3">Ativos</th>
+                <th className="text-right text-muted-foreground font-semibold uppercase tracking-wider pb-2 px-3">Cobertura</th>
+                <th className="text-left text-muted-foreground font-semibold uppercase tracking-wider pb-2 pl-3">Prioridade</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/[0.04]">
+              {adversaryRows.map((row, i) => {
+                const priBg =
+                  row.prioridade === "critica" ? "bg-red-500/10 border-red-500/20 text-red-400" :
+                  row.prioridade === "alta"    ? "bg-amber-500/10 border-amber-500/20 text-amber-400" :
+                  row.prioridade === "media"   ? "bg-yellow-500/10 border-yellow-500/20 text-yellow-400" :
+                                                  "bg-green-500/10 border-green-500/20 text-green-400";
+                const priLabel =
+                  row.prioridade === "critica" ? "Crítica" :
+                  row.prioridade === "alta"    ? "Alta" :
+                  row.prioridade === "media"   ? "Média" : "OK";
+                return (
+                  <tr key={row.municipio} className="hover:bg-white/[0.02] transition-colors">
+                    <td className="py-2 pr-3 text-muted-foreground/40 font-mono">{i + 1}</td>
+                    <td className="py-2 pr-3 font-medium text-foreground capitalize">
+                      {row.municipio.charAt(0) + row.municipio.slice(1).toLowerCase()}
+                    </td>
+                    <td className="py-2 px-3 text-right text-muted-foreground font-mono">
+                      {row.votos.toLocaleString("pt-BR")}
+                    </td>
+                    <td className="py-2 px-3 text-right text-muted-foreground font-mono">
+                      {row.meta > 0 ? row.meta.toLocaleString("pt-BR") : <span className="text-muted-foreground/30">—</span>}
+                    </td>
+                    <td className="py-2 px-3 text-right font-bold text-foreground">
+                      {row.ativos}
+                    </td>
+                    <td className="py-2 px-3 text-right font-mono">
+                      <span className={row.cobertura === 0 ? "text-red-400" : row.cobertura < 1 ? "text-amber-400" : row.cobertura < 3 ? "text-yellow-400" : "text-green-400"}>
+                        {row.cobertura.toFixed(2)}%
+                      </span>
+                    </td>
+                    <td className="py-2 pl-3">
+                      <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold border ${priBg}`}>
+                        {priLabel}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="mt-4 pt-4 border-t border-white/[0.06] rounded-xl bg-red-500/[0.05] border border-red-500/15 p-4">
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            <strong className="text-foreground">Leitura estratégica:</strong> Cobertura = quantos dos eleitores dela já tocamos com nossa base ativa.
+            Municípios com cobertura 0% não têm nenhum colaborador ativo — são zonas cegas.
+            O objetivo não é superar os votos dela, mas <strong className="text-foreground">garantir liderança local capaz de converter o eleitorado conservador que já a escolheu</strong>.
+          </p>
         </div>
       </section>
 
