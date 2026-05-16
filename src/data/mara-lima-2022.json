@@ -1,0 +1,2006 @@
+﻿{
+    "candidata":  "Mara Lima",
+    "partido":  "PSD",
+    "cargo":  "Deputada Estadual PR",
+    "eleicao":  "Eleicoes Gerais 2022 - 1o turno",
+    "totalVotos":  357452,
+    "fonte":  "TSE - votacao_candidato_munzona_2022_PR.csv",
+    "geradoEm":  "2026-05-16",
+    "municipios":  [
+                       {
+                           "codigo":  "75353",
+                           "municipio":  "CURITIBA",
+                           "votos":  16384
+                       },
+                       {
+                           "codigo":  "76678",
+                           "municipio":  "LONDRINA",
+                           "votos":  16010
+                       },
+                       {
+                           "codigo":  "74276",
+                           "municipio":  "ARAPONGAS",
+                           "votos":  15901
+                       },
+                       {
+                           "codigo":  "74713",
+                           "municipio":  "CAMBÉ",
+                           "votos":  8535
+                       },
+                       {
+                           "codigo":  "75892",
+                           "municipio":  "IBAITI",
+                           "votos":  5691
+                       },
+                       {
+                           "codigo":  "77712",
+                           "municipio":  "PITANGA",
+                           "votos":  4863
+                       },
+                       {
+                           "codigo":  "74535",
+                           "municipio":  "BELA VISTA DO PARAÍSO",
+                           "votos":  4760
+                       },
+                       {
+                           "codigo":  "74772",
+                           "municipio":  "CAMPINA GRANDE DO SUL",
+                           "votos":  4739
+                       },
+                       {
+                           "codigo":  "74217",
+                           "municipio":  "ANTONINA",
+                           "votos":  4412
+                       },
+                       {
+                           "codigo":  "74071",
+                           "municipio":  "ALMIRANTE TAMANDARÉ",
+                           "votos":  4411
+                       },
+                       {
+                           "codigo":  "75574",
+                           "municipio":  "FLORESTÓPOLIS",
+                           "votos":  4086
+                       },
+                       {
+                           "codigo":  "78212",
+                           "municipio":  "RIO BRANCO DO SUL",
+                           "votos":  4023
+                       },
+                       {
+                           "codigo":  "79057",
+                           "municipio":  "SERTANÓPOLIS",
+                           "votos":  4014
+                       },
+                       {
+                           "codigo":  "79014",
+                           "municipio":  "SENGÉS",
+                           "votos":  3936
+                       },
+                       {
+                           "codigo":  "75370",
+                           "municipio":  "CURIÚVA",
+                           "votos":  3711
+                       },
+                       {
+                           "codigo":  "79332",
+                           "municipio":  "UBIRATÃ",
+                           "votos":  3629
+                       },
+                       {
+                           "codigo":  "75493",
+                           "municipio":  "FAXINAL",
+                           "votos":  3578
+                       },
+                       {
+                           "codigo":  "74446",
+                           "municipio":  "ITAPERUÇU",
+                           "votos":  3436
+                       },
+                       {
+                           "codigo":  "74195",
+                           "municipio":  "ANDIRÁ",
+                           "votos":  3323
+                       },
+                       {
+                           "codigo":  "76058",
+                           "municipio":  "IPORÃ",
+                           "votos":  3225
+                       },
+                       {
+                           "codigo":  "79154",
+                           "municipio":  "TELÊMACO BORBA",
+                           "votos":  3075
+                       },
+                       {
+                           "codigo":  "76775",
+                           "municipio":  "MANDAGUARI",
+                           "votos":  2914
+                       },
+                       {
+                           "codigo":  "77917",
+                           "municipio":  "PRUDENTÓPOLIS",
+                           "votos":  2823
+                       },
+                       {
+                           "codigo":  "75442",
+                           "municipio":  "IMBAÚ",
+                           "votos":  2749
+                       },
+                       {
+                           "codigo":  "78239",
+                           "municipio":  "RIO NEGRO",
+                           "votos":  2730
+                       },
+                       {
+                           "codigo":  "75116",
+                           "municipio":  "MANGUEIRINHA",
+                           "votos":  2640
+                       },
+                       {
+                           "codigo":  "75159",
+                           "municipio":  "COLORADO",
+                           "votos":  2635
+                       },
+                       {
+                           "codigo":  "76333",
+                           "municipio":  "JAGUARIAÍVA",
+                           "votos":  2611
+                       },
+                       {
+                           "codigo":  "77275",
+                           "municipio":  "ORTIGUEIRA",
+                           "votos":  2583
+                       },
+                       {
+                           "codigo":  "77453",
+                           "municipio":  "PARANAGUÁ",
+                           "votos":  2583
+                       },
+                       {
+                           "codigo":  "74136",
+                           "municipio":  "ALVORADA DO SUL",
+                           "votos":  2578
+                       },
+                       {
+                           "codigo":  "74390",
+                           "municipio":  "ASTORGA",
+                           "votos":  2558
+                       },
+                       {
+                           "codigo":  "75914",
+                           "municipio":  "IBIPORÃ",
+                           "votos":  2502
+                       },
+                       {
+                           "codigo":  "78697",
+                           "municipio":  "SÃO JERÔNIMO DA SERRA",
+                           "votos":  2415
+                       },
+                       {
+                           "codigo":  "79774",
+                           "municipio":  "FRANCISCO ALVES",
+                           "votos":  2310
+                       },
+                       {
+                           "codigo":  "74292",
+                           "municipio":  "ARAPOTI",
+                           "votos":  2300
+                       },
+                       {
+                           "codigo":  "76236",
+                           "municipio":  "IVAIPORÃ",
+                           "votos":  2233
+                       },
+                       {
+                           "codigo":  "79693",
+                           "municipio":  "PÉROLA",
+                           "votos":  2172
+                       },
+                       {
+                           "codigo":  "76210",
+                           "municipio":  "IVAÍ",
+                           "votos":  2164
+                       },
+                       {
+                           "codigo":  "78751",
+                           "municipio":  "SÃO JOÃO DO IVAÍ",
+                           "votos":  2155
+                       },
+                       {
+                           "codigo":  "75558",
+                           "municipio":  "FLORESTA",
+                           "votos":  2132
+                       },
+                       {
+                           "codigo":  "74543",
+                           "municipio":  "MAUÁ DA SERRA",
+                           "votos":  2127
+                       },
+                       {
+                           "codigo":  "74039",
+                           "municipio":  "ADRIANÓPOLIS",
+                           "votos":  2124
+                       },
+                       {
+                           "codigo":  "77798",
+                           "municipio":  "PORECATU",
+                           "votos":  2031
+                       },
+                       {
+                           "codigo":  "78255",
+                           "municipio":  "ROLÂNDIA",
+                           "votos":  2008
+                       },
+                       {
+                           "codigo":  "74209",
+                           "municipio":  "CAFEZAL DO SUL",
+                           "votos":  1983
+                       },
+                       {
+                           "codigo":  "74462",
+                           "municipio":  "IVATÉ",
+                           "votos":  1946
+                       },
+                       {
+                           "codigo":  "74357",
+                           "municipio":  "ARAUCÁRIA",
+                           "votos":  1923
+                       },
+                       {
+                           "codigo":  "79235",
+                           "municipio":  "TIBAGI",
+                           "votos":  1841
+                       },
+                       {
+                           "codigo":  "84530",
+                           "municipio":  "TURVO",
+                           "votos":  1834
+                       },
+                       {
+                           "codigo":  "74322",
+                           "municipio":  "FAZENDA RIO GRANDE",
+                           "votos":  1834
+                       },
+                       {
+                           "codigo":  "75760",
+                           "municipio":  "NOVA TEBAS",
+                           "votos":  1822
+                       },
+                       {
+                           "codigo":  "74756",
+                           "municipio":  "CAMPINA DA LAGOA",
+                           "votos":  1814
+                       },
+                       {
+                           "codigo":  "75345",
+                           "municipio":  "FERNANDES PINHEIRO",
+                           "votos":  1796
+                       },
+                       {
+                           "codigo":  "75132",
+                           "municipio":  "COLOMBO",
+                           "votos":  1792
+                       },
+                       {
+                           "codigo":  "78859",
+                           "municipio":  "SÃO JOSÉ DOS PINHAIS",
+                           "votos":  1779
+                       },
+                       {
+                           "codigo":  "75930",
+                           "municipio":  "ICARAÍMA",
+                           "votos":  1768
+                       },
+                       {
+                           "codigo":  "78310",
+                           "municipio":  "SABÁUDIA",
+                           "votos":  1764
+                       },
+                       {
+                           "codigo":  "74993",
+                           "municipio":  "CENTENÁRIO DO SUL",
+                           "votos":  1721
+                       },
+                       {
+                           "codigo":  "75973",
+                           "municipio":  "IMBITUVA",
+                           "votos":  1707
+                       },
+                       {
+                           "codigo":  "78115",
+                           "municipio":  "RESERVA",
+                           "votos":  1702
+                       },
+                       {
+                           "codigo":  "76317",
+                           "municipio":  "JAGUAPITÃ",
+                           "votos":  1697
+                       },
+                       {
+                           "codigo":  "76694",
+                           "municipio":  "LUPIONÓPOLIS",
+                           "votos":  1676
+                       },
+                       {
+                           "codigo":  "84573",
+                           "municipio":  "FIGUEIRA",
+                           "votos":  1627
+                       },
+                       {
+                           "codigo":  "75485",
+                           "municipio":  "MARQUINHO",
+                           "votos":  1614
+                       },
+                       {
+                           "codigo":  "76856",
+                           "municipio":  "MARIA HELENA",
+                           "votos":  1602
+                       },
+                       {
+                           "codigo":  "76279",
+                           "municipio":  "JABOTI",
+                           "votos":  1594
+                       },
+                       {
+                           "codigo":  "77950",
+                           "municipio":  "QUATRO BARRAS",
+                           "votos":  1581
+                       },
+                       {
+                           "codigo":  "79138",
+                           "municipio":  "TEIXEIRA SOARES",
+                           "votos":  1555
+                       },
+                       {
+                           "codigo":  "76090",
+                           "municipio":  "IRETAMA",
+                           "votos":  1540
+                       },
+                       {
+                           "codigo":  "77631",
+                           "municipio":  "PINHALÃO",
+                           "votos":  1518
+                       },
+                       {
+                           "codigo":  "76813",
+                           "municipio":  "MANOEL RIBAS",
+                           "votos":  1487
+                       },
+                       {
+                           "codigo":  "76112",
+                           "municipio":  "ITAGUAJÉ",
+                           "votos":  1472
+                       },
+                       {
+                           "codigo":  "75019",
+                           "municipio":  "CERRO AZUL",
+                           "votos":  1458
+                       },
+                       {
+                           "codigo":  "76910",
+                           "municipio":  "MARINGÁ",
+                           "votos":  1458
+                       },
+                       {
+                           "codigo":  "78875",
+                           "municipio":  "SÃO MATEUS DO SUL",
+                           "votos":  1435
+                       },
+                       {
+                           "codigo":  "79995",
+                           "municipio":  "SÃO JORGE DO PATROCÍNIO",
+                           "votos":  1427
+                       },
+                       {
+                           "codigo":  "79634",
+                           "municipio":  "MATINHOS",
+                           "votos":  1410
+                       },
+                       {
+                           "codigo":  "76473",
+                           "municipio":  "JATAIZINHO",
+                           "votos":  1395
+                       },
+                       {
+                           "codigo":  "76155",
+                           "municipio":  "ITAMBÉ",
+                           "votos":  1380
+                       },
+                       {
+                           "codigo":  "78913",
+                           "municipio":  "SÃO PEDRO DO IVAÍ",
+                           "votos":  1331
+                       },
+                       {
+                           "codigo":  "77097",
+                           "municipio":  "MORRETES",
+                           "votos":  1329
+                       },
+                       {
+                           "codigo":  "74438",
+                           "municipio":  "BALSA NOVA",
+                           "votos":  1315
+                       },
+                       {
+                           "codigo":  "79430",
+                           "municipio":  "WENCESLAU BRAZ",
+                           "votos":  1309
+                       },
+                       {
+                           "codigo":  "78832",
+                           "municipio":  "SÃO JOSÉ DA BOA VISTA",
+                           "votos":  1299
+                       },
+                       {
+                           "codigo":  "75108",
+                           "municipio":  "ARAPUÃ",
+                           "votos":  1299
+                       },
+                       {
+                           "codigo":  "77119",
+                           "municipio":  "MUNHOZ DE MELO",
+                           "votos":  1290
+                       },
+                       {
+                           "codigo":  "75280",
+                           "municipio":  "CORUMBATAÍ DO SUL",
+                           "votos":  1283
+                       },
+                       {
+                           "codigo":  "79375",
+                           "municipio":  "UNIÃO DA VITÓRIA",
+                           "votos":  1274
+                       },
+                       {
+                           "codigo":  "76015",
+                           "municipio":  "INAJÁ",
+                           "votos":  1272
+                       },
+                       {
+                           "codigo":  "78190",
+                           "municipio":  "RIO BOM",
+                           "votos":  1232
+                       },
+                       {
+                           "codigo":  "76651",
+                           "municipio":  "LOBATO",
+                           "votos":  1225
+                       },
+                       {
+                           "codigo":  "84590",
+                           "municipio":  "LUNARDELLI",
+                           "votos":  1218
+                       },
+                       {
+                           "codigo":  "77658",
+                           "municipio":  "PINHÃO",
+                           "votos":  1208
+                       },
+                       {
+                           "codigo":  "75426",
+                           "municipio":  "GUAMIRANGA",
+                           "votos":  1197
+                       },
+                       {
+                           "codigo":  "78530",
+                           "municipio":  "SANTA MARIANA",
+                           "votos":  1145
+                       },
+                       {
+                           "codigo":  "75957",
+                           "municipio":  "IGUARAÇU",
+                           "votos":  1144
+                       },
+                       {
+                           "codigo":  "75507",
+                           "municipio":  "PEROBAL",
+                           "votos":  1143
+                       },
+                       {
+                           "codigo":  "79510",
+                           "municipio":  "ALTÔNIA",
+                           "votos":  1130
+                       },
+                       {
+                           "codigo":  "76490",
+                           "municipio":  "JOAQUIM TÁVORA",
+                           "votos":  1129
+                       },
+                       {
+                           "codigo":  "74551",
+                           "municipio":  "BITURUNA",
+                           "votos":  1112
+                       },
+                       {
+                           "codigo":  "79677",
+                           "municipio":  "NOVA OLÍMPIA",
+                           "votos":  1111
+                       },
+                       {
+                           "codigo":  "75795",
+                           "municipio":  "GUARACI",
+                           "votos":  1100
+                       },
+                       {
+                           "codigo":  "74055",
+                           "municipio":  "AGUDOS DO SUL",
+                           "votos":  1089
+                       },
+                       {
+                           "codigo":  "74730",
+                           "municipio":  "CAMBIRA",
+                           "votos":  1080
+                       },
+                       {
+                           "codigo":  "78450",
+                           "municipio":  "SANTA FÉ",
+                           "votos":  1073
+                       },
+                       {
+                           "codigo":  "75310",
+                           "municipio":  "CRUZEIRO DO SUL",
+                           "votos":  1069
+                       },
+                       {
+                           "codigo":  "77615",
+                           "municipio":  "PIÊN",
+                           "votos":  1047
+                       },
+                       {
+                           "codigo":  "75515",
+                           "municipio":  "FÊNIX",
+                           "votos":  1030
+                       },
+                       {
+                           "codigo":  "76759",
+                           "municipio":  "MANDAGUAÇU",
+                           "votos":  1026
+                       },
+                       {
+                           "codigo":  "74489",
+                           "municipio":  "LIDIANÓPOLIS",
+                           "votos":  1022
+                       },
+                       {
+                           "codigo":  "74373",
+                           "municipio":  "ASSAÍ",
+                           "votos":  1017
+                       },
+                       {
+                           "codigo":  "75213",
+                           "municipio":  "CONTENDA",
+                           "votos":  1016
+                       },
+                       {
+                           "codigo":  "75620",
+                           "municipio":  "RIO BRANCO DO IVAÍ",
+                           "votos":  1015
+                       },
+                       {
+                           "codigo":  "77135",
+                           "municipio":  "NOSSA SENHORA DAS GRAÇAS",
+                           "votos":  994
+                       },
+                       {
+                           "codigo":  "74659",
+                           "municipio":  "CAFEARA",
+                           "votos":  994
+                       },
+                       {
+                           "codigo":  "79073",
+                           "municipio":  "SIQUEIRA CAMPOS",
+                           "votos":  992
+                       },
+                       {
+                           "codigo":  "75663",
+                           "municipio":  "TAMARANA",
+                           "votos":  956
+                       },
+                       {
+                           "codigo":  "77437",
+                           "municipio":  "PARANACITY",
+                           "votos":  948
+                       },
+                       {
+                           "codigo":  "74632",
+                           "municipio":  "BORRAZÓPOLIS",
+                           "votos":  937
+                       },
+                       {
+                           "codigo":  "75035",
+                           "municipio":  "CHOPINZINHO",
+                           "votos":  918
+                       },
+                       {
+                           "codigo":  "74233",
+                           "municipio":  "ANTONIO OLINTO",
+                           "votos":  908
+                       },
+                       {
+                           "codigo":  "74594",
+                           "municipio":  "BOCAIÚVA DO SUL",
+                           "votos":  898
+                       },
+                       {
+                           "codigo":  "77674",
+                           "municipio":  "PIRAÍ DO SUL",
+                           "votos":  893
+                       },
+                       {
+                           "codigo":  "78654",
+                           "municipio":  "SANTO INÁCIO",
+                           "votos":  891
+                       },
+                       {
+                           "codigo":  "75566",
+                           "municipio":  "PRADO FERREIRA",
+                           "votos":  888
+                       },
+                       {
+                           "codigo":  "77534",
+                           "municipio":  "PAULA FREITAS",
+                           "votos":  887
+                       },
+                       {
+                           "codigo":  "75523",
+                           "municipio":  "PONTAL DO PARANÁ",
+                           "votos":  879
+                       },
+                       {
+                           "codigo":  "74250",
+                           "municipio":  "APUCARANA",
+                           "votos":  877
+                       },
+                       {
+                           "codigo":  "74306",
+                           "municipio":  "FAROL",
+                           "votos":  864
+                       },
+                       {
+                           "codigo":  "74667",
+                           "municipio":  "PITANGUEIRAS",
+                           "votos":  851
+                       },
+                       {
+                           "codigo":  "78557",
+                           "municipio":  "SANTANA DO ITARARÉ",
+                           "votos":  841
+                       },
+                       {
+                           "codigo":  "75175",
+                           "municipio":  "CONGONHINHAS",
+                           "votos":  838
+                       },
+                       {
+                           "codigo":  "78638",
+                           "municipio":  "SANTO ANTÔNIO DO PARAÍSO",
+                           "votos":  823
+                       },
+                       {
+                           "codigo":  "84557",
+                           "municipio":  "ALTAMIRA DO PARANÁ",
+                           "votos":  821
+                       },
+                       {
+                           "codigo":  "74985",
+                           "municipio":  "LARANJAL",
+                           "votos":  815
+                       },
+                       {
+                           "codigo":  "79251",
+                           "municipio":  "TIJUCAS DO SUL",
+                           "votos":  806
+                       },
+                       {
+                           "codigo":  "78590",
+                           "municipio":  "SANTO ANTÔNIO DA PLATINA",
+                           "votos":  797
+                       },
+                       {
+                           "codigo":  "74470",
+                           "municipio":  "BARBOSA FERRAZ",
+                           "votos":  796
+                       },
+                       {
+                           "codigo":  "74900",
+                           "municipio":  "VENTANIA",
+                           "votos":  796
+                       },
+                       {
+                           "codigo":  "84654",
+                           "municipio":  "DOURADINA",
+                           "votos":  794
+                       },
+                       {
+                           "codigo":  "74810",
+                           "municipio":  "CAMPO LARGO",
+                           "votos":  765
+                       },
+                       {
+                           "codigo":  "79596",
+                           "municipio":  "GRANDES RIOS",
+                           "votos":  763
+                       },
+                       {
+                           "codigo":  "74942",
+                           "municipio":  "DOUTOR ULYSSES",
+                           "votos":  757
+                       },
+                       {
+                           "codigo":  "79359",
+                           "municipio":  "UMUARAMA",
+                           "votos":  757
+                       },
+                       {
+                           "codigo":  "77054",
+                           "municipio":  "MIRASELVA",
+                           "votos":  755
+                       },
+                       {
+                           "codigo":  "75302",
+                           "municipio":  "ESPERANÇA NOVA",
+                           "votos":  742
+                       },
+                       {
+                           "codigo":  "74888",
+                           "municipio":  "TUNAS DO PARANÁ",
+                           "votos":  736
+                       },
+                       {
+                           "codigo":  "75043",
+                           "municipio":  "PINHAIS",
+                           "votos":  725
+                       },
+                       {
+                           "codigo":  "78271",
+                           "municipio":  "RONCADOR",
+                           "votos":  717
+                       },
+                       {
+                           "codigo":  "76570",
+                           "municipio":  "LAPA",
+                           "votos":  711
+                       },
+                       {
+                           "codigo":  "79316",
+                           "municipio":  "TUNEIRAS DO OESTE",
+                           "votos":  710
+                       },
+                       {
+                           "codigo":  "76074",
+                           "municipio":  "IRATI",
+                           "votos":  703
+                       },
+                       {
+                           "codigo":  "78956",
+                           "municipio":  "SÃO SEBASTIÃO DA AMOREIRA",
+                           "votos":  699
+                       },
+                       {
+                           "codigo":  "75698",
+                           "municipio":  "GOIOERÊ",
+                           "votos":  681
+                       },
+                       {
+                           "codigo":  "76350",
+                           "municipio":  "JANDAIA DO SUL",
+                           "votos":  677
+                       },
+                       {
+                           "codigo":  "78174",
+                           "municipio":  "RIO AZUL",
+                           "votos":  675
+                       },
+                       {
+                           "codigo":  "76970",
+                           "municipio":  "MARUMBI",
+                           "votos":  673
+                       },
+                       {
+                           "codigo":  "78018",
+                           "municipio":  "QUITANDINHA",
+                           "votos":  673
+                       },
+                       {
+                           "codigo":  "75833",
+                           "municipio":  "GUARAPUAVA",
+                           "votos":  657
+                       },
+                       {
+                           "codigo":  "79731",
+                           "municipio":  "TAPIRA",
+                           "votos":  648
+                       },
+                       {
+                           "codigo":  "77470",
+                           "municipio":  "PARANAPOEMA",
+                           "votos":  629
+                       },
+                       {
+                           "codigo":  "77372",
+                           "municipio":  "PALMITAL",
+                           "votos":  613
+                       },
+                       {
+                           "codigo":  "78158",
+                           "municipio":  "RIBEIRÃO DO PINHAL",
+                           "votos":  608
+                       },
+                       {
+                           "codigo":  "75264",
+                           "municipio":  "CRUZMALTINA",
+                           "votos":  603
+                       },
+                       {
+                           "codigo":  "76376",
+                           "municipio":  "JANIÓPOLIS",
+                           "votos":  599
+                       },
+                       {
+                           "codigo":  "79111",
+                           "municipio":  "TAPEJARA",
+                           "votos":  595
+                       },
+                       {
+                           "codigo":  "78476",
+                           "municipio":  "SANTA INÊS",
+                           "votos":  594
+                       },
+                       {
+                           "codigo":  "74578",
+                           "municipio":  "BOA ESPERANÇA",
+                           "votos":  586
+                       },
+                       {
+                           "codigo":  "78131",
+                           "municipio":  "RIBEIRÃO CLARO",
+                           "votos":  585
+                       },
+                       {
+                           "codigo":  "84514",
+                           "municipio":  "CANTAGALO",
+                           "votos":  582
+                       },
+                       {
+                           "codigo":  "74802",
+                           "municipio":  "SANTA MARIA DO OESTE",
+                           "votos":  576
+                       },
+                       {
+                           "codigo":  "74110",
+                           "municipio":  "ALTO PIQUIRI",
+                           "votos":  574
+                       },
+                       {
+                           "codigo":  "78794",
+                           "municipio":  "SÃO JORGE DO IVAÍ",
+                           "votos":  542
+                       },
+                       {
+                           "codigo":  "74675",
+                           "municipio":  "CALIFÓRNIA",
+                           "votos":  535
+                       },
+                       {
+                           "codigo":  "74519",
+                           "municipio":  "BARRA DO JACARÉ",
+                           "votos":  531
+                       },
+                       {
+                           "codigo":  "77895",
+                           "municipio":  "PRIMEIRO DE MAIO",
+                           "votos":  530
+                       },
+                       {
+                           "codigo":  "74527",
+                           "municipio":  "MATO RICO",
+                           "votos":  530
+                       },
+                       {
+                           "codigo":  "78395",
+                           "municipio":  "SANTA AMÉLIA",
+                           "votos":  527
+                       },
+                       {
+                           "codigo":  "74853",
+                           "municipio":  "CÂNDIDO DE ABREU",
+                           "votos":  524
+                       },
+                       {
+                           "codigo":  "75205",
+                           "municipio":  "CAMPO MAGRO",
+                           "votos":  511
+                       },
+                       {
+                           "codigo":  "76295",
+                           "municipio":  "JACAREZINHO",
+                           "votos":  509
+                       },
+                       {
+                           "codigo":  "75639",
+                           "municipio":  "FOZ DO IGUAÇU",
+                           "votos":  508
+                       },
+                       {
+                           "codigo":  "78778",
+                           "municipio":  "SÃO JOÃO DO TRIUNFO",
+                           "votos":  507
+                       },
+                       {
+                           "codigo":  "78077",
+                           "municipio":  "REBOUÇAS",
+                           "votos":  502
+                       },
+                       {
+                           "codigo":  "76430",
+                           "municipio":  "JARDIM ALEGRE",
+                           "votos":  493
+                       },
+                       {
+                           "codigo":  "74799",
+                           "municipio":  "CAMPO DO TENENTE",
+                           "votos":  492
+                       },
+                       {
+                           "codigo":  "75744",
+                           "municipio":  "ROSÁRIO DO IVAÍ",
+                           "votos":  491
+                       },
+                       {
+                           "codigo":  "74330",
+                           "municipio":  "MARILÂNDIA DO SUL",
+                           "votos":  484
+                       },
+                       {
+                           "codigo":  "75388",
+                           "municipio":  "GOIOXIM",
+                           "votos":  468
+                       },
+                       {
+                           "codigo":  "79170",
+                           "municipio":  "TERRA BOA",
+                           "votos":  462
+                       },
+                       {
+                           "codigo":  "77771",
+                           "municipio":  "PONTA GROSSA",
+                           "votos":  456
+                       },
+                       {
+                           "codigo":  "74098",
+                           "municipio":  "ALTO PARANÁ",
+                           "votos":  454
+                       },
+                       {
+                           "codigo":  "77194",
+                           "municipio":  "NOVA CANTU",
+                           "votos":  448
+                       },
+                       {
+                           "codigo":  "75434",
+                           "municipio":  "DOUTOR CAMARGO",
+                           "votos":  439
+                       },
+                       {
+                           "codigo":  "78972",
+                           "municipio":  "SÃO TOMÉ",
+                           "votos":  436
+                       },
+                       {
+                           "codigo":  "76791",
+                           "municipio":  "MANDIRITUBA",
+                           "votos":  414
+                       },
+                       {
+                           "codigo":  "74608",
+                           "municipio":  "NOVA SANTA BÁRBARA",
+                           "votos":  413
+                       },
+                       {
+                           "codigo":  "77313",
+                           "municipio":  "PAIÇANDU",
+                           "votos":  410
+                       },
+                       {
+                           "codigo":  "74845",
+                           "municipio":  "SÃO MANOEL DO PARANÁ",
+                           "votos":  406
+                       },
+                       {
+                           "codigo":  "76597",
+                           "municipio":  "LARANJEIRAS DO SUL",
+                           "votos":  404
+                       },
+                       {
+                           "codigo":  "75299",
+                           "municipio":  "CRUZEIRO DO OESTE",
+                           "votos":  401
+                       },
+                       {
+                           "codigo":  "78352",
+                           "municipio":  "SALTO DO ITARARÉ",
+                           "votos":  384
+                       },
+                       {
+                           "codigo":  "77550",
+                           "municipio":  "PAULO FRONTIN",
+                           "votos":  371
+                       },
+                       {
+                           "codigo":  "74721",
+                           "municipio":  "RANCHO ALEGRE D OESTE",
+                           "votos":  366
+                       },
+                       {
+                           "codigo":  "79499",
+                           "municipio":  "XAMBRÊ",
+                           "votos":  362
+                       },
+                       {
+                           "codigo":  "75078",
+                           "municipio":  "CIDADE GAÚCHA",
+                           "votos":  358
+                       },
+                       {
+                           "codigo":  "74411",
+                           "municipio":  "ATALAIA",
+                           "votos":  357
+                       },
+                       {
+                           "codigo":  "77879",
+                           "municipio":  "PRESIDENTE CASTELO BRANCO",
+                           "votos":  355
+                       },
+                       {
+                           "codigo":  "74314",
+                           "municipio":  "ARARUNA",
+                           "votos":  353
+                       },
+                       {
+                           "codigo":  "74420",
+                           "municipio":  "NOVO ITACOLOMI",
+                           "votos":  353
+                       },
+                       {
+                           "codigo":  "76457",
+                           "municipio":  "JARDIM OLINDA",
+                           "votos":  352
+                       },
+                       {
+                           "codigo":  "77852",
+                           "municipio":  "PORTO VITÓRIA",
+                           "votos":  344
+                       },
+                       {
+                           "codigo":  "77933",
+                           "municipio":  "QUATIGUÁ",
+                           "votos":  343
+                       },
+                       {
+                           "codigo":  "74225",
+                           "municipio":  "CANDÓI",
+                           "votos":  340
+                       },
+                       {
+                           "codigo":  "76392",
+                           "municipio":  "JAPIRA",
+                           "votos":  327
+                       },
+                       {
+                           "codigo":  "74934",
+                           "municipio":  "CASCAVEL",
+                           "votos":  323
+                       },
+                       {
+                           "codigo":  "74837",
+                           "municipio":  "CAMPO MOURÃO",
+                           "votos":  312
+                       },
+                       {
+                           "codigo":  "75671",
+                           "municipio":  "GENERAL CARNEIRO",
+                           "votos":  307
+                       },
+                       {
+                           "codigo":  "75590",
+                           "municipio":  "FLÓRIDA",
+                           "votos":  302
+                       },
+                       {
+                           "codigo":  "75140",
+                           "municipio":  "BOA VENTURA DE SÃO ROQUE",
+                           "votos":  298
+                       },
+                       {
+                           "codigo":  "77216",
+                           "municipio":  "NOVA ESPERANÇA",
+                           "votos":  292
+                       },
+                       {
+                           "codigo":  "79294",
+                           "municipio":  "TOMAZINA",
+                           "votos":  288
+                       },
+                       {
+                           "codigo":  "75256",
+                           "municipio":  "CORNÉLIO PROCÓPIO",
+                           "votos":  286
+                       },
+                       {
+                           "codigo":  "75337",
+                           "municipio":  "CRUZ MACHADO",
+                           "votos":  283
+                       },
+                       {
+                           "codigo":  "75809",
+                           "municipio":  "LUIZIANA",
+                           "votos":  282
+                       },
+                       {
+                           "codigo":  "75183",
+                           "municipio":  "CAMPINA DO SIMÃO",
+                           "votos":  281
+                       },
+                       {
+                           "codigo":  "79952",
+                           "municipio":  "NOVA PRATA DO IGUAÇU",
+                           "votos":  245
+                       },
+                       {
+                           "codigo":  "79413",
+                           "municipio":  "URAÍ",
+                           "votos":  243
+                       },
+                       {
+                           "codigo":  "79855",
+                           "municipio":  "CAFELÂNDIA",
+                           "votos":  242
+                       },
+                       {
+                           "codigo":  "74918",
+                           "municipio":  "CARLÓPOLIS",
+                           "votos":  241
+                       },
+                       {
+                           "codigo":  "76538",
+                           "municipio":  "JUSSARA",
+                           "votos":  239
+                       },
+                       {
+                           "codigo":  "77577",
+                           "municipio":  "PEABIRU",
+                           "votos":  230
+                       },
+                       {
+                           "codigo":  "75051",
+                           "municipio":  "CIANORTE",
+                           "votos":  226
+                       },
+                       {
+                           "codigo":  "84611",
+                           "municipio":  "SARANDI",
+                           "votos":  225
+                       },
+                       {
+                           "codigo":  "77518",
+                           "municipio":  "PATO BRANCO",
+                           "votos":  217
+                       },
+                       {
+                           "codigo":  "77690",
+                           "municipio":  "PIRAQUARA",
+                           "votos":  217
+                       },
+                       {
+                           "codigo":  "75604",
+                           "municipio":  "RESERVA DO IGUAÇU",
+                           "votos":  195
+                       },
+                       {
+                           "codigo":  "74012",
+                           "municipio":  "ABATIÁ",
+                           "votos":  194
+                       },
+                       {
+                           "codigo":  "75191",
+                           "municipio":  "CONSELHEIRO MAIRINCK",
+                           "votos":  185
+                       },
+                       {
+                           "codigo":  "75990",
+                           "municipio":  "INÁCIO MARTINS",
+                           "votos":  177
+                       },
+                       {
+                           "codigo":  "74454",
+                           "municipio":  "BANDEIRANTES",
+                           "votos":  177
+                       },
+                       {
+                           "codigo":  "74691",
+                           "municipio":  "CAMBARÁ",
+                           "votos":  176
+                       },
+                       {
+                           "codigo":  "79456",
+                           "municipio":  "VERÊ",
+                           "votos":  174
+                       },
+                       {
+                           "codigo":  "74616",
+                           "municipio":  "BOM SUCESSO",
+                           "votos":  174
+                       },
+                       {
+                           "codigo":  "76732",
+                           "municipio":  "MAMBORÊ",
+                           "votos":  173
+                       },
+                       {
+                           "codigo":  "76872",
+                           "municipio":  "MARIALVA",
+                           "votos":  170
+                       },
+                       {
+                           "codigo":  "74004",
+                           "municipio":  "GODOY MOREIRA",
+                           "votos":  169
+                       },
+                       {
+                           "codigo":  "75876",
+                           "municipio":  "GUARATUBA",
+                           "votos":  151
+                       },
+                       {
+                           "codigo":  "74950",
+                           "municipio":  "CASTRO",
+                           "votos":  151
+                       },
+                       {
+                           "codigo":  "75000",
+                           "municipio":  "ITAIPULÂNDIA",
+                           "votos":  150
+                       },
+                       {
+                           "codigo":  "77399",
+                           "municipio":  "PALOTINA",
+                           "votos":  145
+                       },
+                       {
+                           "codigo":  "76716",
+                           "municipio":  "MALLET",
+                           "votos":  140
+                       },
+                       {
+                           "codigo":  "76414",
+                           "municipio":  "JAPURÁ",
+                           "votos":  139
+                       },
+                       {
+                           "codigo":  "79650",
+                           "municipio":  "NOVA AURORA",
+                           "votos":  139
+                       },
+                       {
+                           "codigo":  "75221",
+                           "municipio":  "CARAMBEÍ",
+                           "votos":  138
+                       },
+                       {
+                           "codigo":  "77291",
+                           "municipio":  "OURIZONA",
+                           "votos":  137
+                       },
+                       {
+                           "codigo":  "77330",
+                           "municipio":  "PALMAS",
+                           "votos":  129
+                       },
+                       {
+                           "codigo":  "75086",
+                           "municipio":  "ARIRANHA DO IVAÍ",
+                           "votos":  119
+                       },
+                       {
+                           "codigo":  "84638",
+                           "municipio":  "JURANDA",
+                           "votos":  112
+                       },
+                       {
+                           "codigo":  "77496",
+                           "municipio":  "PARANAVAÍ",
+                           "votos":  105
+                       },
+                       {
+                           "codigo":  "76252",
+                           "municipio":  "IVATUBA",
+                           "votos":  104
+                       },
+                       {
+                           "codigo":  "79790",
+                           "municipio":  "NOVA SANTA ROSA",
+                           "votos":  102
+                       },
+                       {
+                           "codigo":  "78735",
+                           "municipio":  "SÃO JOÃO DO CAIUÁ",
+                           "votos":  99
+                       },
+                       {
+                           "codigo":  "77356",
+                           "municipio":  "PALMEIRA",
+                           "votos":  90
+                       },
+                       {
+                           "codigo":  "75850",
+                           "municipio":  "GUARAQUEÇABA",
+                           "votos":  82
+                       },
+                       {
+                           "codigo":  "75361",
+                           "municipio":  "FOZ DO JORDÃO",
+                           "votos":  78
+                       },
+                       {
+                           "codigo":  "77810",
+                           "municipio":  "PORTO AMAZONAS",
+                           "votos":  78
+                       },
+                       {
+                           "codigo":  "75531",
+                           "municipio":  "FLORAÍ",
+                           "votos":  78
+                       },
+                       {
+                           "codigo":  "75540",
+                           "municipio":  "PORTO BARREIRO",
+                           "votos":  76
+                       },
+                       {
+                           "codigo":  "76899",
+                           "municipio":  "MARILUZ",
+                           "votos":  71
+                       },
+                       {
+                           "codigo":  "79278",
+                           "municipio":  "TOLEDO",
+                           "votos":  67
+                       },
+                       {
+                           "codigo":  "77011",
+                           "municipio":  "MEDIANEIRA",
+                           "votos":  64
+                       },
+                       {
+                           "codigo":  "75469",
+                           "municipio":  "MANFRINÓPOLIS",
+                           "votos":  59
+                       },
+                       {
+                           "codigo":  "76830",
+                           "municipio":  "MARECHAL CÂNDIDO RONDON",
+                           "votos":  57
+                       },
+                       {
+                           "codigo":  "78999",
+                           "municipio":  "SAPOPEMA",
+                           "votos":  56
+                       },
+                       {
+                           "codigo":  "74187",
+                           "municipio":  "BRASILÂNDIA DO SUL",
+                           "votos":  55
+                       },
+                       {
+                           "codigo":  "79553",
+                           "municipio":  "QUEDAS DO IGUAÇU",
+                           "votos":  54
+                       },
+                       {
+                           "codigo":  "75736",
+                           "municipio":  "GUAIRAÇÁ",
+                           "votos":  53
+                       },
+                       {
+                           "codigo":  "75655",
+                           "municipio":  "FRANCISCO BELTRÃO",
+                           "votos":  53
+                       },
+                       {
+                           "codigo":  "75418",
+                           "municipio":  "DOIS VIZINHOS",
+                           "votos":  53
+                       },
+                       {
+                           "codigo":  "75248",
+                           "municipio":  "CORONEL DOMINGOS SOARES",
+                           "votos":  51
+                       },
+                       {
+                           "codigo":  "75752",
+                           "municipio":  "GUAPIRAMA",
+                           "votos":  51
+                       },
+                       {
+                           "codigo":  "75272",
+                           "municipio":  "CORONEL VIVIDA",
+                           "votos":  51
+                       },
+                       {
+                           "codigo":  "76171",
+                           "municipio":  "ITAPEJARA D OESTE",
+                           "votos":  51
+                       },
+                       {
+                           "codigo":  "77232",
+                           "municipio":  "NOVA FÁTIMA",
+                           "votos":  45
+                       },
+                       {
+                           "codigo":  "75710",
+                           "municipio":  "GUAÍRA",
+                           "votos":  44
+                       },
+                       {
+                           "codigo":  "78719",
+                           "municipio":  "SÃO JOÃO",
+                           "votos":  43
+                       },
+                       {
+                           "codigo":  "75230",
+                           "municipio":  "CORBÉLIA",
+                           "votos":  43
+                       },
+                       {
+                           "codigo":  "76554",
+                           "municipio":  "KALORÉ",
+                           "votos":  42
+                       },
+                       {
+                           "codigo":  "79219",
+                           "municipio":  "TERRA ROXA",
+                           "votos":  39
+                       },
+                       {
+                           "codigo":  "79537",
+                           "municipio":  "ASSIS CHATEAUBRIAND",
+                           "votos":  37
+                       },
+                       {
+                           "codigo":  "74748",
+                           "municipio":  "RIO BONITO DO IGUAÇU",
+                           "votos":  35
+                       },
+                       {
+                           "codigo":  "74969",
+                           "municipio":  "VIRMOND",
+                           "votos":  34
+                       },
+                       {
+                           "codigo":  "75582",
+                           "municipio":  "QUARTO CENTENÁRIO",
+                           "votos":  31
+                       },
+                       {
+                           "codigo":  "74128",
+                           "municipio":  "ÂNGULO",
+                           "votos":  29
+                       },
+                       {
+                           "codigo":  "76031",
+                           "municipio":  "IPIRANGA",
+                           "votos":  27
+                       },
+                       {
+                           "codigo":  "77976",
+                           "municipio":  "QUERÊNCIA DO NORTE",
+                           "votos":  27
+                       },
+                       {
+                           "codigo":  "74586",
+                           "municipio":  "NOVA LARANJEIRAS",
+                           "votos":  26
+                       },
+                       {
+                           "codigo":  "77070",
+                           "municipio":  "MOREIRA SALES",
+                           "votos":  24
+                       },
+                       {
+                           "codigo":  "76139",
+                           "municipio":  "ITAMBARACÁ",
+                           "votos":  23
+                       },
+                       {
+                           "codigo":  "79030",
+                           "municipio":  "SERTANEJA",
+                           "votos":  23
+                       },
+                       {
+                           "codigo":  "74926",
+                           "municipio":  "ALTO PARAÍSO",
+                           "votos":  22
+                       },
+                       {
+                           "codigo":  "75477",
+                           "municipio":  "ENGENHEIRO BELTRÃO",
+                           "votos":  22
+                       },
+                       {
+                           "codigo":  "79090",
+                           "municipio":  "TAMBOARA",
+                           "votos":  21
+                       },
+                       {
+                           "codigo":  "79391",
+                           "municipio":  "UNIFLOR",
+                           "votos":  21
+                       },
+                       {
+                           "codigo":  "77410",
+                           "municipio":  "PARAÍSO DO NORTE",
+                           "votos":  20
+                       },
+                       {
+                           "codigo":  "78670",
+                           "municipio":  "SÃO CARLOS DO IVAÍ",
+                           "votos":  19
+                       },
+                       {
+                           "codigo":  "78417",
+                           "municipio":  "SANTA CECÍLIA DO PAVÃO",
+                           "votos":  19
+                       },
+                       {
+                           "codigo":  "74160",
+                           "municipio":  "BOM SUCESSO DO SUL",
+                           "votos":  19
+                       },
+                       {
+                           "codigo":  "78816",
+                           "municipio":  "SÃO JORGE D OESTE",
+                           "votos":  18
+                       },
+                       {
+                           "codigo":  "84670",
+                           "municipio":  "SANTA TEREZINHA DE ITAIPU",
+                           "votos":  18
+                       },
+                       {
+                           "codigo":  "75060",
+                           "municipio":  "SAUDADE DO IGUAÇU",
+                           "votos":  18
+                       },
+                       {
+                           "codigo":  "77259",
+                           "municipio":  "NOVA LONDRINA",
+                           "votos":  17
+                       },
+                       {
+                           "codigo":  "79715",
+                           "municipio":  "SANTA HELENA",
+                           "votos":  17
+                       },
+                       {
+                           "codigo":  "79570",
+                           "municipio":  "CÉU AZUL",
+                           "votos":  15
+                       },
+                       {
+                           "codigo":  "78050",
+                           "municipio":  "REALEZA",
+                           "votos":  14
+                       },
+                       {
+                           "codigo":  "78379",
+                           "municipio":  "SALTO DO LONTRA",
+                           "votos":  13
+                       },
+                       {
+                           "codigo":  "79472",
+                           "municipio":  "VITORINO",
+                           "votos":  13
+                       },
+                       {
+                           "codigo":  "79197",
+                           "municipio":  "TERRA RICA",
+                           "votos":  13
+                       },
+                       {
+                           "codigo":  "79618",
+                           "municipio":  "INDIANÓPOLIS",
+                           "votos":  13
+                       },
+                       {
+                           "codigo":  "78492",
+                           "municipio":  "SANTA ISABEL DO IVAÍ",
+                           "votos":  12
+                       },
+                       {
+                           "codigo":  "74870",
+                           "municipio":  "CAPANEMA",
+                           "votos":  12
+                       },
+                       {
+                           "codigo":  "76996",
+                           "municipio":  "MATELÂNDIA",
+                           "votos":  12
+                       },
+                       {
+                           "codigo":  "75817",
+                           "municipio":  "GUARANIAÇU",
+                           "votos":  12
+                       },
+                       {
+                           "codigo":  "78093",
+                           "municipio":  "RENASCENÇA",
+                           "votos":  12
+                       },
+                       {
+                           "codigo":  "75647",
+                           "municipio":  "SERRANÓPOLIS DO IGUAÇU",
+                           "votos":  12
+                       },
+                       {
+                           "codigo":  "74179",
+                           "municipio":  "AMPÉRE",
+                           "votos":  11
+                       },
+                       {
+                           "codigo":  "78891",
+                           "municipio":  "SÃO MIGUEL DO IGUAÇU",
+                           "votos":  10
+                       },
+                       {
+                           "codigo":  "78298",
+                           "municipio":  "RONDON",
+                           "votos":  10
+                       },
+                       {
+                           "codigo":  "76511",
+                           "municipio":  "JUNDIAÍ DO SUL",
+                           "votos":  10
+                       },
+                       {
+                           "codigo":  "74381",
+                           "municipio":  "IGUATU",
+                           "votos":  10
+                       },
+                       {
+                           "codigo":  "76619",
+                           "municipio":  "LEÓPOLIS",
+                           "votos":  10
+                       },
+                       {
+                           "codigo":  "79871",
+                           "municipio":  "TRÊS BARRAS DO PARANÁ",
+                           "votos":  10
+                       },
+                       {
+                           "codigo":  "76937",
+                           "municipio":  "MARIÓPOLIS",
+                           "votos":  10
+                       },
+                       {
+                           "codigo":  "78514",
+                           "municipio":  "SANTA IZABEL DO OESTE",
+                           "votos":  10
+                       },
+                       {
+                           "codigo":  "79979",
+                           "municipio":  "JESUÍTAS",
+                           "votos":  9
+                       },
+                       {
+                           "codigo":  "75094",
+                           "municipio":  "CLEVELÂNDIA",
+                           "votos":  9
+                       },
+                       {
+                           "codigo":  "74349",
+                           "municipio":  "FLOR DA SERRA DO SUL",
+                           "votos":  9
+                       },
+                       {
+                           "codigo":  "77178",
+                           "municipio":  "NOVA AMÉRICA DA COLINA",
+                           "votos":  9
+                       },
+                       {
+                           "codigo":  "74365",
+                           "municipio":  "HONÓRIO SERPA",
+                           "votos":  9
+                       },
+                       {
+                           "codigo":  "76635",
+                           "municipio":  "LOANDA",
+                           "votos":  9
+                       },
+                       {
+                           "codigo":  "74144",
+                           "municipio":  "BOA ESPERANÇA DO IGUAÇU",
+                           "votos":  8
+                       },
+                       {
+                           "codigo":  "79839",
+                           "municipio":  "BRAGANEY",
+                           "votos":  8
+                       },
+                       {
+                           "codigo":  "74020",
+                           "municipio":  "IBEMA",
+                           "votos":  8
+                       },
+                       {
+                           "codigo":  "77992",
+                           "municipio":  "QUINTA DO SOL",
+                           "votos":  7
+                       },
+                       {
+                           "codigo":  "78034",
+                           "municipio":  "RANCHO ALEGRE",
+                           "votos":  7
+                       },
+                       {
+                           "codigo":  "74896",
+                           "municipio":  "CAPITÃO LEÔNIDAS MARQUES",
+                           "votos":  7
+                       },
+                       {
+                           "codigo":  "74101",
+                           "municipio":  "ANAHY",
+                           "votos":  7
+                       },
+                       {
+                           "codigo":  "74497",
+                           "municipio":  "BARRACÃO",
+                           "votos":  7
+                       },
+                       {
+                           "codigo":  "74829",
+                           "municipio":  "SANTA MÔNICA",
+                           "votos":  6
+                       },
+                       {
+                           "codigo":  "84697",
+                           "municipio":  "MISSAL",
+                           "votos":  6
+                       },
+                       {
+                           "codigo":  "76953",
+                           "municipio":  "MARMELEIRO",
+                           "votos":  6
+                       },
+                       {
+                           "codigo":  "74977",
+                           "municipio":  "CATANDUVAS",
+                           "votos":  6
+                       },
+                       {
+                           "codigo":  "74780",
+                           "municipio":  "CAMPO BONITO",
+                           "votos":  6
+                       },
+                       {
+                           "codigo":  "74764",
+                           "municipio":  "SANTA LÚCIA",
+                           "votos":  6
+                       },
+                       {
+                           "codigo":  "74403",
+                           "municipio":  "IRACEMA DO OESTE",
+                           "votos":  5
+                       },
+                       {
+                           "codigo":  "75329",
+                           "municipio":  "ESPIGÃO ALTO DO IGUAÇU",
+                           "votos":  5
+                       },
+                       {
+                           "codigo":  "74063",
+                           "municipio":  "OURO VERDE DO OESTE",
+                           "votos":  5
+                       },
+                       {
+                           "codigo":  "79898",
+                           "municipio":  "VERA CRUZ DO OESTE",
+                           "votos":  5
+                       },
+                       {
+                           "codigo":  "77836",
+                           "municipio":  "PORTO RICO",
+                           "votos":  5
+                       },
+                       {
+                           "codigo":  "74152",
+                           "municipio":  "AMAPORÃ",
+                           "votos":  5
+                       },
+                       {
+                           "codigo":  "75787",
+                           "municipio":  "SULINA",
+                           "votos":  5
+                       },
+                       {
+                           "codigo":  "74241",
+                           "municipio":  "CRUZEIRO DO IGUAÇU",
+                           "votos":  4
+                       },
+                       {
+                           "codigo":  "77739",
+                           "municipio":  "PLANALTINA DO PARANÁ",
+                           "votos":  4
+                       },
+                       {
+                           "codigo":  "74080",
+                           "municipio":  "SANTA TEREZA DO OESTE",
+                           "votos":  4
+                       },
+                       {
+                           "codigo":  "74500",
+                           "municipio":  "MARIPÁ",
+                           "votos":  3
+                       },
+                       {
+                           "codigo":  "74268",
+                           "municipio":  "DIAMANTE DO SUL",
+                           "votos":  3
+                       },
+                       {
+                           "codigo":  "78611",
+                           "municipio":  "SANTO ANTONIO DO CAIUÁ",
+                           "votos":  3
+                       },
+                       {
+                           "codigo":  "75779",
+                           "municipio":  "GUAPOREMA",
+                           "votos":  3
+                       },
+                       {
+                           "codigo":  "75400",
+                           "municipio":  "DIAMANTE D OESTE",
+                           "votos":  3
+                       },
+                       {
+                           "codigo":  "75396",
+                           "municipio":  "DIAMANTE DO NORTE",
+                           "votos":  3
+                       },
+                       {
+                           "codigo":  "79758",
+                           "municipio":  "MARILENA",
+                           "votos":  3
+                       },
+                       {
+                           "codigo":  "79812",
+                           "municipio":  "BOA VISTA DA APARECIDA",
+                           "votos":  3
+                       },
+                       {
+                           "codigo":  "77593",
+                           "municipio":  "PÉROLA D OESTE",
+                           "votos":  3
+                       },
+                       {
+                           "codigo":  "84719",
+                           "municipio":  "SÃO JOSÉ DAS PALMEIRAS",
+                           "votos":  2
+                       },
+                       {
+                           "codigo":  "78573",
+                           "municipio":  "SANTO ANTÔNIO DO SUDOESTE",
+                           "votos":  2
+                       },
+                       {
+                           "codigo":  "75612",
+                           "municipio":  "FORMOSA DO OESTE",
+                           "votos":  2
+                       },
+                       {
+                           "codigo":  "79936",
+                           "municipio":  "TUPÃSSI",
+                           "votos":  2
+                       },
+                       {
+                           "codigo":  "74624",
+                           "municipio":  "PATO BRAGADO",
+                           "votos":  2
+                       },
+                       {
+                           "codigo":  "78433",
+                           "municipio":  "SANTA CRUZ DE MONTE CASTELO",
+                           "votos":  2
+                       },
+                       {
+                           "codigo":  "77755",
+                           "municipio":  "PLANALTO",
+                           "votos":  1
+                       },
+                       {
+                           "codigo":  "74683",
+                           "municipio":  "QUATRO PONTES",
+                           "votos":  1
+                       },
+                       {
+                           "codigo":  "74560",
+                           "municipio":  "MERCEDES",
+                           "votos":  1
+                       },
+                       {
+                           "codigo":  "74861",
+                           "municipio":  "SÃO PEDRO DO IGUAÇU",
+                           "votos":  1
+                       },
+                       {
+                           "codigo":  "78336",
+                           "municipio":  "SALGADO FILHO",
+                           "votos":  1
+                       },
+                       {
+                           "codigo":  "75167",
+                           "municipio":  "BOM JESUS DO SUL",
+                           "votos":  1
+                       },
+                       {
+                           "codigo":  "79910",
+                           "municipio":  "PRANCHITA",
+                           "votos":  1
+                       },
+                       {
+                           "codigo":  "75124",
+                           "municipio":  "BELA VISTA DA CAROBA",
+                           "votos":  0
+                       },
+                       {
+                           "codigo":  "74640",
+                           "municipio":  "PINHAL DE SÃO BENTO",
+                           "votos":  0
+                       },
+                       {
+                           "codigo":  "74047",
+                           "municipio":  "LINDOESTE",
+                           "votos":  0
+                       },
+                       {
+                           "codigo":  "75450",
+                           "municipio":  "ENÉAS MARQUES",
+                           "votos":  0
+                       },
+                       {
+                           "codigo":  "77151",
+                           "municipio":  "NOVA ALIANÇA DO IVAÍ",
+                           "votos":  0
+                       },
+                       {
+                           "codigo":  "78930",
+                           "municipio":  "SÃO PEDRO DO PARANÁ",
+                           "votos":  0
+                       },
+                       {
+                           "codigo":  "77038",
+                           "municipio":  "MIRADOR",
+                           "votos":  0
+                       },
+                       {
+                           "codigo":  "74705",
+                           "municipio":  "RAMILÂNDIA",
+                           "votos":  0
+                       },
+                       {
+                           "codigo":  "74284",
+                           "municipio":  "ENTRE RIOS DO OESTE",
+                           "votos":  0
+                       },
+                       {
+                           "codigo":  "75027",
+                           "municipio":  "NOVA ESPERANÇA DO SUDOESTE",
+                           "votos":  0
+                       },
+                       {
+                           "codigo":  "76198",
+                           "municipio":  "ITAÚNA DO SUL",
+                           "votos":  0
+                       }
+                   ]
+}
