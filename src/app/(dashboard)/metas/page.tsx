@@ -1,10 +1,11 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { redirect } from "next/navigation";
-import { Target, TrendingUp, Users, CheckCircle2, AlertTriangle, MapPin, Clock } from "lucide-react";
+import { Target, TrendingUp, Users, CheckCircle2, AlertTriangle, MapPin, Clock, Swords } from "lucide-react";
 import Link from "next/link";
 import { addWeeks, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import maraLimaData from "@/data/mara-lima-2022.json";
 
 const CID = "andre-santos-2026";
 
@@ -41,6 +42,13 @@ export default async function MetasPage() {
       cityAgg[city].hasLeader = true;
     }
   }
+
+  // Mapa de votos Mara Lima 2022 por cidade (normalizado para lowercase)
+  const maraMap = new Map(
+    (maraLimaData.municipios as { municipio: string; votos: number }[]).map(
+      (m) => [m.municipio.toLowerCase().trim(), m.votos]
+    )
+  );
 
   // Crescimento semanal médio (últimos 30 dias / 4,3 semanas) por cidade
   const weeklyGrowthMap = Object.fromEntries(
@@ -129,6 +137,14 @@ export default async function MetasPage() {
               const barColor = status === "ok" ? "bg-green-500/70" : status === "warn" ? "bg-amber-500/70" : "bg-red-500/50";
               const textColor = status === "ok" ? "text-green-400" : status === "warn" ? "text-amber-400" : "text-red-400";
 
+              const maraVotos = maraMap.get(g.city.toLowerCase().trim()) ?? 0;
+              const cobertura = maraVotos > 0 ? (real.ativos / maraVotos) * 100 : null;
+              const cobPrioridade =
+                cobertura === null ? null :
+                cobertura === 0   ? "critica" :
+                cobertura < 1     ? "alta" :
+                cobertura < 3     ? "media" : "ok";
+
               return (
                 <div key={g.id} className="px-5 py-4 hover:bg-white/[0.02] transition-colors">
                   <div className="flex items-start justify-between gap-4 mb-3">
@@ -167,6 +183,27 @@ export default async function MetasPage() {
                         </div>
                       );
                     })()}
+                    {/* Mara Lima 2022 */}
+                    {maraVotos > 0 && (
+                      <div className="flex items-center justify-between text-[10px] pt-1 border-t border-white/[0.04] mt-1">
+                        <span className="flex items-center gap-1 text-muted-foreground/60">
+                          <Swords className="w-2.5 h-2.5" />
+                          Mara Lima 2022: {maraVotos.toLocaleString("pt-BR")} votos
+                        </span>
+                        <span className={
+                          cobPrioridade === "critica" ? "text-red-400 font-semibold" :
+                          cobPrioridade === "alta"    ? "text-amber-400 font-semibold" :
+                          cobPrioridade === "media"   ? "text-yellow-400" :
+                                                        "text-green-400"
+                        }>
+                          {cobertura !== null ? `${cobertura.toFixed(1)}% cobertura` : "—"}
+                          {cobPrioridade === "critica" && " · Zona cega"}
+                          {cobPrioridade === "alta"    && " · Prioridade alta"}
+                          {cobPrioridade === "media"   && " · Atenção"}
+                          {cobPrioridade === "ok"      && " · OK"}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
               );
