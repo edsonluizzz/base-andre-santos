@@ -9,31 +9,49 @@
 $ErrorActionPreference = "Stop"
 
 $url         = "https://cdn.tse.jus.br/estatistica/sead/odsele/votacao_candidato_munzona/votacao_candidato_munzona_2022.zip"
-$zipPath     = "$env:TEMP\tse_munzona_2022.zip"
 $extractPath = "$env:TEMP\tse_munzona_2022"
 $outputPath  = "src\data\mara-lima-2022.json"
 
-# 1 — Download
-if (-not (Test-Path $zipPath)) {
-    Write-Host "Baixando dados TSE (arquivo ~400MB, aguarde)..." -ForegroundColor Cyan
-    $wc = New-Object System.Net.WebClient
-    $wc.DownloadFile($url, $zipPath)
-    Write-Host "Download concluido." -ForegroundColor Green
-} else {
-    Write-Host "ZIP ja existe em $zipPath, pulando download." -ForegroundColor Yellow
-}
+# Procura o ZIP em locais comuns (Downloads, Desktop, Temp)
+$candidatos = @(
+    "$env:TEMP\tse_munzona_2022.zip",
+    "$env:USERPROFILE\Downloads\votacao_candidato_munzona_2022.zip",
+    "$env:USERPROFILE\Desktop\votacao_candidato_munzona_2022.zip"
+)
+$zipPath = $candidatos | Where-Object { (Test-Path $_) -and (Get-Item $_).Length -gt 100MB } | Select-Object -First 1
 
-# 2 — Extração
-if (-not (Test-Path $extractPath)) {
-    Write-Host "Extraindo..." -ForegroundColor Cyan
-    Expand-Archive -Path $zipPath -DestinationPath $extractPath -Force
+if (-not $zipPath) {
+    Write-Host ""
+    Write-Host "ARQUIVO NAO ENCONTRADO OU CORROMPIDO." -ForegroundColor Red
+    Write-Host ""
+    Write-Host "1. Abra este link no Chrome ou Edge:" -ForegroundColor Yellow
+    Write-Host "   $url" -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host "2. Aguarde o download completo (~400MB)" -ForegroundColor Yellow
+    Write-Host "3. O arquivo vai para sua pasta Downloads automaticamente" -ForegroundColor Yellow
+    Write-Host "4. Rode o script novamente: .\temporaria\fetch-mara-lima.ps1" -ForegroundColor Yellow
+    Write-Host ""
+    exit 0
 }
+Write-Host "ZIP encontrado: $zipPath ($([math]::Round((Get-Item $zipPath).Length/1MB,0)) MB)" -ForegroundColor Green
 
-$csvFile = Get-ChildItem $extractPath -Filter "*munzona*.csv" -Recurse | Select-Object -First 1
+# Download ja tratado acima — zipPath foi localizado automaticamente
+
+# 2 — Extração (sempre força para evitar pastas vazias de tentativas anteriores)
+Write-Host "Extraindo ZIP para $extractPath..." -ForegroundColor Cyan
+if (Test-Path $extractPath) { Remove-Item $extractPath -Recurse -Force }
+Expand-Archive -Path $zipPath -DestinationPath $extractPath -Force
+
+# Lista tudo que foi extraído para debug
+Write-Host "Conteudo extraido:" -ForegroundColor DarkGray
+Get-ChildItem $extractPath -Recurse | ForEach-Object { Write-Host "  $($_.FullName)" -ForegroundColor DarkGray }
+
+$csvFile = Get-ChildItem $extractPath -Recurse -Include "*.csv","*.CSV" | Select-Object -First 1
 if (-not $csvFile) {
-    $csvFile = Get-ChildItem $extractPath -Filter "*.csv" -Recurse | Select-Object -First 1
+    Write-Error "Nenhum arquivo CSV encontrado em $extractPath"
+    exit 1
 }
-Write-Host "CSV encontrado: $($csvFile.Name)" -ForegroundColor Green
+Write-Host "CSV encontrado: $($csvFile.FullName)" -ForegroundColor Green
 
 # 3 — Leitura do cabeçalho (detecta separador e índices das colunas)
 $firstLine = Get-Content $csvFile.FullName -Encoding UTF8 -TotalCount 1

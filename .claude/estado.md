@@ -1,6 +1,6 @@
 # Estado — Base André Santos
 
-**Última atualização:** 2026-05-15 (ensureCityGoal no POST · estado sincronizado)
+**Última atualização:** 2026-05-16 (análise adversária Mara Lima em andamento · script TSE pronto)
 **Plano de produto:** `.claude/issacar-plano.md` — transformar em SaaS multi-tenant (issacar.app)
 **Landing page:** https://issacar-landing.vercel.app · domínio issacar.app pendente configuração DNS
 **GitHub:** https://github.com/edsonluizzz/base-andre-santos
@@ -174,6 +174,12 @@ gcal-sync:              0 4 * * *             (1×/dia — Hobby plan limit)
 - [x] **Metas sincronizadas:** "Sincronizar metas agora" executado em 2026-05-14 · metas criadas para todas as cidades com colaboradores
 - [x] **Importação Gospel Class:** 1652 leads importados em 2026-05-12 · canal=Outro · origem=GOSPEL CLASS · vinculados ao Marcos
 - [x] **Leads pré-fix:** /configuracoes → "Corrigir origem de leads antigos" — executado em 2026-05-14
+
+### Análise adversária — Mara Lima 2022
+- [ ] **Baixar ZIP do TSE no navegador** → `https://cdn.tse.jus.br/estatistica/sead/odsele/votacao_candidato_munzona/votacao_candidato_munzona_2022.zip` (~400MB)
+- [ ] **Rodar script** → `.\temporaria\fetch-mara-lima.ps1` (detecta ZIP na pasta Downloads automaticamente)
+- [ ] **Commitar** `src/data/mara-lima-2022.json` após geração
+- [ ] **Implementar painel** no `/planejamento` — cruzamento Meta × Mara Lima 2022 × Ativos por município
 
 ### Integrações pendentes
 - [ ] **Evolution API:** WhatsApp para ativação da base — decisão 2026-05-13 (ver seção abaixo)
