@@ -631,7 +631,8 @@ function AttendanceDialog({
       try {
         const r = await fetch(`/api/collaborators?q=${encodeURIComponent(search)}&status=ALL`);
         if (r.ok) {
-          const data: CollabResult[] = await r.json();
+          const j = await r.json();
+          const data: CollabResult[] = j.data ?? j;
           const existing = new Set(entries.map((e) => e.collaboratorId));
           setResults(data.filter((c) => !existing.has(c.id)).slice(0, 8));
         }

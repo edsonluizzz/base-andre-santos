@@ -17,7 +17,11 @@ export function FunnelPanel() {
   useEffect(() => {
     fetch("/api/collaborators?status=ALL")
       .then((r) => r.json())
-      .then((all: Array<{ status: string; supportStatus: string }>) => {
+      .then((res) => {
+        const all: Array<{ status: string; supportStatus: string }> = res.data ?? res;
+        return all;
+      })
+      .then((all) => {
         const total = all.length;
         const leads = all.filter((c) => c.status === "LEAD").length;
         const ativos = all.filter((c) => c.status === "ACTIVE").length;

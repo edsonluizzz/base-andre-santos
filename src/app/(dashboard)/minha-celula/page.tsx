@@ -69,7 +69,7 @@ export default function MinhaCelulaPage() {
       fetch("/api/tasks"),
     ]);
     if (sr.ok) setStats(await sr.json());
-    if (cr.ok) setCollaborators(await cr.json());
+    if (cr.ok) { const j = await cr.json(); setCollaborators(j.data ?? j); }
     if (tr.ok) setTasks(await tr.json());
     setLoading(false);
   }, []);

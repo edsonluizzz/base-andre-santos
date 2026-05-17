@@ -70,7 +70,8 @@ export default function GruposPage() {
       setSearching(true);
       const res = await fetch(`/api/collaborators?q=${encodeURIComponent(search)}&status=ACTIVE`);
       if (res.ok) {
-        const all: Collaborator[] = await res.json();
+        const j = await res.json();
+        const all: Collaborator[] = j.data ?? j;
         const memberIds = new Set(members.map((m) => m.collaborator.id));
         setSearchResults(all.filter((c) => !memberIds.has(c.id)).slice(0, 8));
       }
