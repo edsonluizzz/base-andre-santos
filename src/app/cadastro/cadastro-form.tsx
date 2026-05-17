@@ -13,10 +13,11 @@ type Step = "form" | "success";
 
 export function CadastroForm() {
   const searchParams = useSearchParams();
-  const refUserId  = searchParams.get("ref") ?? "";
-  const refc       = searchParams.get("refc") ?? "";
+  const refUserId   = searchParams.get("ref") ?? "";
+  const refc        = searchParams.get("refc") ?? "";
   const sourceParam = searchParams.get("source") ?? "";
-  const eventId    = searchParams.get("event_id") ?? "";
+  const eventId     = searchParams.get("event_id") ?? "";
+  const channelParam = searchParams.get("ch") ?? "";
 
   const [step, setStep] = useState<Step>("form");
   const [loading, setLoading] = useState(false);
@@ -114,7 +115,7 @@ export function CadastroForm() {
       const res = await fetch("/api/public/cadastro", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, phone, city, neighborhood, email, contributionTypes: selectedTypes, refUserId, refc, lgpdConsent, source: sourceParam || undefined, eventId: eventId || undefined }),
+        body: JSON.stringify({ name, phone, city, neighborhood, email, contributionTypes: selectedTypes, refUserId, refc, lgpdConsent, source: sourceParam || undefined, eventId: eventId || undefined, channel: channelParam || undefined }),
       });
       const data = await res.json();
       if (!res.ok && res.status !== 200) {

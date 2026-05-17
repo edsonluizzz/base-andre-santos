@@ -18,6 +18,7 @@ const cadastroSchema = z.object({
   refc: z.string().optional().or(z.literal("")),
   source: z.string().max(50).optional(),
   eventId: z.string().optional().or(z.literal("")),
+  channel: z.enum(["INSTAGRAM", "WHATSAPP", "EVENTO", "LINK", "OUTRO"]).optional(),
 });
 
 const CID = "andre-santos-2026";
@@ -48,7 +49,7 @@ export async function POST(req: NextRequest) {
       const msg = parsed.error.errors[0]?.message ?? "Dados inválidos";
       return NextResponse.json({ error: msg }, { status: 400 });
     }
-    const { name, phone, city, neighborhood, email, contributionTypes, refUserId, refc, lgpdConsent, source: sourceParam, eventId } = parsed.data;
+    const { name, phone, city, neighborhood, email, contributionTypes, refUserId, refc, lgpdConsent, source: sourceParam, eventId, channel } = parsed.data;
 
     const cleanPhone = phone.replace(/\D/g, "");
     if (cleanPhone.length < 10) {
@@ -92,6 +93,7 @@ export async function POST(req: NextRequest) {
         campaignRole: "VOLUNTARIO",
         status: "LEAD",
         source,
+        channel: channel ?? null,
         contributionTypes: Array.isArray(contributionTypes) ? contributionTypes : [],
         registeredById,
         lgpdConsent: true,

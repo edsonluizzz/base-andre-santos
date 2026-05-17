@@ -24,11 +24,14 @@ type Post = {
   publishedAt: { dateTime: string; timezone: string };
 };
 
+type DailyCount = { date: string; count: number };
+
 type Data = {
   posts: Post[];
   reels: Post[];
   avgReach: number;
   avgEngagement: number;
+  dailyCadastros: DailyCount[];
 };
 
 const DAYS_OPTIONS = [
@@ -45,6 +48,78 @@ function fmtNum(n: number) {
 
 function fmtDate(dt: string) {
   return new Date(dt).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
+}
+
+function CorrelationChart({ dailyCadastros, posts, reels }: { dailyCadastros: DailyCount[]; posts: Post[]; reels: Post[] }) {
+  if (dailyCadastros.length === 0) return null;
+
+  const maxCount = Math.max(...dailyCadastros.map((d) => d.count), 1);
+  const allPubs = [...posts, ...reels];
+  const postDates = new Set(
+    allPubs.map((p) => {
+      const dt = p.publishedAt?.dateTime ?? "";
+      return dt.split("T")[0];
+    })
+  );
+
+  return (
+    <div className="glass-card rounded-2xl p-6 border border-white/[0.08]">
+      <div className="flex items-center gap-2 mb-2">
+        <TrendingUp className="w-4 h-4 text-blue-400" />
+        <h2 className="text-sm font-semibold text-foreground">Novos Cadastros × Publicações</h2>
+      </div>
+      <p className="text-[11px] text-muted-foreground mb-4">
+        Barras = cadastros por dia · <span className="text-pink-400">●</span> publicação no Instagram
+      </p>
+
+      {/* Barras */}
+      <div className="flex items-end gap-px" style={{ height: 80 }}>
+        {dailyCadastros.map((d) => {
+          const hasPost = postDates.has(d.date);
+          const pct = Math.max((d.count / maxCount) * 100, d.count > 0 ? 6 : 2);
+          return (
+            <div
+              key={d.date}
+              className="flex-1 flex flex-col items-center justify-end gap-0.5"
+              title={`${fmtDate(d.date)}: ${d.count} cadastro${d.count !== 1 ? "s" : ""}${hasPost ? " · 📸 publicação" : ""}`}
+            >
+              {hasPost && <div className="w-1.5 h-1.5 rounded-full bg-pink-400 shrink-0" />}
+              <div
+                className={`w-full rounded-sm transition-all ${hasPost ? "bg-pink-500/70" : "bg-blue-500/40"}`}
+                style={{ height: `${pct}%` }}
+              />
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Eixo x: datas dos extremos */}
+      <div className="flex justify-between mt-1">
+        <span className="text-[10px] text-muted-foreground">{fmtDate(dailyCadastros[0].date)}</span>
+        <span className="text-[10px] text-muted-foreground">{fmtDate(dailyCadastros[dailyCadastros.length - 1].date)}</span>
+      </div>
+
+      {/* Posts publicados no período */}
+      {allPubs.length > 0 && (
+        <div className="mt-4 space-y-1.5">
+          <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wide">Publicações no período</p>
+          {allPubs
+            .sort((a, b) => (a.publishedAt?.dateTime ?? "").localeCompare(b.publishedAt?.dateTime ?? ""))
+            .map((p) => {
+              const day = (p.publishedAt?.dateTime ?? "").split("T")[0];
+              const cadastrosDia = dailyCadastros.find((d) => d.date === day)?.count ?? 0;
+              return (
+                <div key={p.postId ?? p.reelId} className="flex items-center gap-2 text-[11px]">
+                  <span className="text-pink-400 shrink-0">{fmtDate(p.publishedAt?.dateTime ?? "")}</span>
+                  <span className="text-muted-foreground truncate flex-1">{p.content?.slice(0, 60) ?? "—"}</span>
+                  <span className="text-blue-400 shrink-0">{cadastrosDia} cadastro{cadastrosDia !== 1 ? "s" : ""}</span>
+                </div>
+              );
+            })}
+        </div>
+      )}
+    </div>
+  );
 }
 
 function PostCard({ p }: { p: Post }) {
@@ -198,6 +273,15 @@ export default function InstagramPage() {
             <p>Acima de 6% = excelente</p>
           </div>
         </div>
+      )}
+
+      {/* Correlação posts × cadastros */}
+      {!loading && data && data.dailyCadastros.length > 0 && (
+        <CorrelationChart
+          dailyCadastros={data.dailyCadastros}
+          posts={data.posts}
+          reels={data.reels}
+        />
       )}
 
       {/* Tabs */}

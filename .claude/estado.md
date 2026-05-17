@@ -1,6 +1,6 @@
 # Estado — Base André Santos
 
-**Última atualização:** 2026-05-16 (sprints 1-3 mobile/performance/segurança + análise adversária Mara Lima)
+**Última atualização:** 2026-05-17 (Metricool Instagram integrado · fix ícone lucide-react · estado sincronizado)
 **Plano de produto:** `.claude/issacar-plano.md` — transformar em SaaS multi-tenant (issacar.app)
 **Landing page:** https://issacar-landing.vercel.app · domínio issacar.app pendente configuração DNS
 **GitHub:** https://github.com/edsonluizzz/base-andre-santos
@@ -32,6 +32,7 @@ Sistema funcional e em produção. Terminologia "Base de Apoio" (não "campanha"
 | Minha Célula | `/minha-celula` | ✅ tier · stats · link de convite · gestão de status · **Minhas Tarefas** (checkbox, prazo colorido, prioridade) |
 | Tarefas | `/tarefas` | ✅ ADMIN only · todas as tarefas agrupadas por usuário · filtros PENDING/DONE/ALL · toggle/delete · modal nova tarefa com seletor de responsável |
 | Metas | `/metas` | ✅ Meta × Realizado por município · velocidade +X/sem · data estimada colorida · KPI "Crescendo" |
+| Instagram | `/instagram` | ✅ grid posts/reels · KPIs · range 7/30/90d · widget no dashboard (req. METRICOOL_TOKEN) |
 | Células | `/celulas` | ✅ visualização hierárquica |
 | Ranking | `/ranking` | ✅ scroll horizontal mobile |
 | Super Admin | `/super-admin` | ✅ conceder/revogar acesso · role/tier · links de convite reutilizáveis |
@@ -127,6 +128,7 @@ SUPER_ADMIN_EMAILS = edsonluizz.silva@gmail.com
 ```
 Opcionais:
 ```
+METRICOOL_TOKEN         → analytics Instagram via Metricool API (userId=4802533 · blogId=6229175)
 RESEND_API_KEY          → emails de convite e broadcast
 RESEND_FROM             → "Base André Santos <noreply@...>"
 BLOB_READ_WRITE_TOKEN   → upload de logo
@@ -176,14 +178,13 @@ gcal-sync:              0 4 * * *             (1×/dia — Hobby plan limit)
 - [x] **Leads pré-fix:** /configuracoes → "Corrigir origem de leads antigos" — executado em 2026-05-14
 
 ### Análise adversária — Mara Lima 2022
-- [ ] **Baixar ZIP do TSE no navegador** → `https://cdn.tse.jus.br/estatistica/sead/odsele/votacao_candidato_munzona/votacao_candidato_munzona_2022.zip` (~400MB)
-- [ ] **Rodar script** → `.\temporaria\fetch-mara-lima.ps1` (detecta ZIP na pasta Downloads automaticamente)
-- [ ] **Commitar** `src/data/mara-lima-2022.json` após geração
-- [ ] **Implementar painel** no `/planejamento` — cruzamento Meta × Mara Lima 2022 × Ativos por município
+- [x] **ZIP TSE baixado** e script executado (2026-05-16) · 357.452 votos · 399 municípios
+- [x] **`src/data/mara-lima-2022.json`** commitado
+- [x] **Painel em `/metas`** — cruzamento Meta × Mara Lima 2022 × Ativos por município · prioridade crítica/alta/média/ok
 
 ### Integrações pendentes
 - [ ] **Evolution API:** WhatsApp para ativação da base — decisão 2026-05-13 (ver seção abaixo)
-- [ ] **Metricool:** analytics + concorrentes (aguardando API key)
+- [x] **Metricool:** integração Instagram — posts, reels, KPIs, widget dashboard (2026-05-17) — req. METRICOOL_TOKEN no Vercel
 - [ ] **Compliance ago/2026:** CNPJ coligação + registro SPCE
 
 ---
