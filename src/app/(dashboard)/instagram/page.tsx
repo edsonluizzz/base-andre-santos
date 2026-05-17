@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import {
-  Instagram, Eye, Heart, MessageCircle, Share2, TrendingUp,
+  Camera, Eye, Heart, MessageCircle, Share2, TrendingUp,
   ExternalLink, BookMarked, Film,
 } from "lucide-react";
 
@@ -137,7 +137,7 @@ export default function InstagramPage() {
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-full bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center">
-            <Instagram className="w-5 h-5 text-white" />
+            <Camera className="w-5 h-5 text-white" />
           </div>
           <div>
             <h1 className="text-xl font-bold text-foreground">Instagram</h1>

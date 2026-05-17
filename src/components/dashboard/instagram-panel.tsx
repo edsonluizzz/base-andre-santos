@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Instagram, ExternalLink, TrendingUp, Eye, Heart } from "lucide-react";
+import { Camera, ExternalLink, TrendingUp, Eye, Heart } from "lucide-react";
 import Link from "next/link";
 
 type Post = {
@@ -56,7 +56,7 @@ export function InstagramPanel() {
   return (
     <div className="glass-card rounded-2xl p-6 border border-white/[0.08]">
       <div className="flex items-center gap-2 mb-5">
-        <Instagram className="w-4 h-4 text-pink-400" />
+        <Camera className="w-4 h-4 text-pink-400" />
         <h2 className="text-sm font-semibold text-foreground">Instagram</h2>
         <span className="text-[10px] text-muted-foreground">últimos 30 dias</span>
         <Link
