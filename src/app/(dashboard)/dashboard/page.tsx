@@ -6,6 +6,7 @@ import { TIER_LABEL, TIER_THRESHOLDS } from "@/lib/contribution";
 import { ROLE_LABEL } from "@/lib/labels";
 import { CopyButton } from "@/components/dashboard/copy-button";
 import { FunnelPanel } from "@/components/dashboard/funnel-panel";
+import { InstagramPanel } from "@/components/dashboard/instagram-panel";
 import { VelocityPanel } from "@/components/dashboard/velocity-panel";
 import { ElectionCountdown } from "@/components/dashboard/election-countdown";
 import { Suspense } from "react";
@@ -220,6 +221,9 @@ export default async function DashboardPage() {
 
       {/* Funil de conversão */}
       <FunnelPanel />
+
+      {/* Instagram Analytics */}
+      <InstagramPanel />
 
       {/* Velocidade por município */}
       <Suspense fallback={<div className="glass-card rounded-2xl p-6 border border-white/[0.08] h-32 animate-pulse" />}>
