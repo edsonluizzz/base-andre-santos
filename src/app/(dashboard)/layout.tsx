@@ -15,7 +15,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         <Sidebar serverRole={role} serverIsSuperAdmin={isSuperAdmin} />
       </div>
       <main className="flex-1 lg:ml-64 min-w-0 overflow-x-hidden">
-        <div className="pt-16 pr-6 pb-6 pl-16 lg:p-8 animate-in fade-in slide-in-from-bottom-3 duration-500 ease-out fill-mode-both">
+        <div className="pt-16 px-4 pb-24 md:pl-16 md:pr-6 lg:p-8 animate-in fade-in slide-in-from-bottom-3 duration-300 ease-out fill-mode-both">
           {children}
         </div>
       </main>

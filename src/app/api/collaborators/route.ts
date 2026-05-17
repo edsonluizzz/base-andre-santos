@@ -26,54 +26,67 @@ export async function GET(req: NextRequest) {
     const supportStatus = searchParams.get("supportStatus") ?? "";
     const dateFrom = searchParams.get("dateFrom") ?? "";
     const dateTo = searchParams.get("dateTo") ?? "";
+    const limit = Math.min(parseInt(searchParams.get("limit") ?? "80"), 200);
+    const offset = parseInt(searchParams.get("offset") ?? "0");
 
     const IMPORT_SOURCES = ["IMPORTACAO_CSV", "IMPORTACAO_XLSX"];
 
-    const collaborators = await db.collaborator.findMany({
-      where: {
-        campaignId: CID,
-        ...(status && status !== "ALL" && { status: status as CollaboratorStatus }),
-        ...(role && { campaignRole: role as CollaboratorRole }),
-        ...(city && { city }),
-        ...(mine && { registeredById: session.user.id }),
-        ...(registeredBy && { registeredById: registeredBy }),
-        ...(profile && { profile: profile as never }),
-        ...(channel && { channel: channel as never }),
-        ...(supportStatus && { supportStatus: supportStatus as never }),
-        ...(sourceType === "IMPORTADO" && { source: { in: IMPORT_SOURCES } }),
-        ...(sourceType === "MANUAL" && {
-          registeredById: { not: null },
-          source: { notIn: IMPORT_SOURCES },
-        }),
-        ...(sourceType === "PUBLICO" && {
-          registeredById: null,
-          source: { notIn: IMPORT_SOURCES },
-        }),
-        ...((dateFrom || dateTo) && {
-          createdAt: {
-            ...(dateFrom && { gte: new Date(dateFrom) }),
-            ...(dateTo && { lte: new Date(`${dateTo}T23:59:59`) }),
-          },
-        }),
-        ...(search && {
-          OR: [
-            { name: { contains: search, mode: "insensitive" } },
-            { email: { contains: search, mode: "insensitive" } },
-            { phone: { contains: search, mode: "insensitive" } },
-            { city: { contains: search, mode: "insensitive" } },
-            { source: { contains: search, mode: "insensitive" } },
-          ],
-        }),
-      },
-      include: {
-        zones: { include: { zone: { select: { id: true, name: true } } } },
-        whatsappGroups: { include: { group: { select: { id: true, name: true } } } },
-        registeredBy: { select: { name: true, email: true } },
-      },
-      orderBy: { name: "asc" },
-    });
+    const where = {
+      campaignId: CID,
+      ...(status && status !== "ALL" && { status: status as CollaboratorStatus }),
+      ...(role && { campaignRole: role as CollaboratorRole }),
+      ...(city && { city }),
+      ...(mine && { registeredById: session.user.id }),
+      ...(registeredBy && { registeredById: registeredBy }),
+      ...(profile && { profile: profile as never }),
+      ...(channel && { channel: channel as never }),
+      ...(supportStatus && { supportStatus: supportStatus as never }),
+      ...(sourceType === "IMPORTADO" && { source: { in: IMPORT_SOURCES } }),
+      ...(sourceType === "MANUAL" && {
+        registeredById: { not: null },
+        source: { notIn: IMPORT_SOURCES },
+      }),
+      ...(sourceType === "PUBLICO" && {
+        registeredById: null,
+        source: { notIn: IMPORT_SOURCES },
+      }),
+      ...((dateFrom || dateTo) && {
+        createdAt: {
+          ...(dateFrom && { gte: new Date(dateFrom) }),
+          ...(dateTo && { lte: new Date(`${dateTo}T23:59:59`) }),
+        },
+      }),
+      ...(search && {
+        OR: [
+          { name: { contains: search, mode: "insensitive" } },
+          { email: { contains: search, mode: "insensitive" } },
+          { phone: { contains: search, mode: "insensitive" } },
+          { city: { contains: search, mode: "insensitive" } },
+          { source: { contains: search, mode: "insensitive" } },
+        ],
+      }),
+    };
 
-    return NextResponse.json(collaborators);
+    const [collaborators, total] = await Promise.all([
+      db.collaborator.findMany({
+        where,
+        select: {
+          id: true, name: true, email: true, phone: true, city: true,
+          neighborhood: true, campaignRole: true, status: true, notes: true,
+          birthday: true, contributionTypes: true, lastContactedAt: true,
+          mobilizationScore: true, profile: true, supportStatus: true, source: true,
+          registeredBy: { select: { name: true, email: true } },
+          zones: { select: { zone: { select: { id: true, name: true } } } },
+          whatsappGroups: { select: { group: { select: { id: true, name: true } } } },
+        },
+        orderBy: { name: "asc" },
+        take: limit,
+        skip: offset,
+      }),
+      db.collaborator.count({ where }),
+    ]);
+
+    return NextResponse.json({ data: collaborators, total });
   } catch (err) {
     console.error("[collaborators GET]", err);
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });

@@ -4,6 +4,21 @@ import { recalcTier } from "@/lib/tier";
 import { sendNewLeadNotificationEmail } from "@/lib/email";
 import { sendTelegram } from "@/lib/telegram";
 import { ensureCityGoal } from "@/lib/municipality-goals";
+import { z } from "zod";
+
+const cadastroSchema = z.object({
+  name: z.string().min(2).max(255),
+  phone: z.string().min(10).max(20),
+  email: z.string().email().optional().or(z.literal("")).or(z.null()),
+  city: z.string().max(100).optional().or(z.literal("")),
+  neighborhood: z.string().max(100).optional().or(z.literal("")),
+  lgpdConsent: z.literal(true),
+  contributionTypes: z.array(z.string()).optional(),
+  refUserId: z.string().optional().or(z.literal("")),
+  refc: z.string().optional().or(z.literal("")),
+  source: z.string().max(50).optional(),
+  eventId: z.string().optional().or(z.literal("")),
+});
 
 const CID = "andre-santos-2026";
 
@@ -28,12 +43,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Muitas tentativas. Aguarde 1 minuto." }, { status: 429 });
     }
 
-    const body = await req.json();
-    const { name, phone, city, neighborhood, email, contributionTypes, refUserId, refc, lgpdConsent, source: sourceParam } = body;
-
-    if (!name?.trim()) return NextResponse.json({ error: "Nome é obrigatório" }, { status: 400 });
-    if (!phone?.trim()) return NextResponse.json({ error: "WhatsApp é obrigatório" }, { status: 400 });
-    if (!lgpdConsent) return NextResponse.json({ error: "Consentimento LGPD é obrigatório" }, { status: 400 });
+    const parsed = cadastroSchema.safeParse(await req.json());
+    if (!parsed.success) {
+      const msg = parsed.error.errors[0]?.message ?? "Dados inválidos";
+      return NextResponse.json({ error: msg }, { status: 400 });
+    }
+    const { name, phone, city, neighborhood, email, contributionTypes, refUserId, refc, lgpdConsent, source: sourceParam, eventId } = parsed.data;
 
     const cleanPhone = phone.replace(/\D/g, "");
     if (cleanPhone.length < 10) {

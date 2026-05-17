@@ -233,7 +233,7 @@ export default function AgendaPage() {
                     key={idx}
                     onClick={() => setSelectedDay(isSelected ? null : day)}
                     className={cn(
-                      "min-h-[52px] sm:min-h-[80px] p-1 sm:p-2 text-left border-b border-r border-white/[0.05] transition-all hover:bg-white/[0.03]",
+                      "min-h-[56px] sm:min-h-[80px] p-1 sm:p-2 text-left border-b border-r border-white/[0.05] transition-all hover:bg-white/[0.03]",
                       !isCurrentMonth && "opacity-30",
                       isSelected && "bg-primary/[0.08] border-primary/20",
                       idx % 7 === 6 && "border-r-0",
@@ -249,7 +249,7 @@ export default function AgendaPage() {
                     {dayEvs.length > 0 && (
                       <div className="flex gap-0.5 flex-wrap sm:hidden">
                         {visible.map((ev) => (
-                          <span key={ev.id} className={cn("w-1.5 h-1.5 rounded-full shrink-0", TYPE_DOT[ev.type])} />
+                          <span key={ev.id} className={cn("w-2 h-2 rounded-full shrink-0", TYPE_DOT[ev.type])} />
                         ))}
                         {more > 0 && <span className="text-[8px] text-muted-foreground leading-none">+{more}</span>}
                       </div>
@@ -718,7 +718,7 @@ function AttendanceDialog({
         </div>
 
         {/* List */}
-        <div className="max-h-60 overflow-y-auto space-y-1.5 pr-0.5">
+        <div className="max-h-[50vh] overflow-y-auto space-y-1.5 pr-0.5">
           {loadingData && (
             <div className="flex items-center justify-center py-8">
               <RefreshCw className="w-4 h-4 animate-spin text-muted-foreground" />

@@ -46,3 +46,10 @@ next-env.d.ts
 /public/workbox-*.js
 
 /src/generated/prisma
+
+# dados temporários / arquivos grandes do TSE
+temporaria/votacao_candidato_munzona_2022/
+temporaria/*.zip
+temporaria/*.xlsx
+temporaria/*.csv
+"Stride - Proposta André Santos.pdf"

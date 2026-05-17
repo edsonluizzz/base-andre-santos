@@ -1,6 +1,6 @@
 # Estado — Base André Santos
 
-**Última atualização:** 2026-05-16 (análise adversária Mara Lima em andamento · script TSE pronto)
+**Última atualização:** 2026-05-16 (sprints 1-3 mobile/performance/segurança + análise adversária Mara Lima)
 **Plano de produto:** `.claude/issacar-plano.md` — transformar em SaaS multi-tenant (issacar.app)
 **Landing page:** https://issacar-landing.vercel.app · domínio issacar.app pendente configuração DNS
 **GitHub:** https://github.com/edsonluizzz/base-andre-santos

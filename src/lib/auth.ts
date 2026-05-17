@@ -30,36 +30,40 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             linkedCollabId = collabsByEmail[0].id;
           }
 
-          // B) Ativa pending UserCampaigns (invites pendentes)
+          // B) Ativa pending UserCampaigns (invites pendentes) — em transação para evitar race conditions
           const pending = await db.userCampaign.findMany({
             where: { pendingEmail: user.email, userId: null },
           });
-          for (const p of pending) {
-            await db.userCampaign.update({
-              where: { id: p.id },
-              data: { userId, pendingEmail: null, inviteStatus: "ACCEPTED", acceptedAt: new Date() },
-            }).catch(() => {});
+          if (pending.length > 0) {
+            await db.$transaction(async (tx) => {
+              for (const p of pending) {
+                await tx.userCampaign.update({
+                  where: { id: p.id },
+                  data: { userId, pendingEmail: null, inviteStatus: "ACCEPTED", acceptedAt: new Date() },
+                });
 
-            // Se o convite foi criado a partir de um Collaborator específico → vincular esse
-            const pWithCollab = p as typeof p & { collaboratorId?: string };
-            if (!linkedCollabId && pWithCollab.collaboratorId) {
-              const target = await db.collaborator.findUnique({ where: { id: pWithCollab.collaboratorId } }).catch(() => null);
-              if (target && !target.userId) {
-                await db.collaborator.update({ where: { id: target.id }, data: { userId } }).catch(() => {});
-                linkedCollabId = target.id;
-              }
-            }
+                const pWithCollab = p as typeof p & { collaboratorId?: string };
+                if (!linkedCollabId && pWithCollab.collaboratorId) {
+                  const target = await tx.collaborator.findUnique({ where: { id: pWithCollab.collaboratorId } });
+                  if (target && !target.userId) {
+                    await tx.collaborator.update({ where: { id: target.id }, data: { userId } });
+                    linkedCollabId = target.id;
+                  }
+                }
 
-            // Só cria novo Collaborator se absolutamente nenhum foi vinculado
-            if (!linkedCollabId) {
-              const existing = await db.collaborator.findUnique({ where: { userId } }).catch(() => null);
-              if (!existing) {
-                const c = await db.collaborator.create({
-                  data: { name: user.name ?? user.email ?? "Colaborador", campaignId: p.campaignId, userId },
-                }).catch(() => null);
-                if (c) linkedCollabId = c.id;
+                if (!linkedCollabId) {
+                  const existing = await tx.collaborator.findFirst({ where: { userId } });
+                  if (!existing) {
+                    const c = await tx.collaborator.create({
+                      data: { name: user.name ?? user.email ?? "Colaborador", campaignId: p.campaignId, userId },
+                    });
+                    linkedCollabId = c.id;
+                  }
+                }
               }
-            }
+            }, { timeout: 10_000 }).catch((err) => {
+              console.error("[JWT] erro ao ativar invites pendentes:", err);
+            });
           }
 
           const uc = await db.userCampaign.findUnique({

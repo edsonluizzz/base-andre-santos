@@ -35,7 +35,11 @@ type Collaborator = {
 
 export default function ColaboradoresPage() {
   const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
+  const [total, setTotal] = useState(0);
+  const [offset, setOffset] = useState(0);
+  const LIMIT = 80;
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [search, setSearch] = useState("");
   const [filterRole, setFilterRole] = useState("");
   const [filterStatus, setFilterStatus] = useState("ACTIVE");
@@ -64,8 +68,7 @@ export default function ColaboradoresPage() {
     fetch("/api/cities").then((r) => r.ok ? r.json() : []).then(setCities).catch(() => {});
   }, []);
 
-  const fetchCollaborators = useCallback(async () => {
-    setLoading(true);
+  const buildParams = useCallback((off: number) => {
     const params = new URLSearchParams();
     if (search) params.set("q", search);
     if (filterRole) params.set("role", filterRole);
@@ -79,11 +82,35 @@ export default function ColaboradoresPage() {
     if (filterSupportStatus) params.set("supportStatus", filterSupportStatus);
     if (filterDateFrom) params.set("dateFrom", filterDateFrom);
     if (filterDateTo) params.set("dateTo", filterDateTo);
-    const res = await fetch(`/api/collaborators?${params.toString()}`);
-    if (res.ok) setCollaborators(await res.json());
+    params.set("limit", String(LIMIT));
+    params.set("offset", String(off));
+    return params;
+  }, [search, filterRole, filterStatus, filterMine, filterLeader, filterCity, filterSourceType, filterProfile, filterChannel, filterSupportStatus, filterDateFrom, filterDateTo]);
+
+  const fetchCollaborators = useCallback(async () => {
+    setLoading(true);
+    setOffset(0);
+    const res = await fetch(`/api/collaborators?${buildParams(0).toString()}`);
+    if (res.ok) {
+      const json = await res.json();
+      setCollaborators(json.data ?? json);
+      setTotal(json.total ?? json.length ?? 0);
+    }
     setLoading(false);
     setSelected(new Set());
-  }, [search, filterRole, filterStatus, filterMine, filterLeader, filterCity, filterSourceType, filterProfile, filterChannel, filterSupportStatus, filterDateFrom, filterDateTo]);
+  }, [buildParams]);
+
+  const loadMore = useCallback(async () => {
+    const newOffset = offset + LIMIT;
+    setLoadingMore(true);
+    const res = await fetch(`/api/collaborators?${buildParams(newOffset).toString()}`);
+    if (res.ok) {
+      const json = await res.json();
+      setCollaborators((prev) => [...prev, ...(json.data ?? json)]);
+      setOffset(newOffset);
+    }
+    setLoadingMore(false);
+  }, [offset, buildParams]);
 
   useEffect(() => {
     const t = setTimeout(fetchCollaborators, 300);
@@ -196,7 +223,11 @@ export default function ColaboradoresPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Colaboradores</h1>
-          <p className="text-sm text-muted-foreground mt-1">{collaborators.length} encontrado{collaborators.length !== 1 ? "s" : ""}</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            {total > collaborators.length
+              ? `Exibindo ${collaborators.length} de ${total}`
+              : `${total} encontrado${total !== 1 ? "s" : ""}`}
+          </p>
         </div>
         <div className="flex gap-2">
           <Button onClick={() => setImportOpen(true)} variant="outline" className="gap-2 hidden sm:flex">
@@ -530,7 +561,7 @@ export default function ColaboradoresPage() {
 
                   <div className="flex items-center gap-2 shrink-0">
                     <Link href={`/colaboradores/${c.id}`} onClick={(e) => e.stopPropagation()}>
-                      <Button size="sm" variant="ghost" className="h-7 w-7 p-0 hidden sm:flex" title="Ver perfil">
+                      <Button size="sm" variant="ghost" className="h-7 w-7 p-0 hidden sm:flex" aria-label="Ver perfil do colaborador">
                         <ExternalLink className="w-3.5 h-3.5" />
                       </Button>
                     </Link>
@@ -595,40 +626,45 @@ export default function ColaboradoresPage() {
         </div>
       )}
 
-      {/* Barra de ação em massa — aparece quando há seleção */}
+      {/* Carregar mais */}
+      {!loading && collaborators.length < total && (
+        <div className="text-center pt-2">
+          <Button variant="outline" onClick={loadMore} disabled={loadingMore} className="gap-2">
+            {loadingMore ? "Carregando..." : `Carregar mais (${total - collaborators.length} restantes)`}
+          </Button>
+        </div>
+      )}
+
+      {/* Barra de ação em massa — scroll horizontal em mobile */}
       {selected.size > 0 && (
-        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center flex-wrap justify-center gap-2 px-4 py-3 rounded-2xl shadow-2xl border border-white/[0.12] max-w-[calc(100vw-2rem)]"
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-[calc(100vw-2rem)] max-w-xl shadow-2xl rounded-2xl border border-white/[0.12]"
           style={{ background: "rgba(13,27,42,0.97)", backdropFilter: "blur(16px)" }}>
-          <span className="text-sm font-semibold text-foreground">
-            {selected.size} sel.
-          </span>
-          <div className="w-px h-4 bg-white/[0.15]" />
-          <Button size="sm" disabled={bulkLoading} onClick={() => bulkUpdate("ACTIVE")}
-            className="h-8 gap-1.5 text-xs bg-green-600 hover:bg-green-500 text-white border-0">
-            <ArrowUpCircle className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Marcar como </span>Ativo
-          </Button>
-          <Button size="sm" disabled={bulkLoading} onClick={() => bulkUpdate("LEAD")}
-            variant="outline" className="h-8 gap-1.5 text-xs border-amber-500/40 text-amber-400 hover:bg-amber-500/10">
-            <UserCheck className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Manter como </span>Lead
-          </Button>
-          <Button size="sm" disabled={bulkLoading} onClick={() => bulkUpdate("INACTIVE")}
-            variant="outline" className="h-8 gap-1.5 text-xs border-red-500/30 text-red-400 hover:bg-red-500/10">
-            <UserMinus className="w-3.5 h-3.5" />
-            Inativar
-          </Button>
-          <div className="w-px h-4 bg-white/[0.15]" />
-          <Button size="sm" disabled={bulkLoading} onClick={() => bulkSupportStatus("CONFIRMADO")}
-            className="h-8 gap-1.5 text-xs bg-primary hover:bg-primary/90 text-primary-foreground border-0">
-            <ThumbsUp className="w-3.5 h-3.5" />
-            Confirmado
-          </Button>
-          <div className="w-px h-4 bg-white/[0.15]" />
-          <button onClick={() => setSelected(new Set())}
-            className="text-muted-foreground hover:text-foreground transition-colors p-1">
-            <X className="w-4 h-4" />
-          </button>
+          <div className="flex items-center gap-2 px-3 py-3 overflow-x-auto scrollbar-none">
+            <span className="text-sm font-semibold text-foreground shrink-0">{selected.size} sel.</span>
+            <div className="w-px h-4 bg-white/[0.15] shrink-0" />
+            <Button size="sm" disabled={bulkLoading} onClick={() => bulkUpdate("ACTIVE")}
+              className="h-8 gap-1.5 text-xs bg-green-600 hover:bg-green-500 text-white border-0 shrink-0">
+              <ArrowUpCircle className="w-3.5 h-3.5" />Ativo
+            </Button>
+            <Button size="sm" disabled={bulkLoading} onClick={() => bulkUpdate("LEAD")}
+              variant="outline" className="h-8 gap-1.5 text-xs border-amber-500/40 text-amber-400 hover:bg-amber-500/10 shrink-0">
+              <UserCheck className="w-3.5 h-3.5" />Lead
+            </Button>
+            <Button size="sm" disabled={bulkLoading} onClick={() => bulkUpdate("INACTIVE")}
+              variant="outline" className="h-8 gap-1.5 text-xs border-red-500/30 text-red-400 hover:bg-red-500/10 shrink-0">
+              <UserMinus className="w-3.5 h-3.5" />Inativar
+            </Button>
+            <div className="w-px h-4 bg-white/[0.15] shrink-0" />
+            <Button size="sm" disabled={bulkLoading} onClick={() => bulkSupportStatus("CONFIRMADO")}
+              className="h-8 gap-1.5 text-xs bg-primary hover:bg-primary/90 text-primary-foreground border-0 shrink-0">
+              <ThumbsUp className="w-3.5 h-3.5" />Confirmado
+            </Button>
+            <div className="w-px h-4 bg-white/[0.15] shrink-0" />
+            <button onClick={() => setSelected(new Set())}
+              className="text-muted-foreground hover:text-foreground transition-colors p-1 shrink-0 ml-auto">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       )}
 

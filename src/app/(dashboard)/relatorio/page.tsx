@@ -88,6 +88,8 @@ export default async function RelatorioPage({
   const all = await db.collaborator.findMany({
     where: { campaignId: CID },
     select: { city: true, campaignRole: true, status: true, supportStatus: true, profile: true, contributionTypes: true, createdAt: true },
+    take: 5000,
+    orderBy: { createdAt: "desc" },
   });
 
   const active = all.filter((c) => c.status === "ACTIVE");
@@ -132,12 +134,13 @@ export default async function RelatorioPage({
   }
   const cities = Object.entries(cityMap).sort((a, b) => b[1].active - a[1].active);
 
-  const filteredCities = cities.filter(([, m]) => {
+  const allFilteredCities = cities.filter(([, m]) => {
     if (activeCob === "alta")    return coverageScore(m.roles) === "alta";
     if (activeCob === "media")   return coverageScore(m.roles) === "media";
     if (activeCob === "confirm") return m.confirmados > 0;
     return true;
   });
+  const filteredCities = allFilteredCities.slice(0, 50);
 
   const totals  = cities.reduce((acc, [, m]) => ({
     total: acc.total + m.total, active: acc.active + m.active,
@@ -501,7 +504,7 @@ export default async function RelatorioPage({
         <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/[0.06]" style={{ background: "rgba(13,27,42,0.3)" }}>
           <p className="text-xs text-muted-foreground">
             {activeCob ? (
-              <>Mostrando <span className="text-foreground font-medium">{filteredCities.length}</span> de {cities.length} municípios — filtro: <span className="text-primary font-medium">{activeCob === "alta" ? "Cobertura Alta" : activeCob === "media" ? "Cobertura Média" : "Confirmados"}</span></>
+              <>Mostrando <span className="text-foreground font-medium">{filteredCities.length}</span> de {allFilteredCities.length} municípios — filtro: <span className="text-primary font-medium">{activeCob === "alta" ? "Cobertura Alta" : activeCob === "media" ? "Cobertura Média" : "Confirmados"}</span></>
             ) : (
               <>{cities.length} município{cities.length !== 1 ? "s" : ""} — clique em um card acima para filtrar</>
             )}
