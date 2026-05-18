@@ -100,6 +100,9 @@ export default function SuperAdminPage() {
   const [showDups, setShowDups] = useState(false);
   const [dupLoading, setDupLoading] = useState(false);
 
+  const [showUsers, setShowUsers] = useState(true);
+  const [showPending, setShowPending] = useState(true);
+
   const [inviteLinks, setInviteLinks] = useState<InviteLinkRecord[]>([]);
   const [showInviteLinks, setShowInviteLinks] = useState(false);
   const [inviteLinksLoading, setInviteLinksLoading] = useState(false);
@@ -327,182 +330,174 @@ export default function SuperAdminPage() {
         </Select>
       </div>
 
-      {loading ? (
-        <div className="text-center py-16 text-muted-foreground">Carregando...</div>
-      ) : (
-        <div className="space-y-6">
+      <div className="space-y-4">
+        {loading && (
+          <div className="glass-card rounded-2xl p-8 text-center border border-white/[0.08] text-muted-foreground text-sm animate-pulse">
+            Carregando usuários...
+          </div>
+        )}
+        {!loading && <div className="space-y-4">
           {/* Usuários com acesso */}
-          {filtered.length > 0 && (
-            <div>
-              <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-                Com acesso ({filtered.length}{search || roleFilter !== "ALL" ? ` de ${accepted.length}` : ""})
-              </h2>
-              <div className="glass-card rounded-2xl border border-white/[0.08] overflow-hidden">
-                <div className="divide-y divide-white/[0.05]">
-                  {filtered.map((uc) => {
-                    const isCurrent = uc.userId === currentUserId;
-                    return (
-                      <div key={uc.id} className={`flex items-start gap-3 p-4 flex-wrap sm:flex-nowrap ${isCurrent ? "bg-primary/[0.04]" : ""}`}>
-                        <Avatar className="w-9 h-9 shrink-0 mt-0.5">
-                          <AvatarImage src={uc.user?.image ?? ""} referrerPolicy="no-referrer" />
-                          <AvatarFallback className="bg-primary/10 text-primary text-xs">
-                            {uc.user?.name?.[0]?.toUpperCase() ?? "?"}
-                          </AvatarFallback>
-                        </Avatar>
-
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="font-medium text-sm text-foreground">
-                              {uc.user?.name ?? "—"}
-                            </span>
-                            {isCurrent && (
-                              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/30">
-                                Você
-                              </span>
-                            )}
-                            {uc.isSuperAdmin && (
-                              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-yellow-500/15 text-yellow-400 border border-yellow-500/30 flex items-center gap-0.5">
-                                <Crown className="w-2.5 h-2.5" /> Super Admin
-                              </span>
-                            )}
-                            <span className={`text-[10px] px-1.5 py-0.5 rounded-full border ${ROLE_COLOR[uc.role]}`}>
-                              {ROLE_LABEL[uc.role]}
-                            </span>
-                          </div>
-                          <p className="text-xs text-muted-foreground truncate mt-0.5">{uc.user?.email}</p>
-                          <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1">
-                            <span className="text-[10px] text-muted-foreground/70">
-                              {uc.registeredCount} cadastro{uc.registeredCount !== 1 ? "s" : ""}
-                            </span>
-                            {uc.acceptedAt && (
-                              <span className="text-[10px] text-muted-foreground/70">
-                                Entrou {fmtDate(uc.acceptedAt)}
-                              </span>
-                            )}
-                            {uc.invitedByName && (
-                              <span className="text-[10px] text-muted-foreground/70">
-                                Convidado por {uc.invitedByName}
-                              </span>
-                            )}
-                            {uc.lastSeen && (
-                              <span className="text-[10px] text-muted-foreground/70">
-                                Visto {timeAgo(uc.lastSeen)}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-1 w-full sm:w-auto sm:shrink-0">
-                          <div className="grid grid-cols-2 gap-1 flex-1 sm:flex sm:gap-2">
-                            <Select
-                              value={uc.role}
-                              onValueChange={(v) => uc.userId && updateUser(uc.userId, { role: v })}
-                              disabled={isCurrent}
-                            >
-                              <SelectTrigger className="h-7 w-full sm:w-36 text-xs"><SelectValue /></SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="MEMBER">Colaborador</SelectItem>
-                                <SelectItem value="LEADER">Coordenador</SelectItem>
-                                <SelectItem value="ADMIN">Administrador</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <Select
-                              value={uc.tier ?? "APOIADOR"}
-                              onValueChange={(v) => uc.userId && updateUser(uc.userId, { tier: v })}
-                            >
-                              <SelectTrigger className="h-7 w-full sm:w-36 text-xs"><SelectValue /></SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="APOIADOR">Apoiador</SelectItem>
-                                <SelectItem value="ATIVISTA">Ativista</SelectItem>
-                                <SelectItem value="LIDER_CELULA">Líder de Célula</SelectItem>
-                                <SelectItem value="COORDENADOR">Coordenador</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          {!isCurrent && (
-                            <Button
-                              size="sm" variant="ghost" onClick={() => revoke(uc)}
-                              className="h-7 w-7 p-0 text-destructive hover:bg-destructive/10 shrink-0"
-                              title="Revogar acesso"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+          <div className="glass-card rounded-2xl border border-white/[0.08] overflow-hidden">
+            <button
+              onClick={() => setShowUsers((v) => !v)}
+              className="w-full flex items-center justify-between p-4 text-left hover:bg-white/[0.02] transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <Shield className="w-4 h-4 text-muted-foreground" />
+                <span className="text-sm font-medium text-foreground">Com acesso</span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-white/[0.06] text-muted-foreground border border-white/[0.08]">
+                  {filtered.length}{search || roleFilter !== "ALL" ? ` de ${accepted.length}` : ""}
+                </span>
               </div>
-            </div>
-          )}
+              {showUsers ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+            </button>
 
-          {filtered.length === 0 && (search || roleFilter !== "ALL") && (
-            <div className="glass-card rounded-2xl p-8 text-center border border-white/[0.08]">
-              <p className="text-muted-foreground text-sm">Nenhum usuário encontrado</p>
-            </div>
-          )}
+            {showUsers && (
+              <div className="border-t border-white/[0.06]">
+                {filtered.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground text-sm">
+                    {search || roleFilter !== "ALL" ? "Nenhum usuário encontrado" : "Nenhum usuário com acesso"}
+                  </div>
+                ) : (
+                  <div className="divide-y divide-white/[0.05]">
+                    {filtered.map((uc) => {
+                      const isCurrent = uc.userId === currentUserId;
+                      return (
+                        <div key={uc.id} className={`flex items-start gap-3 p-4 flex-wrap sm:flex-nowrap ${isCurrent ? "bg-primary/[0.04]" : ""}`}>
+                          <Avatar className="w-9 h-9 shrink-0 mt-0.5">
+                            <AvatarImage src={uc.user?.image ?? ""} referrerPolicy="no-referrer" />
+                            <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                              {uc.user?.name?.[0]?.toUpperCase() ?? "?"}
+                            </AvatarFallback>
+                          </Avatar>
+
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-medium text-sm text-foreground">{uc.user?.name ?? "—"}</span>
+                              {isCurrent && (
+                                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/30">Você</span>
+                              )}
+                              {uc.isSuperAdmin && (
+                                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-yellow-500/15 text-yellow-400 border border-yellow-500/30 flex items-center gap-0.5">
+                                  <Crown className="w-2.5 h-2.5" /> Super Admin
+                                </span>
+                              )}
+                              <span className={`text-[10px] px-1.5 py-0.5 rounded-full border ${ROLE_COLOR[uc.role]}`}>
+                                {ROLE_LABEL[uc.role]}
+                              </span>
+                            </div>
+                            <p className="text-xs text-muted-foreground truncate mt-0.5">{uc.user?.email}</p>
+                            <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1">
+                              <span className="text-[10px] text-muted-foreground/70">{uc.registeredCount} cadastro{uc.registeredCount !== 1 ? "s" : ""}</span>
+                              {uc.acceptedAt && <span className="text-[10px] text-muted-foreground/70">Entrou {fmtDate(uc.acceptedAt)}</span>}
+                              {uc.invitedByName && <span className="text-[10px] text-muted-foreground/70">Convidado por {uc.invitedByName}</span>}
+                              {uc.lastSeen && <span className="text-[10px] text-muted-foreground/70">Visto {timeAgo(uc.lastSeen)}</span>}
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-1 w-full sm:w-auto sm:shrink-0">
+                            <div className="grid grid-cols-2 gap-1 flex-1 sm:flex sm:gap-2">
+                              <Select value={uc.role} onValueChange={(v) => uc.userId && updateUser(uc.userId, { role: v })} disabled={isCurrent}>
+                                <SelectTrigger className="h-7 w-full sm:w-36 text-xs"><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="MEMBER">Colaborador</SelectItem>
+                                  <SelectItem value="LEADER">Coordenador</SelectItem>
+                                  <SelectItem value="ADMIN">Administrador</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <Select value={uc.tier ?? "APOIADOR"} onValueChange={(v) => uc.userId && updateUser(uc.userId, { tier: v })}>
+                                <SelectTrigger className="h-7 w-full sm:w-36 text-xs"><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="APOIADOR">Apoiador</SelectItem>
+                                  <SelectItem value="ATIVISTA">Ativista</SelectItem>
+                                  <SelectItem value="LIDER_CELULA">Líder de Célula</SelectItem>
+                                  <SelectItem value="COORDENADOR">Coordenador</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            {!isCurrent && (
+                              <Button size="sm" variant="ghost" onClick={() => revoke(uc)} className="h-7 w-7 p-0 text-destructive hover:bg-destructive/10 shrink-0" title="Revogar acesso">
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
 
           {/* Convites pendentes */}
-          {pending.length > 0 && (
-            <div>
-              <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-                Aguardando login ({pending.length})
-              </h2>
-              <div className="glass-card rounded-2xl border border-white/[0.08] overflow-hidden">
-                <div className="divide-y divide-white/[0.05]">
-                  {pending.map((uc) => (
-                    <div key={uc.id} className="flex items-start gap-3 p-4 flex-wrap sm:flex-nowrap">
-                      <div className="w-9 h-9 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0">
-                        <Clock className="w-4 h-4 text-amber-400" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm text-foreground truncate">{uc.pendingEmail}</p>
-                        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                          <span className={`text-[10px] px-2 py-0.5 rounded-full border ${ROLE_COLOR[uc.role]}`}>
-                            {ROLE_LABEL[uc.role]}
-                          </span>
-                          <span className="text-[10px] text-amber-400">Aguardando login com Google</span>
-                          {uc.invitedByName && (
-                            <span className="text-[10px] text-muted-foreground/70">por {uc.invitedByName}</span>
+          <div className="glass-card rounded-2xl border border-white/[0.08] overflow-hidden">
+            <button
+              onClick={() => setShowPending((v) => !v)}
+              className="w-full flex items-center justify-between p-4 text-left hover:bg-white/[0.02] transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <Clock className="w-4 h-4 text-muted-foreground" />
+                <span className="text-sm font-medium text-foreground">Aguardando login</span>
+                {pending.length > 0 && (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30">
+                    {pending.length}
+                  </span>
+                )}
+              </div>
+              {showPending ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+            </button>
+
+            {showPending && (
+              <div className="border-t border-white/[0.06]">
+                {pending.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground text-sm flex flex-col items-center gap-2">
+                    <span className="text-green-400 text-lg">✓</span>
+                    Todos os convites foram aceitos
+                  </div>
+                ) : (
+                  <div className="divide-y divide-white/[0.05]">
+                    {pending.map((uc) => (
+                      <div key={uc.id} className="flex items-start gap-3 p-4 flex-wrap sm:flex-nowrap">
+                        <div className="w-9 h-9 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0">
+                          <Clock className="w-4 h-4 text-amber-400" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm text-foreground truncate">{uc.pendingEmail}</p>
+                          <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                            <span className={`text-[10px] px-2 py-0.5 rounded-full border ${ROLE_COLOR[uc.role]}`}>{ROLE_LABEL[uc.role]}</span>
+                            <span className="text-[10px] text-amber-400">Aguardando login com Google</span>
+                            {uc.invitedByName && <span className="text-[10px] text-muted-foreground/70">por {uc.invitedByName}</span>}
+                            <span className="text-[10px] text-muted-foreground/70">{fmtDate(uc.invitedAt)}</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1 shrink-0 self-start sm:self-center">
+                          {uc.pendingEmail && (
+                            <a
+                              href={`https://wa.me/?text=${encodeURIComponent(`Olá! Você recebeu acesso ao sistema da Base de Apoio André Santos 2026.\n\nAcesse com seu Gmail (${uc.pendingEmail}) pelo link:\n${typeof window !== "undefined" ? window.location.origin : ""}/login`)}`}
+                              target="_blank" rel="noopener noreferrer"
+                              className="h-7 px-2 rounded-md flex items-center gap-1 text-xs text-green-400 hover:bg-green-500/10 transition-colors"
+                              title="Enviar convite via WhatsApp"
+                            >
+                              <MessageCircle className="w-3 h-3" />
+                            </a>
                           )}
-                          <span className="text-[10px] text-muted-foreground/70">{fmtDate(uc.invitedAt)}</span>
+                          <Button size="sm" variant="ghost" onClick={() => uc.pendingEmail && resendInvite(uc.pendingEmail)} className="h-7 px-2 text-muted-foreground hover:text-foreground text-xs gap-1" title="Reenviar convite por email">
+                            <Mail className="w-3 h-3" /> Reenviar
+                          </Button>
+                          <Button size="sm" variant="ghost" onClick={() => revoke(uc)} className="h-7 w-7 p-0 text-destructive hover:bg-destructive/10" title="Cancelar convite">
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
                         </div>
                       </div>
-                      <div className="flex items-center gap-1 shrink-0 self-start sm:self-center">
-                        {uc.pendingEmail && (
-                          <a
-                            href={`https://wa.me/?text=${encodeURIComponent(`Olá! Você recebeu acesso ao sistema da Base de Apoio André Santos 2026.\n\nAcesse com seu Gmail (${uc.pendingEmail}) pelo link:\n${typeof window !== "undefined" ? window.location.origin : ""}/login`)}`}
-                            target="_blank" rel="noopener noreferrer"
-                            className="h-7 px-2 rounded-md flex items-center gap-1 text-xs text-green-400 hover:bg-green-500/10 transition-colors"
-                            title="Enviar convite via WhatsApp"
-                          >
-                            <MessageCircle className="w-3 h-3" />
-                          </a>
-                        )}
-                        <Button
-                          size="sm" variant="ghost" onClick={() => uc.pendingEmail && resendInvite(uc.pendingEmail)}
-                          className="h-7 px-2 text-muted-foreground hover:text-foreground text-xs gap-1"
-                          title="Reenviar convite por email"
-                        >
-                          <Mail className="w-3 h-3" /> Reenviar
-                        </Button>
-                        <Button
-                          size="sm" variant="ghost" onClick={() => revoke(uc)}
-                          className="h-7 w-7 p-0 text-destructive hover:bg-destructive/10"
-                          title="Cancelar convite"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </div>
-            </div>
-          )}
-        </div>
-      )}
+            )}
+          </div>
+        </div>}
 
       {/* Links de Convite */}
       <div className="glass-card rounded-2xl border border-white/[0.08] overflow-hidden">
@@ -774,6 +769,8 @@ export default function SuperAdminPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      </div>{/* end space-y-4 wrapper */}
 
       {/* Dialog: Conceder Acesso */}
       <Dialog open={inviteOpen} onOpenChange={(v) => { setInviteOpen(v); if (!v) { setInviteEmail(""); setInviteRole("MEMBER"); setInviteDone(false); } }}>
