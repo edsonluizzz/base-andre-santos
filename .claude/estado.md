@@ -1,6 +1,6 @@
 # Estado — Base André Santos
 
-**Última atualização:** 2026-05-18 (Metricool completo: UTM tracking + correlação posts×cadastros · metas TSE confirmadas automáticas)
+**Última atualização:** 2026-05-18 (Super Admin seções expansíveis · sidebar nome/foto reais do servidor · Metricool completo)
 **Plano de produto:** `.claude/issacar-plano.md` — transformar em SaaS multi-tenant (issacar.app)
 **Landing page:** https://issacar-landing.vercel.app · domínio issacar.app pendente configuração DNS
 **GitHub:** https://github.com/edsonluizzz/base-andre-santos
@@ -35,8 +35,9 @@ Sistema funcional e em produção. Terminologia "Base de Apoio" (não "campanha"
 | Instagram | `/instagram` | ✅ grid posts/reels · KPIs · range 7/30/90d · widget no dashboard (req. METRICOOL_TOKEN) |
 | Células | `/celulas` | ✅ visualização hierárquica |
 | Ranking | `/ranking` | ✅ scroll horizontal mobile |
-| Super Admin | `/super-admin` | ✅ conceder/revogar acesso · role/tier · links de convite reutilizáveis |
-| Cadastro público | `/cadastro` | ✅ sem auth · Short YouTube `z_9zver8iN0` (9:16 autoplay) · auto-copia link pessoal · redirect automático grupo WA em 60s · link compartilhável |
+| Super Admin | `/super-admin` | ✅ todas as seções expansíveis (acesso, pendentes, links, duplicatas, auditoria) |
+| Cadastro público | `/cadastro` | ✅ sem auth · Short YouTube `z_9zver8iN0` (9:16 autoplay) · auto-copia link pessoal · redirect automático grupo WA em 60s · link compartilhável · channel via ?ch= |
+| Instagram | `/instagram` | ✅ grid posts/reels · KPIs · range 7/30/90d · correlação posts×cadastros · widget dashboard |
 | Convite por link | `/entrar?token=X` | ✅ email-first flow · Google OAuth · completar-perfil |
 | Privacidade | `/privacidade` | ✅ LGPD Art. 9 · público |
 | Notificações | sidebar | ✅ badge de não lidas · dropdown · marcar como lida |
@@ -223,6 +224,12 @@ gcal-sync:              0 4 * * *             (1×/dia — Hobby plan limit)
 **Link UTM Instagram:** `/r?src=instagram` (sem ref) ou `/r?src=instagram&ref={userId}`
 
 ---
+
+## UX — correções 2026-05-18
+
+- **Sidebar nome/foto:** `serverName` e `serverImage` passados do layout (server) para o Sidebar — elimina flash de "Usuário"/"U" enquanto useSession carrega
+- **Super Admin:** 5 seções expansíveis com chevron, badge de contagem e estado padrão correto (Com acesso e Pendentes abertos por padrão)
+- **lucide-react:** ícone `Instagram` não existe — usar `Camera` como substituto
 
 ## Armadilhas conhecidas
 
