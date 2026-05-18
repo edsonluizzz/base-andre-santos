@@ -1,6 +1,6 @@
 # Estado — Base André Santos
 
-**Última atualização:** 2026-05-17 (Metricool Instagram integrado · fix ícone lucide-react · estado sincronizado)
+**Última atualização:** 2026-05-18 (Metricool completo: UTM tracking + correlação posts×cadastros · metas TSE confirmadas automáticas)
 **Plano de produto:** `.claude/issacar-plano.md` — transformar em SaaS multi-tenant (issacar.app)
 **Landing page:** https://issacar-landing.vercel.app · domínio issacar.app pendente configuração DNS
 **GitHub:** https://github.com/edsonluizzz/base-andre-santos
@@ -171,10 +171,10 @@ gcal-sync:              0 4 * * *             (1×/dia — Hobby plan limit)
 ### Ações manuais do admin
 - [x] **YouTube:** vídeo definitivo `z_9zver8iN0` (Shorts) · aspecto 9:16 · countdown 60s antes do redirect WA (2026-05-14)
 - [x] **Scores:** /configuracoes → "Recalcular scores agora" — executado em 2026-05-14
-- [ ] **Metas TSE:** /configuracoes → "Sugerir metas por eleitorado PR 2022" → revisa e salva
-- [x] **Normalização de cidades:** endpoint `POST /api/admin/normalize-cities` · botão em /configuracoes · usa lista oficial 399 municípios PR · exibe cidades sem correspondência para revisão
-- [x] **Metas sincronizadas:** "Sincronizar metas agora" executado em 2026-05-14 · metas criadas para todas as cidades com colaboradores
-- [x] **Importação Gospel Class:** 1652 leads importados em 2026-05-12 · canal=Outro · origem=GOSPEL CLASS · vinculados ao Marcos
+- [x] **Metas TSE:** automáticas — `ensureCityGoal` dispara em todos os fluxos (form público, admin, import, cron, sync manual) · sincronizado em 2026-05-14
+- [x] **Normalização de cidades:** botão em /configuracoes · lista oficial 399 municípios PR
+- [x] **Metas sincronizadas:** "Sincronizar metas agora" executado em 2026-05-14
+- [x] **Importação Gospel Class:** 1652 leads importados em 2026-05-12
 - [x] **Leads pré-fix:** /configuracoes → "Corrigir origem de leads antigos" — executado em 2026-05-14
 
 ### Análise adversária — Mara Lima 2022
@@ -183,8 +183,11 @@ gcal-sync:              0 4 * * *             (1×/dia — Hobby plan limit)
 - [x] **Painel em `/metas`** — cruzamento Meta × Mara Lima 2022 × Ativos por município · prioridade crítica/alta/média/ok
 
 ### Integrações pendentes
-- [ ] **Evolution API:** WhatsApp para ativação da base — decisão 2026-05-13 (ver seção abaixo)
-- [x] **Metricool:** integração Instagram — posts, reels, KPIs, widget dashboard (2026-05-17) — req. METRICOOL_TOKEN no Vercel
+- [ ] **Evolution API:** WhatsApp para ativação da base — decisão 2026-05-13 (ver seção abaixo) · aguardando número dedicado + instância
+- [x] **Metricool:** integração completa (2026-05-17/18)
+  - [x] Sprint 1+2: proxy API · widget dashboard · página /instagram (posts, reels, KPIs, range 7/30/90d)
+  - [x] Sprint 3: /r?src=instagram → UTM tracking → channel salvo no banco
+  - [x] Sprint 4: correlação posts × cadastros por dia (gráfico em /instagram)
 - [ ] **Compliance ago/2026:** CNPJ coligação + registro SPCE
 
 ---
@@ -207,16 +210,17 @@ gcal-sync:              0 4 * * *             (1×/dia — Hobby plan limit)
 
 ---
 
-## Sprint anterior — Inteligência Digital (Metricool)
+## Metricool — Concluído (2026-05-17/18)
 
-**Pré-requisito:** API key Metricool + conta Instagram conectada
+| Sprint | Entregável | Status |
+|--------|------------|--------|
+| 1+2 | Proxy `/api/metricool/instagram` · widget dashboard · página `/instagram` | ✅ |
+| 3 | `/r?src=instagram` → UTM → `channel` salvo no banco | ✅ |
+| 4 | Correlação posts × cadastros por dia em `/instagram` | ✅ |
 
-| Sprint | Entregável |
-|--------|------------|
-| 1 | Proxy `/api/metricool/analytics` · widget Instagram no dashboard |
-| 2 | Página `/instagram` — gráficos + top posts + performance por pilar |
-| 3 | Atribuição automática UTM → `channel` preenchido via `/r?src=instagram` |
-| 4 | Correlação posts × cadastros no /planejamento |
+**Env vars necessárias:** `METRICOOL_TOKEN` (já adicionado ao Vercel)
+**blogId:** 6229175 · **userId:** 4802533 · **Instagram:** @andresantos_as
+**Link UTM Instagram:** `/r?src=instagram` (sem ref) ou `/r?src=instagram&ref={userId}`
 
 ---
 
