@@ -41,9 +41,13 @@ const ROLE_LABEL: Record<string, string> = {
 export function Sidebar({
   serverRole,
   serverIsSuperAdmin,
+  serverName,
+  serverImage,
 }: {
   serverRole?: string;
   serverIsSuperAdmin?: boolean;
+  serverName?: string;
+  serverImage?: string;
 }) {
   const pathname = usePathname();
   const { data: session } = useSession();
@@ -57,6 +61,8 @@ export function Sidebar({
   // Usa props do servidor (confiáveis) — cai de volta no useSession apenas se não passado
   const role = serverRole ?? session?.user?.role ?? "MEMBER";
   const isSuperAdmin = serverIsSuperAdmin ?? (session?.user as { isSuperAdmin?: boolean })?.isSuperAdmin ?? false;
+  const displayName  = serverName  || session?.user?.name  || "Usuário";
+  const displayImage = serverImage || session?.user?.image || "";
   const userRank = ROLE_RANK[role] ?? 0;
 
   const visibleItems = navItems.filter((item) => (ROLE_RANK[item.minRole] ?? 0) <= userRank);
@@ -66,8 +72,8 @@ export function Sidebar({
     item.href === "/super-admin" ? isSuperAdmin : true
   );
 
-  const initials = session?.user?.name
-    ?.split(" ").slice(0, 2).map((n) => n[0]).join("").toUpperCase() ?? "U";
+  const initials = displayName
+    .split(" ").slice(0, 2).map((n: string) => n[0]).join("").toUpperCase() || "U";
 
   return (
     <>
@@ -138,11 +144,11 @@ export function Sidebar({
         <div className="p-4 border-t border-white/[0.06]">
           <div className="flex items-center gap-3 mb-3">
             <Avatar className="w-8 h-8">
-              <AvatarImage src={session?.user?.image ?? ""} referrerPolicy="no-referrer" />
+              <AvatarImage src={displayImage} referrerPolicy="no-referrer" />
               <AvatarFallback className="bg-primary/10 text-primary text-xs">{initials}</AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-foreground truncate">{session?.user?.name ?? "Usuário"}</p>
+              <p className="text-xs font-medium text-foreground truncate">{displayName}</p>
               <p className="text-[10px] text-muted-foreground">{ROLE_LABEL[role] ?? "Colaborador"}</p>
             </div>
           </div>
