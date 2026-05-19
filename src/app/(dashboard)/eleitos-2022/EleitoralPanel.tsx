@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { Search, Users } from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
+import { Search, Users, MapPin, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -27,6 +27,8 @@ type Candidate = {
   mandato?: string;
   suplentes?: string[];
 };
+
+type Municipio = { codigo: string; municipio: string; votos: number };
 
 type TabKey = "estadual" | "federal" | "senador" | "governador" | "presidente";
 
@@ -57,28 +59,51 @@ function fmtVotes(n: number) {
 }
 
 function initials(name: string) {
-  return name
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((w) => w[0])
-    .join("")
-    .toUpperCase();
+  return name.split(" ").filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase();
 }
 
 const TABS: { key: TabKey; label: string; count: number | null }[] = [
-  { key: "estadual",    label: "Dep. Estadual", count: depEstaduais.length },
-  { key: "federal",     label: "Dep. Federal",  count: depFederais.length  },
-  { key: "senador",     label: "Senador",        count: senadores.length    },
-  { key: "governador",  label: "Governador",     count: null                },
-  { key: "presidente",  label: "Presidente",     count: null                },
+  { key: "estadual",   label: "Dep. Estadual", count: depEstaduais.length },
+  { key: "federal",    label: "Dep. Federal",  count: depFederais.length  },
+  { key: "senador",    label: "Senador",        count: senadores.length    },
+  { key: "governador", label: "Governador",     count: null                },
+  { key: "presidente", label: "Presidente",     count: null                },
 ];
 
 export function EleitoralPanel() {
-  const [activeTab, setActiveTab] = useState<TabKey>("estadual");
-  const [search, setSearch]       = useState("");
-  const [partido, setPartido]     = useState("");
-  const [selected, setSelected]   = useState<Candidate | null>(null);
+  const [activeTab, setActiveTab]     = useState<TabKey>("estadual");
+  const [search, setSearch]           = useState("");
+  const [partido, setPartido]         = useState("");
+  const [selected, setSelected]       = useState<Candidate | null>(null);
+  const [munData, setMunData]         = useState<Municipio[]>([]);
+  const [munLoading, setMunLoading]   = useState(false);
+  const [munSearch, setMunSearch]     = useState("");
+
+  const hasMunicipios = activeTab === "estadual" || activeTab === "federal";
+
+  // Fetch municipality breakdown when a dep. estadual/federal is selected
+  useEffect(() => {
+    if (!selected || !hasMunicipios) {
+      setMunData([]);
+      return;
+    }
+    let cancelled = false;
+    setMunLoading(true);
+    setMunData([]);
+    const cargo = activeTab === "federal" ? "federal" : "estadual";
+    fetch(`/api/eleitos/municipios?cargo=${cargo}&nome=${encodeURIComponent(selected.nomeUrna)}`)
+      .then((r) => r.json())
+      .then((d: Municipio[]) => { if (!cancelled) setMunData(d ?? []); })
+      .catch(() => { if (!cancelled) setMunData([]); })
+      .finally(() => { if (!cancelled) setMunLoading(false); });
+    return () => { cancelled = true; };
+  }, [selected, activeTab, hasMunicipios]);
+
+  function closeModal() {
+    setSelected(null);
+    setMunData([]);
+    setMunSearch("");
+  }
 
   const candidates = useMemo<Candidate[]>(() => {
     if (activeTab === "estadual") return depEstaduais as Candidate[];
@@ -93,15 +118,22 @@ export function EleitoralPanel() {
   );
 
   const filtered = useMemo(
-    () =>
-      candidates.filter((c) => {
-        const q = search.toLowerCase();
-        const okSearch = !q || c.nomeUrna.toLowerCase().includes(q);
-        const okParty  = !partido || c.partido === partido;
-        return okSearch && okParty;
-      }),
+    () => candidates.filter((c) => {
+      const q = search.toLowerCase();
+      return (!q || c.nomeUrna.toLowerCase().includes(q)) && (!partido || c.partido === partido);
+    }),
     [candidates, search, partido]
   );
+
+  const filteredMun = useMemo(
+    () =>
+      !munSearch
+        ? munData
+        : munData.filter((m) => m.municipio.toLowerCase().includes(munSearch.toLowerCase())),
+    [munData, munSearch]
+  );
+
+  const maxVotos = munData[0]?.votos ?? 1;
 
   function switchTab(tab: TabKey) {
     setActiveTab(tab);
@@ -138,7 +170,6 @@ export function EleitoralPanel() {
       {/* ── Grid view (estadual / federal / senador) ── */}
       {isGrid && (
         <>
-          {/* Filters */}
           <div className="flex flex-wrap gap-3 items-center">
             <div className="relative flex-1 min-w-[200px]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
@@ -167,11 +198,8 @@ export function EleitoralPanel() {
             </div>
           </div>
 
-          {/* Cards */}
           {filtered.length === 0 ? (
-            <div className="text-center py-16 text-muted-foreground">
-              Nenhum candidato encontrado
-            </div>
+            <div className="text-center py-16 text-muted-foreground">Nenhum candidato encontrado</div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
               {filtered.map((c, i) => (
@@ -188,13 +216,8 @@ export function EleitoralPanel() {
                       {initials(c.nomeUrna)}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="text-sm font-medium text-foreground truncate leading-tight">
-                        {c.nomeUrna}
-                      </div>
-                      <div
-                        className="text-xs font-semibold mt-0.5"
-                        style={{ color: partyColor(c.partido) }}
-                      >
+                      <div className="text-sm font-medium text-foreground truncate leading-tight">{c.nomeUrna}</div>
+                      <div className="text-xs font-semibold mt-0.5" style={{ color: partyColor(c.partido) }}>
                         {c.partido}
                       </div>
                     </div>
@@ -202,9 +225,13 @@ export function EleitoralPanel() {
                       #{i + 1}
                     </span>
                   </div>
-                  <div className="text-xs text-muted-foreground">
-                    {fmtVotes(c.votos)} votos
-                  </div>
+                  <div className="text-xs text-muted-foreground">{fmtVotes(c.votos)} votos</div>
+                  {hasMunicipios && (
+                    <div className="mt-2 flex items-center gap-1 text-xs text-muted-foreground/60">
+                      <MapPin className="h-3 w-3" />
+                      <span>ver por município</span>
+                    </div>
+                  )}
                 </button>
               ))}
             </div>
@@ -215,7 +242,6 @@ export function EleitoralPanel() {
       {/* ── Governador ── */}
       {activeTab === "governador" && (
         <div className="space-y-5">
-          {/* Eleito card */}
           <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/10">
             <div className="flex flex-wrap items-start gap-5">
               <div
@@ -226,58 +252,34 @@ export function EleitoralPanel() {
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
-                  <h2 className="text-xl font-bold text-foreground">
-                    {governadorData.eleito.nomeUrna}
-                  </h2>
-                  <Badge
-                    className="text-xs text-white"
-                    style={{ backgroundColor: partyColor(governadorData.eleito.partido) }}
-                  >
+                  <h2 className="text-xl font-bold text-foreground">{governadorData.eleito.nomeUrna}</h2>
+                  <Badge className="text-xs text-white" style={{ backgroundColor: partyColor(governadorData.eleito.partido) }}>
                     {governadorData.eleito.partido}
                   </Badge>
-                  <Badge variant="outline" className="text-xs border-green-500/50 text-green-400">
-                    ELEITO 1º TURNO
-                  </Badge>
+                  <Badge variant="outline" className="text-xs border-green-500/50 text-green-400">ELEITO 1º TURNO</Badge>
                 </div>
-                <div className="text-sm text-muted-foreground mt-1">
-                  {governadorData.eleito.nomeCompleto}
-                </div>
+                <div className="text-sm text-muted-foreground mt-1">{governadorData.eleito.nomeCompleto}</div>
                 <div className="mt-2 text-sm text-muted-foreground">
-                  Vice:{" "}
-                  <span className="text-foreground font-medium">
-                    {governadorData.vice.nomeUrna}
-                  </span>
-                  <span className="ml-1 opacity-60 text-xs">
-                    ({governadorData.vice.partido})
-                  </span>
+                  Vice: <span className="text-foreground font-medium">{governadorData.vice.nomeUrna}</span>
+                  <span className="ml-1 opacity-60 text-xs">({governadorData.vice.partido})</span>
                 </div>
               </div>
               <div className="text-right flex-shrink-0">
-                <div className="text-2xl font-bold text-foreground">
-                  {fmtVotes(governadorData.eleito.votos)}
-                </div>
+                <div className="text-2xl font-bold text-foreground">{fmtVotes(governadorData.eleito.votos)}</div>
                 <div className="text-xs text-muted-foreground">votos</div>
-                <div className="text-lg font-semibold text-green-400 mt-0.5">
-                  {governadorData.eleito.percentual}%
-                </div>
+                <div className="text-lg font-semibold text-green-400 mt-0.5">{governadorData.eleito.percentual}%</div>
               </div>
             </div>
           </div>
-
-          {/* Resultado */}
           <div>
-            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-              Resultado — 1º Turno
-            </h3>
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Resultado — 1º Turno</h3>
             <div className="space-y-2">
               {governadorData.candidatos.map((c, i) => (
                 <div
                   key={i}
                   className={cn(
                     "flex items-center gap-3 p-3 rounded-xl border",
-                    c.situacao === "ELEITO"
-                      ? "bg-green-500/5 border-green-500/20"
-                      : "bg-white/[0.02] border-white/10"
+                    c.situacao === "ELEITO" ? "bg-green-500/5 border-green-500/20" : "bg-white/[0.02] border-white/10"
                   )}
                 >
                   <div
@@ -296,8 +298,7 @@ export function EleitoralPanel() {
                         className="h-full rounded-full transition-all"
                         style={{
                           width: `${c.percentual}%`,
-                          backgroundColor:
-                            c.situacao === "ELEITO" ? "#22c55e" : partyColor(c.partido),
+                          backgroundColor: c.situacao === "ELEITO" ? "#22c55e" : partyColor(c.partido),
                         }}
                       />
                     </div>
@@ -316,7 +317,6 @@ export function EleitoralPanel() {
       {/* ── Presidente ── */}
       {activeTab === "presidente" && (
         <div className="space-y-5">
-          {/* Eleito */}
           <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/10">
             <div className="flex flex-wrap items-start gap-5">
               <div
@@ -327,49 +327,27 @@ export function EleitoralPanel() {
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
-                  <h2 className="text-xl font-bold text-foreground">
-                    {presidenteData.eleito.nomeUrna}
-                  </h2>
-                  <Badge
-                    className="text-xs text-white"
-                    style={{ backgroundColor: partyColor(presidenteData.eleito.partido) }}
-                  >
+                  <h2 className="text-xl font-bold text-foreground">{presidenteData.eleito.nomeUrna}</h2>
+                  <Badge className="text-xs text-white" style={{ backgroundColor: partyColor(presidenteData.eleito.partido) }}>
                     {presidenteData.eleito.partido}
                   </Badge>
-                  <Badge variant="outline" className="text-xs border-green-500/50 text-green-400">
-                    ELEITO 2º TURNO
-                  </Badge>
+                  <Badge variant="outline" className="text-xs border-green-500/50 text-green-400">ELEITO 2º TURNO</Badge>
                 </div>
-                <div className="text-sm text-muted-foreground mt-1">
-                  {presidenteData.eleito.nomeCompleto}
-                </div>
+                <div className="text-sm text-muted-foreground mt-1">{presidenteData.eleito.nomeCompleto}</div>
                 <div className="mt-2 text-sm text-muted-foreground">
-                  Vice:{" "}
-                  <span className="text-foreground font-medium">
-                    {presidenteData.vice.nomeUrna}
-                  </span>
-                  <span className="ml-1 opacity-60 text-xs">
-                    ({presidenteData.vice.partido})
-                  </span>
+                  Vice: <span className="text-foreground font-medium">{presidenteData.vice.nomeUrna}</span>
+                  <span className="ml-1 opacity-60 text-xs">({presidenteData.vice.partido})</span>
                 </div>
               </div>
               <div className="text-right flex-shrink-0">
-                <div className="text-2xl font-bold text-foreground">
-                  {fmtVotes(presidenteData.eleito.votosNacional)}
-                </div>
+                <div className="text-2xl font-bold text-foreground">{fmtVotes(presidenteData.eleito.votosNacional)}</div>
                 <div className="text-xs text-muted-foreground">votos nacionais</div>
-                <div className="text-lg font-semibold text-green-400 mt-0.5">
-                  {presidenteData.eleito.percentualNacional}%
-                </div>
+                <div className="text-lg font-semibold text-green-400 mt-0.5">{presidenteData.eleito.percentualNacional}%</div>
               </div>
             </div>
           </div>
-
-          {/* Resultado PR */}
           <div className="p-5 rounded-xl bg-amber-500/5 border border-amber-500/20">
-            <h3 className="text-xs font-semibold text-amber-400 uppercase tracking-wider mb-4">
-              Resultado no Paraná — 2º Turno
-            </h3>
+            <h3 className="text-xs font-semibold text-amber-400 uppercase tracking-wider mb-4">Resultado no Paraná — 2º Turno</h3>
             <div className="space-y-4">
               {presidenteData.resultadoPR.candidatos.map((c, i) => (
                 <div key={i} className="flex items-center gap-3">
@@ -386,13 +364,7 @@ export function EleitoralPanel() {
                       <span className="text-xs opacity-60">{c.situacao}</span>
                     </div>
                     <div className="h-2 rounded-full bg-white/10 overflow-hidden">
-                      <div
-                        className="h-full rounded-full"
-                        style={{
-                          width: `${c.percentual}%`,
-                          backgroundColor: partyColor(c.partido),
-                        }}
-                      />
+                      <div className="h-full rounded-full" style={{ width: `${c.percentual}%`, backgroundColor: partyColor(c.partido) }} />
                     </div>
                   </div>
                   <div className="text-right flex-shrink-0 min-w-[80px]">
@@ -402,16 +374,14 @@ export function EleitoralPanel() {
                 </div>
               ))}
             </div>
-            <p className="mt-4 text-xs text-muted-foreground leading-relaxed">
-              {presidenteData.resultadoPR.nota}
-            </p>
+            <p className="mt-4 text-xs text-muted-foreground leading-relaxed">{presidenteData.resultadoPR.nota}</p>
           </div>
         </div>
       )}
 
       {/* ── Detail modal ── */}
-      <Dialog open={!!selected} onOpenChange={() => setSelected(null)}>
-        <DialogContent className="sm:max-w-md bg-background border-white/10">
+      <Dialog open={!!selected} onOpenChange={closeModal}>
+        <DialogContent className="sm:max-w-2xl bg-background border-white/10 max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-3">
               {selected && (
@@ -428,16 +398,15 @@ export function EleitoralPanel() {
 
           {selected && (
             <div className="space-y-4 mt-2">
+              {/* Info cells */}
               <div className="grid grid-cols-2 gap-3">
                 <InfoCell label="Partido">
-                  <span style={{ color: partyColor(selected.partido) }} className="font-semibold">
-                    {selected.partido}
-                  </span>
+                  <span style={{ color: partyColor(selected.partido) }} className="font-semibold">{selected.partido}</span>
                 </InfoCell>
                 <InfoCell label="Cargo">
                   <span className="text-sm font-medium">{selected.cargo}</span>
                 </InfoCell>
-                <InfoCell label="Votos">
+                <InfoCell label="Total de votos">
                   <span className="text-lg font-bold">{fmtVotes(selected.votos)}</span>
                 </InfoCell>
                 <InfoCell label="Eleição">
@@ -460,20 +429,78 @@ export function EleitoralPanel() {
               {selected.suplentes && selected.suplentes.length > 0 && (
                 <div className="p-3 rounded-lg bg-white/[0.03] border border-white/10">
                   <div className="text-xs text-muted-foreground mb-2">Suplentes</div>
-                  <div className="space-y-1">
-                    {selected.suplentes.map((s, i) => (
-                      <div key={i} className="text-sm">
-                        {i + 1}º — {s}
-                      </div>
-                    ))}
+                  {selected.suplentes.map((s, i) => (
+                    <div key={i} className="text-sm">{i + 1}º — {s}</div>
+                  ))}
+                </div>
+              )}
+
+              {/* Municipality breakdown */}
+              {hasMunicipios && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                      <MapPin className="h-4 w-4 text-primary" />
+                      Votos por Município
+                    </div>
+                    {munData.length > 0 && (
+                      <span className="text-xs text-muted-foreground">
+                        {munData.length} municípios · {fmtVotes(selected.votos)} votos
+                      </span>
+                    )}
                   </div>
+
+                  {munLoading && (
+                    <div className="flex items-center justify-center py-8 gap-2 text-muted-foreground">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span className="text-sm">Carregando...</span>
+                    </div>
+                  )}
+
+                  {!munLoading && munData.length > 0 && (
+                    <>
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+                        <Input
+                          placeholder="Filtrar município..."
+                          value={munSearch}
+                          onChange={(e) => setMunSearch(e.target.value)}
+                          className="pl-8 h-8 text-sm bg-white/[0.03] border-white/10"
+                        />
+                      </div>
+
+                      <div className="max-h-72 overflow-y-auto space-y-1 pr-1">
+                        {filteredMun.map((m, i) => (
+                          <div key={m.codigo} className="flex items-center gap-3 py-1.5 px-2 rounded-lg hover:bg-white/[0.03] transition-colors">
+                            <span className="text-xs text-muted-foreground w-6 text-right flex-shrink-0">{i + 1}</span>
+                            <span className="text-sm flex-1 truncate">{m.municipio}</span>
+                            <div className="w-24 h-1.5 rounded-full bg-white/10 overflow-hidden flex-shrink-0">
+                              <div
+                                className="h-full rounded-full"
+                                style={{
+                                  width: `${Math.round((m.votos / maxVotos) * 100)}%`,
+                                  backgroundColor: partyColor(selected.partido),
+                                }}
+                              />
+                            </div>
+                            <span className="text-xs font-medium text-right w-16 flex-shrink-0">{fmtVotes(m.votos)}</span>
+                          </div>
+                        ))}
+                        {filteredMun.length === 0 && (
+                          <div className="text-center py-4 text-sm text-muted-foreground">Nenhum município encontrado</div>
+                        )}
+                      </div>
+                    </>
+                  )}
+
+                  {!munLoading && munData.length === 0 && (
+                    <div className="text-center py-4 text-sm text-muted-foreground">Dados não disponíveis</div>
+                  )}
                 </div>
               )}
 
               <div className="flex items-center justify-center gap-2 py-2 rounded-lg border border-green-500/30 bg-green-500/5">
-                <span className="text-xs font-semibold text-green-400 uppercase tracking-wider">
-                  Eleito nas Eleições 2022
-                </span>
+                <span className="text-xs font-semibold text-green-400 uppercase tracking-wider">Eleito nas Eleições 2022</span>
               </div>
             </div>
           )}
@@ -483,13 +510,7 @@ export function EleitoralPanel() {
   );
 }
 
-function InfoCell({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
+function InfoCell({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="p-3 rounded-lg bg-white/[0.03] border border-white/10">
       <div className="text-xs text-muted-foreground mb-1">{label}</div>
