@@ -1,0 +1,16 @@
+[
+  {
+    "id": 1,
+    "nomeUrna": "Sergio Moro",
+    "nomeCompleto": "Sergio Fernando Moro",
+    "partido": "União",
+    "votos": 1953159,
+    "percentual": 33.5,
+    "cargo": "Senador Federal",
+    "estado": "PR",
+    "turno": 1,
+    "ano": 2022,
+    "mandato": "2023–2031",
+    "suplentes": ["Luís Felipe Cunha", "Ricardo Guerra"]
+  }
+]

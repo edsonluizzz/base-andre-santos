@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import {
   LayoutDashboard, Users, MapPin, MessageCircle, Calendar,
-  Megaphone, Settings, LogOut, Menu, X, Shield, Star, Map, BarChart2, Network, Trophy, FileText, Target, ClipboardList, Camera,
+  Megaphone, Settings, LogOut, Menu, X, Shield, Star, Map, BarChart2, Network, Trophy, FileText, Target, ClipboardList, Camera, Award,
 } from "lucide-react";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { useState, useEffect, useRef } from "react";
@@ -26,6 +26,7 @@ const navItems = [
   { href: "/relatorio",     icon: BarChart2,        label: "Relatório",       minRole: "LEADER" },
   { href: "/metas",         icon: Target,           label: "Metas",           minRole: "LEADER" },
   { href: "/instagram",     icon: Camera,           label: "Instagram",       minRole: "LEADER" },
+  { href: "/eleitos-2022",  icon: Award,            label: "Eleitos 2022",    minRole: "LEADER" },
   { href: "/tarefas",       icon: ClipboardList,    label: "Tarefas",         minRole: "ADMIN"  },
   { href: "/comunicados",   icon: Megaphone,        label: "Comunicados",     minRole: "ADMIN"  },
   { href: "/configuracoes", icon: Settings,         label: "Configurações",   minRole: "ADMIN"  },

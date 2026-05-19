@@ -1,0 +1,24 @@
+{
+  "cargo": "Governador do Estado",
+  "estado": "PR",
+  "ano": 2022,
+  "turnoDecisivo": 1,
+  "eleito": {
+    "id": 1,
+    "nomeUrna": "Ratinho Junior",
+    "nomeCompleto": "Carlos Massa Ratinho Junior",
+    "partido": "PSD",
+    "votos": 4243116,
+    "percentual": 69.64
+  },
+  "vice": {
+    "nomeUrna": "Darci Piana",
+    "partido": "PSD"
+  },
+  "candidatos": [
+    { "nomeUrna": "Ratinho Junior",  "partido": "PSD",     "votos": 4243116, "percentual": 69.64, "situacao": "ELEITO" },
+    { "nomeUrna": "Requião",         "partido": "PT",      "votos": 1598149, "percentual": 26.23, "situacao": "NÃO ELEITO" },
+    { "nomeUrna": "Professor Braga", "partido": "PSOL",    "votos": 55901,   "percentual": 0.92,  "situacao": "NÃO ELEITO" },
+    { "nomeUrna": "Delegado Titi",   "partido": "PRTB",    "votos": 52880,   "percentual": 0.87,  "situacao": "NÃO ELEITO" }
+  ]
+}

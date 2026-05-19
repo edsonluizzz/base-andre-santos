@@ -1,0 +1,25 @@
+{
+  "cargo": "Presidente da República",
+  "ano": 2022,
+  "turnoDecisivo": 2,
+  "eleito": {
+    "id": 1,
+    "nomeUrna": "Lula",
+    "nomeCompleto": "Luiz Inácio Lula da Silva",
+    "partido": "PT",
+    "votosNacional": 60345999,
+    "percentualNacional": 50.9
+  },
+  "vice": {
+    "nomeUrna": "Geraldo Alckmin",
+    "partido": "PSB"
+  },
+  "resultadoPR": {
+    "turno": 2,
+    "candidatos": [
+      { "nomeUrna": "Bolsonaro", "partido": "PL", "votos": 4159266, "percentual": 62.4,  "situacao": "VENCEU NO PR" },
+      { "nomeUrna": "Lula",      "partido": "PT", "votos": 2506464, "percentual": 37.6,  "situacao": "ELEITO NACIONAL" }
+    ],
+    "nota": "Bolsonaro venceu no Paraná, mas Lula foi eleito Presidente com 50,9% dos votos válidos nacional."
+  }
+}
