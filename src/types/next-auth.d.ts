@@ -8,7 +8,9 @@ declare module "next-auth" {
       email?: string | null;
       image?: string | null;
       role?: string;
-      establishmentId?: string;
+      establishmentId?: string;  // legado — mantido para backward compat
+      campaignId?: string;       // ISSACAR.IA: identificador da campanha
+      dbUrl?: string;            // ISSACAR.IA: DATABASE_URL da campanha
       isSuperAdmin?: boolean;
       needsChurchSelection?: boolean;
       suspended?: boolean;
@@ -24,6 +26,7 @@ declare module "next-auth/jwt" {
     id?: string;
     role?: string;
     campaignId?: string;
+    dbUrl?: string;              // ISSACAR.IA: DATABASE_URL da campanha
     isSuperAdmin?: boolean;
     isImpersonating?: boolean;
     originalEstablishmentId?: string;

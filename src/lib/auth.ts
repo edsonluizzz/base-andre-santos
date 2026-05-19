@@ -1,6 +1,7 @@
 import NextAuth from "next-auth";
 import { db } from "./db";
 import { authConfig } from "./auth.config";
+import { getCampaignDbUrl } from "./meta-db";
 
 const CAMPAIGN_ID = "andre-santos-2026";
 
@@ -80,6 +81,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             }).catch(() => {});
             token.role = newRole;
             token.campaignId = CAMPAIGN_ID;
+            token.dbUrl = (await getCampaignDbUrl(CAMPAIGN_ID)) ?? process.env.DATABASE_URL;
           } else {
             const effectiveRole = isAdmin && uc.role !== "ADMIN" ? "ADMIN" : uc.role;
             if (isAdmin && uc.role !== "ADMIN") {
@@ -87,6 +89,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             }
             token.role = effectiveRole;
             token.campaignId = uc.campaignId;
+            token.dbUrl = (await getCampaignDbUrl(uc.campaignId)) ?? process.env.DATABASE_URL;
             await db.user.update({ where: { id: userId }, data: { role: effectiveRole, campaignId: uc.campaignId } }).catch(() => {});
           }
         }
@@ -117,6 +120,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         if (user?.id) token.id = user.id;
         token.role = token.role ?? "MEMBER";
         token.campaignId = token.campaignId ?? CAMPAIGN_ID;
+        token.dbUrl = token.dbUrl ?? process.env.DATABASE_URL;
       }
 
       return token;
@@ -129,6 +133,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         if (token.name) session.user.name = token.name as string;
         if (token.image) session.user.image = token.image as string;
         session.user.establishmentId = (token.campaignId as string) ?? CAMPAIGN_ID;
+        session.user.campaignId = (token.campaignId as string) ?? CAMPAIGN_ID;
+        session.user.dbUrl = token.dbUrl as string | undefined;
         session.user.isSuperAdmin = Boolean(token.isSuperAdmin);
         session.user.needsChurchSelection = false;
         session.user.suspended = false;

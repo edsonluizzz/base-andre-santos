@@ -11,6 +11,10 @@ model Campaign {
   name       String
   logoBase64 String?  @db.Text
   joinCode   String?  @unique
+  slug       String?  @unique
+  dbUrl      String?  @db.Text
+  plan       String   @default("free")
+  active     Boolean  @default(true)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   collaborators  Collaborator[]
