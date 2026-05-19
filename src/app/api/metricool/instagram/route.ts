@@ -37,13 +37,18 @@ export async function GET(req: NextRequest) {
       }),
     ]);
 
-    const [postsData, reelsData, storiesData, avgReachData, avgEngData] = await Promise.all([
+    const storiesText = await storiesRes.text();
+    console.log("[metricool/instagram] stories status:", storiesRes.status, "body:", storiesText.slice(0, 500));
+
+    const [postsData, reelsData, avgReachData, avgEngData] = await Promise.all([
       postsRes.json(),
       reelsRes.json(),
-      storiesRes.json(),
       avgReachRes.json(),
       avgEngRes.json(),
     ]);
+
+    let storiesData: { data?: unknown[] } = { data: [] };
+    try { storiesData = JSON.parse(storiesText); } catch { /* endpoint pode não existir ainda */ }
 
     return NextResponse.json(
       {

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import {
   Camera, Eye, Heart, MessageCircle, Share2, TrendingUp,
-  ExternalLink, BookMarked, Film, UserPlus,
+  ExternalLink, BookMarked, Film,
 } from "lucide-react";
 
 type Post = {
@@ -208,29 +208,17 @@ export default function InstagramPage() {
         ))}
       </div>
 
-      {/* Banners: engajamento + cadastros via Instagram */}
+      {/* Engajamento médio */}
       {!loading && data && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="glass-card rounded-2xl p-5 border border-green-500/20 bg-green-500/[0.04] flex items-center gap-4">
-            <TrendingUp className="w-8 h-8 text-green-400 shrink-0" />
-            <div>
-              <p className="text-2xl font-bold text-green-400">{data.avgEngagement.toFixed(2)}%</p>
-              <p className="text-xs text-muted-foreground">Engajamento médio · últimos {days} dias</p>
-            </div>
-            <div className="ml-auto text-xs text-muted-foreground text-right hidden sm:block">
-              <p>3% = bom</p>
-              <p>6% = excelente</p>
-            </div>
+        <div className="glass-card rounded-2xl p-5 border border-green-500/20 bg-green-500/[0.04] flex items-center gap-4">
+          <TrendingUp className="w-8 h-8 text-green-400 shrink-0" />
+          <div>
+            <p className="text-2xl font-bold text-green-400">{data.avgEngagement.toFixed(2)}%</p>
+            <p className="text-xs text-muted-foreground">Engajamento médio · últimos {days} dias</p>
           </div>
-
-          <div className="glass-card rounded-2xl p-5 border border-pink-500/20 bg-pink-500/[0.03] flex items-center gap-4">
-            <UserPlus className="w-8 h-8 text-pink-400 shrink-0" />
-            <div>
-              <p className="text-2xl font-bold text-pink-400">{data.instagramCadastros}</p>
-              <p className="text-xs text-muted-foreground">
-                cadastro{data.instagramCadastros !== 1 ? "s" : ""} via Instagram · últimos {days} dias
-              </p>
-            </div>
+          <div className="ml-auto text-xs text-muted-foreground text-right hidden sm:block">
+            <p>3% = bom</p>
+            <p>6% = excelente</p>
           </div>
         </div>
       )}
