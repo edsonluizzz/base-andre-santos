@@ -3,35 +3,37 @@
 import { useEffect, useState } from "react";
 import {
   Camera, Eye, Heart, MessageCircle, Share2, TrendingUp,
-  ExternalLink, BookMarked, Film,
+  ExternalLink, BookMarked, Film, UserPlus,
 } from "lucide-react";
 
 type Post = {
   postId?: string;
   reelId?: string;
+  storyId?: string;
   url: string;
-  content: string;
+  content?: string;
   imageUrl: string;
-  likes: number;
-  comments: number;
-  shares: number;
+  likes?: number;
+  comments?: number;
+  replies?: number;
+  shares?: number;
   reach: number;
-  engagement: number;
-  impressionsTotal: number;
+  engagement?: number;
+  impressionsTotal?: number;
   saved?: number;
   views?: number;
+  exits?: number;
   type: string;
   publishedAt: { dateTime: string; timezone: string };
 };
 
-type DailyCount = { date: string; count: number };
-
 type Data = {
   posts: Post[];
   reels: Post[];
+  stories: Post[];
   avgReach: number;
   avgEngagement: number;
-  dailyCadastros: DailyCount[];
+  instagramCadastros: number;
 };
 
 const DAYS_OPTIONS = [
@@ -50,81 +52,15 @@ function fmtDate(dt: string) {
   return new Date(dt).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
 }
 
-function CorrelationChart({ dailyCadastros, posts, reels }: { dailyCadastros: DailyCount[]; posts: Post[]; reels: Post[] }) {
-  if (dailyCadastros.length === 0) return null;
-
-  const maxCount = Math.max(...dailyCadastros.map((d) => d.count), 1);
-  const allPubs = [...posts, ...reels];
-  const postDates = new Set(
-    allPubs.map((p) => {
-      const dt = p.publishedAt?.dateTime ?? "";
-      return dt.split("T")[0];
-    })
-  );
-
-  return (
-    <div className="glass-card rounded-2xl p-6 border border-white/[0.08]">
-      <div className="flex items-center gap-2 mb-2">
-        <TrendingUp className="w-4 h-4 text-blue-400" />
-        <h2 className="text-sm font-semibold text-foreground">Novos Cadastros × Publicações</h2>
-      </div>
-      <p className="text-[11px] text-muted-foreground mb-4">
-        Barras = cadastros por dia · <span className="text-pink-400">●</span> publicação no Instagram
-      </p>
-
-      {/* Barras */}
-      <div className="flex items-end gap-px" style={{ height: 80 }}>
-        {dailyCadastros.map((d) => {
-          const hasPost = postDates.has(d.date);
-          const pct = Math.max((d.count / maxCount) * 100, d.count > 0 ? 6 : 2);
-          return (
-            <div
-              key={d.date}
-              className="flex-1 flex flex-col items-center justify-end gap-0.5"
-              title={`${fmtDate(d.date)}: ${d.count} cadastro${d.count !== 1 ? "s" : ""}${hasPost ? " · 📸 publicação" : ""}`}
-            >
-              {hasPost && <div className="w-1.5 h-1.5 rounded-full bg-pink-400 shrink-0" />}
-              <div
-                className={`w-full rounded-sm transition-all ${hasPost ? "bg-pink-500/70" : "bg-blue-500/40"}`}
-                style={{ height: `${pct}%` }}
-              />
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Eixo x: datas dos extremos */}
-      <div className="flex justify-between mt-1">
-        <span className="text-[10px] text-muted-foreground">{fmtDate(dailyCadastros[0].date)}</span>
-        <span className="text-[10px] text-muted-foreground">{fmtDate(dailyCadastros[dailyCadastros.length - 1].date)}</span>
-      </div>
-
-      {/* Posts publicados no período */}
-      {allPubs.length > 0 && (
-        <div className="mt-4 space-y-1.5">
-          <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wide">Publicações no período</p>
-          {allPubs
-            .sort((a, b) => (a.publishedAt?.dateTime ?? "").localeCompare(b.publishedAt?.dateTime ?? ""))
-            .map((p) => {
-              const day = (p.publishedAt?.dateTime ?? "").split("T")[0];
-              const cadastrosDia = dailyCadastros.find((d) => d.date === day)?.count ?? 0;
-              return (
-                <div key={p.postId ?? p.reelId} className="flex items-center gap-2 text-[11px]">
-                  <span className="text-pink-400 shrink-0">{fmtDate(p.publishedAt?.dateTime ?? "")}</span>
-                  <span className="text-muted-foreground truncate flex-1">{p.content?.slice(0, 60) ?? "—"}</span>
-                  <span className="text-blue-400 shrink-0">{cadastrosDia} cadastro{cadastrosDia !== 1 ? "s" : ""}</span>
-                </div>
-              );
-            })}
-        </div>
-      )}
-    </div>
-  );
-}
-
 function PostCard({ p }: { p: Post }) {
-  const id = p.postId ?? p.reelId ?? p.url;
+  const id = p.postId ?? p.reelId ?? p.storyId ?? p.url;
   const isReel = p.type?.includes("REEL");
+  const isStory = p.type?.includes("STORY");
+  const engagement = p.engagement ?? 0;
+  const likes = p.likes ?? 0;
+  const comments = p.comments ?? p.replies ?? 0;
+  const shares = p.shares ?? 0;
+
   return (
     <div className="glass-card rounded-xl border border-white/[0.08] overflow-hidden flex flex-col">
       <a href={p.url} target="_blank" rel="noopener noreferrer" className="relative aspect-square block group">
@@ -141,6 +77,12 @@ function PostCard({ p }: { p: Post }) {
             <span className="text-[10px] text-white">Reel</span>
           </span>
         )}
+        {isStory && (
+          <span className="absolute top-2 left-2 bg-black/70 rounded-md px-1.5 py-0.5 flex items-center gap-1">
+            <Camera className="w-3 h-3 text-purple-400" />
+            <span className="text-[10px] text-white">Story</span>
+          </span>
+        )}
         <span className="absolute top-2 right-2 bg-black/70 rounded-md px-1.5 py-0.5 text-[10px] text-white">
           {fmtDate(p.publishedAt.dateTime)}
         </span>
@@ -155,10 +97,10 @@ function PostCard({ p }: { p: Post }) {
         )}
         <div className="grid grid-cols-2 gap-1.5 mt-auto">
           {[
-            { icon: Eye,         label: "Alcance",       value: fmtNum(p.reach),            color: "text-blue-400"  },
-            { icon: TrendingUp,  label: "Engaj.",        value: `${p.engagement.toFixed(1)}%`, color: "text-green-400" },
-            { icon: Heart,       label: "Curtidas",      value: fmtNum(p.likes),            color: "text-pink-400"  },
-            { icon: MessageCircle, label: "Comentários", value: fmtNum(p.comments),         color: "text-purple-400"},
+            { icon: Eye,           label: "Alcance",  value: fmtNum(p.reach),              color: "text-blue-400"   },
+            { icon: TrendingUp,    label: "Engaj.",   value: `${engagement.toFixed(1)}%`,   color: "text-green-400"  },
+            { icon: Heart,         label: "Curtidas", value: fmtNum(likes),                 color: "text-pink-400"   },
+            { icon: MessageCircle, label: isStory ? "Respostas" : "Comentários", value: fmtNum(comments), color: "text-purple-400" },
           ].map((m) => (
             <div key={m.label} className="flex items-center gap-1.5">
               <m.icon className={`w-3 h-3 ${m.color} shrink-0`} />
@@ -173,11 +115,11 @@ function PostCard({ p }: { p: Post }) {
               <span className="text-[10px] font-medium text-yellow-400">{fmtNum(p.saved!)}</span>
             </div>
           )}
-          {(p.shares ?? 0) > 0 && (
+          {shares > 0 && (
             <div className="flex items-center gap-1.5">
               <Share2 className="w-3 h-3 text-orange-400 shrink-0" />
               <span className="text-[10px] text-muted-foreground">Compart.:</span>
-              <span className="text-[10px] font-medium text-orange-400">{fmtNum(p.shares)}</span>
+              <span className="text-[10px] font-medium text-orange-400">{fmtNum(shares)}</span>
             </div>
           )}
         </div>
@@ -190,7 +132,7 @@ export default function InstagramPage() {
   const [days, setDays] = useState(30);
   const [data, setData] = useState<Data | null>(null);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<"posts" | "reels">("posts");
+  const [tab, setTab] = useState<"posts" | "reels" | "stories">("posts");
 
   useEffect(() => {
     setLoading(true);
@@ -205,6 +147,12 @@ export default function InstagramPage() {
     [...list].sort((a, b) => b.reach - a.reach);
 
   const totalPublicacoes = (data?.posts.length ?? 0) + (data?.reels.length ?? 0);
+
+  const tabList: { key: "posts" | "reels" | "stories"; label: string; count: number }[] = [
+    { key: "posts",   label: "Posts",   count: data?.posts.length ?? 0 },
+    { key: "reels",   label: "Reels",   count: data?.reels.length ?? 0 },
+    { key: "stories", label: "Stories", count: data?.stories.length ?? 0 },
+  ];
 
   return (
     <div className="space-y-6">
@@ -227,7 +175,6 @@ export default function InstagramPage() {
           </div>
         </div>
 
-        {/* Range selector */}
         <div className="flex gap-1 bg-white/[0.04] rounded-xl p-1 border border-white/[0.08]">
           {DAYS_OPTIONS.map((o) => (
             <button
@@ -246,12 +193,13 @@ export default function InstagramPage() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
         {[
-          { label: "Publicações",    value: loading ? "—" : String(totalPublicacoes),           color: "text-pink-400"  },
-          { label: "Posts",          value: loading ? "—" : String(data?.posts.length ?? 0),    color: "text-purple-400"},
-          { label: "Reels",          value: loading ? "—" : String(data?.reels.length ?? 0),    color: "text-orange-400"},
-          { label: "Alcance médio",  value: loading ? "—" : fmtNum(data?.avgReach ?? 0),        color: "text-blue-400"  },
+          { label: "Publicações",    value: loading ? "—" : String(totalPublicacoes),           color: "text-pink-400"   },
+          { label: "Posts",          value: loading ? "—" : String(data?.posts.length ?? 0),    color: "text-purple-400" },
+          { label: "Reels",          value: loading ? "—" : String(data?.reels.length ?? 0),    color: "text-orange-400" },
+          { label: "Stories",        value: loading ? "—" : String(data?.stories.length ?? 0),  color: "text-yellow-400" },
+          { label: "Alcance médio",  value: loading ? "—" : fmtNum(data?.avgReach ?? 0),        color: "text-blue-400"   },
         ].map((k) => (
           <div key={k.label} className="glass-card rounded-2xl p-5 border border-white/[0.08]">
             <p className="text-xs text-muted-foreground mb-2">{k.label}</p>
@@ -260,47 +208,48 @@ export default function InstagramPage() {
         ))}
       </div>
 
-      {/* Engajamento médio banner */}
+      {/* Banners: engajamento + cadastros via Instagram */}
       {!loading && data && (
-        <div className="glass-card rounded-2xl p-5 border border-green-500/20 bg-green-500/[0.04] flex items-center gap-4">
-          <TrendingUp className="w-8 h-8 text-green-400 shrink-0" />
-          <div>
-            <p className="text-2xl font-bold text-green-400">{data.avgEngagement.toFixed(2)}%</p>
-            <p className="text-xs text-muted-foreground">Taxa de engajamento média nos últimos {days} dias</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="glass-card rounded-2xl p-5 border border-green-500/20 bg-green-500/[0.04] flex items-center gap-4">
+            <TrendingUp className="w-8 h-8 text-green-400 shrink-0" />
+            <div>
+              <p className="text-2xl font-bold text-green-400">{data.avgEngagement.toFixed(2)}%</p>
+              <p className="text-xs text-muted-foreground">Engajamento médio · últimos {days} dias</p>
+            </div>
+            <div className="ml-auto text-xs text-muted-foreground text-right hidden sm:block">
+              <p>3% = bom</p>
+              <p>6% = excelente</p>
+            </div>
           </div>
-          <div className="ml-auto text-xs text-muted-foreground text-right hidden sm:block">
-            <p>Acima de 3% = bom</p>
-            <p>Acima de 6% = excelente</p>
+
+          <div className="glass-card rounded-2xl p-5 border border-pink-500/20 bg-pink-500/[0.03] flex items-center gap-4">
+            <UserPlus className="w-8 h-8 text-pink-400 shrink-0" />
+            <div>
+              <p className="text-2xl font-bold text-pink-400">{data.instagramCadastros}</p>
+              <p className="text-xs text-muted-foreground">
+                cadastro{data.instagramCadastros !== 1 ? "s" : ""} via Instagram · últimos {days} dias
+              </p>
+            </div>
           </div>
         </div>
       )}
 
-      {/* Correlação posts × cadastros */}
-      {!loading && data && data.dailyCadastros.length > 0 && (
-        <CorrelationChart
-          dailyCadastros={data.dailyCadastros}
-          posts={data.posts}
-          reels={data.reels}
-        />
-      )}
-
       {/* Tabs */}
       <div className="flex gap-2 border-b border-white/[0.08]">
-        {(["posts", "reels"] as const).map((t) => (
+        {tabList.map((t) => (
           <button
-            key={t}
-            onClick={() => setTab(t)}
+            key={t.key}
+            onClick={() => setTab(t.key)}
             className={`pb-2 px-1 text-sm font-medium border-b-2 transition-colors capitalize ${
-              tab === t
+              tab === t.key
                 ? "border-pink-400 text-pink-400"
                 : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
-            {t === "posts" ? "Posts" : "Reels"}{" "}
+            {t.label}{" "}
             {!loading && data && (
-              <span className="text-[10px] opacity-60">
-                ({t === "posts" ? data.posts.length : data.reels.length})
-              </span>
+              <span className="text-[10px] opacity-60">({t.count})</span>
             )}
           </button>
         ))}
@@ -323,14 +272,14 @@ export default function InstagramPage() {
 
       {!loading && data && (
         <>
-          {(tab === "posts" ? sorted(data.posts) : sorted(data.reels)).length === 0 ? (
+          {sorted(tab === "posts" ? data.posts : tab === "reels" ? data.reels : data.stories).length === 0 ? (
             <p className="text-center text-muted-foreground py-12 text-sm">
-              Nenhum {tab === "posts" ? "post" : "reel"} encontrado no período selecionado.
+              Nenhum {tab === "stories" ? "story" : tab === "posts" ? "post" : "reel"} encontrado no período selecionado.
             </p>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-              {(tab === "posts" ? sorted(data.posts) : sorted(data.reels)).map((p) => (
-                <PostCard key={p.postId ?? p.reelId ?? p.url} p={p} />
+              {sorted(tab === "posts" ? data.posts : tab === "reels" ? data.reels : data.stories).map((p) => (
+                <PostCard key={p.postId ?? p.reelId ?? p.storyId ?? p.url} p={p} />
               ))}
             </div>
           )}

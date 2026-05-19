@@ -26,42 +26,33 @@ export async function GET(req: NextRequest) {
     const fromDate = new Date(from);
     const toDate = new Date(to);
 
-    const [postsRes, reelsRes, avgReachRes, avgEngRes, collabsRaw] = await Promise.all([
+    const [postsRes, reelsRes, storiesRes, avgReachRes, avgEngRes, instagramCount] = await Promise.all([
       fetch(`${BASE}/v2/analytics/posts/instagram?from=${from}&to=${to}&timezone=${tz}`, { headers: h }),
       fetch(`${BASE}/v2/analytics/reels/instagram?from=${from}&to=${to}&timezone=${tz}`, { headers: h }),
+      fetch(`${BASE}/v2/analytics/stories/instagram?from=${from}&to=${to}&timezone=${tz}`, { headers: h }),
       fetch(`${BASE}/v2/analytics/aggregation?network=instagram&metric=reach&subject=posts&from=${from}&to=${to}&timezone=${tz}`, { headers: h }),
       fetch(`${BASE}/v2/analytics/aggregation?network=instagram&metric=engagement&subject=posts&from=${from}&to=${to}&timezone=${tz}`, { headers: h }),
-      db.collaborator.findMany({
-        where: { campaignId: CID, createdAt: { gte: fromDate, lte: toDate } },
-        select: { createdAt: true },
+      db.collaborator.count({
+        where: { campaignId: CID, createdAt: { gte: fromDate, lte: toDate }, channel: "INSTAGRAM" },
       }),
     ]);
 
-    const [postsData, reelsData, avgReachData, avgEngData] = await Promise.all([
+    const [postsData, reelsData, storiesData, avgReachData, avgEngData] = await Promise.all([
       postsRes.json(),
       reelsRes.json(),
+      storiesRes.json(),
       avgReachRes.json(),
       avgEngRes.json(),
     ]);
-
-    // Agrupa cadastros por dia (America/Sao_Paulo = UTC-3)
-    const byDay = new Map<string, number>();
-    for (const c of collabsRaw) {
-      const d = new Date(c.createdAt.getTime() - 3 * 60 * 60 * 1000);
-      const day = d.toISOString().split("T")[0];
-      byDay.set(day, (byDay.get(day) ?? 0) + 1);
-    }
-    const dailyCadastros = Array.from(byDay.entries())
-      .map(([date, count]) => ({ date, count }))
-      .sort((a, b) => a.date.localeCompare(b.date));
 
     return NextResponse.json(
       {
         posts: postsData.data ?? [],
         reels: reelsData.data ?? [],
+        stories: storiesData.data ?? [],
         avgReach: avgReachData.data ?? 0,
         avgEngagement: avgEngData.data ?? 0,
-        dailyCadastros,
+        instagramCadastros: instagramCount,
       },
       { headers: { "Cache-Control": "s-maxage=3600, stale-while-revalidate=300" } }
     );
