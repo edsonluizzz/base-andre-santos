@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { Search, Users, MapPin, Loader2 } from "lucide-react";
+import { Search, Users, MapPin, Loader2, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -78,8 +78,36 @@ export function EleitoralPanel() {
   const [munData, setMunData]         = useState<Municipio[]>([]);
   const [munLoading, setMunLoading]   = useState(false);
   const [munSearch, setMunSearch]     = useState("");
+  const [favorites, setFavorites]     = useState<string[]>([]);
+  const [onlyFavs, setOnlyFavs]       = useState(false);
 
   const hasMunicipios = activeTab === "estadual" || activeTab === "federal";
+
+  // Load favorites from localStorage on mount
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("eleitos-favoritos");
+      if (stored) setFavorites(JSON.parse(stored));
+    } catch {}
+  }, []);
+
+  function favKey(c: Candidate) {
+    return `${activeTab}:${c.nomeUrna}`;
+  }
+
+  function isFav(c: Candidate) {
+    return favorites.includes(favKey(c));
+  }
+
+  function toggleFav(c: Candidate, e?: React.MouseEvent) {
+    e?.stopPropagation();
+    const key = favKey(c);
+    const next = favorites.includes(key)
+      ? favorites.filter((f) => f !== key)
+      : [...favorites, key];
+    setFavorites(next);
+    try { localStorage.setItem("eleitos-favoritos", JSON.stringify(next)); } catch {}
+  }
 
   // Fetch municipality breakdown when a dep. estadual/federal is selected
   useEffect(() => {
@@ -120,9 +148,12 @@ export function EleitoralPanel() {
   const filtered = useMemo(
     () => candidates.filter((c) => {
       const q = search.toLowerCase();
-      return (!q || c.nomeUrna.toLowerCase().includes(q)) && (!partido || c.partido === partido);
+      const okSearch = !q || c.nomeUrna.toLowerCase().includes(q);
+      const okParty  = !partido || c.partido === partido;
+      const okFav    = !onlyFavs || favorites.includes(`${activeTab}:${c.nomeUrna}`);
+      return okSearch && okParty && okFav;
     }),
-    [candidates, search, partido]
+    [candidates, search, partido, onlyFavs, favorites, activeTab]
   );
 
   const filteredMun = useMemo(
@@ -140,6 +171,7 @@ export function EleitoralPanel() {
     setSearch("");
     setPartido("");
     setSelected(null);
+    setOnlyFavs(false);
   }
 
   const isGrid = activeTab === "estadual" || activeTab === "federal" || activeTab === "senador";
@@ -192,6 +224,23 @@ export function EleitoralPanel() {
                 ))}
               </select>
             )}
+            <button
+              onClick={() => setOnlyFavs((v) => !v)}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm border transition-all",
+                onlyFavs
+                  ? "bg-amber-500/15 border-amber-500/40 text-amber-400"
+                  : "bg-white/[0.03] border-white/10 text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <Star className={cn("h-3.5 w-3.5", onlyFavs && "fill-amber-400")} />
+              Favoritos
+              {favorites.filter((f) => f.startsWith(activeTab + ":")).length > 0 && (
+                <span className="text-xs opacity-70">
+                  ({favorites.filter((f) => f.startsWith(activeTab + ":")).length})
+                </span>
+              )}
+            </button>
             <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
               <Users className="h-4 w-4" />
               <span>{filtered.length} eleito{filtered.length !== 1 ? "s" : ""}</span>
@@ -206,9 +255,23 @@ export function EleitoralPanel() {
                 <button
                   key={c.id}
                   onClick={() => setSelected(c)}
-                  className="text-left p-4 rounded-xl bg-white/[0.03] border border-white/10 hover:bg-white/[0.06] hover:border-white/20 transition-all group"
+                  className={cn(
+                    "text-left p-4 rounded-xl border transition-all group relative",
+                    isFav(c)
+                      ? "bg-amber-500/5 border-amber-500/25 hover:border-amber-500/40"
+                      : "bg-white/[0.03] border-white/10 hover:bg-white/[0.06] hover:border-white/20"
+                  )}
                 >
-                  <div className="flex items-center gap-3 mb-3">
+                  {/* Fav button */}
+                  <button
+                    onClick={(e) => toggleFav(c, e)}
+                    className="absolute top-3 right-3 p-0.5 text-muted-foreground/40 hover:text-amber-400 transition-colors"
+                    title={isFav(c) ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+                  >
+                    <Star className={cn("h-3.5 w-3.5", isFav(c) && "fill-amber-400 text-amber-400")} />
+                  </button>
+
+                  <div className="flex items-center gap-3 mb-3 pr-5">
                     <div
                       className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0 shadow-md"
                       style={{ backgroundColor: partyColor(c.partido) }}
@@ -221,9 +284,6 @@ export function EleitoralPanel() {
                         {c.partido}
                       </div>
                     </div>
-                    <span className="text-xs text-muted-foreground opacity-0 group-hover:opacity-60 transition-opacity flex-shrink-0">
-                      #{i + 1}
-                    </span>
                   </div>
                   <div className="text-xs text-muted-foreground">{fmtVotes(c.votos)} votos</div>
                   {hasMunicipios && (
@@ -392,7 +452,21 @@ export function EleitoralPanel() {
                   {initials(selected.nomeUrna)}
                 </div>
               )}
-              <span className="truncate">{selected?.nomeUrna}</span>
+              <span className="truncate flex-1">{selected?.nomeUrna}</span>
+              {selected && isGrid && (
+                <button
+                  onClick={() => selected && toggleFav(selected)}
+                  className="p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors flex-shrink-0"
+                  title={isFav(selected) ? "Remover dos favoritos" : "Favoritar"}
+                >
+                  <Star
+                    className={cn(
+                      "h-5 w-5 transition-colors",
+                      isFav(selected) ? "fill-amber-400 text-amber-400" : "text-muted-foreground"
+                    )}
+                  />
+                </button>
+              )}
             </DialogTitle>
           </DialogHeader>
 

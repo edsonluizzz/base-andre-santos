@@ -12,10 +12,14 @@ if (-not (Test-Path $csvPath)) {
     exit 1
 }
 
-Write-Host "Lendo CSV do Parana..." -ForegroundColor Cyan
+Write-Host "Lendo CSV do Parana (CP1252)..." -ForegroundColor Cyan
 
-$data = Import-Csv -Path $csvPath -Delimiter ";" -Encoding Default |
-    Where-Object { $_.DS_CARGO -match "Deputado Estadual" -and $_.NM_CANDIDATO -match "MARA" } |
+$enc  = [System.Text.Encoding]::GetEncoding(1252)
+$rows = [System.IO.File]::ReadAllLines($csvPath, $enc) | ConvertFrom-Csv -Delimiter ";"
+
+# Filtro exato por NM_URNA_CANDIDATO = "CANTORA MARA LIMA" (Republicanos, eleita 2022)
+$data = $rows |
+    Where-Object { $_.DS_CARGO -match "Deputado Estadual" -and $_.NM_URNA_CANDIDATO -eq "CANTORA MARA LIMA" } |
     Group-Object CD_MUNICIPIO |
     ForEach-Object {
         [PSCustomObject]@{
@@ -26,15 +30,15 @@ $data = Import-Csv -Path $csvPath -Delimiter ";" -Encoding Default |
     } | Sort-Object votos -Descending
 
 if ($data.Count -eq 0) {
-    Write-Error "Nenhum dado encontrado para Mara Lima / Governador. Verifique o CSV."
+    Write-Error "Nenhum dado encontrado para CANTORA MARA LIMA. Verifique o CSV."
     exit 1
 }
 
 $total = ($data | Measure-Object votos -Sum).Sum
 
 $output = [ordered]@{
-    candidata  = "Mara Lima"
-    partido    = "PSD"
+    candidata  = "Cantora Mara Lima"
+    partido    = "Republicanos"
     cargo      = "Deputada Estadual PR"
     eleicao    = "Eleicoes Gerais 2022 - 1o turno"
     totalVotos = $total
@@ -44,7 +48,7 @@ $output = [ordered]@{
 }
 
 New-Item -ItemType Directory -Force -Path "src\data" | Out-Null
-$output | ConvertTo-Json -Depth 5 | Out-File -FilePath $outputPath -Encoding UTF8 -NoNewline
+$output | ConvertTo-Json -Depth 5 | Out-File -FilePath $outputPath -Encoding UTF8NoBOM -NoNewline
 
 Write-Host ""
 Write-Host "============================================" -ForegroundColor Green
