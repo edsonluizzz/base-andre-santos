@@ -33,7 +33,7 @@ const STEP_LABELS: Record<Step, string> = {
 
 export function NovaCampanhaForm() {
   const router = useRouter();
-  const [mode, setMode]       = useState<Mode>("auto");
+  const [mode, setMode]       = useState<Mode>("manual");
   const [form, setForm]       = useState<FormData>(EMPTY);
   const [loading, setLoading] = useState(false);
   const [step, setStep]       = useState<Step>("idle");
@@ -152,23 +152,6 @@ export function NovaCampanhaForm() {
       <div className="grid grid-cols-2 gap-3">
         <button
           type="button"
-          onClick={() => setMode("auto")}
-          className={cn(
-            "p-4 rounded-xl border text-left transition-all",
-            mode === "auto"
-              ? "bg-primary/10 border-primary/40 text-foreground"
-              : "bg-white/[0.02] border-white/10 text-muted-foreground hover:border-white/20"
-          )}
-        >
-          <div className="flex items-center gap-2 mb-1">
-            <Zap className="h-4 w-4 text-primary" />
-            <span className="text-sm font-semibold">Automático</span>
-          </div>
-          <p className="text-xs opacity-70">Neon API cria o banco e aplica o schema automaticamente.</p>
-          <p className="text-xs opacity-50 mt-1">Requer NEON_API_KEY no Vercel</p>
-        </button>
-        <button
-          type="button"
           onClick={() => setMode("manual")}
           className={cn(
             "p-4 rounded-xl border text-left transition-all",
@@ -178,10 +161,28 @@ export function NovaCampanhaForm() {
           )}
         >
           <div className="flex items-center gap-2 mb-1">
-            <Database className="h-4 w-4" />
+            <Database className="h-4 w-4 text-primary" />
             <span className="text-sm font-semibold">Manual</span>
+            <span className="text-xs bg-green-500/20 text-green-400 px-1.5 py-0.5 rounded">Recomendado</span>
           </div>
-          <p className="text-xs opacity-70">Você cria o Neon e cola a URL. Roda o schema localmente.</p>
+          <p className="text-xs opacity-70">Crie o banco no Vercel Marketplace, cole a URL aqui e rode o schema.</p>
+        </button>
+        <button
+          type="button"
+          onClick={() => setMode("auto")}
+          className={cn(
+            "p-4 rounded-xl border text-left transition-all",
+            mode === "auto"
+              ? "bg-primary/10 border-primary/40 text-foreground"
+              : "bg-white/[0.02] border-white/10 text-muted-foreground hover:border-white/20"
+          )}
+        >
+          <div className="flex items-center gap-2 mb-1">
+            <Zap className="h-4 w-4" />
+            <span className="text-sm font-semibold">Automático</span>
+          </div>
+          <p className="text-xs opacity-70">Requer conta Neon independente (não gerenciada pelo Vercel).</p>
+          <p className="text-xs opacity-50 mt-1">NEON_API_KEY de neon.tech/app/settings/api-keys</p>
         </button>
       </div>
 
