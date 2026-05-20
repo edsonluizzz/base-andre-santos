@@ -148,9 +148,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       try {
         await db.campaign.upsert({
           where: { id: CAMPAIGN_ID },
-          update: { dbUrl: process.env.DATABASE_URL ?? undefined, slug: "andre-santos" },
-          create: { id: CAMPAIGN_ID, name: "Base André Santos", joinCode: "andre2026", slug: "andre-santos", dbUrl: process.env.DATABASE_URL },
-        });
+          update: {},
+          create: { id: CAMPAIGN_ID, name: "Base André Santos", joinCode: "andre2026" },
+        }).catch(() => {});
 
         if (!user.email) return true;
 
