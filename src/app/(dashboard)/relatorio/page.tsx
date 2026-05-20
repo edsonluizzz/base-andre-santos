@@ -1,5 +1,5 @@
 import { auth } from "@/lib/auth";
-import { getCampaignContext } from "@/lib/campaign-context";
+import { db } from "@/lib/db";
 import { BarChart2, Download, FileSpreadsheet, AlertTriangle, TrendingUp, Users } from "lucide-react";
 import Link from "next/link";
 import { PrintButton } from "@/components/relatorio/print-button";
@@ -67,8 +67,7 @@ export default async function RelatorioPage({
   searchParams: { cob?: string; perfil?: string; periodo?: string };
 }) {
   const session = await auth();
-  const { db, cid } = getCampaignContext(session!);
-  const CID = cid;
+  const CID = session?.user?.campaignId ?? "andre-santos-2026";
   const activeCob     = searchParams.cob    ?? null;
   const activeProfile = searchParams.perfil ?? null;
   const activePeriodo = searchParams.periodo ?? "30";

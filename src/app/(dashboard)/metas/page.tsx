@@ -1,5 +1,5 @@
 import { auth } from "@/lib/auth";
-import { getCampaignContext } from "@/lib/campaign-context";
+import { db } from "@/lib/db";
 import { redirect } from "next/navigation";
 import { Target, TrendingUp, Users, CheckCircle2, AlertTriangle, MapPin, Clock, Swords } from "lucide-react";
 import Link from "next/link";
@@ -10,8 +10,7 @@ import maraLimaData from "@/data/mara-lima-2022.json";
 
 export default async function MetasPage() {
   const session = await auth();
-  const { db, cid } = getCampaignContext(session!);
-  const CID = cid;
+  const CID = session?.user?.campaignId ?? "andre-santos-2026";
   const role = (session?.user as { role?: string })?.role ?? "MEMBER";
   if (!["LEADER", "ADMIN"].includes(role)) redirect("/dashboard");
 

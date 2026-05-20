@@ -1,5 +1,5 @@
 import { auth } from "@/lib/auth";
-import { getCampaignContext } from "@/lib/campaign-context";
+import { db } from "@/lib/db";
 import { Users, MapPin, MessageCircle, Calendar, TrendingUp, Star, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { TIER_LABEL, TIER_THRESHOLDS } from "@/lib/contribution";
@@ -35,8 +35,7 @@ const EVENT_TYPE_LABEL: Record<string, string> = {
 export default async function DashboardPage() {
   const session = await auth();
   const userId = session?.user?.id;
-  const { db, cid } = getCampaignContext(session!);
-  const CID = cid;
+  const CID = session?.user?.campaignId ?? "andre-santos-2026";
 
   const [total, byRole, cityRaw, groups, zones, upcomingEvents, myTotal, myActive, myTier] = await Promise.all([
     db.collaborator.count({ where: { campaignId: CID, status: "ACTIVE" } }),
