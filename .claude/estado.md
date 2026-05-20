@@ -1,10 +1,10 @@
-# Estado — Base André Santos
+# Estado — Base André Santos / ISSACAR.IA
 
-**Última atualização:** 2026-05-18 (Super Admin seções expansíveis · sidebar nome/foto reais do servidor · Metricool completo)
+**Última atualização:** 2026-05-19 (Sprint 1–3 ISSACAR multi-tenant · fix CID em 47 rotas · eleitos 2022 PR · Mara Lima corrigida)
 **Plano de produto:** `.claude/issacar-plano.md` — transformar em SaaS multi-tenant (issacar.app)
 **Landing page:** https://issacar-landing.vercel.app · domínio issacar.app pendente configuração DNS
 **GitHub:** https://github.com/edsonluizzz/base-andre-santos
-**Deploy:** Vercel — base-andre-santos.vercel.app · último deploy: `7ebe11f` (READY)
+**Deploy:** Vercel — base-andre-santos.vercel.app · último deploy: `138092a` (READY)
 
 ---
 
@@ -230,6 +230,59 @@ gcal-sync:              0 4 * * *             (1×/dia — Hobby plan limit)
 - **Sidebar nome/foto:** `serverName` e `serverImage` passados do layout (server) para o Sidebar — elimina flash de "Usuário"/"U" enquanto useSession carrega
 - **Super Admin:** 5 seções expansíveis com chevron, badge de contagem e estado padrão correto (Com acesso e Pendentes abertos por padrão)
 - **lucide-react:** ícone `Instagram` não existe — usar `Camera` como substituto
+
+## ISSACAR.IA — Multi-tenant (Sprints 1–3) — 2026-05-19
+
+### O que foi feito
+- **Sprint 1:** Branch `v2/issacar` + schema Campaign expandido (`slug`, `dbUrl`, `plan`, `active`, `adminEmail`, `candidateName`, `party`, `district`, `electionYear`, `primaryColor`, `secondaryColor`) · `meta-db.ts` · `tenant-db.ts` · `campaign-context.ts` · `next-auth.d.ts` com `dbUrl`/`campaignId` no JWT
+- **Sprint 2:** 47 rotas API convertidas para `getCampaignContext(session)` → `{ db, cid }` (Python bulk script) · `const CID = cid` adicionado em todas as rotas · mergeado em `main`
+- **Sprint 3:** `/campanhas` (lista) · `/nova-campanha` (form) · sidebar com `superAdminOnly` flag · `/api/admin/campaigns` CRUD · `/api/admin/campaigns/provision` (Vercel API → Neon API fallback) · `tenant-init-sql.ts` · `.vercelignore` para excluir CSVs TSE (4.3 GB)
+
+### Padrão de acesso ao banco (crítico)
+```ts
+// pages (sem auth de rota): usa db global + CID do session
+import { db } from "@/lib/db";
+const CID = session?.user?.campaignId ?? "andre-santos-2026";
+
+// API routes: usa getCampaignContext
+const { db, cid } = getCampaignContext(session);
+const CID = cid;
+```
+`getCampaignContext` → usa `globalDb` quando dbUrl == `DATABASE_URL` (tenant principal), `getTenantDb` para URLs diferentes (futuros tenants).
+
+### Status do provisionamento
+- **Neon API direta:** bloqueada — org André Santos é "managed by Vercel"
+- **Vercel Storage API:** endpoint `/v1/storage/databases` retorna `not_found` (não disponível na conta atual)
+- **Solução atual:** Modo Manual (Recomendado) — usuário cria Neon via Vercel Marketplace, cola DATABASE_URL no form, roda `prisma db push` localmente
+- **Pendência:** criar campanha via form ainda tem problema (a investigar na próxima sessão)
+- **Script local:** `temporaria/init-tenant-db.ps1 -DbUrl "postgresql://..."` roda `prisma db push` contra novo banco
+
+### Módulos super-admin adicionados
+| Rota | Status |
+|------|--------|
+| `/campanhas` | ✅ lista com contagem de colaboradores/operadores + status DB |
+| `/nova-campanha` | ✅ form modo manual (padrão) + automático · pendente bug ao criar |
+
+### Regressões corrigidas
+- `ReferenceError: CID is not defined` em 47 rotas → fix `const CID = cid` (commit `13188d6`)
+- Pages zeradas (dashboard, metas, relatorio, colaboradores/[id]) → restaurado `import { db }` global (commit `3330d22`)
+- Login quebrado após merge → revertido upsert do Campaign no signIn (commit na sequência)
+- Deploy CLI 4.3 GB → `.vercelignore` com `temporaria/` (commit `bf6f516`)
+- `getTenantDb` causava dados zerados → `getCampaignContext` usa `globalDb` para tenant principal (commit `2c88134`)
+
+---
+
+## Eleitos 2022 PR — 2026-05-19
+
+### Módulo `/eleitos-2022`
+- **Dados:** dep-estaduais.json (54) · dep-federais.json (30) · senadores.json (Moro) · governador.json (Ratinho Jr) · presidente.json
+- **Por município:** dep-estaduais-municipios.json (~2 MB, 54 × 399) · dep-federais-municipios.json (~1.1 MB, 30 × 399)
+- **Script:** `temporaria/fetch-eleitos-municipios.ps1` — lê CSVs TSE com encoding CP1252
+- **Componente:** `EleitoralPanel.tsx` — 5 tabs, search, filtro partido, favoritos localStorage, modal município com fetch on-demand
+- **API:** `/api/eleitos/municipios` — serve dados municipais sob demanda
+- **Mara Lima corrigida:** `mara-lima-2022.json` = 46.011 votos (era 357.452 por filtro errado); Arapongas = 785 votos
+
+---
 
 ## Armadilhas conhecidas
 
