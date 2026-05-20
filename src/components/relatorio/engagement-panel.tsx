@@ -1,7 +1,6 @@
-import { db } from "@/lib/db";
+import { getCampaignContext } from "@/lib/campaign-context";
 import { Trophy, Zap, AlertTriangle } from "lucide-react";
 
-const CID = "andre-santos-2026";
 
 export async function EngagementPanel() {
   const thirtyDaysAgo = new Date(); thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);

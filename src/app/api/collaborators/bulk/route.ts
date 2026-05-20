@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { getCampaignContext } from "@/lib/campaign-context";
 import { recalcTier } from "@/lib/tier";
 
-const CID = "andre-santos-2026";
 
 export async function PATCH(req: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const { db, cid } = getCampaignContext(session);
     if (!["ADMIN", "LEADER"].includes(session.user.role ?? ""))
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
@@ -52,7 +52,7 @@ export async function PATCH(req: NextRequest) {
         select: { registeredById: true },
       });
       const registradores = [...new Set(affected.map((c) => c.registeredById!))];
-      await Promise.all(registradores.map((uid) => recalcTier(uid).catch(() => {})));
+      await Promise.all(registradores.map((uid) => recalcTier(uid, db, cid).catch(() => {})));
     }
 
     return NextResponse.json({ updated: result.count });

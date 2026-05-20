@@ -1,5 +1,5 @@
 import { auth } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { getCampaignContext } from "@/lib/campaign-context";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Phone, MapPin, Mail, Calendar, Star, UserCheck, ShieldCheck, ShieldAlert, Monitor, Zap, Radio, PhoneCall } from "lucide-react";
@@ -11,7 +11,6 @@ import { calcMobilizationScore } from "@/lib/mobilization";
 import { differenceInDays, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-const CID = "andre-santos-2026";
 
 const SUPPORT_LABEL: Record<string, { label: string; color: string }> = {
   CONFIRMADO: { label: "Confirmado", color: "text-green-400" },

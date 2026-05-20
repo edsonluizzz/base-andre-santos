@@ -1,5 +1,5 @@
 import { auth } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { getCampaignContext } from "@/lib/campaign-context";
 import { Users, MapPin, MessageCircle, Calendar, TrendingUp, Star, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { TIER_LABEL, TIER_THRESHOLDS } from "@/lib/contribution";
@@ -11,7 +11,6 @@ import { VelocityPanel } from "@/components/dashboard/velocity-panel";
 import { ElectionCountdown } from "@/components/dashboard/election-countdown";
 import { Suspense } from "react";
 
-const CID = "andre-santos-2026";
 
 const ROLE_COLOR: Record<string, string> = {
   COORD_GERAL:     "text-yellow-400",

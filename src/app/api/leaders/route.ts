@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { getCampaignContext } from "@/lib/campaign-context";
 
-const CID = "andre-santos-2026";
 
 // Lista de usuários que têm pelo menos 1 colaborador cadastrado (para filtro)
 export async function GET() {
   try {
     const session = await auth();
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const { db, cid } = getCampaignContext(session);
 
     const leaders = await db.user.findMany({
       where: { registeredCollaborators: { some: { campaignId: CID } } },

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { getCampaignContext } from "@/lib/campaign-context";
 
 const BASE = "https://app.metricool.com/api";
 
@@ -8,6 +8,7 @@ export async function GET(req: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const { db, cid } = getCampaignContext(session);
 
     const token = process.env.METRICOOL_TOKEN;
     if (!token) return NextResponse.json({ error: "Metricool não configurado" }, { status: 503 });
@@ -22,7 +23,6 @@ export async function GET(req: NextRequest) {
 
     const h = { "X-Mc-Auth": token, Accept: "application/json" };
 
-    const CID = "andre-santos-2026";
     const fromDate = new Date(from);
     const toDate = new Date(to);
 

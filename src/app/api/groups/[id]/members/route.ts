@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { getCampaignContext } from "@/lib/campaign-context";
 
-const CID = "andre-santos-2026";
 
 export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
   try {
     const session = await auth();
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const { db, cid } = getCampaignContext(session);
 
     const group = await db.whatsAppGroup.findFirst({ where: { id: params.id, campaignId: CID } });
     if (!group) return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -28,6 +28,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   try {
     const session = await auth();
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const { db, cid } = getCampaignContext(session);
     if (!["ADMIN", "LEADER"].includes(session.user.role ?? "")) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
     const group = await db.whatsAppGroup.findFirst({ where: { id: params.id, campaignId: CID } });
@@ -53,6 +54,7 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
   try {
     const session = await auth();
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const { db, cid } = getCampaignContext(session);
     if (!["ADMIN", "LEADER"].includes(session.user.role ?? "")) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
     const { collaboratorId } = await req.json();

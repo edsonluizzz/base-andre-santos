@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { getCampaignContext } from "@/lib/campaign-context";
 import { ROLE_LABEL, STATUS_LABEL, SUPPORT_LABEL, PROFILE_LABEL, CONTRIB_LABEL } from "@/lib/labels";
 
-const CID = "andre-santos-2026";
 
 export async function GET() {
   try {
     const session = await auth();
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const { db, cid } = getCampaignContext(session);
 
     const collaborators = await db.collaborator.findMany({
       where: { campaignId: CID, city: { not: null } },

@@ -1,13 +1,12 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { getCampaignContext } from "@/lib/campaign-context";
 import ExcelJS from "exceljs";
 import {
   ROLE_LABEL, STATUS_LABEL, SUPPORT_LABEL, PROFILE_LABEL,
   CONTRIB_LABEL, ROLE_ORDER, PROFILE_ORDER, SUPPORT_ORDER,
 } from "@/lib/labels";
 
-const CID = "andre-santos-2026";
 
 // ─── Paleta ────────────────────────────────────────────────────────────────
 const C = {
@@ -93,6 +92,7 @@ export async function GET() {
   try {
     const session = await auth();
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const { db, cid } = getCampaignContext(session);
 
     const all = await db.collaborator.findMany({
       where: { campaignId: CID },

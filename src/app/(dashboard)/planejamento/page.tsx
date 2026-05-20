@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth";
+import { getCampaignContext } from "@/lib/campaign-context";
 import { db } from "@/lib/db";
 import { redirect } from "next/navigation";
 import {
@@ -56,12 +57,12 @@ async function enumHasValue(enumType: string, value: string): Promise<boolean> {
   } catch { return false; }
 }
 
-async function groupsTerritorialized(): Promise<number> {
+async function groupsTerritorialized(cid: string): Promise<number> {
   try {
     const r = await db.$queryRaw<Array<{ total: bigint; with_zone: bigint }>>`
       SELECT COUNT(*) as total, COUNT("zoneId") as with_zone
       FROM "WhatsAppGroup"
-      WHERE "campaignId" = 'andre-santos-2026'
+      WHERE "campaignId" = ${cid}
     `;
     const total = Number(r[0]?.total ?? 0);
     const withZone = Number(r[0]?.with_zone ?? 0);
@@ -70,7 +71,7 @@ async function groupsTerritorialized(): Promise<number> {
   } catch { return 0; }
 }
 
-async function checkAllGaps(): Promise<GapResult[]> {
+async function checkAllGaps(cid: string): Promise<GapResult[]> {
   const [
     hasNeighborhood,
     hasChannel,
@@ -86,7 +87,7 @@ async function checkAllGaps(): Promise<GapResult[]> {
     enumHasValue("CollaboratorProfile", "LIDER_RELIGIOSO"),
     tableExists("MunicipalityGoal"),
     colExists("Collaborator", "mobilizationScore"),
-    groupsTerritorialized(),
+    groupsTerritorialized(cid),
   ]);
 
   // Dynamic import: resolve em build time — true se o módulo existe no bundle
@@ -179,13 +180,15 @@ export default async function PlanejamentoPage() {
   if (!session?.user) redirect("/login");
   if ((session.user.role ?? "MEMBER") !== "ADMIN") redirect("/dashboard");
 
+  const { db, cid } = getCampaignContext(session);
+
   const [gaps, cityRaw, goals] = await Promise.all([
-    checkAllGaps(),
+    checkAllGaps(cid),
     db.collaborator.findMany({
-      where: { campaignId: "andre-santos-2026", status: "ACTIVE", city: { not: null } },
+      where: { campaignId: cid, status: "ACTIVE", city: { not: null } },
       select: { city: true },
     }),
-    db.municipalityGoal.findMany({ where: { campaignId: "andre-santos-2026" } }),
+    db.municipalityGoal.findMany({ where: { campaignId: cid } }),
   ]);
 
   const resolved = gaps.filter((g) => g.status === "resolved").length;

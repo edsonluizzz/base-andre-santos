@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { getCampaignContext } from "@/lib/campaign-context";
 import { normalizeCity } from "@/lib/utils";
 
-const CAMPAIGN_ID = "andre-santos-2026";
 
 export async function POST(req: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const { db, cid } = getCampaignContext(session);
 
     const { name, phone, city, neighborhood, profile, contributionTypes } = await req.json();
 
@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
       const user = await db.user.findUnique({ where: { id: userId }, select: { email: true } });
       await db.collaborator.create({
         data: {
-          campaignId: CAMPAIGN_ID,
+          campaignId: cid,
           userId,
           name: name.trim(),
           phone,

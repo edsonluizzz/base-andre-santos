@@ -22,6 +22,7 @@ export const authConfig: NextAuthConfig = {
         session.user.id = (token.id as string) ?? "";
         session.user.role = (token.role as string) ?? "MEMBER";
         session.user.establishmentId = (token.campaignId as string) ?? "andre-santos-2026";
+        session.user.campaignId = (token.campaignId as string) ?? "andre-santos-2026";
         session.user.isSuperAdmin = Boolean(token.isSuperAdmin);
         session.user.needsChurchSelection = false;
         session.user.suspended = false;

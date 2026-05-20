@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { getCampaignContext } from "@/lib/campaign-context";
 
-const CID = "andre-santos-2026";
 
 export async function GET(req: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const { db, cid } = getCampaignContext(session);
 
     const all = req.nextUrl.searchParams.get("all") === "true" && session.user.role === "ADMIN";
 
@@ -36,6 +36,7 @@ export async function POST(req: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const { db, cid } = getCampaignContext(session);
 
     const { title, description, dueDate, priority, assignedToId } = await req.json();
     if (!title?.trim()) return NextResponse.json({ error: "Título obrigatório" }, { status: 400 });

@@ -1,7 +1,6 @@
-import { db } from "@/lib/db";
+import { getCampaignContext } from "@/lib/campaign-context";
 import { TrendingUp, TrendingDown, Minus, AlertTriangle } from "lucide-react";
 
-const CID = "andre-santos-2026";
 
 export async function VelocityPanel() {
   const now        = new Date();

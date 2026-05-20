@@ -1,5 +1,5 @@
 import { auth } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { getCampaignContext } from "@/lib/campaign-context";
 import { BarChart2, Download, FileSpreadsheet, AlertTriangle, TrendingUp, Users } from "lucide-react";
 import Link from "next/link";
 import { PrintButton } from "@/components/relatorio/print-button";
@@ -7,7 +7,6 @@ import { EngagementPanel } from "@/components/relatorio/engagement-panel";
 import { Suspense } from "react";
 import { ROLE_LABEL, PROFILE_LABEL, SUPPORT_LABEL, ROLE_ORDER, PROFILE_ORDER, SUPPORT_ORDER } from "@/lib/labels";
 
-const CID = "andre-santos-2026";
 
 const ROLE_LABEL_SHORT: Record<string, string> = {
   COORD_GERAL: "C. Geral", COORD_REGIONAL: "C. Regional",

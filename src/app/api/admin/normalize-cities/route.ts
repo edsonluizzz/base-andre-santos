@@ -1,10 +1,9 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { getCampaignContext } from "@/lib/campaign-context";
 import { readFileSync } from "fs";
 import { join } from "path";
 
-const CID = "andre-santos-2026";
 
 // Correções curadas: variações conhecidas que não constam na lista canônica
 const CURATED: Record<string, string> = {
@@ -33,6 +32,7 @@ export async function POST() {
   try {
     const session = await auth();
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const { db, cid } = getCampaignContext(session);
     if (session.user.role !== "ADMIN") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
     const rows = await db.collaborator.findMany({

@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { getCampaignContext } from "@/lib/campaign-context";
 
-const CID = "andre-santos-2026";
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   try {
     const session = await auth();
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const { db, cid } = getCampaignContext(session);
 
     const task = await db.task.findFirst({
       where: { id: params.id, campaignId: CID },
@@ -37,6 +37,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: { id: stri
   try {
     const session = await auth();
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const { db, cid } = getCampaignContext(session);
 
     const task = await db.task.findFirst({ where: { id: params.id, campaignId: CID } });
     if (!task) return NextResponse.json({ error: "Not found" }, { status: 404 });

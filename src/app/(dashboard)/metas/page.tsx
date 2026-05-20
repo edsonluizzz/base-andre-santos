@@ -1,5 +1,5 @@
 import { auth } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { getCampaignContext } from "@/lib/campaign-context";
 import { redirect } from "next/navigation";
 import { Target, TrendingUp, Users, CheckCircle2, AlertTriangle, MapPin, Clock, Swords } from "lucide-react";
 import Link from "next/link";
@@ -7,7 +7,6 @@ import { addWeeks, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import maraLimaData from "@/data/mara-lima-2022.json";
 
-const CID = "andre-santos-2026";
 
 export default async function MetasPage() {
   const session = await auth();

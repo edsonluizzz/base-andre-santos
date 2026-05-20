@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { getCampaignContext } from "@/lib/campaign-context";
 
-const CAMPAIGN_ID = "andre-santos-2026";
 
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
 function isRateLimited(ip: string): boolean {
@@ -34,7 +33,7 @@ export async function POST(req: NextRequest) {
     const existingUser = await db.user.findUnique({ where: { email: normalizedEmail }, select: { id: true } });
     if (existingUser) {
       const alreadyAccepted = await db.userCampaign.findFirst({
-        where: { userId: existingUser.id, campaignId: CAMPAIGN_ID, inviteStatus: "ACCEPTED" },
+        where: { userId: existingUser.id, campaignId: cid, inviteStatus: "ACCEPTED" },
       });
       if (alreadyAccepted) {
         await db.inviteLink.update({
@@ -47,12 +46,12 @@ export async function POST(req: NextRequest) {
 
     // Cria ou atualiza UserCampaign pendente para esse email
     const existing = await db.userCampaign.findFirst({
-      where: { pendingEmail: normalizedEmail, campaignId: CAMPAIGN_ID },
+      where: { pendingEmail: normalizedEmail, campaignId: cid },
     });
     if (!existing) {
       await db.userCampaign.create({
         data: {
-          campaignId: CAMPAIGN_ID,
+          campaignId: cid,
           pendingEmail: normalizedEmail,
           role: link.role,
           inviteStatus: "PENDING",

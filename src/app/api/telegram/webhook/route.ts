@@ -10,12 +10,11 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { getCampaignContext } from "@/lib/campaign-context";
 import { sendTelegram } from "@/lib/telegram";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-const CID = "andre-santos-2026";
 
 const TYPE_EMOJI: Record<string, string> = {
   REUNIAO: "🤝", CULTO: "⛪", PANFLETAGEM: "📋",
