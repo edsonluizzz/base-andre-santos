@@ -8,6 +8,7 @@ export async function POST(_req: NextRequest, { params }: { params: { id: string
     const session = await auth();
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const { db, cid } = getCampaignContext(session);
+    const CID = cid;
 
     const existing = await db.collaborator.findFirst({
       where: { id: params.id, campaignId: CID },

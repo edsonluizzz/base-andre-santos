@@ -11,6 +11,7 @@ export async function GET() {
     const session = await auth();
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const { db, cid } = getCampaignContext(session);
+    const CID = cid;
     const broadcasts = await db.broadcast.findMany({
       where: { campaignId: CID },
       orderBy: { createdAt: "desc" },
@@ -36,6 +37,7 @@ export async function POST(req: NextRequest) {
     const session = await auth();
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const { db, cid } = getCampaignContext(session);
+    const CID = cid;
     if (session.user.role !== "ADMIN") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
     const { title, message, audience } = await req.json();

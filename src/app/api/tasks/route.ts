@@ -8,6 +8,7 @@ export async function GET(req: NextRequest) {
     const session = await auth();
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const { db, cid } = getCampaignContext(session);
+    const CID = cid;
 
     const all = req.nextUrl.searchParams.get("all") === "true" && session.user.role === "ADMIN";
 
@@ -37,6 +38,7 @@ export async function POST(req: NextRequest) {
     const session = await auth();
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const { db, cid } = getCampaignContext(session);
+    const CID = cid;
 
     const { title, description, dueDate, priority, assignedToId } = await req.json();
     if (!title?.trim()) return NextResponse.json({ error: "Título obrigatório" }, { status: 400 });

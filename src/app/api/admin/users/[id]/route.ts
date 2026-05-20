@@ -8,6 +8,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     const session = await auth();
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const { db, cid } = getCampaignContext(session);
+    const CID = cid;
     if (!["ADMIN"].includes(session.user.role ?? "")) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
     const { role, tier } = await req.json();
@@ -41,6 +42,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: { id: stri
     const session = await auth();
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const { db, cid } = getCampaignContext(session);
+    const CID = cid;
     if (!["ADMIN"].includes(session.user.role ?? "")) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
     if (params.id === session.user.id) {
@@ -66,6 +68,7 @@ export async function PATCH(_req: NextRequest, { params }: { params: { id: strin
     const session = await auth();
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const { db, cid } = getCampaignContext(session);
+    const CID = cid;
     if (!["ADMIN"].includes(session.user.role ?? "")) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
     const uc = await db.userCampaign.findUnique({ where: { id: params.id } });

@@ -10,6 +10,7 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
     const session = await auth();
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const { db, cid } = getCampaignContext(session);
+    const CID = cid;
     const c = await db.collaborator.findFirst({
       where: { id: params.id, campaignId: CID },
       include: {
@@ -31,6 +32,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     const session = await auth();
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const { db, cid } = getCampaignContext(session);
+    const CID = cid;
 
     const existing = await db.collaborator.findFirst({ where: { id: params.id, campaignId: CID } });
     if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -94,6 +96,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: { id: stri
     const session = await auth();
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const { db, cid } = getCampaignContext(session);
+    const CID = cid;
     if (session.user.role !== "ADMIN") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
     const existing = await db.collaborator.findFirst({ where: { id: params.id, campaignId: CID } });

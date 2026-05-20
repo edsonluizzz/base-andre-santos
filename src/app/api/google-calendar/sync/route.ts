@@ -10,6 +10,7 @@ export async function POST() {
     const session = await auth();
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const { db, cid } = getCampaignContext(session);
+    const CID = cid;
     if (!["ADMIN", "LEADER"].includes(session.user.role ?? "")) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
     const settings = await db.settings.findUnique({ where: { id: "singleton" }, select: { googleRefreshToken: true } });

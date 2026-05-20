@@ -8,6 +8,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     const session = await auth();
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const { db, cid } = getCampaignContext(session);
+    const CID = cid;
     if (!["ADMIN", "LEADER"].includes(session.user.role ?? "")) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
     const existing = await db.zone.findFirst({ where: { id: params.id, campaignId: CID } });
@@ -30,6 +31,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: { id: stri
     const session = await auth();
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const { db, cid } = getCampaignContext(session);
+    const CID = cid;
     if (session.user.role !== "ADMIN") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
     const existing = await db.zone.findFirst({ where: { id: params.id, campaignId: CID } });

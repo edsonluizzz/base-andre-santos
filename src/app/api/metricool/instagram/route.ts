@@ -9,6 +9,7 @@ export async function GET(req: NextRequest) {
     const session = await auth();
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const { db, cid } = getCampaignContext(session);
+    const CID = cid;
 
     const token = process.env.METRICOOL_TOKEN;
     if (!token) return NextResponse.json({ error: "Metricool não configurado" }, { status: 503 });

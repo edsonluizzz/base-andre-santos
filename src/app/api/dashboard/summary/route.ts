@@ -8,6 +8,7 @@ export async function GET() {
     const session = await auth();
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const { db, cid } = getCampaignContext(session);
+    const CID = cid;
 
     const [total, byRole, byCityRaw, groups, upcomingEvents] = await Promise.all([
       db.collaborator.count({ where: { campaignId: CID, status: "ACTIVE" } }),

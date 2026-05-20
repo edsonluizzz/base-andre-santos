@@ -8,6 +8,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     const session = await auth();
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const { db, cid } = getCampaignContext(session);
+    const CID = cid;
 
     const task = await db.task.findFirst({
       where: { id: params.id, campaignId: CID },
@@ -38,6 +39,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: { id: stri
     const session = await auth();
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const { db, cid } = getCampaignContext(session);
+    const CID = cid;
 
     const task = await db.task.findFirst({ where: { id: params.id, campaignId: CID } });
     if (!task) return NextResponse.json({ error: "Not found" }, { status: 404 });

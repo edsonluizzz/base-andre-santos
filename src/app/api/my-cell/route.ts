@@ -8,6 +8,7 @@ export async function GET() {
     const session = await auth();
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const { db, cid } = getCampaignContext(session);
+    const CID = cid;
     const uid = session.user.id;
 
     const [uc, total, active, leads, inactive] = await Promise.all([

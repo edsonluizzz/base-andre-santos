@@ -8,6 +8,7 @@ export async function GET() {
     const session = await auth();
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const { db, cid } = getCampaignContext(session);
+    const CID = cid;
     const campaign = await db.campaign.findUnique({
       where: { id: cid },
       select: { id: true, name: true, joinCode: true },
@@ -24,6 +25,7 @@ export async function PUT(req: NextRequest) {
     const session = await auth();
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const { db, cid } = getCampaignContext(session);
+    const CID = cid;
     if (session.user.role !== "ADMIN") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     const { joinCode } = await req.json();
     const campaign = await db.campaign.update({
