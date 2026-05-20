@@ -10,6 +10,8 @@ import maraLimaData from "@/data/mara-lima-2022.json";
 
 export default async function MetasPage() {
   const session = await auth();
+  const { db, cid } = getCampaignContext(session!);
+  const CID = cid;
   const role = (session?.user as { role?: string })?.role ?? "MEMBER";
   if (!["LEADER", "ADMIN"].includes(role)) redirect("/dashboard");
 

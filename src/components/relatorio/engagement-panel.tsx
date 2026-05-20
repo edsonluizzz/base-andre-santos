@@ -1,4 +1,6 @@
-import { getCampaignContext } from "@/lib/campaign-context";
+import { db } from "@/lib/db";
+
+const CID = "andre-santos-2026";
 import { Trophy, Zap, AlertTriangle } from "lucide-react";
 
 

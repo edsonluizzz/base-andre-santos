@@ -28,6 +28,8 @@ const CONTRIB_LABEL = Object.fromEntries(CONTRIBUTION_OPTIONS.map((o) => [o.valu
 
 export default async function CollaboratorProfilePage({ params }: { params: { id: string } }) {
   const session = await auth();
+  const { db, cid } = getCampaignContext(session!);
+  const CID = cid;
   const isAdmin = ["ADMIN", "LEADER"].includes(session?.user?.role ?? "");
 
   const collaborator = await db.collaborator.findFirst({

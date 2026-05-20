@@ -1,4 +1,6 @@
-import { getCampaignContext } from "@/lib/campaign-context";
+import { db } from "@/lib/db";
+
+const CID = "andre-santos-2026";
 import { TrendingUp, TrendingDown, Minus, AlertTriangle } from "lucide-react";
 
 

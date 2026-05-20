@@ -35,6 +35,8 @@ const EVENT_TYPE_LABEL: Record<string, string> = {
 export default async function DashboardPage() {
   const session = await auth();
   const userId = session?.user?.id;
+  const { db, cid } = getCampaignContext(session!);
+  const CID = cid;
 
   const [total, byRole, cityRaw, groups, zones, upcomingEvents, myTotal, myActive, myTier] = await Promise.all([
     db.collaborator.count({ where: { campaignId: CID, status: "ACTIVE" } }),

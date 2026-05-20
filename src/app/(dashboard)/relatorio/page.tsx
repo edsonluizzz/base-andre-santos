@@ -66,7 +66,9 @@ export default async function RelatorioPage({
 }: {
   searchParams: { cob?: string; perfil?: string; periodo?: string };
 }) {
-  await auth();
+  const session = await auth();
+  const { db, cid } = getCampaignContext(session!);
+  const CID = cid;
   const activeCob     = searchParams.cob    ?? null;
   const activeProfile = searchParams.perfil ?? null;
   const activePeriodo = searchParams.periodo ?? "30";
