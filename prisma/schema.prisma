@@ -7,16 +7,25 @@ datasource db {
 }
 
 model Campaign {
-  id         String   @id
-  name       String
-  logoBase64 String?  @db.Text
-  joinCode   String?  @unique
-  slug       String?  @unique
-  dbUrl      String?  @db.Text
-  plan       String   @default("free")
-  active     Boolean  @default(true)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id              String   @id
+  name            String
+  logoBase64      String?  @db.Text
+  joinCode        String?  @unique
+  slug            String?  @unique
+  dbUrl           String?  @db.Text
+  plan            String   @default("free")
+  active          Boolean  @default(true)
+  // Personalização do candidato (Sprint 3)
+  candidateName   String?
+  candidatePhoto  String?  @db.Text
+  party           String?
+  district        String?
+  electionYear    Int?
+  primaryColor    String?
+  secondaryColor  String?
+  adminEmail      String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
   collaborators  Collaborator[]
   zones          Zone[]
   whatsappGroups WhatsAppGroup[]

@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import {
   LayoutDashboard, Users, MapPin, MessageCircle, Calendar,
-  Megaphone, Settings, LogOut, Menu, X, Shield, Star, Map, BarChart2, Network, Trophy, FileText, Target, ClipboardList, Camera, Award,
+  Megaphone, Settings, LogOut, Menu, X, Shield, Star, Map, BarChart2, Network, Trophy, FileText, Target, ClipboardList, Camera, Award, Building2, Plus,
 } from "lucide-react";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { useState, useEffect, useRef } from "react";
@@ -15,22 +15,24 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 const ROLE_RANK: Record<string, number> = { MEMBER: 0, LEADER: 1, ADMIN: 2 };
 
 const navItems = [
-  { href: "/dashboard",     icon: LayoutDashboard, label: "Dashboard",       minRole: "MEMBER" },
-  { href: "/colaboradores", icon: Users,            label: "Colaboradores",   minRole: "MEMBER" },
-  { href: "/minha-celula",  icon: Star,             label: "Minha Célula",    minRole: "MEMBER" },
-  { href: "/celulas",       icon: Network,          label: "Células",         minRole: "MEMBER" },
-  { href: "/ranking",       icon: Trophy,           label: "Ranking",         minRole: "MEMBER" },
-  { href: "/mapa",          icon: Map,              label: "Mapa de Apoio",   minRole: "LEADER" },
-  { href: "/grupos",        icon: MessageCircle,    label: "Grupos WhatsApp", minRole: "LEADER" },
-  { href: "/agenda",        icon: Calendar,         label: "Agenda",          minRole: "LEADER" },
-  { href: "/relatorio",     icon: BarChart2,        label: "Relatório",       minRole: "LEADER" },
-  { href: "/metas",         icon: Target,           label: "Metas",           minRole: "LEADER" },
-  { href: "/instagram",     icon: Camera,           label: "Instagram",       minRole: "LEADER" },
-  { href: "/eleitos-2022",  icon: Award,            label: "Eleitos 2022",    minRole: "LEADER" },
-  { href: "/tarefas",       icon: ClipboardList,    label: "Tarefas",         minRole: "ADMIN"  },
-  { href: "/comunicados",   icon: Megaphone,        label: "Comunicados",     minRole: "ADMIN"  },
-  { href: "/configuracoes", icon: Settings,         label: "Configurações",   minRole: "ADMIN"  },
-  { href: "/super-admin",   icon: Shield,           label: "Super Admin",     minRole: "ADMIN"  },
+  { href: "/dashboard",      icon: LayoutDashboard, label: "Dashboard",       minRole: "MEMBER", superAdminOnly: false },
+  { href: "/colaboradores",  icon: Users,            label: "Colaboradores",   minRole: "MEMBER", superAdminOnly: false },
+  { href: "/minha-celula",   icon: Star,             label: "Minha Célula",    minRole: "MEMBER", superAdminOnly: false },
+  { href: "/celulas",        icon: Network,          label: "Células",         minRole: "MEMBER", superAdminOnly: false },
+  { href: "/ranking",        icon: Trophy,           label: "Ranking",         minRole: "MEMBER", superAdminOnly: false },
+  { href: "/mapa",           icon: Map,              label: "Mapa de Apoio",   minRole: "LEADER", superAdminOnly: false },
+  { href: "/grupos",         icon: MessageCircle,    label: "Grupos WhatsApp", minRole: "LEADER", superAdminOnly: false },
+  { href: "/agenda",         icon: Calendar,         label: "Agenda",          minRole: "LEADER", superAdminOnly: false },
+  { href: "/relatorio",      icon: BarChart2,        label: "Relatório",       minRole: "LEADER", superAdminOnly: false },
+  { href: "/metas",          icon: Target,           label: "Metas",           minRole: "LEADER", superAdminOnly: false },
+  { href: "/instagram",      icon: Camera,           label: "Instagram",       minRole: "LEADER", superAdminOnly: false },
+  { href: "/eleitos-2022",   icon: Award,            label: "Eleitos 2022",    minRole: "LEADER", superAdminOnly: false },
+  { href: "/tarefas",        icon: ClipboardList,    label: "Tarefas",         minRole: "ADMIN",  superAdminOnly: false },
+  { href: "/comunicados",    icon: Megaphone,        label: "Comunicados",     minRole: "ADMIN",  superAdminOnly: false },
+  { href: "/configuracoes",  icon: Settings,         label: "Configurações",   minRole: "ADMIN",  superAdminOnly: false },
+  { href: "/super-admin",    icon: Shield,           label: "Super Admin",     minRole: "ADMIN",  superAdminOnly: true  },
+  { href: "/campanhas",      icon: Building2,        label: "Campanhas",       minRole: "ADMIN",  superAdminOnly: true  },
+  { href: "/nova-campanha",  icon: Plus,             label: "Nova Campanha",   minRole: "ADMIN",  superAdminOnly: true  },
 ];
 
 const ROLE_LABEL: Record<string, string> = {
@@ -68,9 +70,9 @@ export function Sidebar({
 
   const visibleItems = navItems.filter((item) => (ROLE_RANK[item.minRole] ?? 0) <= userRank);
 
-  // Super Admin visível apenas para superAdmin (subset do ADMIN)
+  // Itens com superAdminOnly só aparecem para superAdmin
   const finalItems = visibleItems.filter((item) =>
-    item.href === "/super-admin" ? isSuperAdmin : true
+    item.superAdminOnly ? isSuperAdmin : true
   );
 
   const initials = displayName
