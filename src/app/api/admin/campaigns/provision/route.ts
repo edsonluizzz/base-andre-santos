@@ -77,6 +77,8 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    let neonProjectId: string | undefined;
+
     if (!dbUrl && neonApiKey) {
       // Fallback: Neon API direta (funciona em contas Neon independentes)
       const neonRes = await fetch(`${NEON_API}/projects`, {
@@ -93,6 +95,7 @@ export async function POST(req: NextRequest) {
 
       if (neonRes.ok) {
         const neonData = await neonRes.json();
+        neonProjectId = neonData.project?.id;
         const uris: Array<{ connection_uri: string }> = neonData.connection_uris ?? [];
         const unpooled = uris.find(u => !u.connection_uri.includes("-pooler"));
         dbUrl = unpooled?.connection_uri ?? uris[0]?.connection_uri ?? null;
@@ -153,7 +156,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       ok: true,
       campaign,
-      neonProjectId: neonData.project?.id,
+      neonProjectId,
       dbUrl,
     });
   } catch (err) {

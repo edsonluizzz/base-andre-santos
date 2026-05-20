@@ -135,7 +135,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.user.establishmentId = (token.campaignId as string) ?? CAMPAIGN_ID;
         session.user.campaignId = (token.campaignId as string) ?? CAMPAIGN_ID;
         session.user.dbUrl = token.dbUrl as string | undefined;
-        session.user.isSuperAdmin = Boolean(token.isSuperAdmin);
+        // Re-avalia isSuperAdmin em toda sessão — garante tokens criados antes do campo funcionem
+        const superAdminEmails = (process.env.SUPER_ADMIN_EMAILS ?? "")
+          .split(",").map((e) => e.trim()).filter(Boolean);
+        session.user.isSuperAdmin = Boolean(token.isSuperAdmin) ||
+          (!!session.user.email && superAdminEmails.includes(session.user.email));
         session.user.needsChurchSelection = false;
         session.user.suspended = false;
         session.user.isImpersonating = Boolean(token.isImpersonating);

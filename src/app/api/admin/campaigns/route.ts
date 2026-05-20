@@ -40,16 +40,24 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "id, name e dbUrl são obrigatórios" }, { status: 400 });
     }
 
-    const existing = await db.campaign.findUnique({ where: { id } });
-    if (existing) {
+    const effectiveSlug = slug || id;
+
+    const [existingById, existingBySlug] = await Promise.all([
+      db.campaign.findUnique({ where: { id } }),
+      db.campaign.findUnique({ where: { slug: effectiveSlug } }),
+    ]);
+    if (existingById) {
       return NextResponse.json({ error: "Campanha com este ID já existe" }, { status: 409 });
+    }
+    if (existingBySlug) {
+      return NextResponse.json({ error: `Slug "${effectiveSlug}" já está em uso por outra campanha` }, { status: 409 });
     }
 
     const campaign = await db.campaign.create({
       data: {
         id,
         name,
-        slug: slug || id,
+        slug: effectiveSlug,
         dbUrl,
         plan: plan || "free",
         active: true,
@@ -66,7 +74,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, campaign });
   } catch (err) {
     console.error("[campaigns POST]", err);
-    return NextResponse.json({ error: "Erro interno" }, { status: 500 });
+    const msg = err instanceof Error ? err.message : "Erro interno desconhecido";
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
 
