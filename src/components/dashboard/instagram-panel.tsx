@@ -103,6 +103,7 @@ export function InstagramPanel() {
                 src={p.imageUrl}
                 alt={p.content?.slice(0, 40) ?? "Post"}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                referrerPolicy="no-referrer"
               />
               <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1">
                 <div className="flex items-center gap-1 text-white text-xs">

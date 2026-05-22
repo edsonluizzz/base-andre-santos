@@ -70,6 +70,7 @@ function PostCard({ p }: { p: Post }) {
           src={p.imageUrl}
           alt={p.content?.slice(0, 60) ?? "Post"}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          referrerPolicy="no-referrer"
         />
         {isReel && (
           <span className="absolute top-2 left-2 bg-black/70 rounded-md px-1.5 py-0.5 flex items-center gap-1">
