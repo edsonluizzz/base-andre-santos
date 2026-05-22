@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Star } from "lucide-react";
 
-export const metadata = { title: "Política de Privacidade — Base André Santos 2026" };
+export const metadata = { title: "Política de Privacidade — Ovile Eleitoral" };
 
 export default function PrivacidadePage() {
   return (
@@ -88,7 +88,7 @@ export default function PrivacidadePage() {
         </div>
 
         <div className="mt-10 pt-6 border-t border-white/[0.07] flex items-center justify-between">
-          <p className="text-xs text-slate-500">Base André Santos 2026 · LGPD Art. 9</p>
+          <p className="text-xs text-slate-500">Ovile Eleitoral · LGPD Art. 9</p>
           <Link href="/cadastro" className="text-xs underline underline-offset-2" style={{ color: "rgba(212,175,55,0.7)" }}>
             Voltar ao cadastro
           </Link>

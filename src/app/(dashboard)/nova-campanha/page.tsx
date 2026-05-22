@@ -2,7 +2,7 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { NovaCampanhaForm } from "./NovaCampanhaForm";
 
-export const metadata = { title: "Nova Campanha — ISSACAR.IA" };
+export const metadata = { title: "Nova Campanha — Ovile Eleitoral" };
 
 export default async function NovaCampanhaPage() {
   const session = await auth();
@@ -13,7 +13,7 @@ export default async function NovaCampanhaPage() {
       <div>
         <h1 className="text-xl font-bold text-foreground">Nova Campanha</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Crie um novo tenant no ISSACAR.IA. Após criar, inicialize o banco com{" "}
+          Crie um novo tenant no Ovile Eleitoral. Após criar, inicialize o banco com{" "}
           <code className="text-xs bg-white/10 px-1.5 py-0.5 rounded">
             DATABASE_URL=&lt;url&gt; npx prisma db push
           </code>

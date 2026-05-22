@@ -1,5 +1,5 @@
 /**
- * SQL de inicialização do schema para novos tenants ISSACAR.IA.
+ * SQL de inicialização do schema para novos tenants Ovile Eleitoral.
  * Gerado via: npx prisma migrate diff --from-empty --to-schema prisma/schema.prisma --script
  * Atualizar sempre que o schema mudar.
  */

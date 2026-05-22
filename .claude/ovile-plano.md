@@ -1,7 +1,7 @@
-# Plano — ISSACAR.IA (issacar.app): Multi-Tenant + Rename + Escalabilidade
+# Plano — Ovile Eleitoral (ovile.com.br): Multi-Tenant + Escalabilidade
 
-> **Status:** Planejado em 2026-05-13 · Aguardando início da implementação
-> **Próximo passo:** Criar branch `v2/issacar` e iniciar Sprint 1
+> **Status:** Rebrand concluído em 2026-05-22 · Domínio: ovile.com.br · Produto renomeado de ISSACAR.IA → Ovile Eleitoral
+> **Próximo passo:** Sprint 4 — roteamento de tenant (JWT dinâmico por campanha · slug/subdomínio · convite de admin)
 
 ## Contexto
 

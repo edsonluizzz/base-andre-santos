@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          name: `issacar-${(slug || id).slice(0, 30)}`,
+          name: `ovile-${(slug || id).slice(0, 30)}`,
           type: "postgres",
           plan: "free",
           region: "sae1", // South America East — São Paulo
@@ -89,7 +89,7 @@ export async function POST(req: NextRequest) {
           "Accept": "application/json",
         },
         body: JSON.stringify({
-          project: { name: `issacar-${slug || id}`, region_id: NEON_REGION, pg_version: 16 },
+          project: { name: `ovile-${slug || id}`, region_id: NEON_REGION, pg_version: 16 },
         }),
       });
 

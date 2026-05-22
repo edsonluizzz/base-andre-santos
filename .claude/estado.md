@@ -1,10 +1,10 @@
-# Estado — Base André Santos / ISSACAR.IA
+# Estado — Ovile Eleitoral (Base André Santos)
 
-**Última atualização:** 2026-05-19 (Sprint 1–3 ISSACAR multi-tenant · fix CID em 47 rotas · eleitos 2022 PR · Mara Lima corrigida)
-**Plano de produto:** `.claude/issacar-plano.md` — transformar em SaaS multi-tenant (issacar.app)
-**Landing page:** https://issacar-landing.vercel.app · domínio issacar.app pendente configuração DNS
+**Última atualização:** 2026-05-22 (rebrand ISSACAR.IA → Ovile Eleitoral · landing page / · domínio ovile.com.br)
+**Plano de produto:** `.claude/ovile-plano.md` — SaaS multi-tenant eleitoral
+**Domínio:** ovile.com.br (migrado do projeto Ovile igreja)
 **GitHub:** https://github.com/edsonluizzz/base-andre-santos
-**Deploy:** Vercel — base-andre-santos.vercel.app · último deploy: `138092a` (READY)
+**Deploy:** Vercel — base-andre-santos.vercel.app · último deploy: `fb2f05e` (READY)
 
 ---
 
@@ -230,6 +230,16 @@ gcal-sync:              0 4 * * *             (1×/dia — Hobby plan limit)
 - **Sidebar nome/foto:** `serverName` e `serverImage` passados do layout (server) para o Sidebar — elimina flash de "Usuário"/"U" enquanto useSession carrega
 - **Super Admin:** 5 seções expansíveis com chevron, badge de contagem e estado padrão correto (Com acesso e Pendentes abertos por padrão)
 - **lucide-react:** ícone `Instagram` não existe — usar `Camera` como substituto
+
+## Entregas sprint 2026-05-20
+
+- ✅ **Fix 3 bugs criação de campanha** (commit `fb2f05e`):
+  - `provision/route.ts`: `neonData` declarado dentro de bloco `if` mas referenciado fora → ReferenceError silencioso (modo auto quebrado)
+  - `campaigns/route.ts`: catch retornava "Erro interno" genérico; adicionado check de slug duplicado + erro real exposto no response
+  - `auth.ts` session callback: `isSuperAdmin` re-avaliado em toda sessão — tokens antigos chegavam como `false`
+- ✅ **Banco Neon tenant inicializado**: `ep-steep-poetry-acb6x32c` · prisma db push via C:\tmp (Google Drive trava npm)
+- ⚠️ **Workflow**: Google Drive/OneDrive travam npm install — mover projetos para `C:\Projetos\` ou usar GitHub Codespaces
+- ⏳ **Sprint 4 ISSACAR** (próximo): roteamento de tenant — JWT dinâmico por campanha · slug/subdomínio · convite de admin do tenant
 
 ## ISSACAR.IA — Multi-tenant (Sprints 1–3) — 2026-05-19
 

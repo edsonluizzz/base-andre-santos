@@ -10,8 +10,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Base André Santos",
-  description: "Sistema interno de gestão da base de apoio André Santos 2026",
+  title: "Ovile Eleitoral",
+  description: "Gestão de base eleitoral",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -6,7 +6,7 @@ import { Plus, Users, Database, CheckCircle2, XCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
-export const metadata = { title: "Campanhas — ISSACAR.IA" };
+export const metadata = { title: "Campanhas — Ovile Eleitoral" };
 
 export default async function CampanhasPage() {
   const session = await auth();
