@@ -3,6 +3,8 @@ import { auth } from "@/lib/auth";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Ovile Eleitoral",
   description: "Gestão de base eleitoral",
