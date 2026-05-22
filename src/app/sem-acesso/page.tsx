@@ -17,7 +17,7 @@ export default function SemAcessoPage() {
 
         <div>
           <p className="text-xs tracking-[3px] uppercase mb-2" style={{ color: "rgba(212,175,55,0.7)" }}>
-            Base de Apoio 2026
+            Ovile Eleitoral
           </p>
           <h1 className="text-2xl font-bold text-white">Acesso restrito</h1>
           <p className="text-slate-400 mt-3 leading-relaxed text-sm">

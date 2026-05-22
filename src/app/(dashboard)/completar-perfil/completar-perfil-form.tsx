@@ -91,7 +91,7 @@ export function CompletarPerfilForm({ defaultName, defaultEmail }: Props) {
             </div>
           </div>
           <div>
-            <p className="text-xs tracking-[3px] uppercase" style={{ color: "rgba(212,175,55,0.7)" }}>Base de Apoio 2026</p>
+            <p className="text-xs tracking-[3px] uppercase" style={{ color: "rgba(212,175,55,0.7)" }}>Ovile Eleitoral</p>
             <h1 className="text-2xl font-bold text-white mt-1">Complete seu perfil</h1>
             <p className="text-slate-400 text-sm mt-1">Só mais algumas informações para finalizar</p>
           </div>

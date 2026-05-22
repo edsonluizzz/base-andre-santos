@@ -4,7 +4,7 @@ export default function GlobalError({ reset }: { error: Error & { digest?: strin
   return (
     <html lang="pt-BR">
       <body style={{ margin: 0, background: "#0a1220", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "100vh", gap: "16px", fontFamily: "sans-serif", color: "#fff" }}>
-        <p style={{ fontSize: "11px", letterSpacing: "4px", textTransform: "uppercase", color: "rgba(212,175,55,0.6)", margin: 0 }}>Base de Apoio · 2026</p>
+        <p style={{ fontSize: "11px", letterSpacing: "4px", textTransform: "uppercase", color: "rgba(212,175,55,0.6)", margin: 0 }}>Ovile Eleitoral</p>
         <h2 style={{ margin: 0, fontSize: "24px" }}>Algo deu errado</h2>
         <button
           onClick={() => reset()}

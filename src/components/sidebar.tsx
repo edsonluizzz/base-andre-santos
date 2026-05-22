@@ -109,8 +109,8 @@ export function Sidebar({
               <Star className="w-4 h-4 text-primary fill-primary/30" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[10px] tracking-[3px] uppercase text-primary/70">Base de Apoio 2026</p>
-              <p className="text-sm font-bold text-foreground truncate">Base André Santos</p>
+              <p className="text-[10px] tracking-[3px] uppercase text-primary/70">Ovile Eleitoral</p>
+              <p className="text-sm font-bold text-foreground truncate">Ovile Eleitoral</p>
             </div>
           </div>
         </div>

@@ -23,7 +23,7 @@ export default function Error({
         <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-6" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.25)" }}>
           <AlertTriangle className="w-6 h-6 text-red-400" />
         </div>
-        <p className="text-[11px] tracking-[4px] uppercase mb-2" style={{ color: "rgba(212,175,55,0.6)" }}>Base de Apoio · 2026</p>
+        <p className="text-[11px] tracking-[4px] uppercase mb-2" style={{ color: "rgba(212,175,55,0.6)" }}>Ovile Eleitoral</p>
         <h1 className="text-2xl font-bold text-white mb-3">Algo deu errado</h1>
         <p className="text-slate-400 text-sm mb-8">Ocorreu um erro inesperado. Tente novamente.</p>
         <button

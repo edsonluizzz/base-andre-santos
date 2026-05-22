@@ -161,8 +161,8 @@ export default function EntrarPage() {
               <span className="text-3xl">🤝</span>
             </div>
           </div>
-          <h1 className="text-2xl font-bold text-white mb-1">Base de Apoio</h1>
-          <p className="text-[#d4af37] font-semibold">André Santos 2026</p>
+          <h1 className="text-2xl font-bold text-white mb-1">Ovile Eleitoral</h1>
+          <p className="text-[#d4af37] font-semibold">Gestão de base eleitoral</p>
         </div>
 
         <Suspense fallback={<div className="bg-[#111] border border-white/10 rounded-2xl p-8 text-center text-white/50">Carregando...</div>}>
@@ -170,7 +170,7 @@ export default function EntrarPage() {
         </Suspense>
 
         <p className="text-center text-white/20 text-xs mt-6">
-          Base de Apoio André Santos 2026
+          Ovile Eleitoral
         </p>
       </div>
     </div>

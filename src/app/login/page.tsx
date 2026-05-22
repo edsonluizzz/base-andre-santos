@@ -16,8 +16,8 @@ export default async function LoginPage() {
           </div>
         </div>
         <div>
-          <p className="text-xs tracking-[3px] uppercase text-primary/70 mb-1">Base de Apoio 2026</p>
-          <h1 className="text-2xl font-bold text-foreground">Base André Santos</h1>
+          <p className="text-xs tracking-[3px] uppercase text-primary/70 mb-1">Ovile Eleitoral</p>
+          <h1 className="text-2xl font-bold text-foreground">Gestão de base eleitoral</h1>
           <p className="text-sm text-muted-foreground mt-2">Sistema interno de gestão da base de apoio</p>
         </div>
         <form action={async () => {

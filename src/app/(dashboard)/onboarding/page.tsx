@@ -68,7 +68,7 @@ export default function OnboardingPage() {
         <div>
           <h1 className="text-2xl font-bold text-foreground">Bem-vindo, {firstName}!</h1>
           <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed">
-            Você agora faz parte da Base André Santos 2026.<br />
+            Você agora faz parte do Ovile Eleitoral.<br />
             Veja como contribuir com a base de apoio.
           </p>
         </div>
