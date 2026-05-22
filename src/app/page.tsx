@@ -32,7 +32,7 @@ export default async function Home() {
 
         {/* CTA */}
         <Link
-          href="/entrar"
+          href="/login"
           className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm transition-opacity hover:opacity-80"
           style={{ background: "#d4af37", color: "#0a1220" }}
         >
