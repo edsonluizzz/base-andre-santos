@@ -21,9 +21,9 @@ export function ElectionCountdown() {
         <p className={`text-[10px] font-semibold uppercase tracking-widest mt-0.5 ${urgency.label}`}>dias</p>
       </div>
       <div className="w-px h-10 bg-white/[0.08] shrink-0" />
-      <div>
+      <div className="min-w-0 flex-1">
         <p className="text-sm font-semibold text-foreground leading-tight">1º Turno — Eleições 2026</p>
-        <p className="text-xs text-muted-foreground mt-0.5">4 de outubro de 2026 · Deputado Estadual PR</p>
+        <p className="text-xs text-muted-foreground mt-0.5">4 de outubro de 2026 · Dep. Estadual PR</p>
       </div>
     </div>
   );

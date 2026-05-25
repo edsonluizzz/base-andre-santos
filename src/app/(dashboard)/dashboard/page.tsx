@@ -116,9 +116,9 @@ export default async function DashboardPage() {
         ))}
       </div>
 
-      <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4 xl:gap-6">
+      <div className="grid lg:grid-cols-3 gap-6">
         {/* Colaboradores por cargo */}
-        <div className="glass-card rounded-2xl p-4 sm:p-6 border border-border lg:col-span-1">
+        <div className="glass-card rounded-2xl p-6 border border-border lg:col-span-1">
           <div className="flex items-center gap-2 mb-5">
             <TrendingUp className="w-4 h-4 text-primary" />
             <h2 className="text-sm font-semibold text-foreground">Por Cargo</h2>
@@ -143,7 +143,7 @@ export default async function DashboardPage() {
         </div>
 
         {/* Minha Célula */}
-        <div className="glass-card rounded-2xl p-4 sm:p-6 border border-border lg:col-span-1">
+        <div className="glass-card rounded-2xl p-6 border border-border lg:col-span-1">
           <div className="flex items-center gap-2 mb-5">
             <Star className="w-4 h-4 text-primary" />
             <h2 className="text-sm font-semibold text-foreground">Minha Célula</h2>
@@ -190,7 +190,7 @@ export default async function DashboardPage() {
         </div>
 
         {/* Próximos eventos */}
-        <div className="glass-card rounded-2xl p-4 sm:p-6 border border-border lg:col-span-1">
+        <div className="glass-card rounded-2xl p-6 border border-border lg:col-span-1">
           <div className="flex items-center justify-between mb-5">
             <div className="flex items-center gap-2">
               <Calendar className="w-4 h-4 text-primary" />
