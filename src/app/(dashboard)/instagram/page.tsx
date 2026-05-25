@@ -67,10 +67,10 @@ function PostCard({ p }: { p: Post }) {
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           key={id}
-          src={p.imageUrl}
+          src={p.imageUrl ? `/api/proxy/image?url=${encodeURIComponent(p.imageUrl)}` : ""}
           alt={p.content?.slice(0, 60) ?? "Post"}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          referrerPolicy="no-referrer"
+          onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
         />
         {isReel && (
           <span className="absolute top-2 left-2 bg-black/70 rounded-md px-1.5 py-0.5 flex items-center gap-1">

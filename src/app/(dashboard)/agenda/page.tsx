@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { QRCodeSVG } from "qrcode.react";
 import {
   Calendar, List, MapPin, Clock, RefreshCw, Plus,
   ChevronLeft, ChevronRight, X, Users, Tag, FileText,
@@ -516,10 +517,6 @@ function QrCodeDialog({ event, open, onClose }: { event: Event; open: boolean; o
     ? `${window.location.origin}/cadastro?source=EVENTO&event_id=${event.id}`
     : "";
 
-  const qrImageUrl = cadastroUrl
-    ? `https://api.qrserver.com/v1/create-qr-code/?size=260x260&format=png&qzone=1&data=${encodeURIComponent(cadastroUrl)}`
-    : "";
-
   function copyLink() {
     navigator.clipboard.writeText(cadastroUrl).then(() => {
       setCopied(true);
@@ -538,16 +535,14 @@ function QrCodeDialog({ event, open, onClose }: { event: Event; open: boolean; o
         </DialogHeader>
 
         <div className="flex flex-col items-center gap-4 py-2">
-          {/* QR Code image */}
-          {qrImageUrl && (
+          {/* QR Code */}
+          {cadastroUrl && (
             <div className="rounded-2xl border border-white/[0.10] overflow-hidden bg-white p-3">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={qrImageUrl}
-                alt="QR Code de cadastro"
-                width={240}
-                height={240}
-                className="block"
+              <QRCodeSVG
+                value={cadastroUrl}
+                size={240}
+                bgColor="#ffffff"
+                fgColor="#070a10"
               />
             </div>
           )}

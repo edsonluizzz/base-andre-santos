@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { QRCodeSVG } from "qrcode.react";
 import { Star, Users, UserCheck, UserX, Copy, Check, Phone, MapPin, ChevronDown, MessageCircle, ClipboardList, Plus, Trash2, Circle, CheckCircle2, Calendar } from "lucide-react";
 import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -221,21 +222,14 @@ export default function MinhaCelulaPage() {
               {referralLink && (
                 <div className="mt-auto space-y-3">
                   <div className="flex flex-col items-center gap-1.5">
-                    <img
-                      src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&bgcolor=ffffff&color=070a10&data=${encodeURIComponent(referralLink)}`}
-                      alt="QR Code do link de cadastro"
-                      width={180}
-                      height={180}
-                      className="rounded-xl bg-white p-1.5"
-                    />
-                    <a
-                      href={`https://api.qrserver.com/v1/create-qr-code/?size=800x800&bgcolor=ffffff&color=070a10&data=${encodeURIComponent(referralLink)}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-[10px] text-primary/70 hover:text-primary transition-colors underline underline-offset-2"
-                    >
-                      Abrir maior para imprimir
-                    </a>
+                    <div className="rounded-xl bg-white p-1.5">
+                      <QRCodeSVG
+                        value={referralLink}
+                        size={180}
+                        bgColor="#ffffff"
+                        fgColor="#070a10"
+                      />
+                    </div>
                   </div>
                   <div className="flex items-center gap-2 rounded-lg px-3 py-2.5 bg-white/[0.04] border border-white/[0.08] overflow-hidden">
                     <span className="flex-1 min-w-0 text-xs text-muted-foreground font-mono truncate">{referralLink}</span>
