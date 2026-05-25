@@ -6,10 +6,11 @@ import { signOut, useSession } from "next-auth/react";
 import {
   LayoutDashboard, Users, MapPin, MessageCircle, Calendar,
   Megaphone, Settings, LogOut, Menu, X, Shield, Star, Map, BarChart2, Network, Trophy, FileText, Target, ClipboardList, Camera, Award, Building2, Plus,
-  ChevronLeft, ChevronRight,
+  ChevronLeft, ChevronRight, Sun, Moon,
 } from "lucide-react";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { useState, useEffect, useRef } from "react";
+import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useSidebar } from "@/contexts/sidebar-context";
@@ -59,6 +60,7 @@ export function Sidebar({
   const [mobileOpen, setMobileOpen] = useState(false);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const { isCollapsed, toggle } = useSidebar();
+  const { theme, setTheme } = useTheme();
 
   useEffect(() => {
     if (!mobileOpen) menuButtonRef.current?.focus();
@@ -78,12 +80,14 @@ export function Sidebar({
   const initials = displayName
     .split(" ").slice(0, 2).map((n: string) => n[0]).join("").toUpperCase() || "U";
 
+  const isLight = theme === "light";
+
   return (
     <>
       {/* Mobile hamburger */}
       <button
         ref={menuButtonRef}
-        className="fixed top-4 left-4 z-50 lg:hidden glass-card border border-white/[0.07] p-2 rounded-lg cursor-pointer"
+        className="fixed top-4 left-4 z-50 lg:hidden glass-card border border-border p-2 rounded-lg cursor-pointer"
         onClick={() => setMobileOpen((o) => !o)}
         aria-label={mobileOpen ? "Fechar menu" : "Abrir menu"}
       >
@@ -97,7 +101,7 @@ export function Sidebar({
       <aside
         className={cn(
           "fixed top-0 left-0 h-full max-h-[100dvh] z-40 flex flex-col transition-all duration-300 overflow-y-auto overflow-x-hidden",
-          "border-r border-white/[0.06] bg-slate-950/90",
+          "border-r border-sidebar-border bg-sidebar",
           "lg:translate-x-0",
           mobileOpen ? "translate-x-0" : "-translate-x-full",
           isCollapsed ? "w-16" : "w-64"
@@ -105,7 +109,7 @@ export function Sidebar({
         style={{ backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)" }}
       >
         {/* Header */}
-        <div className="p-3 border-b border-white/[0.06] flex-shrink-0">
+        <div className="p-3 border-b border-sidebar-border flex-shrink-0">
           <div className={cn("flex items-center gap-3 px-1 py-1.5", isCollapsed && "justify-center")}>
             <div className="w-9 h-9 rounded-lg bg-primary/10 border border-primary/25 flex items-center justify-center animate-glow-pulse flex-shrink-0">
               <Star className="w-4 h-4 text-primary fill-primary/30" />
@@ -113,7 +117,7 @@ export function Sidebar({
             {!isCollapsed && (
               <div className="flex-1 min-w-0">
                 <p className="text-[10px] tracking-[3px] uppercase text-primary/70">Ovile Eleitoral</p>
-                <p className="text-sm font-bold text-foreground truncate">Ovile Eleitoral</p>
+                <p className="text-sm font-bold text-sidebar-foreground truncate">Ovile Eleitoral</p>
               </div>
             )}
           </div>
@@ -133,9 +137,10 @@ export function Sidebar({
                   "flex items-center gap-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200",
                   isCollapsed ? "px-0 justify-center" : "px-3",
                   active
-                    ? "bg-primary/10 text-primary border border-primary/20 shadow-[inset_3px_0_0_#d4af37]"
-                    : "text-muted-foreground hover:text-foreground hover:bg-white/[0.04] hover:translate-x-0.5"
+                    ? "bg-primary/10 text-primary border border-primary/20"
+                    : "text-muted-foreground hover:text-sidebar-foreground hover:bg-foreground/[0.05] hover:translate-x-0.5"
                 )}
+                style={active ? { boxShadow: "inset 3px 0 0 var(--primary)" } : undefined}
               >
                 <item.icon className="w-4 h-4 flex-shrink-0" />
                 {!isCollapsed && item.label}
@@ -152,7 +157,7 @@ export function Sidebar({
         )}
 
         {/* User footer */}
-        <div className={cn("p-3 border-t border-white/[0.06]", isCollapsed && "flex flex-col items-center gap-2")}>
+        <div className={cn("p-3 border-t border-sidebar-border", isCollapsed && "flex flex-col items-center gap-2")}>
           {!isCollapsed ? (
             <>
               <div className="flex items-center gap-3 mb-3">
@@ -161,7 +166,7 @@ export function Sidebar({
                   <AvatarFallback className="bg-primary/10 text-primary text-xs">{initials}</AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-foreground truncate">{displayName}</p>
+                  <p className="text-xs font-medium text-sidebar-foreground truncate">{displayName}</p>
                   <p className="text-[10px] text-muted-foreground">{ROLE_LABEL[role] ?? "Colaborador"}</p>
                 </div>
               </div>
@@ -194,17 +199,38 @@ export function Sidebar({
           )}
         </div>
 
-        {/* Toggle button (desktop only) */}
-        <button
-          onClick={toggle}
-          className="hidden lg:flex items-center justify-center w-full py-2 border-t border-white/[0.06] text-muted-foreground hover:text-foreground hover:bg-white/[0.04] transition-colors cursor-pointer flex-shrink-0"
-          title={isCollapsed ? "Expandir menu" : "Recolher menu"}
-        >
-          {isCollapsed
-            ? <ChevronRight className="w-4 h-4" />
-            : <ChevronLeft className="w-4 h-4" />
-          }
-        </button>
+        {/* Barra inferior: tema + collapse (desktop) */}
+        <div className="hidden lg:flex items-center border-t border-sidebar-border flex-shrink-0">
+          {/* Toggle tema */}
+          <button
+            onClick={() => setTheme(isLight ? "dark" : "light")}
+            className={cn(
+              "flex items-center justify-center py-2 text-muted-foreground hover:text-sidebar-foreground hover:bg-foreground/[0.05] transition-colors cursor-pointer",
+              isCollapsed ? "w-full" : "flex-1"
+            )}
+            title={isLight ? "Mudar para tema escuro" : "Mudar para tema claro"}
+          >
+            {isLight
+              ? <Moon className="w-4 h-4" />
+              : <Sun className="w-4 h-4" />
+            }
+          </button>
+
+          {/* Toggle sidebar */}
+          <button
+            onClick={toggle}
+            className={cn(
+              "flex items-center justify-center py-2 text-muted-foreground hover:text-sidebar-foreground hover:bg-foreground/[0.05] transition-colors cursor-pointer",
+              isCollapsed ? "w-full" : "px-3"
+            )}
+            title={isCollapsed ? "Expandir menu" : "Recolher menu"}
+          >
+            {isCollapsed
+              ? <ChevronRight className="w-4 h-4" />
+              : <ChevronLeft className="w-4 h-4" />
+            }
+          </button>
+        </div>
       </aside>
     </>
   );

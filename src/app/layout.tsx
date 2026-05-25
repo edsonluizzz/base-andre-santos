@@ -3,6 +3,7 @@ import { Inter, Bebas_Neue } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { SessionProvider } from "@/components/session-provider";
+import { ThemeProvider } from "next-themes";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -22,12 +23,14 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR" className={`${inter.variable} ${bebasNeue.variable}`}>
+    <html lang="pt-BR" className={`${inter.variable} ${bebasNeue.variable}`} suppressHydrationWarning>
       <body>
-        <SessionProvider>
-          {children}
-          <Toaster richColors position="top-center" />
-        </SessionProvider>
+        <ThemeProvider attribute="class" defaultTheme="dark" disableTransitionOnChange>
+          <SessionProvider>
+            {children}
+            <Toaster richColors position="top-center" />
+          </SessionProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

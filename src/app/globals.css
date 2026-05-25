@@ -60,6 +60,38 @@
     --radius: 0.625rem;
   }
 
+  /* ── Tema Claro ──────────────────────────────────── */
+  html.light {
+    --background: #f1f5f9;
+    --card: rgba(255,255,255,0.85);
+    --card-foreground: #0f172a;
+    --popover: #ffffff;
+    --popover-foreground: #0f172a;
+    --secondary: #e2e8f0;
+    --secondary-foreground: #0f172a;
+    --muted: #e2e8f0;
+    --muted-foreground: #475569;
+    --primary: #9a7a00;
+    --primary-foreground: #ffffff;
+    --accent: rgba(154,122,0,0.10);
+    --accent-foreground: #7a5f00;
+    --ring: rgba(154,122,0,0.35);
+    --cta: #9a7a00;
+    --cta-foreground: #ffffff;
+    --cta-muted: rgba(154,122,0,0.12);
+    --foreground: #0f172a;
+    --border: rgba(15,23,42,0.10);
+    --input: #e2e8f0;
+    --sidebar: rgba(241,245,249,0.97);
+    --sidebar-foreground: #0f172a;
+    --sidebar-primary: #9a7a00;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: rgba(154,122,0,0.08);
+    --sidebar-accent-foreground: #7a5f00;
+    --sidebar-border: rgba(15,23,42,0.08);
+    --sidebar-ring: rgba(154,122,0,0.35);
+  }
+
   * {
     @apply border-border;
     outline-color: rgba(212,175,55,0.4);
@@ -78,6 +110,15 @@
     -webkit-font-smoothing: antialiased;
   }
 
+  html.light body {
+    background-color: #f1f5f9;
+    background-image: radial-gradient(
+      ellipse 80% 50% at 50% -10%,
+      #dbeafe 0%,
+      #f1f5f9 65%
+    );
+  }
+
   html { @apply font-sans; overflow-x: hidden; }
   body { overflow-x: hidden; }
 }
@@ -92,6 +133,14 @@
     box-shadow:
       inset 0 1px 0 rgba(255,255,255,0.08),
       0 8px 32px rgba(0,0,0,0.35);
+  }
+
+  html.light .glass-card {
+    background: rgba(255,255,255,0.75);
+    border: 1px solid rgba(15,23,42,0.07);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.95),
+      0 4px 20px rgba(15,23,42,0.07);
   }
 
   .gold-glow {

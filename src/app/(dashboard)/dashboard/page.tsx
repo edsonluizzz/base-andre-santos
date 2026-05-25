@@ -106,7 +106,7 @@ export default async function DashboardPage() {
           { icon: MessageCircle, label: "Grupos WA",      value: groups,              href: "/grupos",        color: "text-green-400"  },
           { icon: Calendar,      label: "Próx. Eventos",  value: upcomingEvents.length, href: "/agenda",      color: "text-purple-400" },
         ].map((kpi) => (
-          <Link key={kpi.label} href={kpi.href} className="glass-card rounded-2xl p-5 hover:border-primary/30 transition-colors border border-white/[0.08]">
+          <Link key={kpi.label} href={kpi.href} className="glass-card rounded-2xl p-5 hover:border-primary/30 transition-colors border border-border">
             <div className="flex items-center justify-between mb-3">
               <span className="text-xs text-muted-foreground font-medium">{kpi.label}</span>
               <kpi.icon className={`w-4 h-4 ${kpi.color}`} />
@@ -116,9 +116,9 @@ export default async function DashboardPage() {
         ))}
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-6">
+      <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4 xl:gap-6">
         {/* Colaboradores por cargo */}
-        <div className="glass-card rounded-2xl p-6 border border-white/[0.08] lg:col-span-1">
+        <div className="glass-card rounded-2xl p-4 sm:p-6 border border-border lg:col-span-1">
           <div className="flex items-center gap-2 mb-5">
             <TrendingUp className="w-4 h-4 text-primary" />
             <h2 className="text-sm font-semibold text-foreground">Por Cargo</h2>
@@ -133,7 +133,7 @@ export default async function DashboardPage() {
                     <span className={ROLE_COLOR[role]}>{label}</span>
                     <span className="text-muted-foreground">{count}</span>
                   </div>
-                  <div className="h-1.5 bg-white/[0.06] rounded-full">
+                  <div className="h-1.5 bg-foreground/[0.06] rounded-full">
                     <div className="h-full bg-primary/60 rounded-full transition-all" style={{ width: `${pct}%` }} />
                   </div>
                 </div>
@@ -143,7 +143,7 @@ export default async function DashboardPage() {
         </div>
 
         {/* Minha Célula */}
-        <div className="glass-card rounded-2xl p-6 border border-white/[0.08] lg:col-span-1">
+        <div className="glass-card rounded-2xl p-4 sm:p-6 border border-border lg:col-span-1">
           <div className="flex items-center gap-2 mb-5">
             <Star className="w-4 h-4 text-primary" />
             <h2 className="text-sm font-semibold text-foreground">Minha Célula</h2>
@@ -157,11 +157,11 @@ export default async function DashboardPage() {
 
             {/* Contadores */}
             <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-xl p-3 text-center bg-white/[0.03] border border-white/[0.06]">
+              <div className="rounded-xl p-3 text-center bg-foreground/[0.03] border border-foreground/[0.06]">
                 <p className="text-2xl font-bold text-primary">{myTotal}</p>
                 <p className="text-[10px] text-muted-foreground mt-0.5">Cadastrados</p>
               </div>
-              <div className="rounded-xl p-3 text-center bg-white/[0.03] border border-white/[0.06]">
+              <div className="rounded-xl p-3 text-center bg-foreground/[0.03] border border-foreground/[0.06]">
                 <p className="text-2xl font-bold text-green-400">{myActive}</p>
                 <p className="text-[10px] text-muted-foreground mt-0.5">Ativos</p>
               </div>
@@ -190,7 +190,7 @@ export default async function DashboardPage() {
         </div>
 
         {/* Próximos eventos */}
-        <div className="glass-card rounded-2xl p-6 border border-white/[0.08] lg:col-span-1">
+        <div className="glass-card rounded-2xl p-4 sm:p-6 border border-border lg:col-span-1">
           <div className="flex items-center justify-between mb-5">
             <div className="flex items-center gap-2">
               <Calendar className="w-4 h-4 text-primary" />
@@ -209,7 +209,7 @@ export default async function DashboardPage() {
                     <p className="text-[9px] uppercase text-muted-foreground">{new Date(ev.date).toLocaleDateString("pt-BR", { month: "short" })}</p>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground truncate">{ev.title}</p>
+                    <p className="text-sm font-medium text-foreground line-clamp-2">{ev.title}</p>
                     <p className="text-xs text-muted-foreground">{EVENT_TYPE_LABEL[ev.type]}{ev.zone ? ` · ${ev.zone.name}` : ""}</p>
                   </div>
                 </div>
@@ -226,13 +226,13 @@ export default async function DashboardPage() {
       <InstagramPanel />
 
       {/* Velocidade por município */}
-      <Suspense fallback={<div className="glass-card rounded-2xl p-6 border border-white/[0.08] h-32 animate-pulse" />}>
+      <Suspense fallback={<div className="glass-card rounded-2xl p-6 border border-border h-32 animate-pulse" />}>
         <VelocityPanel />
       </Suspense>
 
       {/* Cobertura por município */}
       {topCities.length > 0 && (
-        <div className="glass-card rounded-2xl p-6 border border-white/[0.08]">
+        <div className="glass-card rounded-2xl p-6 border border-border">
           <div className="flex items-center justify-between mb-5">
             <h2 className="text-sm font-semibold text-foreground">Cobertura por Município</h2>
             <Link href="/relatorio" className="text-xs text-primary hover:text-primary/80">Ver relatório completo</Link>
@@ -240,7 +240,7 @@ export default async function DashboardPage() {
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
             {topCities.map(([city, data]) => {
               const pct = data.total > 0 ? Math.round((data.confirmados / data.total) * 100) : 0;
-              const borderColor = data.hasLeader ? "border-green-500/25" : "border-white/[0.06]";
+              const borderColor = data.hasLeader ? "border-green-500/25" : "border-border";
               return (
                 <div key={city} className={`p-3 rounded-xl bg-white/[0.03] border ${borderColor} space-y-2`}>
                   <div className="flex items-center justify-between">
@@ -250,7 +250,7 @@ export default async function DashboardPage() {
                   <p className="text-xl font-bold text-primary">{data.total}</p>
                   {data.total > 0 && (
                     <div className="space-y-1">
-                      <div className="h-1 rounded-full bg-white/[0.06]">
+                      <div className="h-1 rounded-full bg-foreground/[0.06]">
                         <div className="h-full bg-green-500/70 rounded-full" style={{ width: `${pct}%` }} />
                       </div>
                       {data.confirmados > 0 && (
