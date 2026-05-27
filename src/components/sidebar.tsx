@@ -116,8 +116,8 @@ export function Sidebar({
             </div>
             {!isCollapsed && (
               <div className="flex-1 min-w-0">
-                <p className="text-[10px] tracking-[3px] uppercase text-primary/70">Ovile Eleitoral</p>
-                <p className="text-sm font-bold text-sidebar-foreground truncate">Ovile Eleitoral</p>
+                <p className="text-[10px] tracking-[3px] uppercase text-primary/70">Gestão Eleitoral</p>
+                <p className="text-sm font-bold text-sidebar-foreground truncate">Ovile · PR 2026</p>
               </div>
             )}
           </div>
