@@ -161,7 +161,26 @@ export default function MinhaCelulaPage() {
       </div>
 
       {loading && !stats ? (
-        <div className="text-center py-16 text-muted-foreground">Carregando...</div>
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {[0, 1].map((i) => (
+              <div key={i} className="glass-card rounded-2xl p-6 border border-white/[0.08] animate-pulse space-y-4">
+                <div className="flex justify-between">
+                  <div className="h-3 w-16 bg-white/[0.06] rounded" />
+                  <div className="h-5 w-20 bg-white/[0.06] rounded-full" />
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  {[0,1,2].map((j) => (
+                    <div key={j} className="rounded-xl p-3 bg-white/[0.03] border border-white/[0.06] space-y-1.5">
+                      <div className="h-6 bg-white/[0.06] rounded w-2/3 mx-auto" />
+                      <div className="h-2 bg-white/[0.04] rounded w-full" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       ) : (
         <>
           {/* Tier + Stats */}

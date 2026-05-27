@@ -37,7 +37,24 @@ export default function RankingPage() {
       </div>
 
       {loading ? (
-        <div className="text-center py-16 text-muted-foreground">Carregando...</div>
+        <div className="glass-card rounded-2xl border border-white/[0.08] overflow-hidden">
+          <div className="px-4 py-2.5 border-b border-white/[0.08]" style={{ background: "rgba(13,27,42,0.5)" }}>
+            <div className="h-3 w-32 bg-white/[0.06] rounded animate-pulse" />
+          </div>
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="px-4 py-3 flex items-center gap-3 border-b border-white/[0.04] animate-pulse">
+              <div className="w-6 h-6 rounded bg-white/[0.06] shrink-0" />
+              <div className="w-7 h-7 rounded-full bg-white/[0.06] shrink-0" />
+              <div className="flex-1 space-y-1.5">
+                <div className="h-3 bg-white/[0.06] rounded w-1/3" />
+                <div className="h-2 bg-white/[0.04] rounded w-1/5" />
+              </div>
+              <div className="h-4 w-8 bg-white/[0.04] rounded hidden sm:block" />
+              <div className="h-4 w-8 bg-white/[0.04] rounded hidden sm:block" />
+              <div className="h-4 w-8 bg-white/[0.04] rounded hidden sm:block" />
+            </div>
+          ))}
+        </div>
       ) : leaders.length === 0 ? (
         <div className="glass-card rounded-2xl p-12 text-center border border-white/[0.08]">
           <Trophy className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
