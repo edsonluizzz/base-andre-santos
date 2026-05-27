@@ -7,379 +7,285 @@ import {
   Trophy, Target, LayoutDashboard, Network,
   ArrowRight, ShieldCheck, ChevronDown,
 } from "lucide-react";
+import { animate, stagger } from "animejs";
 
 const MODULES = [
-  { icon: Users, label: "Colaboradores", desc: "Perfis completos, score de mobilização e histórico" },
-  { icon: Map, label: "Mapa PR", desc: "Cobertura territorial choropleth por município" },
-  { icon: MessageSquare, label: "Grupos WhatsApp", desc: "Gestão e territorialização de grupos" },
-  { icon: CalendarDays, label: "Agenda", desc: "Eventos, presenças e sync Google Calendar" },
-  { icon: Trophy, label: "Ranking", desc: "Engajamento e liderança da equipe" },
-  { icon: Target, label: "Metas", desc: "Projeção de votos cruzada com eleitos 2022" },
-  { icon: LayoutDashboard, label: "Dashboard", desc: "KPIs, velocidade semanal e funil de conversão" },
-  { icon: Network, label: "Células", desc: "Organização hierárquica da base de apoio" },
+  { icon: Users,         label: "Colaboradores", desc: "Perfis completos, score de mobilização e histórico" },
+  { icon: Map,           label: "Mapa PR",        desc: "Cobertura territorial choropleth por município" },
+  { icon: MessageSquare, label: "Grupos WhatsApp",desc: "Gestão e territorialização de grupos" },
+  { icon: CalendarDays,  label: "Agenda",         desc: "Eventos, presenças e sync Google Calendar" },
+  { icon: Trophy,        label: "Ranking",        desc: "Engajamento e liderança da equipe" },
+  { icon: Target,        label: "Metas",          desc: "Projeção de votos cruzada com eleitos 2022" },
+  { icon: LayoutDashboard, label: "Dashboard",    desc: "KPIs, velocidade semanal e funil de conversão" },
+  { icon: Network,       label: "Células",        desc: "Organização hierárquica da base de apoio" },
 ];
 
 export function LandingContent() {
-  const heroRef = useRef<HTMLDivElement>(null);
+  const heroRef  = useRef<HTMLDivElement>(null);
+  const badgesRef = useRef<HTMLDivElement>(null);
+  const modulesRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     // Hero fade-in
-    const hero = heroRef.current;
-    if (hero) {
-      hero.style.opacity = "0";
-      hero.style.transform = "translateY(24px)";
-      const t = setTimeout(() => {
-        hero.style.transition = "opacity 1s cubic-bezier(.16,1,.3,1), transform 1s cubic-bezier(.16,1,.3,1)";
-        hero.style.opacity = "1";
-        hero.style.transform = "translateY(0)";
-      }, 80);
-      return () => clearTimeout(t);
+    if (heroRef.current) {
+      animate(heroRef.current, {
+        opacity: [0, 1],
+        translateY: [28, 0],
+        duration: 900,
+        delay: 80,
+        ease: "outExpo",
+      });
+    }
+    // Badges stagger
+    if (badgesRef.current) {
+      animate(badgesRef.current.querySelectorAll(".badge-item"), {
+        opacity: [0, 1],
+        translateY: [10, 0],
+        duration: 500,
+        delay: stagger(120, { start: 500 }),
+        ease: "outExpo",
+      });
     }
   }, []);
 
   useEffect(() => {
-    // Scroll reveal
+    // Scroll reveal para módulos
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            (entry.target as HTMLElement).dataset.visible = "true";
+            const cards = (entry.target as HTMLElement).querySelectorAll(".module-card-item");
+            animate(cards, {
+              opacity: [0, 1],
+              translateY: [24, 0],
+              duration: 600,
+              delay: stagger(70),
+              ease: "outExpo",
+            });
+            observer.unobserve(entry.target);
           }
         });
       },
-      { threshold: 0.08, rootMargin: "0px 0px -40px 0px" }
+      { threshold: 0.08 }
     );
-
-    document.querySelectorAll("[data-reveal]").forEach((el) => observer.observe(el));
+    if (modulesRef.current) observer.observe(modulesRef.current);
     return () => observer.disconnect();
   }, []);
 
   return (
-    <>
-      <style>{`
-        :root { --gold: #d4af37; --bg: #0a1220; }
+    <div className="relative min-h-screen overflow-hidden bg-[#0a1220]">
 
-        @keyframes spin-slow { to { transform: rotate(360deg); } }
-        @keyframes spin-slow-rev { to { transform: rotate(-360deg); } }
-        @keyframes pulse-ring {
-          0%, 100% { opacity: 0.3; transform: scale(1); }
-          50% { opacity: 0.6; transform: scale(1.04); }
-        }
-        @keyframes float {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-6px); }
-        }
-        @keyframes badge-in {
-          from { opacity: 0; transform: translateY(10px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
+      {/* Grid texture */}
+      <div
+        className="fixed inset-0 z-0 pointer-events-none"
+        style={{
+          backgroundImage: "radial-gradient(circle at 1px 1px, rgba(212,175,55,0.05) 1px, transparent 0)",
+          backgroundSize: "44px 44px",
+        }}
+      />
 
-        .logo-ring-outer {
-          animation: spin-slow 12s linear infinite;
-        }
-        .logo-ring-inner {
-          animation: spin-slow-rev 8s linear infinite;
-        }
-        .logo-float {
-          animation: float 5s ease-in-out infinite;
-        }
-        .hero-badge {
-          animation: badge-in 0.6s cubic-bezier(.16,1,.3,1) both;
-        }
-        .hero-badge:nth-child(2) { animation-delay: 0.15s; }
-        .hero-badge:nth-child(3) { animation-delay: 0.3s; }
+      {/* Glow ambiental */}
+      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[700px] h-[500px] rounded-full pointer-events-none z-0"
+        style={{ background: "radial-gradient(ellipse, rgba(212,175,55,0.07) 0%, transparent 65%)" }}
+      />
 
-        [data-reveal] {
-          opacity: 0;
-          transform: translateY(28px);
-          transition: opacity 0.7s cubic-bezier(.16,1,.3,1), transform 0.7s cubic-bezier(.16,1,.3,1);
-        }
-        [data-reveal][data-visible="true"] {
-          opacity: 1;
-          transform: translateY(0);
-        }
-        [data-reveal][data-delay="1"] { transition-delay: 0.08s; }
-        [data-reveal][data-delay="2"] { transition-delay: 0.16s; }
-        [data-reveal][data-delay="3"] { transition-delay: 0.24s; }
-        [data-reveal][data-delay="4"] { transition-delay: 0.32s; }
-        [data-reveal][data-delay="5"] { transition-delay: 0.40s; }
-        [data-reveal][data-delay="6"] { transition-delay: 0.48s; }
-        [data-reveal][data-delay="7"] { transition-delay: 0.56s; }
-        [data-reveal][data-delay="8"] { transition-delay: 0.64s; }
+      {/* ─── HERO ─── */}
+      <section className="relative z-10 min-h-screen flex flex-col items-center justify-center px-6 pt-20 pb-12 text-center">
+        <div ref={heroRef} className="max-w-2xl w-full" style={{ opacity: 0 }}>
 
-        .module-card {
-          background: rgba(13,27,42,0.85);
-          border: 1px solid rgba(255,255,255,0.055);
-          border-radius: 16px;
-          padding: 1.5rem;
-          transition: border-color 0.25s, transform 0.25s, box-shadow 0.25s;
-        }
-        .module-card:hover {
-          border-color: rgba(212,175,55,0.28);
-          transform: translateY(-3px);
-          box-shadow: 0 12px 40px rgba(212,175,55,0.07);
-        }
-
-        .cta-btn {
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          background: var(--gold);
-          color: #0a1220;
-          font-weight: 700;
-          font-size: 0.95rem;
-          padding: 0.9rem 2rem;
-          border-radius: 14px;
-          text-decoration: none;
-          transition: opacity 0.2s, transform 0.2s;
-        }
-        .cta-btn:hover {
-          opacity: 0.88;
-          transform: translateY(-1px);
-        }
-
-        .grid-bg {
-          background-image: radial-gradient(circle at 1px 1px, rgba(212,175,55,0.055) 1px, transparent 0);
-          background-size: 44px 44px;
-        }
-
-        .divider {
-          height: 1px;
-          background: linear-gradient(90deg, transparent, rgba(212,175,55,0.15), transparent);
-        }
-
-        @media (min-width: 640px) {
-          .modules-grid { grid-template-columns: repeat(2, 1fr) !important; }
-        }
-        @media (min-width: 900px) {
-          .modules-grid { grid-template-columns: repeat(4, 1fr) !important; }
-        }
-      `}</style>
-
-      <div style={{ background: "var(--bg)", minHeight: "100vh", position: "relative", overflow: "hidden" }}>
-
-        {/* Grid texture */}
-        <div className="grid-bg" style={{ position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none" }} />
-
-        {/* Ambient glow top */}
-        <div style={{
-          position: "fixed", top: "-20%", left: "50%", transform: "translateX(-50%)",
-          width: 700, height: 500, borderRadius: "50%",
-          background: "radial-gradient(ellipse, rgba(212,175,55,0.06) 0%, transparent 65%)",
-          pointerEvents: "none", zIndex: 0,
-        }} />
-
-        {/* ─── HERO ─── */}
-        <section style={{
-          position: "relative", zIndex: 1,
-          minHeight: "100vh",
-          display: "flex", flexDirection: "column",
-          alignItems: "center", justifyContent: "center",
-          padding: "5rem 1.5rem 3rem",
-          textAlign: "center",
-        }}>
-          <div ref={heroRef} style={{ maxWidth: 700, width: "100%" }}>
-
-            {/* Animated logo */}
-            <div className="logo-float" style={{ display: "inline-block", marginBottom: "2.5rem", position: "relative" }}>
-              {/* Outer spinning ring */}
-              <svg className="logo-ring-outer" width="110" height="110" style={{ position: "absolute", inset: "-15px", pointerEvents: "none" }}>
-                <rect x="4" y="4" width="102" height="102" rx="28"
-                  fill="none" stroke="rgba(212,175,55,0.18)" strokeWidth="1"
-                  strokeDasharray="8 6" />
-              </svg>
-              {/* Inner spinning ring */}
-              <svg className="logo-ring-inner" width="96" height="96" style={{ position: "absolute", inset: "-8px", pointerEvents: "none" }}>
-                <rect x="3" y="3" width="90" height="90" rx="22"
-                  fill="none" stroke="rgba(212,175,55,0.10)" strokeWidth="1"
-                  strokeDasharray="4 8" />
-              </svg>
-              {/* Logo box */}
-              <div style={{
-                width: 80, height: 80, borderRadius: 20,
+          {/* Logo animado */}
+          <div className="relative inline-block mb-10">
+            {/* Anel externo giratório */}
+            <svg
+              className="absolute pointer-events-none animate-[spin_12s_linear_infinite]"
+              width="110" height="110"
+              style={{ inset: "-15px" }}
+            >
+              <rect x="4" y="4" width="102" height="102" rx="28"
+                fill="none" stroke="rgba(212,175,55,0.18)" strokeWidth="1"
+                strokeDasharray="8 6"
+              />
+            </svg>
+            {/* Anel interno giratório reverso */}
+            <svg
+              className="absolute pointer-events-none animate-[spin_8s_linear_infinite_reverse]"
+              width="96" height="96"
+              style={{ inset: "-8px" }}
+            >
+              <rect x="3" y="3" width="90" height="90" rx="22"
+                fill="none" stroke="rgba(212,175,55,0.10)" strokeWidth="1"
+                strokeDasharray="4 8"
+              />
+            </svg>
+            {/* Caixa do logo */}
+            <div className="w-20 h-20 rounded-[20px] flex items-center justify-center animate-[float_5s_ease-in-out_infinite]"
+              style={{
                 background: "rgba(212,175,55,0.09)",
                 border: "1px solid rgba(212,175,55,0.32)",
-                display: "flex", alignItems: "center", justifyContent: "center",
                 boxShadow: "0 0 30px rgba(212,175,55,0.12), inset 0 1px 0 rgba(212,175,55,0.15)",
-              }}>
-                <span style={{
-                  fontSize: 34, fontWeight: 900, color: "#d4af37",
-                  fontFamily: "var(--font-display, var(--font-sans))",
-                  letterSpacing: "-1px",
-                }}>O</span>
-              </div>
+              }}
+            >
+              <span className="text-[34px] font-black text-gold leading-none" style={{ fontFamily: "var(--font-display, var(--font-sans))", letterSpacing: "-1px" }}>
+                O
+              </span>
             </div>
+          </div>
 
-            {/* Eyebrow */}
-            <p style={{
-              fontSize: "0.7rem", letterSpacing: "5px", textTransform: "uppercase",
-              color: "rgba(212,175,55,0.65)", marginBottom: "1rem",
-            }}>
-              Paraná · 2026
-            </p>
+          {/* Eyebrow */}
+          <p className="text-[0.7rem] tracking-[5px] uppercase text-gold/65 mb-4">
+            Paraná · 2026
+          </p>
 
-            {/* Main title */}
-            <h1 style={{
+          {/* Título principal */}
+          <h1
+            className="font-normal leading-[0.92] text-white mb-4"
+            style={{
               fontSize: "clamp(3.5rem, 11vw, 7.5rem)",
               fontFamily: "var(--font-display, var(--font-sans))",
-              fontWeight: 400,
               letterSpacing: "0.04em",
-              lineHeight: 0.92,
-              color: "white",
-              marginBottom: "0.4em",
-            }}>
-              OVILE<br />
-              <span style={{
-                WebkitTextStroke: "1px rgba(212,175,55,0.7)",
-                color: "transparent",
-              }}>ELEITORAL</span>
-            </h1>
+            }}
+          >
+            OVILE<br />
+            <span style={{ WebkitTextStroke: "1px rgba(212,175,55,0.7)", color: "transparent" }}>
+              ELEITORAL
+            </span>
+          </h1>
 
-            {/* Tagline */}
-            <p style={{
-              fontSize: "1rem", color: "rgba(148,163,184,0.85)",
-              marginBottom: "2.5rem", letterSpacing: "0.02em",
-            }}>
-              Plataforma de gestão de base eleitoral
-            </p>
+          {/* Tagline */}
+          <p className="text-base text-slate-400/85 mb-10 tracking-wide">
+            Plataforma de gestão de base eleitoral
+          </p>
 
-            {/* Pills / badges */}
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", justifyContent: "center", marginBottom: "2.5rem" }}>
-              {["Colaboradores", "Mapa PR", "Metas TSE", "Google Calendar"].map((tag, i) => (
-                <span key={tag} className="hero-badge" style={{
-                  fontSize: "0.72rem", letterSpacing: "0.03em",
-                  color: "rgba(212,175,55,0.75)",
-                  background: "rgba(212,175,55,0.07)",
-                  border: "1px solid rgba(212,175,55,0.18)",
-                  borderRadius: 999, padding: "0.3rem 0.9rem",
-                }}>
-                  {tag}
-                </span>
-              ))}
-            </div>
-
-            {/* CTA */}
-            <Link href="/login" className="cta-btn">
-              Acessar o sistema <ArrowRight size={15} />
-            </Link>
-
-          </div>
-
-          {/* Scroll indicator */}
-          <div style={{
-            position: "absolute", bottom: "2rem", left: "50%", transform: "translateX(-50%)",
-            display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
-            opacity: 0.3,
-          }}>
-            <span style={{ fontSize: "0.65rem", letterSpacing: "3px", textTransform: "uppercase", color: "white" }}>scroll</span>
-            <ChevronDown size={14} color="white" />
-          </div>
-        </section>
-
-        <div className="divider" style={{ position: "relative", zIndex: 1 }} />
-
-        {/* ─── MODULES ─── */}
-        <section style={{ position: "relative", zIndex: 1, padding: "6rem 1.5rem", maxWidth: 1160, margin: "0 auto" }}>
-
-          <div data-reveal style={{ textAlign: "center", marginBottom: "3.5rem" }}>
-            <p style={{
-              fontSize: "0.68rem", letterSpacing: "5px", textTransform: "uppercase",
-              color: "rgba(212,175,55,0.6)", marginBottom: "0.75rem",
-            }}>
-              Plataforma completa
-            </p>
-            <h2 style={{
-              fontSize: "clamp(1.75rem, 4vw, 2.75rem)",
-              fontFamily: "var(--font-display, var(--font-sans))",
-              fontWeight: 400, letterSpacing: "0.04em",
-              color: "white",
-            }}>
-              MÓDULOS DO SISTEMA
-            </h2>
-          </div>
-
-          <div className="modules-grid" style={{ display: "grid", gridTemplateColumns: "1fr", gap: "0.875rem" }}>
-            {MODULES.map(({ icon: Icon, label, desc }, i) => (
-              <div
-                key={label}
-                className="module-card"
-                data-reveal
-                data-delay={String(i + 1)}
+          {/* Badges */}
+          <div ref={badgesRef} className="flex flex-wrap gap-2 justify-center mb-10">
+            {["Colaboradores", "Mapa PR", "Metas TSE", "Google Calendar"].map((tag) => (
+              <span
+                key={tag}
+                className="badge-item text-[0.72rem] tracking-[0.03em] text-gold/75 bg-gold/[0.07] border border-gold/[0.18] rounded-full px-[0.9rem] py-[0.3rem]"
+                style={{ opacity: 0 }}
               >
-                <div style={{
-                  width: 38, height: 38, borderRadius: 10,
-                  background: "rgba(212,175,55,0.09)",
-                  border: "1px solid rgba(212,175,55,0.2)",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  marginBottom: "1rem",
-                }}>
-                  <Icon size={17} color="#d4af37" />
-                </div>
-                <p style={{ fontWeight: 600, color: "white", fontSize: "0.875rem", marginBottom: "0.35rem" }}>{label}</p>
-                <p style={{ fontSize: "0.77rem", color: "rgba(148,163,184,0.75)", lineHeight: 1.55 }}>{desc}</p>
-              </div>
+                {tag}
+              </span>
             ))}
           </div>
-        </section>
 
-        <div className="divider" style={{ position: "relative", zIndex: 1 }} />
+          {/* CTA */}
+          <Link
+            href="/login"
+            className="inline-flex items-center gap-2 bg-gold text-[#0a1220] font-bold text-[0.95rem] px-8 py-[0.9rem] rounded-[14px] transition-all duration-200 hover:opacity-90 hover:-translate-y-0.5"
+          >
+            Acessar o sistema <ArrowRight size={15} />
+          </Link>
+        </div>
 
-        {/* ─── ACCESS SECTION ─── */}
-        <section style={{ position: "relative", zIndex: 1, padding: "6rem 1.5rem 8rem", textAlign: "center" }}>
+        {/* Scroll indicator */}
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 opacity-30">
+          <span className="text-[0.65rem] tracking-[3px] uppercase text-white">scroll</span>
+          <ChevronDown size={14} color="white" />
+        </div>
+      </section>
 
-          <div data-reveal style={{ maxWidth: 480, margin: "0 auto" }}>
-            <p style={{
-              fontSize: "0.68rem", letterSpacing: "5px", textTransform: "uppercase",
-              color: "rgba(212,175,55,0.6)", marginBottom: "3rem",
-            }}>
-              Portal de acesso
-            </p>
+      {/* Divider */}
+      <div className="relative z-10 h-px mx-6" style={{ background: "linear-gradient(90deg, transparent, rgba(212,175,55,0.15), transparent)" }} />
 
-            <div style={{
+      {/* ─── MODULES ─── */}
+      <section className="relative z-10 px-6 py-24 max-w-[1160px] mx-auto">
+
+        <div className="text-center mb-14">
+          <p className="text-[0.68rem] tracking-[5px] uppercase text-gold/60 mb-3">
+            Plataforma completa
+          </p>
+          <h2
+            className="text-white font-normal"
+            style={{
+              fontSize: "clamp(1.75rem, 4vw, 2.75rem)",
+              fontFamily: "var(--font-display, var(--font-sans))",
+              letterSpacing: "0.04em",
+            }}
+          >
+            MÓDULOS DO SISTEMA
+          </h2>
+        </div>
+
+        <div ref={modulesRef} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-[0.875rem]">
+          {MODULES.map(({ icon: Icon, label, desc }) => (
+            <div
+              key={label}
+              className="module-card-item rounded-2xl p-6 border transition-all duration-250 hover:-translate-y-1 group"
+              style={{
+                opacity: 0,
+                background: "rgba(13,27,42,0.85)",
+                border: "1px solid rgba(255,255,255,0.055)",
+              }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(212,175,55,0.28)";
+                (e.currentTarget as HTMLDivElement).style.boxShadow = "0 12px 40px rgba(212,175,55,0.07)";
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(255,255,255,0.055)";
+                (e.currentTarget as HTMLDivElement).style.boxShadow = "none";
+              }}
+            >
+              <div className="w-[38px] h-[38px] rounded-[10px] flex items-center justify-center mb-4 bg-gold/[0.09] border border-gold/20">
+                <Icon size={17} color="#d4af37" />
+              </div>
+              <p className="font-semibold text-white text-sm mb-1.5">{label}</p>
+              <p className="text-[0.77rem] text-slate-400/75 leading-relaxed">{desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Divider */}
+      <div className="relative z-10 h-px mx-6" style={{ background: "linear-gradient(90deg, transparent, rgba(212,175,55,0.15), transparent)" }} />
+
+      {/* ─── ACESSO ─── */}
+      <section className="relative z-10 px-6 py-24 pb-32 text-center">
+        <div className="max-w-sm mx-auto">
+
+          <p className="text-[0.68rem] tracking-[5px] uppercase text-gold/60 mb-12">
+            Portal de acesso
+          </p>
+
+          <div
+            className="rounded-3xl px-8 py-11"
+            style={{
               background: "rgba(13,27,42,0.9)",
               border: "1px solid rgba(212,175,55,0.18)",
-              borderRadius: 24, padding: "2.75rem 2rem",
               boxShadow: "0 2px 0 rgba(212,175,55,0.12), 0 40px 80px rgba(0,0,0,0.4)",
-            }}>
-              <div style={{
-                width: 50, height: 50, borderRadius: 14,
-                background: "rgba(212,175,55,0.09)",
-                border: "1px solid rgba(212,175,55,0.25)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                margin: "0 auto 1.5rem",
-              }}>
-                <ShieldCheck size={22} color="#d4af37" />
-              </div>
-
-              <h3 style={{
-                fontSize: "1.5rem",
-                fontFamily: "var(--font-display, var(--font-sans))",
-                fontWeight: 400, letterSpacing: "0.05em",
-                color: "white", marginBottom: "0.75rem",
-              }}>
-                ACESSO RESTRITO
-              </h3>
-
-              <p style={{
-                fontSize: "0.85rem", color: "rgba(148,163,184,0.75)",
-                lineHeight: 1.65, marginBottom: "2rem",
-              }}>
-                Esta plataforma é de uso exclusivo da equipe de gestão da base de apoio.
-                Faça login com sua conta Google autorizada.
-              </p>
-
-              <Link href="/login" className="cta-btn" style={{ width: "100%", justifyContent: "center" }}>
-                Entrar com Google
-              </Link>
-
-              <p style={{ marginTop: "1.25rem", fontSize: "0.72rem", color: "rgba(148,163,184,0.3)" }}>
-                Ovile Eleitoral · Gestão de base eleitoral
-              </p>
+            }}
+          >
+            {/* Ícone */}
+            <div className="w-[50px] h-[50px] rounded-[14px] flex items-center justify-center mx-auto mb-6 bg-gold/[0.09] border border-gold/25">
+              <ShieldCheck size={22} color="#d4af37" />
             </div>
-          </div>
-        </section>
 
-      </div>
-    </>
+            <h3
+              className="text-white text-2xl font-normal mb-3"
+              style={{ fontFamily: "var(--font-display, var(--font-sans))", letterSpacing: "0.05em" }}
+            >
+              ACESSO RESTRITO
+            </h3>
+
+            <p className="text-[0.85rem] text-slate-400/75 leading-relaxed mb-8">
+              Esta plataforma é de uso exclusivo da equipe de gestão da base de apoio.
+              Faça login com sua conta Google autorizada.
+            </p>
+
+            <Link
+              href="/login"
+              className="flex items-center justify-center gap-2 bg-gold text-[#0a1220] font-bold text-[0.95rem] px-8 py-[0.9rem] rounded-[14px] transition-all duration-200 hover:opacity-90 hover:-translate-y-0.5"
+            >
+              Entrar com Google
+            </Link>
+
+            <p className="mt-5 text-[0.72rem] text-slate-400/30">
+              Ovile Eleitoral · Gestão de base eleitoral
+            </p>
+          </div>
+        </div>
+      </section>
+
+    </div>
   );
 }

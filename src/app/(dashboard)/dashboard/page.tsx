@@ -9,6 +9,7 @@ import { FunnelPanel } from "@/components/dashboard/funnel-panel";
 import { InstagramPanel } from "@/components/dashboard/instagram-panel";
 import { VelocityPanel } from "@/components/dashboard/velocity-panel";
 import { ElectionCountdown } from "@/components/dashboard/election-countdown";
+import { KpiCard } from "@/components/dashboard/kpi-card";
 import { Suspense } from "react";
 
 
@@ -98,22 +99,12 @@ export default async function DashboardPage() {
         </Link>
       )}
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          { icon: Users,         label: "Colaboradores", value: total,               href: "/colaboradores", color: "text-primary"    },
-          { icon: MapPin,        label: "Zonas",          value: zones,               href: "/zonas",         color: "text-blue-400"   },
-          { icon: MessageCircle, label: "Grupos WA",      value: groups,              href: "/grupos",        color: "text-green-400"  },
-          { icon: Calendar,      label: "Próx. Eventos",  value: upcomingEvents.length, href: "/agenda",      color: "text-purple-400" },
-        ].map((kpi) => (
-          <Link key={kpi.label} href={kpi.href} className="glass-card rounded-2xl p-5 hover:border-primary/30 transition-colors border border-border">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs text-muted-foreground font-medium">{kpi.label}</span>
-              <kpi.icon className={`w-4 h-4 ${kpi.color}`} />
-            </div>
-            <p className={`text-2xl sm:text-3xl font-bold ${kpi.color}`}>{kpi.value}</p>
-          </Link>
-        ))}
+      {/* KPI Cards — animados com anime.js */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <KpiCard icon={Users}         label="Colaboradores"  value={total}                href="/colaboradores" color="text-primary"     delay={0} />
+        <KpiCard icon={MapPin}        label="Zonas"          value={zones}                href="/zonas"         color="text-blue-400"    delay={1} />
+        <KpiCard icon={MessageCircle} label="Grupos WA"      value={groups}               href="/grupos"        color="text-green-400"   delay={2} />
+        <KpiCard icon={Calendar}      label="Próx. Eventos"  value={upcomingEvents.length} href="/agenda"       color="text-purple-400"  delay={3} />
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6">

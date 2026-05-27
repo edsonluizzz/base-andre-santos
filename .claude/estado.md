@@ -308,7 +308,20 @@ const CID = cid;
 
 ---
 
-## Achados de Segurança
+## Achados de Segurança — Auditoria 2026-05-27
 
-- MÉDIO: N+1 queries em `/api/admin/users` GET
-- BAIXO: bulk sem whitelist enum; rate limit in-memory ineficaz; googleRefreshToken texto plano
+### Crítico
+- `ignoreBuildErrors: true` + `eslint ignoreDuringBuilds: true` → erros silenciados em produção (`next.config.mjs`)
+- Rate limit in-memory ineficaz no serverless (`api/public/cadastro`) — cada instância Vercel tem estado próprio
+- `joinCode: "andre2026"` hardcoded no `signIn` (`auth.ts:157`)
+
+### Médio
+- Sem CSP (Content-Security-Policy) nos headers
+- `googleRefreshToken` texto plano no banco
+- Bulk updates usam `as never` — sem validação de enum
+- Token de impersonation no JWT sem TTL
+
+### Baixo
+- N+1 queries parcialmente corrigido; `console.error` pode vazar stack traces
+
+**Plano completo:** `PLAN.md` (Sprints 1–4, criado 2026-05-27)

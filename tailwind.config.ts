@@ -75,17 +75,30 @@ const config: Config = {
       },
       keyframes: {
         "glow-pulse": {
-          "0%, 100%": { boxShadow: "0 0 0 rgba(99,102,241,0)" },
-          "50%": { boxShadow: "0 0 20px rgba(99,102,241,0.35)" },
+          "0%, 100%": { boxShadow: "0 0 4px rgba(212,175,55,0.15), 0 0 0 1px rgba(212,175,55,0.10)" },
+          "50%":       { boxShadow: "0 0 20px rgba(212,175,55,0.50), 0 0 0 1px rgba(212,175,55,0.25)" },
         },
         "fade-up": {
           "0%": { opacity: "0", transform: "translateY(12px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
         },
+        "float": {
+          "0%, 100%": { transform: "translateY(0px)" },
+          "50%": { transform: "translateY(-6px)" },
+        },
+        "spin-slow": {
+          "to": { transform: "rotate(360deg)" },
+        },
+        "spin-slow-rev": {
+          "to": { transform: "rotate(-360deg)" },
+        },
       },
       animation: {
-        "glow-pulse": "glow-pulse 3s ease-in-out infinite",
-        "fade-up": "fade-up 0.5s ease-out forwards",
+        "glow-pulse":    "glow-pulse 2.5s ease-in-out infinite",
+        "fade-up":       "fade-up 0.5s ease-out forwards",
+        "float":         "float 5s ease-in-out infinite",
+        "spin-slow":     "spin-slow 12s linear infinite",
+        "spin-slow-rev": "spin-slow-rev 8s linear infinite",
       },
     },
   },

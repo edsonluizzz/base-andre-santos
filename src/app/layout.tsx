@@ -8,17 +8,37 @@ import { ThemeProvider } from "next-themes";
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-sans",
+  display: "swap",
 });
 
 const bebasNeue = Bebas_Neue({
   weight: "400",
   subsets: ["latin"],
   variable: "--font-display",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "Ovile Eleitoral",
-  description: "Gestão de base eleitoral",
+  title: {
+    default: "Ovile Eleitoral",
+    template: "%s | Ovile Eleitoral",
+  },
+  description: "Plataforma de gestão de base eleitoral — Paraná 2026. Colaboradores, mapa de apoio, metas TSE, comunicados e mais.",
+  keywords: ["gestão eleitoral", "base de apoio", "Paraná 2026", "deputado estadual", "CRM político"],
+  authors: [{ name: "Edson Luiz Silva" }],
+  robots: { index: false, follow: false },
+  openGraph: {
+    title: "Ovile Eleitoral — Gestão de Base Eleitoral",
+    description: "Plataforma de gestão de base eleitoral · Paraná 2026",
+    locale: "pt_BR",
+    type: "website",
+    siteName: "Ovile Eleitoral",
+  },
+  twitter: {
+    card: "summary",
+    title: "Ovile Eleitoral",
+    description: "Plataforma de gestão de base eleitoral · Paraná 2026",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

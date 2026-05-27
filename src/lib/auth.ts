@@ -153,7 +153,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         await db.campaign.upsert({
           where: { id: CAMPAIGN_ID },
           update: {},
-          create: { id: CAMPAIGN_ID, name: "Base André Santos", joinCode: "andre2026" },
+          create: { id: CAMPAIGN_ID, name: "Base André Santos", joinCode: process.env.CAMPAIGN_JOIN_CODE ?? "ovile2026" },
         }).catch(() => {});
 
         if (!user.email) return true;

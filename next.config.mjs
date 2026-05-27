@@ -1,8 +1,8 @@
 /** @type {import("next").NextConfig} */
-// build: 2026-05-10
+// build: 2026-05-27
 const nextConfig = {
-  typescript: { ignoreBuildErrors: true },
-  eslint: { ignoreDuringBuilds: true },
+  typescript: { ignoreBuildErrors: true }, // TODO Sprint1: remover após corrigir erros de tipo
+  eslint: { ignoreDuringBuilds: true },    // TODO Sprint1: remover após corrigir warnings
   async headers() {
     return [
       {
@@ -13,6 +13,21 @@ const nextConfig = {
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
           { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+          {
+            key: "Content-Security-Policy",
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+              "font-src 'self' https://fonts.gstatic.com",
+              "img-src 'self' data: blob: https://*.googleusercontent.com https://*.googleapis.com https://img.youtube.com https://*.public.blob.vercel-storage.com",
+              "connect-src 'self' https://*.googleapis.com https://*.google.com https://api.telegram.org https://api.metricool.com",
+              "frame-src https://www.youtube.com https://youtube.com",
+              "object-src 'none'",
+              "base-uri 'self'",
+              "form-action 'self'",
+            ].join("; "),
+          },
         ],
       },
     ];
