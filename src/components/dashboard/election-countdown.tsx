@@ -2,56 +2,68 @@
 
 import { useEffect, useRef } from "react";
 import { differenceInDays, startOfDay } from "date-fns";
-import { animate } from "animejs";
 
 const ELECTION_DATE = new Date("2026-10-04T00:00:00-03:00");
 
+function easeOutExpo(t: number) {
+  return t === 1 ? 1 : 1 - Math.pow(2, -10 * t);
+}
+
 export function ElectionCountdown() {
   const today = startOfDay(new Date());
-  const days = differenceInDays(startOfDay(ELECTION_DATE), today);
+  const days  = differenceInDays(startOfDay(ELECTION_DATE), today);
 
   const numRef  = useRef<HTMLSpanElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (!numRef.current || days < 0) return;
-    const obj = { val: 0 };
-    animate(obj, {
-      val: days,
-      duration: 1200,
-      delay: 300,
-      ease: "outExpo",
-      onUpdate: () => {
-        if (numRef.current) numRef.current.textContent = Math.round(obj.val).toString();
-      },
-    });
-  }, [days]);
-
+  /* Entrada da card */
   useEffect(() => {
     if (!cardRef.current || days < 0) return;
-    animate(cardRef.current, {
-      opacity: [0, 1],
-      translateY: [12, 0],
-      duration: 600,
-      delay: 200,
-      ease: "outExpo",
-    });
+    const el = cardRef.current;
+    const t = setTimeout(() => {
+      el.style.transition = "opacity 0.6s cubic-bezier(0.16,1,0.3,1), transform 0.6s cubic-bezier(0.16,1,0.3,1)";
+      el.style.opacity = "1";
+      el.style.transform = "translateY(0)";
+    }, 200);
+    return () => clearTimeout(t);
+  }, [days]);
+
+  /* CountUp RAF */
+  useEffect(() => {
+    if (!numRef.current || days <= 0) {
+      if (numRef.current) numRef.current.textContent = String(Math.max(0, days));
+      return;
+    }
+    const DURATION = 1200;
+    const start = performance.now() + 300;
+    let rafId: number;
+
+    const tick = (now: number) => {
+      if (!numRef.current) return;
+      if (now < start) { rafId = requestAnimationFrame(tick); return; }
+      const t = Math.min((now - start) / DURATION, 1);
+      numRef.current.textContent = Math.round(easeOutExpo(t) * days).toString();
+      if (t < 1) rafId = requestAnimationFrame(tick);
+    };
+
+    rafId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafId);
   }, [days]);
 
   if (days < 0) return null;
 
   const urgency =
-    days <= 30  ? { ring: "border-red-500/40",    bg: "bg-red-500/[0.07]",    num: "text-red-400",    label: "text-red-300/80",    glow: "rgba(239,68,68,0.15)"   } :
-    days <= 90  ? { ring: "border-amber-500/40",  bg: "bg-amber-500/[0.07]",  num: "text-amber-400",  label: "text-amber-300/80",  glow: "rgba(245,158,11,0.15)"  } :
-                  { ring: "border-primary/30",    bg: "bg-primary/[0.05]",    num: "text-primary",    label: "text-primary/70",    glow: "rgba(212,175,55,0.12)"  };
+    days <= 30  ? { ring: "border-red-500/40",    bg: "bg-red-500/[0.07]",    num: "text-red-400",    label: "text-red-300/80",    glow: "rgba(239,68,68,0.15)"  } :
+    days <= 90  ? { ring: "border-amber-500/40",  bg: "bg-amber-500/[0.07]",  num: "text-amber-400",  label: "text-amber-300/80",  glow: "rgba(245,158,11,0.15)" } :
+                  { ring: "border-primary/30",    bg: "bg-primary/[0.05]",    num: "text-primary",    label: "text-primary/70",    glow: "rgba(212,175,55,0.12)" };
 
   return (
     <div
       ref={cardRef}
       className={`relative flex items-center gap-4 rounded-2xl border px-5 py-4 overflow-hidden ${urgency.ring} ${urgency.bg}`}
-      style={{ opacity: 0 }}
+      style={{ opacity: 0, transform: "translateY(12px)" }}
     >
-      {/* Glow decorativo */}
+      {/* Glow contextual */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{ background: `radial-gradient(ellipse 60% 80% at 0% 50%, ${urgency.glow} 0%, transparent 65%)` }}
