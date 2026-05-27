@@ -91,7 +91,7 @@ export function LandingContent() {
 
       {/* ─── HERO ─── */}
       <section className="relative z-10 min-h-screen flex flex-col items-center justify-center px-6 pt-20 pb-12 text-center">
-        <div ref={heroRef} className="max-w-2xl w-full" style={{ opacity: 0 }}>
+        <div ref={heroRef} className="max-w-2xl w-full" style={{ opacity: 0, willChange: "transform, opacity" }}>
 
           {/* Logo animado */}
           <div className="relative inline-block mb-10">

@@ -1,27 +1,35 @@
 import { db } from "@/lib/db";
-
-const CID = "andre-santos-2026";
+import { unstable_cache } from "next/cache";
 import { TrendingUp, TrendingDown, Minus, AlertTriangle } from "lucide-react";
 
+const CID = "andre-santos-2026";
+
+const getVelocityData = unstable_cache(
+  async () => {
+    const now        = new Date();
+    const weekStart  = new Date(now); weekStart.setDate(weekStart.getDate() - 7);  weekStart.setHours(0, 0, 0, 0);
+    const week2Start = new Date(now); week2Start.setDate(week2Start.getDate() - 14); week2Start.setHours(0, 0, 0, 0);
+
+    return Promise.all([
+      db.collaborator.groupBy({
+        by: ["city"],
+        where: { campaignId: CID, createdAt: { gte: weekStart }, city: { not: null } },
+        _count: { id: true },
+        orderBy: { _count: { id: "desc" } },
+      }),
+      db.collaborator.groupBy({
+        by: ["city"],
+        where: { campaignId: CID, createdAt: { gte: week2Start, lt: weekStart }, city: { not: null } },
+        _count: { id: true },
+      }),
+    ]);
+  },
+  [`velocity-${CID}`],
+  { revalidate: 120, tags: [`campaign-${CID}`] },
+);
 
 export async function VelocityPanel() {
-  const now        = new Date();
-  const weekStart  = new Date(now); weekStart.setDate(weekStart.getDate() - 7);  weekStart.setHours(0, 0, 0, 0);
-  const week2Start = new Date(now); week2Start.setDate(week2Start.getDate() - 14); week2Start.setHours(0, 0, 0, 0);
-
-  const [thisWeekRaw, lastWeekRaw] = await Promise.all([
-    db.collaborator.groupBy({
-      by: ["city"],
-      where: { campaignId: CID, createdAt: { gte: weekStart }, city: { not: null } },
-      _count: { id: true },
-      orderBy: { _count: { id: "desc" } },
-    }),
-    db.collaborator.groupBy({
-      by: ["city"],
-      where: { campaignId: CID, createdAt: { gte: week2Start, lt: weekStart }, city: { not: null } },
-      _count: { id: true },
-    }),
-  ]);
+  const [thisWeekRaw, lastWeekRaw] = await getVelocityData();
 
   const lastWeekMap = Object.fromEntries(lastWeekRaw.map((r) => [r.city!, r._count.id]));
   const thisWeekMap = Object.fromEntries(thisWeekRaw.map((r) => [r.city!, r._count.id]));
