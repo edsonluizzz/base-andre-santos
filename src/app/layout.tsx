@@ -48,7 +48,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ThemeProvider attribute="class" defaultTheme="dark" disableTransitionOnChange>
           <SessionProvider>
             {children}
-            <Toaster richColors position="top-center" />
+            <Toaster richColors position="bottom-right" />
           </SessionProvider>
         </ThemeProvider>
       </body>
