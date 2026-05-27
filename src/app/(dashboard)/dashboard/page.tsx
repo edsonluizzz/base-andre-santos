@@ -13,21 +13,22 @@ import { ElectionCountdown } from "@/components/dashboard/election-countdown";
 import { KpiCard } from "@/components/dashboard/kpi-card";
 import { Suspense } from "react";
 
-/** Queries de campanha (não dependem do usuário) — cache 60 s */
-function getCampaignStats(CID: string) {
-  return unstable_cache(
-    () => Promise.all([
-      db.collaborator.count({ where: { campaignId: CID, status: "ACTIVE" } }),
-      db.collaborator.groupBy({ by: ["campaignRole"], where: { campaignId: CID, status: "ACTIVE" }, _count: { id: true } }),
-      db.collaborator.findMany({ where: { campaignId: CID, status: "ACTIVE", city: { not: null } }, select: { city: true, supportStatus: true, campaignRole: true } }),
-      db.whatsAppGroup.count({ where: { campaignId: CID } }),
-      db.zone.count({ where: { campaignId: CID } }),
-      db.event.findMany({ where: { campaignId: CID, date: { gte: new Date() } }, orderBy: { date: "asc" }, take: 5, include: { zone: { select: { name: true } } } }),
-    ]),
-    [`dashboard-stats-${CID}`],
-    { revalidate: 60, tags: [`campaign-${CID}`] },
-  )();
-}
+/**
+ * unstable_cache DEVE ser criado no nível do módulo (fora de qualquer função/componente).
+ * Passar CID como argumento — Next.js inclui automaticamente os args na chave de cache.
+ */
+const getCampaignStats = unstable_cache(
+  async (CID: string) => Promise.all([
+    db.collaborator.count({ where: { campaignId: CID, status: "ACTIVE" } }),
+    db.collaborator.groupBy({ by: ["campaignRole"], where: { campaignId: CID, status: "ACTIVE" }, _count: { id: true } }),
+    db.collaborator.findMany({ where: { campaignId: CID, status: "ACTIVE", city: { not: null } }, select: { city: true, supportStatus: true, campaignRole: true } }),
+    db.whatsAppGroup.count({ where: { campaignId: CID } }),
+    db.zone.count({ where: { campaignId: CID } }),
+    db.event.findMany({ where: { campaignId: CID, date: { gte: new Date() } }, orderBy: { date: "asc" }, take: 5, include: { zone: { select: { name: true } } } }),
+  ]),
+  ["dashboard-stats"],
+  { revalidate: 60, tags: ["campaign-stats"] },
+);
 
 
 const ROLE_COLOR: Record<string, string> = {
@@ -57,7 +58,7 @@ export default async function DashboardPage() {
 
   // Queries de campanha (cached 60 s) + queries pessoais (sem cache)
   const [[total, byRole, cityRaw, groups, zones, upcomingEvents], [myTotal, myActive, myTier]] = await Promise.all([
-    getCampaignStats(CID),
+    getCampaignStats(CID),  // CID é passado como arg — incluso na cache key automaticamente
     Promise.all([
       userId ? db.collaborator.count({ where: { campaignId: CID, registeredById: userId } }) : Promise.resolve(0),
       userId ? db.collaborator.count({ where: { campaignId: CID, registeredById: userId, status: "ACTIVE" } }) : Promise.resolve(0),
