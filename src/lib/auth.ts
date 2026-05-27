@@ -7,6 +7,9 @@ const CAMPAIGN_ID = "andre-santos-2026";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   ...authConfig,
+  // Necessário para domínios personalizados no Vercel (ovile.com.br)
+  // Evita o erro "Configuration" no NextAuth v5 beta em produção
+  trustHost: true,
   callbacks: {
     async jwt({ token, user, trigger, session }) {
       try {
