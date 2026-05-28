@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Users, Plus, Search, Phone, MapPin, ChevronDown, Upload, UserCheck, ExternalLink, CheckSquare, Square, X, ArrowUpCircle, UserMinus, ThumbsUp, PhoneCall, AlertTriangle, SlidersHorizontal } from "lucide-react";
+import { Users, Plus, Search, Phone, MapPin, ChevronDown, Upload, UserCheck, ExternalLink, CheckSquare, Square, X, ArrowUpCircle, UserMinus, ThumbsUp, PhoneCall, AlertTriangle, SlidersHorizontal, Download } from "lucide-react";
 import { differenceInDays } from "date-fns";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -27,7 +27,7 @@ const CONTRIBUTION_LABEL = Object.fromEntries(CONTRIBUTION_OPTIONS.map((o) => [o
 type Collaborator = {
   id: string; name: string; email?: string; phone?: string; city?: string;
   neighborhood?: string; campaignRole: string; status: string; supportStatus?: string; notes?: string;
-  birthday?: string; contributionTypes?: string[]; lastContactedAt?: string | null;
+  birthday?: string; contributionTypes?: string[]; lastContactedAt?: string | null; source?: string;
   registeredBy?: { name: string | null; email: string | null } | null;
   zones: { zone: { id: string; name: string } }[];
   whatsappGroups: { group: { id: string; name: string } }[];
@@ -47,6 +47,7 @@ export default function ColaboradoresPage() {
   const [filterLeader, setFilterLeader] = useState("");
   const [filterCity, setFilterCity] = useState("");
   const [filterSourceType, setFilterSourceType] = useState("");
+  const [filterSource, setFilterSource] = useState("");
   const [filterProfile, setFilterProfile] = useState("");
   const [filterChannel, setFilterChannel] = useState("");
   const [filterSupportStatus, setFilterSupportStatus] = useState("");
@@ -55,6 +56,8 @@ export default function ColaboradoresPage() {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [leaders, setLeaders] = useState<{ id: string; name: string; count: number }[]>([]);
   const [cities, setCities] = useState<string[]>([]);
+  const [sources, setSources] = useState<string[]>([]);
+  const [waGroupLink, setWaGroupLink] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [editing, setEditing] = useState<Collaborator | null>(null);
@@ -66,6 +69,10 @@ export default function ColaboradoresPage() {
   useEffect(() => {
     fetch("/api/leaders").then((r) => r.ok ? r.json() : []).then(setLeaders).catch(() => {});
     fetch("/api/cities").then((r) => r.ok ? r.json() : []).then(setCities).catch(() => {});
+    fetch("/api/collaborators/sources").then((r) => r.ok ? r.json() : []).then(setSources).catch(() => {});
+    fetch("/api/settings").then((r) => r.ok ? r.json() : {}).then((s) => {
+      if (s.whatsappGroupLink) setWaGroupLink(s.whatsappGroupLink);
+    }).catch(() => {});
   }, []);
 
   const buildParams = useCallback((off: number) => {
@@ -77,6 +84,7 @@ export default function ColaboradoresPage() {
     if (filterLeader) params.set("registeredBy", filterLeader);
     if (filterCity) params.set("city", filterCity);
     if (filterSourceType) params.set("sourceType", filterSourceType);
+    if (filterSource) params.set("source", filterSource);
     if (filterProfile) params.set("profile", filterProfile);
     if (filterChannel) params.set("channel", filterChannel);
     if (filterSupportStatus) params.set("supportStatus", filterSupportStatus);
@@ -85,7 +93,7 @@ export default function ColaboradoresPage() {
     params.set("limit", String(LIMIT));
     params.set("offset", String(off));
     return params;
-  }, [search, filterRole, filterStatus, filterMine, filterLeader, filterCity, filterSourceType, filterProfile, filterChannel, filterSupportStatus, filterDateFrom, filterDateTo]);
+  }, [search, filterRole, filterStatus, filterMine, filterLeader, filterCity, filterSourceType, filterSource, filterProfile, filterChannel, filterSupportStatus, filterDateFrom, filterDateTo]);
 
   const fetchCollaborators = useCallback(async () => {
     setLoading(true);
@@ -173,6 +181,21 @@ export default function ColaboradoresPage() {
   function openNew() { setEditing(null); setDialogOpen(true); }
   function openEdit(c: Collaborator) { setEditing(c); setDialogOpen(true); }
 
+  function handleExport() {
+    const params = buildParams(0);
+    params.delete("limit");
+    params.delete("offset");
+    window.open(`/api/collaborators/export?${params.toString()}`, "_blank");
+  }
+
+  const waInviteHref = (phone: string, name: string) => {
+    const digits = phone.replace(/\D/g, "");
+    const number = digits.startsWith("55") ? digits : `55${digits}`;
+    const firstName = name.split(" ")[0];
+    const text = `Olá ${firstName}! Aqui é a equipe do André Santos 👋\n\nConvidamos você para fazer parte do nosso grupo exclusivo de apoiadores no WhatsApp!\n\n👉 ${waGroupLink}`;
+    return `https://wa.me/${number}?text=${encodeURIComponent(text)}`;
+  };
+
   async function handleDelete() {
     if (!deleting) return;
     const res = await fetch(`/api/collaborators/${deleting.id}`, { method: "DELETE" });
@@ -230,6 +253,9 @@ export default function ColaboradoresPage() {
           </p>
         </div>
         <div className="flex gap-2">
+          <Button onClick={handleExport} variant="outline" className="gap-2 hidden sm:flex">
+            <Download className="w-4 h-4" /> Exportar
+          </Button>
           <Button onClick={() => setImportOpen(true)} variant="outline" className="gap-2 hidden sm:flex">
             <Upload className="w-4 h-4" /> Importar
           </Button>
@@ -243,7 +269,7 @@ export default function ColaboradoresPage() {
 
       {/* Filtros */}
       {(() => {
-        const advancedActive = [filterSourceType, filterProfile, filterChannel, filterSupportStatus, filterLeader, filterCity, filterDateFrom, filterDateTo].filter(Boolean).length;
+        const advancedActive = [filterSourceType, filterSource, filterProfile, filterChannel, filterSupportStatus, filterLeader, filterCity, filterDateFrom, filterDateTo].filter(Boolean).length;
         function FilterLabel({ children }: { children: string }) {
           return <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/50 pl-0.5 mb-0.5">{children}</p>;
         }
@@ -325,7 +351,7 @@ export default function ColaboradoresPage() {
                 <p className="text-xs font-semibold text-muted-foreground">Filtros avançados</p>
                 {advancedActive > 0 && (
                   <button
-                    onClick={() => { setFilterSourceType(""); setFilterProfile(""); setFilterChannel(""); setFilterSupportStatus(""); setFilterLeader(""); setFilterCity(""); setFilterDateFrom(""); setFilterDateTo(""); }}
+                    onClick={() => { setFilterSourceType(""); setFilterSource(""); setFilterProfile(""); setFilterChannel(""); setFilterSupportStatus(""); setFilterLeader(""); setFilterCity(""); setFilterDateFrom(""); setFilterDateTo(""); }}
                     className="text-xs text-destructive/70 hover:text-destructive flex items-center gap-1"
                   >
                     <X className="w-3 h-3" /> Limpar tudo
@@ -336,7 +362,7 @@ export default function ColaboradoresPage() {
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-2 gap-y-3">
                 <div>
                   <FilterLabel>Forma de entrada</FilterLabel>
-                  <Select value={filterSourceType} onValueChange={setFilterSourceType}>
+                  <Select value={filterSourceType} onValueChange={(v) => { setFilterSourceType(v); if (v) setFilterSource(""); }}>
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Qualquer origem" />
                     </SelectTrigger>
@@ -348,6 +374,23 @@ export default function ColaboradoresPage() {
                     </SelectContent>
                   </Select>
                 </div>
+
+                {sources.length > 0 && (
+                  <div>
+                    <FilterLabel>Origem específica</FilterLabel>
+                    <Select value={filterSource} onValueChange={(v) => { setFilterSource(v); if (v) setFilterSourceType(""); }}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Todas as origens" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">Todas as origens</SelectItem>
+                        {sources.map((s) => (
+                          <SelectItem key={s} value={s}>{s}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
 
                 <div>
                   <FilterLabel>Perfil</FilterLabel>
@@ -603,6 +646,9 @@ export default function ColaboradoresPage() {
                     <div className="grid sm:grid-cols-2 gap-2 text-xs text-muted-foreground">
                       {c.email && <div><span className="text-foreground/60">E-mail:</span> {c.email}</div>}
                       {c.birthday && <div><span className="text-foreground/60">Aniversário:</span> {new Date(c.birthday + "T12:00:00").toLocaleDateString("pt-BR")}</div>}
+                      {c.source && !["IMPORTACAO_CSV", "IMPORTACAO_XLSX"].includes(c.source) && (
+                        <div><span className="text-foreground/60">Origem:</span> {c.source}</div>
+                      )}
                       {c.registeredBy && (
                         <div><span className="text-foreground/60">Cadastrado por:</span> {c.registeredBy.name ?? c.registeredBy.email}</div>
                       )}
@@ -641,6 +687,17 @@ export default function ColaboradoresPage() {
                         >
                           <svg className="w-3 h-3 fill-current" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.117.549 4.107 1.514 5.832L.057 23.986l6.305-1.654A11.954 11.954 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.007-1.371l-.36-.214-3.732.979 1-3.642-.235-.374A9.818 9.818 0 1112 21.818z"/></svg>
                           WhatsApp
+                        </a>
+                      )}
+                      {c.phone && waGroupLink && (
+                        <a
+                          href={waInviteHref(c.phone, c.name)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md text-xs font-medium border border-green-500/50 text-green-300 bg-green-500/[0.12] hover:bg-green-500/25 transition-colors"
+                        >
+                          <svg className="w-3 h-3 fill-current" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.117.549 4.107 1.514 5.832L.057 23.986l6.305-1.654A11.954 11.954 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.007-1.371l-.36-.214-3.732.979 1-3.642-.235-.374A9.818 9.818 0 1112 21.818z"/></svg>
+                          Convidar p/ grupo WA
                         </a>
                       )}
                       <Button size="sm" variant="outline" className="h-7 text-xs gap-1.5 border-blue-500/30 text-blue-400 hover:bg-blue-500/10"

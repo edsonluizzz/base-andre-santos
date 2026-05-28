@@ -291,6 +291,7 @@ model Settings {
   campaignName        String   @default("Base Andre Santos")
   logoBase64          String?  @db.Text
   googleRefreshToken  String?  @db.Text
+  whatsappGroupLink   String?  // Link de convite do grupo WhatsApp de apoiadores
   updatedAt           DateTime @updatedAt
 }
 

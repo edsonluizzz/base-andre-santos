@@ -23,11 +23,22 @@ export async function PUT(req: NextRequest) {
     const session = await auth();
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     if (session.user.role !== "ADMIN") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    const { campaignName, logoBase64 } = await req.json();
+    const { campaignName, logoBase64, whatsappGroupLink } = await req.json();
     const settings = await db.settings.upsert({
       where: { id: "singleton" },
-      update: { ...(campaignName && { campaignName }), ...(logoBase64 !== undefined && { logoBase64 }), updatedAt: new Date() },
-      create: { id: "singleton", campaignName: campaignName ?? "Base Andre Santos", logoBase64: logoBase64 ?? null, updatedAt: new Date() },
+      update: {
+        ...(campaignName && { campaignName }),
+        ...(logoBase64 !== undefined && { logoBase64 }),
+        ...(whatsappGroupLink !== undefined && { whatsappGroupLink: whatsappGroupLink || null }),
+        updatedAt: new Date(),
+      },
+      create: {
+        id: "singleton",
+        campaignName: campaignName ?? "Base Andre Santos",
+        logoBase64: logoBase64 ?? null,
+        whatsappGroupLink: whatsappGroupLink ?? null,
+        updatedAt: new Date(),
+      },
     });
     return NextResponse.json(settings);
   } catch (err) {

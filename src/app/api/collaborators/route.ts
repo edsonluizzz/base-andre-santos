@@ -22,6 +22,7 @@ export async function GET(req: NextRequest) {
     const mine = searchParams.get("mine") === "true";
     const registeredBy = searchParams.get("registeredBy") ?? "";
     const sourceType = searchParams.get("sourceType") ?? "";
+    const sourceText = searchParams.get("source") ?? "";
     const profile = searchParams.get("profile") ?? "";
     const channel = searchParams.get("channel") ?? "";
     const supportStatus = searchParams.get("supportStatus") ?? "";
@@ -31,6 +32,18 @@ export async function GET(req: NextRequest) {
     const offset = parseInt(searchParams.get("offset") ?? "0");
 
     const IMPORT_SOURCES = ["IMPORTACAO_CSV", "IMPORTACAO_XLSX"];
+
+    // Build source condition (mutually exclusive: sourceType category OR sourceText free-text)
+    let sourceCondition: Record<string, unknown> | undefined;
+    if (sourceType === "IMPORTADO") {
+      sourceCondition = { source: { in: IMPORT_SOURCES } };
+    } else if (sourceType === "MANUAL") {
+      sourceCondition = { registeredById: { not: null }, source: { notIn: IMPORT_SOURCES } };
+    } else if (sourceType === "PUBLICO") {
+      sourceCondition = { registeredById: null, source: { notIn: IMPORT_SOURCES } };
+    } else if (sourceText) {
+      sourceCondition = { source: { contains: sourceText, mode: "insensitive" as const } };
+    }
 
     const where = {
       campaignId: CID,
@@ -42,15 +55,7 @@ export async function GET(req: NextRequest) {
       ...(profile && { profile: profile as never }),
       ...(channel && { channel: channel as never }),
       ...(supportStatus && { supportStatus: supportStatus as never }),
-      ...(sourceType === "IMPORTADO" && { source: { in: IMPORT_SOURCES } }),
-      ...(sourceType === "MANUAL" && {
-        registeredById: { not: null },
-        source: { notIn: IMPORT_SOURCES },
-      }),
-      ...(sourceType === "PUBLICO" && {
-        registeredById: null,
-        source: { notIn: IMPORT_SOURCES },
-      }),
+      ...sourceCondition,
       ...((dateFrom || dateTo) && {
         createdAt: {
           ...(dateFrom && { gte: new Date(dateFrom) }),
@@ -59,11 +64,11 @@ export async function GET(req: NextRequest) {
       }),
       ...(search && {
         OR: [
-          { name: { contains: search, mode: "insensitive" } },
-          { email: { contains: search, mode: "insensitive" } },
-          { phone: { contains: search, mode: "insensitive" } },
-          { city: { contains: search, mode: "insensitive" } },
-          { source: { contains: search, mode: "insensitive" } },
+          { name: { contains: search, mode: "insensitive" as const } },
+          { email: { contains: search, mode: "insensitive" as const } },
+          { phone: { contains: search, mode: "insensitive" as const } },
+          { city: { contains: search, mode: "insensitive" as const } },
+          { source: { contains: search, mode: "insensitive" as const } },
         ],
       }),
     };

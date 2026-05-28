@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
-import { Settings, Upload, Key, X, Calendar, CheckCircle2, AlertCircle, RefreshCw, Unlink, Target, Zap, Database } from "lucide-react";
+import { Settings, Upload, Key, X, Calendar, CheckCircle2, AlertCircle, RefreshCw, Unlink, Target, Zap, Database, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +16,7 @@ function ConfiguracoesContent() {
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [logoBase64, setLogoBase64] = useState<string | null | undefined>(undefined);
   const [joinCode, setJoinCode] = useState("");
+  const [whatsappGroupLink, setWhatsappGroupLink] = useState("");
   const [saving, setSaving] = useState(false);
   const [gcalConnected, setGcalConnected] = useState(false);
   const [gcalSyncing, setGcalSyncing] = useState(false);
@@ -38,6 +39,7 @@ function ConfiguracoesContent() {
         if (s.campaignName) setCampaignName(s.campaignName);
         if (s.logoBase64) setLogoPreview(s.logoBase64);
         if (s.googleRefreshToken) setGcalConnected(true);
+        if (s.whatsappGroupLink) setWhatsappGroupLink(s.whatsappGroupLink);
       })
       .catch(() => {});
 
@@ -68,7 +70,7 @@ function ConfiguracoesContent() {
 
   async function handleSave() {
     setSaving(true);
-    const payload: Record<string, unknown> = { campaignName };
+    const payload: Record<string, unknown> = { campaignName, whatsappGroupLink };
     if (logoBase64 !== undefined) payload.logoBase64 = logoBase64;
 
     const [settingsRes, campaignRes] = await Promise.all([
@@ -165,6 +167,37 @@ function ConfiguracoesContent() {
                 Colaboradores usam este código para solicitar acesso à base.
               </p>
             </div>
+          </div>
+
+          {/* WhatsApp Grupo de Apoiadores */}
+          <div className="glass-card rounded-2xl p-5 border border-white/[0.08] space-y-4">
+            <div className="flex items-center gap-2">
+              <MessageSquare className="w-4 h-4 text-green-400" />
+              <h2 className="text-sm font-semibold">Grupo WhatsApp de Apoiadores</h2>
+            </div>
+            <div>
+              <Label>Link de convite do grupo</Label>
+              <Input
+                value={whatsappGroupLink}
+                onChange={(e) => setWhatsappGroupLink(e.target.value)}
+                placeholder="https://chat.whatsapp.com/..."
+                className="font-mono text-xs"
+              />
+              <p className="text-[11px] text-muted-foreground mt-1.5">
+                Cole o link de convite do grupo. Será usado no botão &quot;Convidar para grupo WA&quot; na lista de colaboradores.
+              </p>
+            </div>
+            {whatsappGroupLink && (
+              <a
+                href={whatsappGroupLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-xs text-green-400 hover:text-green-300 transition-colors"
+              >
+                <MessageSquare className="w-3 h-3" />
+                Testar link do grupo
+              </a>
+            )}
           </div>
 
           {/* Google Calendar */}
