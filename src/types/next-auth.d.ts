@@ -29,6 +29,7 @@ declare module "next-auth/jwt" {
     dbUrl?: string;              // Ovile Eleitoral: DATABASE_URL da campanha
     isSuperAdmin?: boolean;
     isImpersonating?: boolean;
+    impersonationExpiry?: number; // timestamp ms — TTL 2h
     originalEstablishmentId?: string;
   }
 }
