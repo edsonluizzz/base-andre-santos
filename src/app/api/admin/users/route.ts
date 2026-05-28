@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { getCampaignContext } from "@/lib/campaign-context";
+import { db } from "@/lib/db";                           // banco global — User/UserCampaign/Session
+import { getCampaignContext } from "@/lib/campaign-context"; // banco tenant — Collaborator
 import { sendAccessGrantedEmail } from "@/lib/email";
 
 
@@ -8,27 +9,29 @@ export async function GET() {
   try {
     const session = await auth();
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    const { db, cid } = getCampaignContext(session);
-    const CID = cid;
     if (!["ADMIN"].includes(session.user.role ?? "")) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
+    // cid vem da sessão; tenantDb usado apenas para queries de Collaborator
+    const { db: tenantDb, cid: CID } = getCampaignContext(session);
 
     const superAdminEmails = (process.env.SUPER_ADMIN_EMAILS ?? "")
       .split(",").map((e) => e.trim()).filter(Boolean);
 
+    // UserCampaign vive no banco global
     const userCampaigns = await db.userCampaign.findMany({
       where: { campaignId: CID },
       include: { user: { select: { id: true, name: true, email: true, image: true, createdAt: true } } },
       orderBy: { invitedAt: "desc" },
     });
 
-    // Busca nomes dos inviters em batch
+    // Inviters em batch
     const inviterIds = [...new Set(userCampaigns.map((uc) => uc.invitedBy).filter(Boolean))] as string[];
     const inviters = inviterIds.length > 0
       ? await db.user.findMany({ where: { id: { in: inviterIds } }, select: { id: true, name: true } })
       : [];
     const inviterMap = Object.fromEntries(inviters.map((u) => [u.id, u.name]));
 
-    // Busca último acesso via tabela Session
+    // Último acesso (Sessions ficam no banco global)
     const userIds = userCampaigns.map((uc) => uc.userId).filter(Boolean) as string[];
     const sessions = userIds.length > 0
       ? await db.session.findMany({
@@ -44,8 +47,8 @@ export async function GET() {
       }
     }
 
-    // Batch count — single query instead of N+1
-    const regCounts = await db.collaborator.groupBy({
+    // Contagem de cadastros usa o banco do tenant (Collaborator é dado da campanha)
+    const regCounts = await tenantDb.collaborator.groupBy({
       by: ["registeredById"],
       where: { campaignId: CID, registeredById: { not: null } },
       _count: true,
@@ -71,16 +74,16 @@ export async function POST(req: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    const { db, cid } = getCampaignContext(session);
-    const CID = cid;
     if (!["ADMIN"].includes(session.user.role ?? "")) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
+    const { cid: CID } = getCampaignContext(session);
     const { email, role } = await req.json();
     if (!email?.trim()) return NextResponse.json({ error: "E-mail obrigatório" }, { status: 400 });
 
     const targetEmail = email.trim().toLowerCase();
     const targetRole = (role as string) ?? "MEMBER";
 
+    // Todas as queries de User/UserCampaign/AuditLog usam banco global
     const existingUser = await db.user.findUnique({ where: { email: targetEmail }, select: { id: true } });
 
     if (existingUser) {

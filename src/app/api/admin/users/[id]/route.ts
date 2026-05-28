@@ -1,16 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { getCampaignContext } from "@/lib/campaign-context";
+import { db } from "@/lib/db"; // banco global — User/UserCampaign/AuditLog
 
+
+function getCid(session: { user?: { campaignId?: string } }): string {
+  return session.user?.campaignId ?? "andre-santos-2026";
+}
 
 export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
   try {
     const session = await auth();
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    const { db, cid } = getCampaignContext(session);
-    const CID = cid;
     if (!["ADMIN"].includes(session.user.role ?? "")) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
+    const CID = getCid(session);
     const { role, tier } = await req.json();
 
     const uc = await db.userCampaign.findFirst({ where: { userId: params.id, campaignId: CID } });
@@ -41,14 +44,13 @@ export async function DELETE(_req: NextRequest, { params }: { params: { id: stri
   try {
     const session = await auth();
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    const { db, cid } = getCampaignContext(session);
-    const CID = cid;
     if (!["ADMIN"].includes(session.user.role ?? "")) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
     if (params.id === session.user.id) {
       return NextResponse.json({ error: "Não é possível revogar seu próprio acesso" }, { status: 400 });
     }
 
+    const CID = getCid(session);
     await db.userCampaign.deleteMany({ where: { userId: params.id, campaignId: CID } });
 
     await db.auditLog.create({
@@ -67,8 +69,6 @@ export async function PATCH(_req: NextRequest, { params }: { params: { id: strin
   try {
     const session = await auth();
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    const { db, cid } = getCampaignContext(session);
-    const CID = cid;
     if (!["ADMIN"].includes(session.user.role ?? "")) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
     const uc = await db.userCampaign.findUnique({ where: { id: params.id } });

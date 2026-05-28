@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import { db } from "@/lib/db"; // InviteLink vive no banco global
 import { getCampaignContext } from "@/lib/campaign-context";
 
 
@@ -10,8 +11,7 @@ export async function DELETE(
   try {
     const session = await auth();
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    const { db, cid } = getCampaignContext(session);
-    const CID = cid;
+    const { cid } = getCampaignContext(session);
     if (session.user.role !== "ADMIN") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
     const link = await db.inviteLink.findFirst({
