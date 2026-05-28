@@ -14,6 +14,7 @@ import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useSidebar } from "@/contexts/sidebar-context";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const ROLE_RANK: Record<string, number> = { MEMBER: 0, LEADER: 1, ADMIN: 2 };
 
@@ -83,6 +84,7 @@ export function Sidebar({
   const isLight = theme === "light";
 
   return (
+    <TooltipProvider delayDuration={300}>
     <>
       {/* Mobile hamburger */}
       <button
@@ -127,12 +129,11 @@ export function Sidebar({
         <nav className={cn("flex-1 p-2 space-y-0.5 overflow-y-auto", isCollapsed ? "px-2" : "px-3")}>
           {finalItems.map((item) => {
             const active = pathname.startsWith(item.href);
-            return (
+            const linkEl = (
               <Link
                 key={item.href}
                 href={item.href}
                 onClick={() => setMobileOpen(false)}
-                title={isCollapsed ? item.label : undefined}
                 className={cn(
                   "flex items-center gap-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200",
                   isCollapsed ? "px-0 justify-center" : "px-3",
@@ -145,6 +146,17 @@ export function Sidebar({
                 <item.icon className="w-4 h-4 flex-shrink-0" />
                 {!isCollapsed && item.label}
               </Link>
+            );
+
+            if (!isCollapsed) return <div key={item.href}>{linkEl}</div>;
+
+            return (
+              <Tooltip key={item.href}>
+                <TooltipTrigger asChild>{linkEl}</TooltipTrigger>
+                <TooltipContent side="right" className="font-medium">
+                  {item.label}
+                </TooltipContent>
+              </Tooltip>
             );
           })}
         </nav>
@@ -233,5 +245,6 @@ export function Sidebar({
         </div>
       </aside>
     </>
+    </TooltipProvider>
   );
 }

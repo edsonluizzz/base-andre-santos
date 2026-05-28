@@ -15,6 +15,15 @@ import { sendTelegram } from "@/lib/telegram";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
+// BRT = UTC-3. Vercel roda em UTC; usar estas helpers em todas as operações de data.
+const BRT_OFFSET = 3 * 60 * 60 * 1000;
+function nowBRT(): Date { return new Date(Date.now() - BRT_OFFSET); }
+function toBRT(d: Date): Date { return new Date(d.getTime() - BRT_OFFSET); }
+function startOfDayBRT(d: Date): Date { const x = new Date(d); x.setHours(0, 0, 0, 0); return x; }
+function endOfDayBRT(d: Date): Date   { const x = new Date(d); x.setHours(23, 59, 59, 999); return x; }
+/** Converte limite BRT (d calculado em "horário BRT") de volta para UTC para query no banco */
+function brtToUTC(d: Date): Date { return new Date(d.getTime() + BRT_OFFSET); }
+
 
 const TYPE_EMOJI: Record<string, string> = {
   REUNIAO: "🤝", CULTO: "⛪", PANFLETAGEM: "📋",
@@ -62,19 +71,23 @@ async function handleNovo(text: string) {
 
   const [day, month] = dateStr.split("/").map(Number);
   const [hour, min]  = timeStr.split(":").map(Number);
-  const year         = new Date().getFullYear();
-  const eventDate    = new Date(year, month - 1, day, hour ?? 9, min ?? 0);
+  // Ano calculado em BRT (evita erro na virada de meia-noite UTC)
+  const year = nowBRT().getFullYear();
+  // O usuário informa horário BRT → gravar em UTC (+ 3h)
+  const eventDateBRT = new Date(year, month - 1, day, hour ?? 9, min ?? 0);
+  const eventDateUTC = brtToUTC(eventDateBRT);
 
-  if (isNaN(eventDate.getTime())) {
+  if (isNaN(eventDateUTC.getTime())) {
     await sendTelegram(`❌ Data inválida: <code>${dateStr}</code>. Use o formato dd/mm.`);
     return;
   }
 
   await db.event.create({
-    data: { campaignId: CID, title, type: "OUTRO", date: eventDate, location: location || null, notes: "Criado via Telegram" },
+    data: { campaignId: CID, title, type: "OUTRO", date: eventDateUTC, location: location || null, notes: "Criado via Telegram" },
   });
 
-  const formattedDate = format(eventDate, "EEEE, dd/MM 'às' HH:mm", { locale: ptBR });
+  // Exibir horário em BRT na confirmação
+  const formattedDate = format(eventDateBRT, "EEEE, dd/MM 'às' HH:mm", { locale: ptBR });
   await sendTelegram(
     `✅ <b>Evento criado!</b>\n\n📌 ${title}\n🗓️ ${formattedDate}${location ? `\n📍 ${location}` : ""}\n\n<i>Acesse a agenda para editar detalhes.</i>`,
   );
@@ -83,9 +96,12 @@ async function handleNovo(text: string) {
 // ─── /lista ───────────────────────────────────────────────────────────────────
 
 async function handleLista() {
-  const now   = new Date();
-  const start = new Date(now); start.setHours(0, 0, 0, 0);
-  const end   = new Date(start); end.setDate(end.getDate() + 7); end.setHours(23, 59, 59, 999);
+  const brt      = nowBRT();
+  const startBRT = startOfDayBRT(brt);
+  const endBRT7  = endOfDayBRT(new Date(brt.getTime() + 7 * 24 * 60 * 60 * 1000));
+  // Converter limites BRT → UTC para query no banco (Neon armazena em UTC)
+  const start = brtToUTC(startBRT);
+  const end   = brtToUTC(endBRT7);
 
   const events = await db.event.findMany({
     where: { campaignId: CID, date: { gte: start, lte: end } },
@@ -99,10 +115,10 @@ async function handleLista() {
     return;
   }
 
-  // Agrupa por dia
+  // Agrupa por dia (chave em BRT para agrupamento correto)
   const byDay = new Map<string, typeof events>();
   for (const ev of events) {
-    const dayKey = format(ev.date, "yyyy-MM-dd");
+    const dayKey = format(toBRT(ev.date), "yyyy-MM-dd");
     const group  = byDay.get(dayKey) ?? [];
     group.push(ev);
     byDay.set(dayKey, group);
@@ -110,10 +126,10 @@ async function handleLista() {
 
   let msg = `📅 <b>Agenda — próximos 7 dias</b>\n`;
   for (const [, dayEvents] of byDay) {
-    const dayLabel = format(dayEvents[0].date, "EEE, dd/MM", { locale: ptBR });
+    const dayLabel = format(toBRT(dayEvents[0].date), "EEE, dd/MM", { locale: ptBR });
     msg += `\n<b>${dayLabel.charAt(0).toUpperCase() + dayLabel.slice(1)}</b>\n`;
     for (const ev of dayEvents) {
-      const time  = format(ev.date, "HH:mm");
+      const time  = format(toBRT(ev.date), "HH:mm");
       const emoji = TYPE_EMOJI[ev.type] ?? "📌";
       msg += `${emoji} <b>${time}</b> · ${ev.title}`;
       if (ev.location) msg += `\n   📍 ${ev.location}`;
@@ -129,8 +145,10 @@ async function handleLista() {
 // ─── /stats ───────────────────────────────────────────────────────────────────
 
 async function handleStats() {
-  const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
-  const weekStart  = new Date(todayStart); weekStart.setDate(weekStart.getDate() - 7);
+  const brt        = nowBRT();
+  const todayStart = brtToUTC(startOfDayBRT(brt));
+  const weekAgo    = new Date(brt.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const weekStart  = brtToUTC(startOfDayBRT(weekAgo));
 
   const [ativos, leads, confirmados, novosHoje, novaSemana, cidades] = await Promise.all([
     db.collaborator.count({ where: { campaignId: CID, status: "ACTIVE" } }),
@@ -145,7 +163,7 @@ async function handleStats() {
     }),
   ]);
 
-  const timeStr = format(new Date(), "HH:mm");
+  const timeStr = format(brt, "HH:mm");
   const msg = [
     `📊 <b>Base André Santos — Resumo</b>`,
     ``,

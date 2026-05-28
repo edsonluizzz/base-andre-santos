@@ -117,12 +117,24 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           if (dbUser) token.role = dbUser.role;
         }
 
+        // Impersonation TTL: 2 horas
+        const IMPERSONATION_TTL_MS = 2 * 60 * 60 * 1000;
+        if (token.isImpersonating && token.impersonationExpiry) {
+          if (Date.now() > (token.impersonationExpiry as number)) {
+            token.isImpersonating = false;
+            token.impersonationExpiry = undefined;
+            await db.auditLog.create({ data: { action: "IMPERSONATE_END", actorId: token.id as string } }).catch(() => {});
+          }
+        }
+
         if (trigger === "update" && session !== null && "impersonateId" in session && token.isSuperAdmin) {
           if (session.impersonateId) {
             token.isImpersonating = true;
+            token.impersonationExpiry = Date.now() + IMPERSONATION_TTL_MS;
             await db.auditLog.create({ data: { action: "IMPERSONATE_START", actorId: token.id as string, targetId: session.impersonateId as string } }).catch(() => {});
           } else {
             token.isImpersonating = false;
+            token.impersonationExpiry = undefined;
             await db.auditLog.create({ data: { action: "IMPERSONATE_END", actorId: token.id as string } }).catch(() => {});
           }
           return token;

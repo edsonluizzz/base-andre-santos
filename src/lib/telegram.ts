@@ -4,6 +4,16 @@ import { ptBR } from "date-fns/locale";
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN ?? "";
 const CHAT_ID   = process.env.TELEGRAM_CHAT_ID   ?? "";
 
+/**
+ * Converte qualquer Date/string/number para horário de Brasília (BRT = UTC-3).
+ * Vercel serverless roda em UTC; subtract 3h antes de usar format() para exibir BRT.
+ */
+function toBRT(d: Date | string | number): Date {
+  return new Date(new Date(d).getTime() - 3 * 60 * 60 * 1000);
+}
+/** Retorna "agora" no fuso de Brasília */
+function nowBRT(): Date { return toBRT(Date.now()); }
+
 export function isTelegramConfigured() {
   return Boolean(BOT_TOKEN && CHAT_ID);
 }
@@ -42,7 +52,7 @@ interface EventLike {
 }
 
 export function buildAgendaMessage(events: EventLike[], isUpdate = false): string {
-  const now     = new Date();
+  const now     = nowBRT();
   const dateStr = format(now, "dd/MM (EEEE)", { locale: ptBR });
   const timeStr = format(now, "HH:mm");
 
@@ -51,11 +61,11 @@ export function buildAgendaMessage(events: EventLike[], isUpdate = false): strin
     : `📅 <b>Agenda de hoje — ${dateStr}</b>`;
 
   if (events.length === 0) {
-    return `${header}\n\nNenhum evento agendado para hoje.\n\n<i>Enviado às ${timeStr}</i>`;
+    return `${header}\n\nNenhum evento agendado para hoje.\n\n<i>Enviado às ${timeStr} (BRT)</i>`;
   }
 
   const lines = events.map((ev) => {
-    const time  = format(new Date(ev.date), "HH:mm");
+    const time  = format(toBRT(ev.date), "HH:mm");
     const emoji = TYPE_EMOJI[ev.type] ?? "📌";
     let line    = `${emoji} <b>${time}</b> · ${ev.title}`;
     if (ev.location) line += `\n📍 ${ev.location}`;
@@ -63,14 +73,14 @@ export function buildAgendaMessage(events: EventLike[], isUpdate = false): strin
     return line;
   });
 
-  return `${header}\n\n${lines.join("\n\n")}\n\n<i>Enviado às ${timeStr}</i>`;
+  return `${header}\n\n${lines.join("\n\n")}\n\n<i>Enviado às ${timeStr} (BRT)</i>`;
 }
 
 export function buildDailyDigestMessage(
   todayEvents: EventLike[],
   nextDaysEvents: { date: Date; events: EventLike[] }[],
 ): string {
-  const now     = new Date();
+  const now     = nowBRT();
   const timeStr = format(now, "HH:mm");
 
   let msg = `🌅 <b>Bom dia! Agenda — ${format(now, "dd/MM (EEEE)", { locale: ptBR })}</b>\n\n`;
@@ -80,7 +90,7 @@ export function buildDailyDigestMessage(
     msg += `📭 Nenhum evento hoje.\n`;
   } else {
     msg += todayEvents.map((ev) => {
-      const time  = format(new Date(ev.date), "HH:mm");
+      const time  = format(toBRT(ev.date), "HH:mm");
       const emoji = TYPE_EMOJI[ev.type] ?? "📌";
       let line    = `${emoji} <b>${time}</b> · ${ev.title}`;
       if (ev.location) line += `\n   📍 ${ev.location}`;
@@ -93,10 +103,11 @@ export function buildDailyDigestMessage(
   if (diasComEventos.length > 0) {
     msg += `\n\n<b>📆 Próximos dias</b>`;
     for (const { date, events } of diasComEventos) {
+      // date já vem calculado em BRT (agenda-telegram/route.ts usa nowBRT())
       const dayLabel = format(date, "EEEE, dd/MM", { locale: ptBR });
       msg += `\n\n<i>${dayLabel.charAt(0).toUpperCase() + dayLabel.slice(1)}</i>`;
       for (const ev of events) {
-        const time  = format(new Date(ev.date), "HH:mm");
+        const time  = format(toBRT(ev.date), "HH:mm");
         const emoji = TYPE_EMOJI[ev.type] ?? "📌";
         msg += `\n${emoji} ${time} · ${ev.title}`;
         if (ev.location) msg += ` · 📍 ${ev.location}`;
@@ -104,14 +115,13 @@ export function buildDailyDigestMessage(
     }
   }
 
-  msg += `\n\n<i>Enviado às ${timeStr}</i>`;
+  msg += `\n\n<i>Enviado às ${timeStr} (BRT)</i>`;
   return msg;
 }
 
 export function buildBroadcastMessage(title: string, message: string): string {
-  const now     = new Date();
-  const timeStr = format(now, "dd/MM 'às' HH:mm");
-  return `📢 <b>${title}</b>\n\n${message}\n\n<i>${timeStr}</i>`;
+  const timeStr = format(nowBRT(), "dd/MM 'às' HH:mm");
+  return `📢 <b>${title}</b>\n\n${message}\n\n<i>${timeStr} (BRT)</i>`;
 }
 
 export function buildEventNotification(
@@ -119,8 +129,9 @@ export function buildEventNotification(
   event: EventLike,
 ): string {
   const emoji   = action === "criado" ? "✅" : action === "atualizado" ? "✏️" : "❌";
-  const time    = format(new Date(event.date), "HH:mm");
-  const dateStr = format(new Date(event.date), "dd/MM", { locale: ptBR });
+  const brtDate = toBRT(event.date);
+  const time    = format(brtDate, "HH:mm");
+  const dateStr = format(brtDate, "dd/MM", { locale: ptBR });
 
   let text = `${emoji} <b>Evento ${action}:</b> ${event.title}`;
   text += `\n🗓️ ${dateStr} às ${time}`;
