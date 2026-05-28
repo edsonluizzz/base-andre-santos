@@ -96,7 +96,12 @@ export default function SuperAdminPage() {
   const [auditLoading, setAuditLoading] = useState(false);
 
   const [dupPairs, setDupPairs] = useState<DupPair[]>([]);
-  const [ignoredDups, setIgnoredDups] = useState<Set<string>>(new Set());
+  const [ignoredDups, setIgnoredDups] = useState<Set<string>>(() => {
+    try {
+      const stored = typeof window !== "undefined" ? localStorage.getItem("ignored-dups") : null;
+      return new Set(stored ? (JSON.parse(stored) as string[]) : []);
+    } catch { return new Set(); }
+  });
   const [showDups, setShowDups] = useState(false);
   const [dupLoading, setDupLoading] = useState(false);
 
@@ -648,7 +653,14 @@ export default function SuperAdminPage() {
                         <Button
                           size="sm" variant="ghost"
                           className="h-7 text-xs text-muted-foreground"
-                          onClick={() => setIgnoredDups((prev) => new Set([...prev, `${pair.keep.id}:${pair.merge.id}`]))}
+                          onClick={() => {
+                            const key = `${pair.keep.id}:${pair.merge.id}`;
+                            setIgnoredDups((prev) => {
+                              const next = new Set([...prev, key]);
+                              try { localStorage.setItem("ignored-dups", JSON.stringify([...next])); } catch {}
+                              return next;
+                            });
+                          }}
                         >
                           Ignorar
                         </Button>

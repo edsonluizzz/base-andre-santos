@@ -23,6 +23,53 @@ type MetricoolData = {
   avgEngagement: number;
 };
 
+function proxyUrl(src: string) {
+  return `/api/proxy/image?url=${encodeURIComponent(src)}`;
+}
+
+function PostThumb({ post }: { post: Post }) {
+  const [broken, setBroken] = useState(false);
+  const key = (post as { postId?: string; reelId?: string }).postId ?? (post as { reelId?: string }).reelId;
+  return (
+    <a
+      key={key}
+      href={post.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="relative aspect-square rounded-xl overflow-hidden group border border-white/[0.06] bg-white/[0.04] flex items-center justify-center"
+    >
+      {!broken ? (
+        /* eslint-disable-next-line @next/next/no-img-element */
+        <img
+          src={proxyUrl(post.imageUrl)}
+          alt={post.content?.slice(0, 40) ?? "Post"}
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          onError={() => setBroken(true)}
+        />
+      ) : (
+        /* Fallback quando a imagem não carrega */
+        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-pink-500/10 to-purple-500/10">
+          <Camera className="w-6 h-6 text-pink-400/50" />
+        </div>
+      )}
+      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1">
+        <div className="flex items-center gap-1 text-white text-xs">
+          <Eye className="w-3 h-3" />
+          {post.reach >= 1000 ? `${(post.reach / 1000).toFixed(1)}k` : post.reach}
+        </div>
+        <div className="flex items-center gap-1 text-white text-xs">
+          <Heart className="w-3 h-3" />
+          {post.likes}
+        </div>
+        <div className="flex items-center gap-1 text-white text-xs">
+          <TrendingUp className="w-3 h-3" />
+          {post.engagement.toFixed(1)}%
+        </div>
+      </div>
+    </a>
+  );
+}
+
 export function InstagramPanel() {
   const [data, setData] = useState<MetricoolData | null>(null);
   const [error, setError] = useState(false);
@@ -90,37 +137,7 @@ export function InstagramPanel() {
       {/* Top posts thumbnails */}
       {topPosts.length > 0 && (
         <div className="grid grid-cols-3 gap-2">
-          {topPosts.map((p) => (
-            <a
-              key={p.postId ?? (p as { reelId?: string }).reelId}
-              href={p.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="relative aspect-square rounded-xl overflow-hidden group border border-white/[0.06]"
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={p.imageUrl}
-                alt={p.content?.slice(0, 40) ?? "Post"}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                referrerPolicy="no-referrer"
-              />
-              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1">
-                <div className="flex items-center gap-1 text-white text-xs">
-                  <Eye className="w-3 h-3" />
-                  {p.reach >= 1000 ? `${(p.reach / 1000).toFixed(1)}k` : p.reach}
-                </div>
-                <div className="flex items-center gap-1 text-white text-xs">
-                  <Heart className="w-3 h-3" />
-                  {p.likes}
-                </div>
-                <div className="flex items-center gap-1 text-white text-xs">
-                  <TrendingUp className="w-3 h-3" />
-                  {p.engagement.toFixed(1)}%
-                </div>
-              </div>
-            </a>
-          ))}
+          {topPosts.map((p) => <PostThumb key={(p as { postId?: string; reelId?: string }).postId ?? (p as { reelId?: string }).reelId} post={p} />)}
         </div>
       )}
     </div>

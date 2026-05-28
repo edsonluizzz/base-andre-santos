@@ -45,7 +45,6 @@ function ConfiguracoesContent() {
       .then((r) => r.json())
       .then((c) => { if (c.joinCode) setJoinCode(c.joinCode); })
       .catch(() => {});
-
   }, [searchParams]);
 
   function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
@@ -93,262 +92,271 @@ function ConfiguracoesContent() {
   }
 
   return (
-    <div className="space-y-6 max-w-lg">
+    <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-foreground">Configurações</h1>
         <p className="text-sm text-muted-foreground mt-1">Configurações gerais da base de apoio</p>
       </div>
 
-      {/* Campanha */}
-      <div className="glass-card rounded-2xl p-6 border border-white/[0.08] space-y-4">
-        <div className="flex items-center gap-2 mb-2">
-          <Settings className="w-4 h-4 text-primary" />
-          <h2 className="text-sm font-semibold">Campanha</h2>
-        </div>
+      {/* Grid 2 colunas em desktop */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
 
-        <div>
-          <Label>Nome da Campanha</Label>
-          <Input
-            value={campaignName}
-            onChange={(e) => setCampaignName(e.target.value)}
-            placeholder="Base André Santos"
-          />
-        </div>
+        {/* ── Col esquerda ── */}
+        <div className="space-y-5">
 
-        {/* Logo */}
-        <div>
-          <Label>Logo da Campanha</Label>
-          <div className="mt-2 flex items-start gap-4">
-            {logoPreview ? (
-              <div className="relative w-20 h-20 rounded-xl overflow-hidden border border-white/[0.08] bg-white/5 flex-shrink-0">
-                <Image src={logoPreview} alt="Logo" fill className="object-contain p-1" />
-                <button
-                  onClick={removeLogo}
-                  className="absolute top-1 right-1 w-5 h-5 rounded-full bg-destructive/80 flex items-center justify-center hover:bg-destructive transition-colors"
-                >
-                  <X className="w-3 h-3 text-white" />
-                </button>
+          {/* Campanha */}
+          <div className="glass-card rounded-2xl p-5 border border-white/[0.08] space-y-4">
+            <div className="flex items-center gap-2">
+              <Settings className="w-4 h-4 text-primary" />
+              <h2 className="text-sm font-semibold">Campanha</h2>
+            </div>
+            <div>
+              <Label>Nome da Campanha</Label>
+              <Input
+                value={campaignName}
+                onChange={(e) => setCampaignName(e.target.value)}
+                placeholder="Base André Santos"
+              />
+            </div>
+            {/* Logo */}
+            <div>
+              <Label>Logo da Campanha</Label>
+              <div className="mt-2 flex items-start gap-4">
+                {logoPreview ? (
+                  <div className="relative w-16 h-16 rounded-xl overflow-hidden border border-white/[0.08] bg-white/5 flex-shrink-0">
+                    <Image src={logoPreview} alt="Logo" fill className="object-contain p-1" />
+                    <button
+                      onClick={removeLogo}
+                      className="absolute top-1 right-1 w-4 h-4 rounded-full bg-destructive/80 flex items-center justify-center hover:bg-destructive transition-colors"
+                    >
+                      <X className="w-2.5 h-2.5 text-white" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="w-16 h-16 rounded-xl border border-dashed border-white/[0.15] bg-white/[0.02] flex items-center justify-center flex-shrink-0">
+                    <Upload className="w-5 h-5 text-muted-foreground" />
+                  </div>
+                )}
+                <div className="flex-1">
+                  <input ref={fileRef} type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={handleFile} />
+                  <Button variant="outline" size="sm" onClick={() => fileRef.current?.click()} className="border-white/[0.12] text-xs">
+                    {logoPreview ? "Trocar logo" : "Enviar logo"}
+                  </Button>
+                  <p className="text-[11px] text-muted-foreground mt-1.5">PNG, JPG ou WebP · Máx 2 MB</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Acesso */}
+          <div className="glass-card rounded-2xl p-5 border border-white/[0.08] space-y-4">
+            <div className="flex items-center gap-2">
+              <Key className="w-4 h-4 text-primary" />
+              <h2 className="text-sm font-semibold">Acesso</h2>
+            </div>
+            <div>
+              <Label>Código de Convite</Label>
+              <Input
+                value={joinCode}
+                onChange={(e) => setJoinCode(e.target.value)}
+                placeholder="andre2026"
+              />
+              <p className="text-[11px] text-muted-foreground mt-1.5">
+                Colaboradores usam este código para solicitar acesso à base.
+              </p>
+            </div>
+          </div>
+
+          {/* Google Calendar */}
+          <div className="glass-card rounded-2xl p-5 border border-white/[0.08] space-y-3">
+            <div className="flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-primary" />
+              <h2 className="text-sm font-semibold">Google Calendar</h2>
+            </div>
+            {gcalConnected ? (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-sm text-green-400">
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>Calendário conectado</span>
+                </div>
+                <div className="flex gap-2 flex-wrap">
+                  <Button variant="outline" size="sm" disabled={gcalSyncing} className="gap-1.5 text-xs"
+                    onClick={async () => {
+                      setGcalSyncing(true);
+                      const res = await fetch("/api/google-calendar/sync", { method: "POST" });
+                      setGcalSyncing(false);
+                      if (res.ok) {
+                        const d = await res.json();
+                        toast.success(`Sync concluído: ${d.pushed} enviados, ${d.pulled} importados`);
+                      } else toast.error("Erro ao sincronizar");
+                    }}
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${gcalSyncing ? "animate-spin" : ""}`} />
+                    {gcalSyncing ? "Sincronizando..." : "Sincronizar agora"}
+                  </Button>
+                  <Button variant="ghost" size="sm" className="gap-1.5 text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
+                    onClick={async () => {
+                      const res = await fetch("/api/google-calendar/sync", { method: "DELETE" });
+                      if (res.ok) { setGcalConnected(false); toast.success("Calendário desconectado"); }
+                      else toast.error("Erro ao desconectar");
+                    }}
+                  >
+                    <Unlink className="w-3.5 h-3.5" /> Desconectar
+                  </Button>
+                </div>
               </div>
             ) : (
-              <div className="w-20 h-20 rounded-xl border border-dashed border-white/[0.15] bg-white/[0.02] flex items-center justify-center flex-shrink-0">
-                <Upload className="w-6 h-6 text-muted-foreground" />
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <AlertCircle className="w-4 h-4" />
+                  <span>Não conectado</span>
+                </div>
+                <Button variant="outline" size="sm" className="gap-2 text-xs" onClick={() => { window.location.href = "/api/google-calendar/connect"; }}>
+                  <Calendar className="w-3.5 h-3.5" /> Conectar Google Calendar
+                </Button>
+                <p className="text-[11px] text-muted-foreground">
+                  Sincroniza os eventos da agenda com o Google Calendar da conta autorizada.
+                </p>
               </div>
             )}
-            <div className="flex-1">
-              <input ref={fileRef} type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={handleFile} />
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => fileRef.current?.click()}
-                className="border-white/[0.12] text-xs"
-              >
-                {logoPreview ? "Trocar logo" : "Enviar logo"}
-              </Button>
-              <p className="text-[11px] text-muted-foreground mt-1.5">PNG, JPG ou WebP · Máx 2 MB</p>
-            </div>
           </div>
         </div>
-      </div>
 
-      {/* Acesso */}
-      <div className="glass-card rounded-2xl p-6 border border-white/[0.08] space-y-4">
-        <div className="flex items-center gap-2 mb-2">
-          <Key className="w-4 h-4 text-primary" />
-          <h2 className="text-sm font-semibold">Acesso</h2>
-        </div>
-        <div>
-          <Label>Código de Convite</Label>
-          <Input
-            value={joinCode}
-            onChange={(e) => setJoinCode(e.target.value)}
-            placeholder="andre2026"
-          />
-          <p className="text-[11px] text-muted-foreground mt-1.5">
-            Colaboradores usam este código para solicitar acesso à base.
-          </p>
-        </div>
-      </div>
+        {/* ── Col direita ── */}
+        <div className="space-y-5">
 
-      {/* Google Calendar */}
-      <div className="glass-card rounded-2xl p-6 border border-white/[0.08] space-y-4">
-        <div className="flex items-center gap-2 mb-2">
-          <Calendar className="w-4 h-4 text-primary" />
-          <h2 className="text-sm font-semibold">Google Calendar</h2>
-        </div>
-        {gcalConnected ? (
-          <div className="space-y-3">
-            <div className="flex items-center gap-2 text-sm text-green-400">
-              <CheckCircle2 className="w-4 h-4" />
-              <span>Calendário conectado</span>
+          {/* Metas por Município */}
+          <div className="glass-card rounded-2xl p-5 border border-white/[0.08] space-y-3">
+            <div className="flex items-center gap-2">
+              <Target className="w-4 h-4 text-primary" />
+              <h2 className="text-sm font-semibold">Metas por Município</h2>
             </div>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" disabled={gcalSyncing} className="gap-1.5 text-xs"
+            <p className="text-[11px] text-muted-foreground">
+              Geradas automaticamente com base no eleitorado TSE 2022 assim que o primeiro colaborador de uma cidade é cadastrado. Sem intervenção manual.
+            </p>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={syncGoalsLoading}
+              className="gap-1.5 text-xs"
+              onClick={async () => {
+                setSyncGoalsLoading(true);
+                const res = await fetch("/api/admin/sync-goals", { method: "POST" });
+                setSyncGoalsLoading(false);
+                if (res.ok) {
+                  const d = await res.json();
+                  if (d.created === 0) toast.success("Todas as cidades já têm metas");
+                  else toast.success(`${d.created} meta(s) criada(s) para cidades novas`);
+                } else toast.error("Erro ao sincronizar metas");
+              }}
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${syncGoalsLoading ? "animate-spin" : ""}`} />
+              {syncGoalsLoading ? "Sincronizando..." : "Sincronizar metas agora"}
+            </Button>
+          </div>
+
+          {/* Score de Mobilização */}
+          <div className="glass-card rounded-2xl p-5 border border-white/[0.08] space-y-3">
+            <div className="flex items-center gap-2">
+              <Zap className="w-4 h-4 text-primary" />
+              <h2 className="text-sm font-semibold">Score de Mobilização</h2>
+            </div>
+            <p className="text-[11px] text-muted-foreground">
+              Calcula automaticamente o score de cada colaborador com base em perfil, apoio declarado, status e formas de contribuição.
+            </p>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={recalcLoading}
+              className="gap-1.5 text-xs"
+              onClick={async () => {
+                setRecalcLoading(true);
+                const res = await fetch("/api/admin/recalc-scores", { method: "POST" });
+                setRecalcLoading(false);
+                if (res.ok) {
+                  const d = await res.json();
+                  toast.success(`Scores recalculados: ${d.updated} colaboradores`);
+                } else toast.error("Erro ao recalcular");
+              }}
+            >
+              <Zap className={`w-3.5 h-3.5 ${recalcLoading ? "animate-pulse" : ""}`} />
+              {recalcLoading ? "Calculando..." : "Recalcular scores agora"}
+            </Button>
+          </div>
+
+          {/* Manutenção de Dados */}
+          <div className="glass-card rounded-2xl p-5 border border-white/[0.08] space-y-3">
+            <div className="flex items-center gap-2">
+              <Database className="w-4 h-4 text-primary" />
+              <h2 className="text-sm font-semibold">Manutenção de Dados</h2>
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-[11px] text-muted-foreground">
+                Corrige leads importados antes de 11/05/2026 que possuem texto livre no campo &quot;origem&quot; — padroniza o source para IMPORTACAO_XLSX.
+              </p>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={fixSourceLoading}
+                className="gap-1.5 text-xs"
                 onClick={async () => {
-                  setGcalSyncing(true);
-                  const res = await fetch("/api/google-calendar/sync", { method: "POST" });
-                  setGcalSyncing(false);
+                  setFixSourceLoading(true);
+                  const res = await fetch("/api/admin/fix-import-source", { method: "POST" });
+                  setFixSourceLoading(false);
                   if (res.ok) {
                     const d = await res.json();
-                    toast.success(`Sync concluído: ${d.pushed} enviados, ${d.pulled} importados`);
-                  } else toast.error("Erro ao sincronizar");
+                    if (d.updated === 0) toast.success("Nenhum lead precisava de correção");
+                    else toast.success(`${d.updated} leads corrigidos com sucesso`);
+                  } else toast.error("Erro ao corrigir leads");
                 }}
               >
-                <RefreshCw className={`w-3.5 h-3.5 ${gcalSyncing ? "animate-spin" : ""}`} />
-                {gcalSyncing ? "Sincronizando..." : "Sincronizar agora"}
+                <Database className={`w-3.5 h-3.5 ${fixSourceLoading ? "animate-pulse" : ""}`} />
+                {fixSourceLoading ? "Corrigindo..." : "Corrigir origem de leads antigos"}
               </Button>
-              <Button variant="ghost" size="sm" className="gap-1.5 text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
+            </div>
+
+            <div className="border-t border-white/[0.06] pt-3 space-y-2">
+              <p className="text-[11px] text-muted-foreground">
+                Normaliza os nomes de cidades no banco usando a lista oficial dos 399 municípios do Paraná — corrige variações de caixa, acentuação e espaços.
+              </p>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={normCitiesLoading}
+                className="gap-1.5 text-xs"
                 onClick={async () => {
-                  const res = await fetch("/api/google-calendar/sync", { method: "DELETE" });
-                  if (res.ok) { setGcalConnected(false); toast.success("Calendário desconectado"); }
-                  else toast.error("Erro ao desconectar");
+                  setNormCitiesLoading(true);
+                  setUnmatchedCities([]);
+                  const res = await fetch("/api/admin/normalize-cities", { method: "POST" });
+                  setNormCitiesLoading(false);
+                  if (res.ok) {
+                    const d = await res.json();
+                    if (d.corrections === 0) toast.success("Todas as cidades já estavam normalizadas");
+                    else toast.success(`${d.corrections} nome(s) corrigido(s) · ${d.updated} colaborador(es) atualizados`);
+                    if (d.unmatched?.length) setUnmatchedCities(d.unmatched);
+                  } else toast.error("Erro ao normalizar cidades");
                 }}
               >
-                <Unlink className="w-3.5 h-3.5" /> Desconectar
+                <Database className={`w-3.5 h-3.5 ${normCitiesLoading ? "animate-pulse" : ""}`} />
+                {normCitiesLoading ? "Normalizando..." : "Normalizar nomes de cidades"}
               </Button>
+              {unmatchedCities.length > 0 && (
+                <div className="rounded-lg border border-amber-500/25 bg-amber-500/[0.06] p-3 space-y-1.5">
+                  <p className="text-[11px] font-medium text-amber-400">Cidades sem correspondência — revisar manualmente:</p>
+                  <ul className="space-y-0.5">
+                    {unmatchedCities.map((c) => (
+                      <li key={c} className="text-[11px] text-muted-foreground font-mono">{c}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           </div>
-        ) : (
-          <div className="space-y-3">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <AlertCircle className="w-4 h-4" />
-              <span>Não conectado</span>
-            </div>
-            <Button variant="outline" size="sm" className="gap-2 text-xs" onClick={() => { window.location.href = "/api/google-calendar/connect"; }}>
-              <Calendar className="w-3.5 h-3.5" /> Conectar Google Calendar
-            </Button>
-            <p className="text-[11px] text-muted-foreground">
-              Sincroniza os eventos da agenda com o Google Calendar da conta autorizada.
-            </p>
-          </div>
-        )}
-      </div>
-
-      {/* Metas por Município — automáticas */}
-      <div className="glass-card rounded-2xl p-6 border border-white/[0.08] space-y-3">
-        <div className="flex items-center gap-2 mb-1">
-          <Target className="w-4 h-4 text-primary" />
-          <h2 className="text-sm font-semibold">Metas por Município</h2>
-        </div>
-        <p className="text-[11px] text-muted-foreground">
-          Geradas automaticamente com base no eleitorado TSE 2022 assim que o primeiro colaborador de uma cidade é cadastrado. Sem intervenção manual.
-        </p>
-        <Button
-          size="sm"
-          variant="outline"
-          disabled={syncGoalsLoading}
-          className="gap-1.5 text-xs"
-          onClick={async () => {
-            setSyncGoalsLoading(true);
-            const res = await fetch("/api/admin/sync-goals", { method: "POST" });
-            setSyncGoalsLoading(false);
-            if (res.ok) {
-              const d = await res.json();
-              if (d.created === 0) toast.success("Todas as cidades já têm metas");
-              else toast.success(`${d.created} meta(s) criada(s) para cidades novas`);
-            } else toast.error("Erro ao sincronizar metas");
-          }}
-        >
-          <RefreshCw className={`w-3.5 h-3.5 ${syncGoalsLoading ? "animate-spin" : ""}`} />
-          {syncGoalsLoading ? "Sincronizando..." : "Sincronizar metas agora"}
-        </Button>
-      </div>
-
-      {/* Score de mobilização */}
-      <div className="glass-card rounded-2xl p-6 border border-white/[0.08] space-y-3">
-        <div className="flex items-center gap-2 mb-1">
-          <Zap className="w-4 h-4 text-primary" />
-          <h2 className="text-sm font-semibold">Score de Mobilização</h2>
-        </div>
-        <p className="text-[11px] text-muted-foreground">
-          Calcula automaticamente o score de cada colaborador com base em perfil, apoio declarado, status e formas de contribuição.
-        </p>
-        <Button
-          size="sm"
-          variant="outline"
-          disabled={recalcLoading}
-          className="gap-1.5 text-xs"
-          onClick={async () => {
-            setRecalcLoading(true);
-            const res = await fetch("/api/admin/recalc-scores", { method: "POST" });
-            setRecalcLoading(false);
-            if (res.ok) {
-              const d = await res.json();
-              toast.success(`Scores recalculados: ${d.updated} colaboradores`);
-            } else toast.error("Erro ao recalcular");
-          }}
-        >
-          <Zap className={`w-3.5 h-3.5 ${recalcLoading ? "animate-pulse" : ""}`} />
-          {recalcLoading ? "Calculando..." : "Recalcular scores agora"}
-        </Button>
-      </div>
-
-      {/* Manutenção de Dados */}
-      <div className="glass-card rounded-2xl p-6 border border-white/[0.08] space-y-3">
-        <div className="flex items-center gap-2 mb-1">
-          <Database className="w-4 h-4 text-primary" />
-          <h2 className="text-sm font-semibold">Manutenção de Dados</h2>
-        </div>
-        <p className="text-[11px] text-muted-foreground">
-          Corrige leads importados antes de 11/05/2026 que possuem texto livre no campo &quot;origem&quot; — move o texto para as notas e padroniza o source para IMPORTACAO_XLSX, fazendo-os aparecer no filtro &quot;Importado&quot;.
-        </p>
-        <Button
-          size="sm"
-          variant="outline"
-          disabled={fixSourceLoading}
-          className="gap-1.5 text-xs"
-          onClick={async () => {
-            setFixSourceLoading(true);
-            const res = await fetch("/api/admin/fix-import-source", { method: "POST" });
-            setFixSourceLoading(false);
-            if (res.ok) {
-              const d = await res.json();
-              if (d.updated === 0) toast.success("Nenhum lead precisava de correção");
-              else toast.success(`${d.updated} leads corrigidos com sucesso`);
-            } else toast.error("Erro ao corrigir leads");
-          }}
-        >
-          <Database className={`w-3.5 h-3.5 ${fixSourceLoading ? "animate-pulse" : ""}`} />
-          {fixSourceLoading ? "Corrigindo..." : "Corrigir origem de leads antigos"}
-        </Button>
-
-        <div className="border-t border-white/[0.06] pt-3 space-y-2">
-          <p className="text-[11px] text-muted-foreground">
-            Normaliza os nomes de cidades no banco usando a lista oficial dos 399 municípios do Paraná — corrige variações de caixa, acentuação e espaços. Cidades sem correspondência são listadas para revisão manual.
-          </p>
-          <Button
-            size="sm"
-            variant="outline"
-            disabled={normCitiesLoading}
-            className="gap-1.5 text-xs"
-            onClick={async () => {
-              setNormCitiesLoading(true);
-              setUnmatchedCities([]);
-              const res = await fetch("/api/admin/normalize-cities", { method: "POST" });
-              setNormCitiesLoading(false);
-              if (res.ok) {
-                const d = await res.json();
-                if (d.corrections === 0) toast.success("Todas as cidades já estavam normalizadas");
-                else toast.success(`${d.corrections} nome(s) corrigido(s) · ${d.updated} colaborador(es) atualizados`);
-                if (d.unmatched?.length) setUnmatchedCities(d.unmatched);
-              } else toast.error("Erro ao normalizar cidades");
-            }}
-          >
-            <Database className={`w-3.5 h-3.5 ${normCitiesLoading ? "animate-pulse" : ""}`} />
-            {normCitiesLoading ? "Normalizando..." : "Normalizar nomes de cidades"}
-          </Button>
-          {unmatchedCities.length > 0 && (
-            <div className="rounded-lg border border-amber-500/25 bg-amber-500/[0.06] p-3 space-y-1.5">
-              <p className="text-[11px] font-medium text-amber-400">Cidades sem correspondência — revisar manualmente:</p>
-              <ul className="space-y-0.5">
-                {unmatchedCities.map((c) => (
-                  <li key={c} className="text-[11px] text-muted-foreground font-mono">{c}</li>
-                ))}
-              </ul>
-            </div>
-          )}
         </div>
       </div>
 
+      {/* Salvar — full width */}
       <Button onClick={handleSave} disabled={saving} className="bg-primary text-primary-foreground">
         {saving ? "Salvando..." : "Salvar alterações"}
       </Button>

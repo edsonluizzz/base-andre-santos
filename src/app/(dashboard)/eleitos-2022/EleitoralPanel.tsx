@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { Search, Users, MapPin, Loader2, Star } from "lucide-react";
+import { Search, Users, MapPin, Loader2, Star, LayoutGrid, List, Swords } from "lucide-react";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -80,14 +81,17 @@ export function EleitoralPanel() {
   const [munSearch, setMunSearch]     = useState("");
   const [favorites, setFavorites]     = useState<string[]>([]);
   const [onlyFavs, setOnlyFavs]       = useState(false);
+  const [viewMode, setViewMode]       = useState<"grid" | "list">("grid");
 
   const hasMunicipios = activeTab === "estadual" || activeTab === "federal";
 
-  // Load favorites from localStorage on mount
+  // Load favorites + viewMode from localStorage on mount
   useEffect(() => {
     try {
       const stored = localStorage.getItem("eleitos-favoritos");
       if (stored) setFavorites(JSON.parse(stored));
+      const vm = localStorage.getItem("eleitos-view") as "grid" | "list" | null;
+      if (vm === "list" || vm === "grid") setViewMode(vm);
     } catch {}
   }, []);
 
@@ -245,13 +249,31 @@ export function EleitoralPanel() {
               <Users className="h-4 w-4" />
               <span>{filtered.length} eleito{filtered.length !== 1 ? "s" : ""}</span>
             </div>
+            {/* Toggle grade/lista */}
+            <div className="flex items-center gap-1 rounded-lg border border-white/10 p-0.5 bg-white/[0.03]">
+              <button
+                onClick={() => { setViewMode("grid"); try { localStorage.setItem("eleitos-view", "grid"); } catch {} }}
+                className={cn("p-1.5 rounded-md transition-all", viewMode === "grid" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground")}
+                title="Vista grade"
+              >
+                <LayoutGrid className="h-3.5 w-3.5" />
+              </button>
+              <button
+                onClick={() => { setViewMode("list"); try { localStorage.setItem("eleitos-view", "list"); } catch {} }}
+                className={cn("p-1.5 rounded-md transition-all", viewMode === "list" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground")}
+                title="Vista lista"
+              >
+                <List className="h-3.5 w-3.5" />
+              </button>
+            </div>
           </div>
 
           {filtered.length === 0 ? (
             <div className="text-center py-16 text-muted-foreground">Nenhum candidato encontrado</div>
-          ) : (
+          ) : viewMode === "grid" ? (
+            /* ── Vista grade ── */
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-              {filtered.map((c, i) => (
+              {filtered.map((c) => (
                 <button
                   key={c.id}
                   onClick={() => setSelected(c)}
@@ -262,7 +284,6 @@ export function EleitoralPanel() {
                       : "bg-white/[0.03] border-white/10 hover:bg-white/[0.06] hover:border-white/20"
                   )}
                 >
-                  {/* Fav button */}
                   <button
                     onClick={(e) => toggleFav(c, e)}
                     className="absolute top-3 right-3 p-0.5 text-muted-foreground/40 hover:text-amber-400 transition-colors"
@@ -270,7 +291,6 @@ export function EleitoralPanel() {
                   >
                     <Star className={cn("h-3.5 w-3.5", isFav(c) && "fill-amber-400 text-amber-400")} />
                   </button>
-
                   <div className="flex items-center gap-3 mb-3 pr-5">
                     <div
                       className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0 shadow-md"
@@ -280,19 +300,75 @@ export function EleitoralPanel() {
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="text-sm font-medium text-foreground truncate leading-tight">{c.nomeUrna}</div>
-                      <div className="text-xs font-semibold mt-0.5" style={{ color: partyColor(c.partido) }}>
-                        {c.partido}
-                      </div>
+                      <div className="text-xs font-semibold mt-0.5" style={{ color: partyColor(c.partido) }}>{c.partido}</div>
                     </div>
                   </div>
                   <div className="text-xs text-muted-foreground">{fmtVotes(c.votos)} votos</div>
                   {hasMunicipios && (
                     <div className="mt-2 flex items-center gap-1 text-xs text-muted-foreground/60">
-                      <MapPin className="h-3 w-3" />
-                      <span>ver por município</span>
+                      <MapPin className="h-3 w-3" /><span>ver por município</span>
                     </div>
                   )}
                 </button>
+              ))}
+            </div>
+          ) : (
+            /* ── Vista lista ── */
+            <div className="rounded-xl border border-white/10 overflow-hidden divide-y divide-white/[0.05]">
+              {filtered.map((c, i) => (
+                <div
+                  key={c.id}
+                  className={cn(
+                    "flex items-center gap-3 px-4 py-2.5 hover:bg-white/[0.03] transition-colors group",
+                    isFav(c) && "bg-amber-500/[0.03]"
+                  )}
+                >
+                  {/* Posição */}
+                  <span className="text-xs text-muted-foreground/50 w-5 text-right flex-shrink-0">{i + 1}</span>
+
+                  {/* Avatar */}
+                  <div
+                    className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0"
+                    style={{ backgroundColor: partyColor(c.partido) }}
+                  >
+                    {initials(c.nomeUrna)}
+                  </div>
+
+                  {/* Nome + partido */}
+                  <div className="flex-1 min-w-0">
+                    <button
+                      className="text-left w-full"
+                      onClick={() => setSelected(c)}
+                    >
+                      <span className="text-sm font-medium text-foreground truncate block">{c.nomeUrna}</span>
+                    </button>
+                  </div>
+                  <span className="text-xs font-semibold flex-shrink-0" style={{ color: partyColor(c.partido) }}>{c.partido}</span>
+                  <span className="text-xs text-muted-foreground flex-shrink-0 hidden sm:block">{fmtVotes(c.votos)} votos</span>
+
+                  {/* Botão "Usar como rival nas Metas" */}
+                  {(activeTab === "estadual") && (
+                    <Link
+                      href="/metas"
+                      onClick={() => {
+                        try { localStorage.setItem("metas-rival", c.nomeUrna); } catch {}
+                      }}
+                      className="flex-shrink-0 flex items-center gap-1 text-[10px] text-muted-foreground/50 hover:text-primary transition-colors px-1.5 py-1 rounded border border-transparent hover:border-primary/20"
+                      title="Usar como adversário nas Metas"
+                    >
+                      <Swords className="h-3 w-3" />
+                      <span className="hidden sm:inline">Usar nas metas</span>
+                    </Link>
+                  )}
+
+                  {/* Fav */}
+                  <button
+                    onClick={(e) => toggleFav(c, e)}
+                    className="flex-shrink-0 p-0.5 text-muted-foreground/30 hover:text-amber-400 transition-colors"
+                  >
+                    <Star className={cn("h-3.5 w-3.5", isFav(c) && "fill-amber-400 text-amber-400")} />
+                  </button>
+                </div>
               ))}
             </div>
           )}
