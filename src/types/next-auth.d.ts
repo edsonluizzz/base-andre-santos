@@ -26,5 +26,6 @@ declare module "next-auth/jwt" {
     isSuperAdmin?: boolean;
     isImpersonating?: boolean;
     impersonationExpiry?: number; // timestamp ms — TTL 2h
+    selectedCampaignId?: string; // super-admin: troca de campanha ativa
   }
 }

@@ -9,7 +9,7 @@ import {
   ChevronLeft, ChevronRight, Sun, Moon,
 } from "lucide-react";
 import { NotificationBell } from "@/components/notifications/notification-bell";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -57,31 +57,53 @@ export function Sidebar({
   serverImage?: string;
 }) {
   const pathname = usePathname();
-  const { data: session } = useSession();
+  const { data: session, update } = useSession();
   const [mobileOpen, setMobileOpen] = useState(false);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const { isCollapsed, toggle } = useSidebar();
   const { theme, setTheme } = useTheme();
+  const [campaigns, setCampaigns] = useState<{ id: string; name: string }[]>([]);
+  const [switcherOpen, setSwitcherOpen] = useState(false);
+
+  // Valores derivados — definidos antes dos hooks que os consomem
+  const role = serverRole ?? session?.user?.role ?? "MEMBER";
+  const isSuperAdmin = serverIsSuperAdmin ?? (session?.user as { isSuperAdmin?: boolean })?.isSuperAdmin ?? false;
+  const displayName  = serverName  || session?.user?.name  || "Usuário";
+  const displayImage = serverImage || session?.user?.image || "";
+  const activeCampaignId = (session?.user as { campaignId?: string })?.campaignId ?? "andre-santos-2026";
+  const userRank = ROLE_RANK[role] ?? 0;
+  const visibleItems = navItems.filter((item) => (ROLE_RANK[item.minRole] ?? 0) <= userRank);
+  const finalItems = visibleItems.filter((item) =>
+    item.superAdminOnly ? isSuperAdmin : true
+  );
+  const initials = displayName
+    .split(" ").slice(0, 2).map((n: string) => n[0]).join("").toUpperCase() || "U";
+  const isLight = theme === "light";
+
+  // Hooks que dependem de valores derivados
+  const fetchCampaigns = useCallback(async () => {
+    try {
+      const res = await fetch("/api/admin/campaigns");
+      if (res.ok) {
+        const data = await res.json();
+        setCampaigns(data.map((c: { id: string; name: string }) => ({ id: c.id, name: c.name })));
+      }
+    } catch { /* silencioso */ }
+  }, []);
+
+  useEffect(() => {
+    if (isSuperAdmin) fetchCampaigns();
+  }, [isSuperAdmin, fetchCampaigns]);
 
   useEffect(() => {
     if (!mobileOpen) menuButtonRef.current?.focus();
   }, [mobileOpen]);
 
-  const role = serverRole ?? session?.user?.role ?? "MEMBER";
-  const isSuperAdmin = serverIsSuperAdmin ?? (session?.user as { isSuperAdmin?: boolean })?.isSuperAdmin ?? false;
-  const displayName  = serverName  || session?.user?.name  || "Usuário";
-  const displayImage = serverImage || session?.user?.image || "";
-  const userRank = ROLE_RANK[role] ?? 0;
-
-  const visibleItems = navItems.filter((item) => (ROLE_RANK[item.minRole] ?? 0) <= userRank);
-  const finalItems = visibleItems.filter((item) =>
-    item.superAdminOnly ? isSuperAdmin : true
-  );
-
-  const initials = displayName
-    .split(" ").slice(0, 2).map((n: string) => n[0]).join("").toUpperCase() || "U";
-
-  const isLight = theme === "light";
+  async function switchCampaign(campaignId: string) {
+    setSwitcherOpen(false);
+    await update({ selectedCampaignId: campaignId });
+    window.location.href = "/dashboard"; // limpa caches RSC
+  }
 
   return (
     <TooltipProvider delayDuration={300}>
@@ -160,6 +182,38 @@ export function Sidebar({
             );
           })}
         </nav>
+
+        {/* Campaign switcher — visível apenas para super-admin */}
+        {isSuperAdmin && !isCollapsed && campaigns.length > 1 && (
+          <div className="px-3 pb-2 relative">
+            <button
+              onClick={() => setSwitcherOpen((v) => !v)}
+              className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs border border-white/[0.08] bg-white/[0.03] hover:bg-white/[0.06] transition-colors"
+              title="Trocar campanha ativa"
+            >
+              <Building2 className="w-3.5 h-3.5 text-primary flex-shrink-0" />
+              <span className="flex-1 text-left truncate text-muted-foreground">
+                {campaigns.find((c) => c.id === activeCampaignId)?.name ?? activeCampaignId}
+              </span>
+              <ChevronRight className={`w-3 h-3 text-muted-foreground transition-transform ${switcherOpen ? "rotate-90" : ""}`} />
+            </button>
+            {switcherOpen && (
+              <div className="absolute bottom-full left-3 right-3 mb-1 rounded-xl border border-white/[0.10] bg-sidebar overflow-hidden shadow-xl z-50">
+                {campaigns.map((c) => (
+                  <button
+                    key={c.id}
+                    onClick={() => switchCampaign(c.id)}
+                    className={`w-full flex items-center gap-2 px-3 py-2.5 text-xs transition-colors hover:bg-white/[0.06] text-left ${c.id === activeCampaignId ? "text-primary bg-primary/[0.06]" : "text-muted-foreground"}`}
+                  >
+                    <Building2 className="w-3 h-3 flex-shrink-0" />
+                    <span className="truncate">{c.name}</span>
+                    {c.id === activeCampaignId && <span className="ml-auto text-[9px] text-primary">ativa</span>}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Notificações */}
         {!isCollapsed && (

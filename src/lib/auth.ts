@@ -79,25 +79,33 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             });
           }
 
-          const uc = await db.userCampaign.findUnique({
-            where: { userId_campaignId: { userId, campaignId: CAMPAIGN_ID } },
-          });
-
           const adminEmails = (process.env.ADMIN_EMAILS ?? "").split(",").map((e) => e.trim()).filter(Boolean);
           const isAdmin = adminEmails.includes(user.email);
 
+          // Busca em TODAS as campanhas — multi-tenant (usa a mais antiga como campanha principal)
+          const uc = await db.userCampaign.findFirst({
+            where: { userId, inviteStatus: "ACCEPTED" },
+            orderBy: { acceptedAt: "asc" },
+          });
+
           if (!uc) {
-            const newRole = isAdmin ? "ADMIN" : "MEMBER";
-            await db.userCampaign.create({
-              data: { userId, campaignId: CAMPAIGN_ID, role: newRole, inviteStatus: "ACCEPTED", acceptedAt: new Date() },
-            }).catch(() => {});
-            token.role = newRole;
-            token.campaignId = CAMPAIGN_ID;
-            token.dbUrl = (await getCampaignDbUrl(CAMPAIGN_ID)) ?? process.env.DATABASE_URL;
+            if (isAdmin) {
+              // Admin sem UC → garante vínculo com a campanha principal
+              await db.userCampaign.create({
+                data: { userId, campaignId: CAMPAIGN_ID, role: "ADMIN", inviteStatus: "ACCEPTED", acceptedAt: new Date() },
+              }).catch(() => {});
+              token.role = "ADMIN";
+              token.campaignId = CAMPAIGN_ID;
+              token.dbUrl = (await getCampaignDbUrl(CAMPAIGN_ID)) ?? process.env.DATABASE_URL;
+            }
+            // Não-admin sem campanha: token fica sem campaignId (signIn já bloqueou — safety net)
           } else {
             const effectiveRole = isAdmin && uc.role !== "ADMIN" ? "ADMIN" : uc.role;
             if (isAdmin && uc.role !== "ADMIN") {
-              await db.userCampaign.update({ where: { userId_campaignId: { userId, campaignId: CAMPAIGN_ID } }, data: { role: "ADMIN" } }).catch(() => {});
+              await db.userCampaign.update({
+                where: { userId_campaignId: { userId, campaignId: uc.campaignId } },
+                data: { role: "ADMIN" },
+              }).catch(() => {});
             }
             token.role = effectiveRole;
             token.campaignId = uc.campaignId;
@@ -136,6 +144,17 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             token.isImpersonating = false;
             token.impersonationExpiry = undefined;
             await db.auditLog.create({ data: { action: "IMPERSONATE_END", actorId: token.id as string } }).catch(() => {});
+          }
+          return token;
+        }
+
+        // Troca de campanha — exclusivo para super-admin
+        if (trigger === "update" && session !== null && "selectedCampaignId" in session && token.isSuperAdmin) {
+          const cid = session.selectedCampaignId as string | null;
+          if (cid) {
+            token.campaignId = cid;
+            token.dbUrl = (await getCampaignDbUrl(cid)) ?? process.env.DATABASE_URL;
+            await db.auditLog.create({ data: { action: "CAMPAIGN_SWITCH", actorId: token.id as string, targetId: cid } }).catch(() => {});
           }
           return token;
         }
@@ -184,18 +203,18 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const isAdmin = adminEmails.includes(user.email) || superAdminEmails.includes(user.email);
 
         if (!isAdmin) {
-          // 1) Convite pendente por email
+          // 1) Convite pendente por email — busca em QUALQUER campanha (multi-tenant)
           const pendingInvite = await db.userCampaign.findFirst({
-            where: { pendingEmail: user.email.toLowerCase(), campaignId: CAMPAIGN_ID },
+            where: { pendingEmail: user.email.toLowerCase() },
             select: { id: true },
           });
 
           if (!pendingInvite) {
-            // 2) Usuário já aceito (retornando)
+            // 2) Usuário já aceito (retornando) — busca em qualquer campanha
             const existingUser = await db.user.findUnique({ where: { email: user.email }, select: { id: true } });
             if (existingUser) {
               const acceptedUC = await db.userCampaign.findFirst({
-                where: { userId: existingUser.id, campaignId: CAMPAIGN_ID, inviteStatus: "ACCEPTED" },
+                where: { userId: existingUser.id, inviteStatus: "ACCEPTED" },
                 select: { id: true },
               });
               if (!acceptedUC) return "/sem-acesso";
@@ -223,12 +242,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         user.id = dbUser.id;
 
-        // Só cria/atualiza UserCampaign para admins ou usuários já convidados
-        await db.userCampaign.upsert({
-          where: { userId_campaignId: { userId: dbUser.id, campaignId: CAMPAIGN_ID } },
-          update: { ...(isAdmin ? { role: "ADMIN" } : {}), inviteStatus: "ACCEPTED" },
-          create: { userId: dbUser.id, campaignId: CAMPAIGN_ID, role: isAdmin ? "ADMIN" : "MEMBER", inviteStatus: "ACCEPTED", acceptedAt: new Date() },
-        }).catch(() => {});
+        // Cria/atualiza UserCampaign na campanha principal apenas para admins
+        // Não-admins têm o UC criado pelo jwt callback ao ativar o invite pendente
+        if (isAdmin) {
+          await db.userCampaign.upsert({
+            where: { userId_campaignId: { userId: dbUser.id, campaignId: CAMPAIGN_ID } },
+            update: { role: "ADMIN", inviteStatus: "ACCEPTED" },
+            create: { userId: dbUser.id, campaignId: CAMPAIGN_ID, role: "ADMIN", inviteStatus: "ACCEPTED", acceptedAt: new Date() },
+          }).catch(() => {});
+        }
       } catch (err) {
         console.error("[signIn] erro:", err);
       }
