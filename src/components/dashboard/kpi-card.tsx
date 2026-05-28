@@ -2,10 +2,10 @@
 
 import { useEffect, useRef } from "react";
 import Link from "next/link";
-import type { LucideIcon } from "lucide-react";
+import type { ReactNode } from "react";
 
 interface KpiCardProps {
-  icon: LucideIcon;
+  icon: ReactNode;
   label: string;
   value: number;
   href: string;
@@ -18,7 +18,7 @@ function easeOutExpo(t: number) {
   return t === 1 ? 1 : 1 - Math.pow(2, -10 * t);
 }
 
-export function KpiCard({ icon: Icon, label, value, href, color, delay = 0 }: KpiCardProps) {
+export function KpiCard({ icon, label, value, href, color, delay = 0 }: KpiCardProps) {
   const numRef  = useRef<HTMLSpanElement>(null);
   const cardRef = useRef<HTMLAnchorElement>(null);
 
@@ -79,7 +79,7 @@ export function KpiCard({ icon: Icon, label, value, href, color, delay = 0 }: Kp
         <div className="flex items-center justify-between mb-3">
           <span className="text-xs text-muted-foreground font-medium tracking-wide">{label}</span>
           <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-foreground/[0.04] border border-foreground/[0.06] group-hover:border-primary/20 transition-colors">
-            <Icon className={`w-3.5 h-3.5 ${color}`} />
+            {icon}
           </div>
         </div>
 

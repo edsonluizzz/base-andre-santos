@@ -1,6 +1,5 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { unstable_cache } from "next/cache";
 import { Users, MapPin, MessageCircle, Calendar, TrendingUp, Star, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { TIER_LABEL, TIER_THRESHOLDS } from "@/lib/contribution";
@@ -13,23 +12,8 @@ import { ElectionCountdown } from "@/components/dashboard/election-countdown";
 import { KpiCard } from "@/components/dashboard/kpi-card";
 import { Suspense } from "react";
 
-/**
- * unstable_cache DEVE ser criado no nível do módulo (fora de qualquer função/componente).
- * Passar CID como argumento — Next.js inclui automaticamente os args na chave de cache.
- */
-const getCampaignStats = unstable_cache(
-  async (CID: string) => Promise.all([
-    db.collaborator.count({ where: { campaignId: CID, status: "ACTIVE" } }),
-    db.collaborator.groupBy({ by: ["campaignRole"], where: { campaignId: CID, status: "ACTIVE" }, _count: { id: true } }),
-    db.collaborator.findMany({ where: { campaignId: CID, status: "ACTIVE", city: { not: null } }, select: { city: true, supportStatus: true, campaignRole: true } }),
-    db.whatsAppGroup.count({ where: { campaignId: CID } }),
-    db.zone.count({ where: { campaignId: CID } }),
-    db.event.findMany({ where: { campaignId: CID, date: { gte: new Date() } }, orderBy: { date: "asc" }, take: 5, include: { zone: { select: { name: true } } } }),
-  ]),
-  ["dashboard-stats"],
-  { revalidate: 60, tags: ["campaign-stats"] },
-);
-
+// Sempre dinâmico — evita qualquer interação com cache em edge/build
+export const dynamic = "force-dynamic";
 
 const ROLE_COLOR: Record<string, string> = {
   COORD_GERAL:     "text-yellow-400",
@@ -56,9 +40,15 @@ export default async function DashboardPage() {
   const userId = session?.user?.id;
   const CID = session?.user?.campaignId ?? "andre-santos-2026";
 
-  // Queries de campanha (cached 60 s) + queries pessoais (sem cache)
   const [[total, byRole, cityRaw, groups, zones, upcomingEvents], [myTotal, myActive, myTier]] = await Promise.all([
-    getCampaignStats(CID),  // CID é passado como arg — incluso na cache key automaticamente
+    Promise.all([
+      db.collaborator.count({ where: { campaignId: CID, status: "ACTIVE" } }),
+      db.collaborator.groupBy({ by: ["campaignRole"], where: { campaignId: CID, status: "ACTIVE" }, _count: { id: true } }),
+      db.collaborator.findMany({ where: { campaignId: CID, status: "ACTIVE", city: { not: null } }, select: { city: true, supportStatus: true, campaignRole: true } }),
+      db.whatsAppGroup.count({ where: { campaignId: CID } }),
+      db.zone.count({ where: { campaignId: CID } }),
+      db.event.findMany({ where: { campaignId: CID, date: { gte: new Date() } }, orderBy: { date: "asc" }, take: 5, include: { zone: { select: { name: true } } } }),
+    ]),
     Promise.all([
       userId ? db.collaborator.count({ where: { campaignId: CID, registeredById: userId } }) : Promise.resolve(0),
       userId ? db.collaborator.count({ where: { campaignId: CID, registeredById: userId, status: "ACTIVE" } }) : Promise.resolve(0),
@@ -115,12 +105,12 @@ export default async function DashboardPage() {
         </Link>
       )}
 
-      {/* KPI Cards — animados com anime.js */}
+      {/* KPI Cards — ícones passados como JSX (não como função) para respeitar boundary RSC→Client */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <KpiCard icon={Users}         label="Colaboradores"  value={total}                href="/colaboradores" color="text-primary"     delay={0} />
-        <KpiCard icon={MapPin}        label="Zonas"          value={zones}                href="/zonas"         color="text-blue-400"    delay={1} />
-        <KpiCard icon={MessageCircle} label="Grupos WA"      value={groups}               href="/grupos"        color="text-green-400"   delay={2} />
-        <KpiCard icon={Calendar}      label="Próx. Eventos"  value={upcomingEvents.length} href="/agenda"       color="text-purple-400"  delay={3} />
+        <KpiCard icon={<Users className="w-3.5 h-3.5 text-primary" />}         label="Colaboradores"  value={total}                 href="/colaboradores" color="text-primary"     delay={0} />
+        <KpiCard icon={<MapPin className="w-3.5 h-3.5 text-blue-400" />}        label="Zonas"          value={zones}                 href="/zonas"         color="text-blue-400"    delay={1} />
+        <KpiCard icon={<MessageCircle className="w-3.5 h-3.5 text-green-400" />} label="Grupos WA"      value={groups}                href="/grupos"        color="text-green-400"   delay={2} />
+        <KpiCard icon={<Calendar className="w-3.5 h-3.5 text-purple-400" />}    label="Próx. Eventos"  value={upcomingEvents.length}  href="/agenda"        color="text-purple-400"  delay={3} />
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6">
