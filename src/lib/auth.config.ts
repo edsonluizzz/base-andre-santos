@@ -14,6 +14,10 @@ export const authConfig: NextAuthConfig = {
       clientSecret: process.env.AUTH_GOOGLE_SECRET!,
     }),
   ],
+  // Necessário para domínios personalizados no Vercel (ovile.com.br) — aplicado
+  // tanto no middleware (edge) quanto no servidor (auth.ts). Sem isso, o NextAuth
+  // v5 beta não confia no host header quando atrás do proxy reverso da Vercel.
+  trustHost: true,
   session: { strategy: "jwt" },
   pages: { signIn: "/login" },
   callbacks: {
