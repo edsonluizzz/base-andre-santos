@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
     const supportStatus = searchParams.get("supportStatus") ?? "";
     const dateFrom = searchParams.get("dateFrom") ?? "";
     const dateTo = searchParams.get("dateTo") ?? "";
-    const limit = Math.min(parseInt(searchParams.get("limit") ?? "80"), 200);
+    const limit = Math.min(parseInt(searchParams.get("limit") ?? "500"), 500);
     const offset = parseInt(searchParams.get("offset") ?? "0");
 
     const IMPORT_SOURCES = ["IMPORTACAO_CSV", "IMPORTACAO_XLSX"];

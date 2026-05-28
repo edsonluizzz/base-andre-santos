@@ -37,7 +37,7 @@ export default function ColaboradoresPage() {
   const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
   const [total, setTotal] = useState(0);
   const [offset, setOffset] = useState(0);
-  const LIMIT = 80;
+  const LIMIT = 500;
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [search, setSearch] = useState("");
@@ -724,35 +724,56 @@ export default function ColaboradoresPage() {
         </div>
       )}
 
-      {/* Barra de ação em massa — scroll horizontal em mobile */}
+      {/* Barra de ação em massa */}
       {selected.size > 0 && (
-        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-[calc(100vw-2rem)] max-w-xl shadow-2xl rounded-2xl border border-white/[0.12]"
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-[calc(100vw-2rem)] max-w-2xl shadow-2xl rounded-2xl border border-white/[0.12]"
           style={{ background: "rgba(13,27,42,0.97)", backdropFilter: "blur(16px)" }}>
-          <div className="flex items-center gap-2 px-3 py-3 overflow-x-auto scrollbar-none">
-            <span className="text-sm font-semibold text-foreground shrink-0">{selected.size} sel.</span>
-            <div className="w-px h-4 bg-white/[0.15] shrink-0" />
-            <Button size="sm" disabled={bulkLoading} onClick={() => bulkUpdate("ACTIVE")}
-              className="h-8 gap-1.5 text-xs bg-green-600 hover:bg-green-500 text-white border-0 shrink-0">
-              <ArrowUpCircle className="w-3.5 h-3.5" />Ativo
-            </Button>
-            <Button size="sm" disabled={bulkLoading} onClick={() => bulkUpdate("LEAD")}
-              variant="outline" className="h-8 gap-1.5 text-xs border-amber-500/40 text-amber-400 hover:bg-amber-500/10 shrink-0">
-              <UserCheck className="w-3.5 h-3.5" />Lead
-            </Button>
-            <Button size="sm" disabled={bulkLoading} onClick={() => bulkUpdate("INACTIVE")}
-              variant="outline" className="h-8 gap-1.5 text-xs border-red-500/30 text-red-400 hover:bg-red-500/10 shrink-0">
-              <UserMinus className="w-3.5 h-3.5" />Inativar
-            </Button>
-            <div className="w-px h-4 bg-white/[0.15] shrink-0" />
-            <Button size="sm" disabled={bulkLoading} onClick={() => bulkSupportStatus("CONFIRMADO")}
-              className="h-8 gap-1.5 text-xs bg-primary hover:bg-primary/90 text-primary-foreground border-0 shrink-0">
-              <ThumbsUp className="w-3.5 h-3.5" />Confirmado
-            </Button>
-            <div className="w-px h-4 bg-white/[0.15] shrink-0" />
+
+          {/* Linha 1 — Status */}
+          <div className="flex items-center gap-1.5 px-3 pt-2.5 pb-1.5 border-b border-white/[0.07]">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/50 shrink-0 w-14">Status</span>
+            <div className="flex items-center gap-1.5 flex-1 overflow-x-auto scrollbar-none">
+              <Button size="sm" disabled={bulkLoading} onClick={() => bulkUpdate("ACTIVE")}
+                className="h-7 gap-1.5 text-xs bg-green-600 hover:bg-green-500 text-white border-0 shrink-0">
+                <ArrowUpCircle className="w-3 h-3" />Ativo
+              </Button>
+              <Button size="sm" disabled={bulkLoading} onClick={() => bulkUpdate("LEAD")}
+                variant="outline" className="h-7 gap-1.5 text-xs border-amber-500/40 text-amber-400 hover:bg-amber-500/10 shrink-0">
+                <UserCheck className="w-3 h-3" />Lead
+              </Button>
+              <Button size="sm" disabled={bulkLoading} onClick={() => bulkUpdate("INACTIVE")}
+                variant="outline" className="h-7 gap-1.5 text-xs border-red-500/30 text-red-400 hover:bg-red-500/10 shrink-0">
+                <UserMinus className="w-3 h-3" />Inativar
+              </Button>
+            </div>
             <button onClick={() => setSelected(new Set())}
-              className="text-muted-foreground hover:text-foreground transition-colors p-1 shrink-0 ml-auto">
+              className="text-muted-foreground hover:text-foreground transition-colors p-1 shrink-0 ml-1">
               <X className="w-4 h-4" />
             </button>
+          </div>
+
+          {/* Linha 2 — Apoio + contador */}
+          <div className="flex items-center gap-1.5 px-3 pt-1.5 pb-2.5">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/50 shrink-0 w-14">Apoio</span>
+            <div className="flex items-center gap-1.5 flex-1 overflow-x-auto scrollbar-none">
+              <Button size="sm" disabled={bulkLoading} onClick={() => bulkSupportStatus("CONFIRMADO")}
+                className="h-7 gap-1.5 text-xs bg-primary hover:bg-primary/90 text-primary-foreground border-0 shrink-0">
+                <ThumbsUp className="w-3 h-3" />Confirmado
+              </Button>
+              <Button size="sm" disabled={bulkLoading} onClick={() => bulkSupportStatus("NEGOCIANDO")}
+                variant="outline" className="h-7 gap-1.5 text-xs border-yellow-500/40 text-yellow-400 hover:bg-yellow-500/10 shrink-0">
+                Negociando
+              </Button>
+              <Button size="sm" disabled={bulkLoading} onClick={() => bulkSupportStatus("NEUTRO")}
+                variant="outline" className="h-7 gap-1.5 text-xs border-slate-500/40 text-slate-400 hover:bg-slate-500/10 shrink-0">
+                Neutro
+              </Button>
+              <Button size="sm" disabled={bulkLoading} onClick={() => bulkSupportStatus("ADVERSARIO")}
+                variant="outline" className="h-7 gap-1.5 text-xs border-red-500/30 text-red-400 hover:bg-red-500/10 shrink-0">
+                Adversário
+              </Button>
+            </div>
+            <span className="text-xs font-semibold text-muted-foreground shrink-0 ml-1">{selected.size} sel.</span>
           </div>
         </div>
       )}
