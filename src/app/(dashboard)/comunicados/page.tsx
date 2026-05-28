@@ -97,7 +97,27 @@ export default function ComunicadosPage() {
       </div>
 
       {loading ? (
-        <div className="text-center py-12 text-muted-foreground">Carregando...</div>
+        <div className="space-y-3">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="glass-card rounded-xl p-5 border border-white/[0.08] animate-pulse">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 bg-white/[0.07] rounded w-2/5" />
+                  <div className="flex gap-3">
+                    <div className="h-3 bg-white/[0.04] rounded w-28" />
+                    <div className="h-3 bg-white/[0.04] rounded w-20" />
+                  </div>
+                  <div className="h-3 bg-white/[0.04] rounded w-full" />
+                  <div className="h-3 bg-white/[0.04] rounded w-3/4" />
+                </div>
+                <div className="flex gap-1.5 shrink-0">
+                  <div className="h-8 w-8 bg-white/[0.05] rounded-md" />
+                  <div className="h-8 w-8 bg-white/[0.05] rounded-md" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       ) : broadcasts.length === 0 ? (
         <div className="glass-card rounded-2xl p-12 text-center border border-white/[0.08]">
           <Megaphone className="w-10 h-10 text-muted-foreground mx-auto mb-3" />

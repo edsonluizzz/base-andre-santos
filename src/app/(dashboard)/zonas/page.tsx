@@ -80,7 +80,23 @@ export default function ZonasPage() {
       </div>
 
       {loading ? (
-        <div className="text-center py-12 text-muted-foreground">Carregando...</div>
+        <div className="space-y-3">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="glass-card rounded-xl border border-white/[0.08] p-4 animate-pulse">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="h-5 w-16 bg-white/[0.07] rounded-full" />
+                  <div className="h-4 w-32 bg-white/[0.07] rounded" />
+                  <div className="h-3 w-8 bg-white/[0.04] rounded" />
+                </div>
+                <div className="flex gap-2">
+                  <div className="h-7 w-14 bg-white/[0.05] rounded-md" />
+                  <div className="h-7 w-14 bg-white/[0.05] rounded-md" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       ) : zones.length === 0 ? (
         <div className="glass-card rounded-2xl p-12 text-center border border-white/[0.08]">
           <MapPin className="w-10 h-10 text-muted-foreground mx-auto mb-3" />

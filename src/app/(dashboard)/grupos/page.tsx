@@ -203,7 +203,24 @@ export default function GruposPage() {
       })()}
 
       {loading ? (
-        <div className="text-center py-12 text-muted-foreground">Carregando...</div>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="glass-card rounded-xl p-5 border border-white/[0.08] space-y-3 animate-pulse">
+              <div className="flex items-start justify-between gap-2">
+                <div className="space-y-1.5 flex-1">
+                  <div className="h-4 bg-white/[0.07] rounded w-3/5" />
+                  <div className="h-3 bg-white/[0.04] rounded w-2/5" />
+                </div>
+                <div className="h-4 w-10 bg-white/[0.05] rounded" />
+              </div>
+              <div className="h-3 bg-white/[0.04] rounded w-4/5" />
+              <div className="flex gap-2 pt-1">
+                <div className="h-7 bg-white/[0.05] rounded-md flex-1" />
+                <div className="h-7 bg-white/[0.05] rounded-md flex-1" />
+              </div>
+            </div>
+          ))}
+        </div>
       ) : groups.length === 0 ? (
         <div className="glass-card rounded-2xl p-12 text-center border border-white/[0.08]">
           <MessageCircle className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
@@ -324,7 +341,17 @@ export default function GruposPage() {
             <div className="space-y-2">
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Membros atuais</p>
               {membersLoading ? (
-                <p className="text-xs text-muted-foreground py-4 text-center">Carregando...</p>
+                <div className="space-y-2 animate-pulse">
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-white/[0.03]">
+                      <div className="w-7 h-7 rounded-full bg-white/[0.07] shrink-0" />
+                      <div className="flex-1 space-y-1">
+                        <div className="h-3 bg-white/[0.07] rounded w-2/5" />
+                        <div className="h-2 bg-white/[0.04] rounded w-1/4" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
               ) : members.length === 0 ? (
                 <div className="rounded-xl border border-white/[0.08] p-6 text-center">
                   <Users className="w-6 h-6 text-muted-foreground mx-auto mb-2" />
