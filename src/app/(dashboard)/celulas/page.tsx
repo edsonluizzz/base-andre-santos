@@ -67,7 +67,26 @@ export default function CelulasPage() {
       </div>
 
       {loading ? (
-        <div className="text-center py-16 text-muted-foreground">Carregando...</div>
+        <div className="space-y-3">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="glass-card rounded-2xl border border-white/[0.08] p-4 animate-pulse">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-full bg-white/[0.07] shrink-0" />
+                <div className="flex-1 space-y-1.5">
+                  <div className="flex items-center gap-2">
+                    <div className="h-3.5 bg-white/[0.07] rounded w-28" />
+                    <div className="h-4 bg-white/[0.05] rounded-full w-16" />
+                  </div>
+                  <div className="h-3 bg-white/[0.04] rounded w-40" />
+                </div>
+                <div className="flex gap-4 shrink-0">
+                  <div className="h-4 w-10 bg-white/[0.05] rounded" />
+                  <div className="h-4 w-10 bg-white/[0.05] rounded" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       ) : leaders.length === 0 ? (
         <div className="glass-card rounded-2xl p-12 text-center border border-white/[0.08]">
           <Network className="w-10 h-10 text-muted-foreground mx-auto mb-3" />

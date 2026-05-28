@@ -281,7 +281,30 @@ export default function MapaPage() {
 
       {/* Listagem por cidade */}
       {loading ? (
-        <div className="text-center py-16 text-muted-foreground">Carregando...</div>
+        <div className="space-y-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="glass-card rounded-2xl border border-white/[0.08] overflow-hidden animate-pulse">
+              <div className="px-4 py-3 flex items-center justify-between border-b border-white/[0.06]" style={{ background: "rgba(13,27,42,0.5)" }}>
+                <div className="flex items-center gap-2">
+                  <div className="h-4 bg-white/[0.07] rounded w-32" />
+                  <div className="h-3 bg-white/[0.04] rounded w-16" />
+                </div>
+              </div>
+              <div className="divide-y divide-white/[0.04]">
+                {Array.from({ length: 2 }).map((_, j) => (
+                  <div key={j} className="px-4 py-3 flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-white/[0.06] shrink-0" />
+                    <div className="flex-1 space-y-1.5">
+                      <div className="h-3.5 bg-white/[0.07] rounded w-2/5" />
+                      <div className="h-2.5 bg-white/[0.04] rounded w-1/4" />
+                    </div>
+                    <div className="h-5 w-20 bg-white/[0.05] rounded-full" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
       ) : cities.length === 0 ? (
         <div className="glass-card rounded-2xl p-12 text-center border border-white/[0.08]">
           <Map className="w-10 h-10 text-muted-foreground mx-auto mb-3" />

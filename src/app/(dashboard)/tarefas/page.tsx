@@ -131,7 +131,29 @@ export default function TarefasPage() {
       </div>
 
       {loading ? (
-        <div className="text-center py-16 text-muted-foreground">Carregando...</div>
+        <div className="space-y-6">
+          {Array.from({ length: 2 }).map((_, gi) => (
+            <div key={gi} className="glass-card rounded-2xl border border-white/[0.08] overflow-hidden animate-pulse">
+              <div className="flex items-center gap-2 px-4 py-3 border-b border-white/[0.06] bg-white/[0.02]">
+                <div className="h-3.5 w-3.5 bg-white/[0.06] rounded" />
+                <div className="h-4 bg-white/[0.07] rounded w-32" />
+                <div className="h-3 bg-white/[0.04] rounded w-12 ml-auto" />
+              </div>
+              <div className="divide-y divide-white/[0.05]">
+                {Array.from({ length: 3 }).map((_, ti) => (
+                  <div key={ti} className="flex items-start gap-3 px-4 py-3">
+                    <div className="w-4 h-4 rounded-full bg-white/[0.06] mt-0.5 shrink-0" />
+                    <div className="flex-1 space-y-1.5">
+                      <div className="h-3.5 bg-white/[0.07] rounded w-3/5" />
+                      <div className="h-2.5 bg-white/[0.04] rounded w-1/3" />
+                    </div>
+                    <div className="h-5 w-14 bg-white/[0.04] rounded-full" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
       ) : filtered.length === 0 ? (
         <div className="glass-card rounded-2xl p-12 text-center border border-white/[0.08]">
           <ClipboardList className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
