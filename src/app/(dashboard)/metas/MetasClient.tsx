@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { Target, TrendingUp, Users, CheckCircle2, AlertTriangle, MapPin, Clock, Swords, ChevronDown, Loader2 } from "lucide-react";
+import { Target, TrendingUp, Users, CheckCircle2, AlertTriangle, MapPin, Clock, Swords, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { addWeeks, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import depEstaduais from "@/data/eleitos-2022/dep-estaduais.json";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 type Goal = {
   id: string;
@@ -107,25 +108,23 @@ export function MetasClient({ goals, cityAgg, weeklyGrowthMap }: Props) {
         </div>
 
         {/* Seletor de adversário */}
-        <div className="flex flex-col gap-1 min-w-[220px]">
+        <div className="flex flex-col gap-1.5 min-w-[240px]">
           <label className="text-[10px] font-medium text-muted-foreground flex items-center gap-1">
             <Swords className="w-3 h-3" /> Comparar com adversário
           </label>
-          <div className="relative">
-            <select
-              value={rivalName}
-              onChange={(e) => handleRivalChange(e.target.value)}
-              className="w-full appearance-none text-sm bg-white/[0.04] border border-white/[0.12] rounded-lg px-3 py-2 pr-8 text-foreground focus:outline-none focus:border-primary/50 transition-colors"
-            >
-              <option value="">— Nenhum —</option>
+          <Select value={rivalName || "__none__"} onValueChange={(v) => handleRivalChange(v === "__none__" ? "" : v)}>
+            <SelectTrigger className="bg-white/[0.04] border-white/[0.12] text-sm h-9">
+              <SelectValue placeholder="Selecionar adversário..." />
+            </SelectTrigger>
+            <SelectContent className="max-h-72">
+              <SelectItem value="__none__">— Nenhum —</SelectItem>
               {RIVAIS.map((r) => (
-                <option key={r.nomeUrna} value={r.nomeUrna}>
-                  {r.nomeUrna} ({r.partido})
-                </option>
+                <SelectItem key={r.nomeUrna} value={r.nomeUrna}>
+                  {r.nomeUrna} <span className="text-muted-foreground">({r.partido})</span>
+                </SelectItem>
               ))}
-            </select>
-            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
-          </div>
+            </SelectContent>
+          </Select>
           {rivalInfo && (
             <p className="text-[10px] text-muted-foreground">
               {rivalInfo.votos.toLocaleString("pt-BR")} votos totais em 2022
