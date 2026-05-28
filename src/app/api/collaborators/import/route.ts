@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { getCampaignContext } from "@/lib/campaign-context";
 import { normalizeCity } from "@/lib/utils";
 import { ensureCityGoal } from "@/lib/municipality-goals";
+import { triggerImportBatchWebhook } from "@/lib/n8n";
 
 
 const PROFILE_MAP: Record<string, string> = {
@@ -105,6 +106,7 @@ export async function POST(req: NextRequest) {
     let updated = 0;
     let skipped = 0;
     const errors: string[] = [];
+    const newLeadsForWebhook: { collaboratorId: string; name: string; phone: string; source: string; city: string | null }[] = [];
     const cepCache = new Map<string, { city: string; neighborhood: string }>();
     // Cache de email → userId para o campo responsavel_email
     const userCache = new Map<string, string | null>();
@@ -198,7 +200,7 @@ export async function POST(req: NextRequest) {
           });
           updated++;
         } else {
-          await db.collaborator.create({
+          const newCollab = await db.collaborator.create({
             data: {
               campaignId: CID,
               ...payload,
@@ -208,6 +210,16 @@ export async function POST(req: NextRequest) {
             },
           });
           created++;
+          // Acumula leads com telefone para disparar n8n em lote
+          if (newCollab.status === "LEAD" && newCollab.phone) {
+            newLeadsForWebhook.push({
+              collaboratorId: newCollab.id,
+              name: newCollab.name,
+              phone: newCollab.phone,
+              source: newCollab.source ?? "IMPORTACAO_XLSX",
+              city: newCollab.city,
+            });
+          }
         }
       } catch {
         errors.push(name);
@@ -217,6 +229,17 @@ export async function POST(req: NextRequest) {
     // Garante metas automáticas para todas as cidades importadas
     const importedCities = [...new Set(rows.map((r) => normalizeCity((r.cidade || r.municipio || r.Cidade || r.Município || "").trim())).filter(Boolean))];
     await Promise.allSettled(importedCities.map((c) => ensureCityGoal(c, db, cid)));
+
+    // Dispara n8n em lote para novos leads (fire-and-forget)
+    if (newLeadsForWebhook.length > 0) {
+      triggerImportBatchWebhook(newLeadsForWebhook.map(l => ({
+        collaboratorId: l.collaboratorId,
+        name: l.name,
+        phone: l.phone,
+        source: l.source,
+        city: l.city,
+      }))).catch(() => {});
+    }
 
     return NextResponse.json({ created, updated, skipped, errors: errors.slice(0, 10) });
   } catch (err) {

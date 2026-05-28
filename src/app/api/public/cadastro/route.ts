@@ -4,6 +4,7 @@ import { recalcTier } from "@/lib/tier";
 import { sendNewLeadNotificationEmail } from "@/lib/email";
 import { sendTelegram } from "@/lib/telegram";
 import { ensureCityGoal } from "@/lib/municipality-goals";
+import { triggerLeadWebhook } from "@/lib/n8n";
 import { z } from "zod";
 
 const cadastroSchema = z.object({
@@ -164,6 +165,16 @@ export async function POST(req: NextRequest) {
         }).catch(() => {});
       }
     }
+
+    // Dispara n8n para contato imediato via WhatsApp (fire-and-forget)
+    triggerLeadWebhook({
+      collaboratorId: created.id,
+      name: created.name,
+      phone: created.phone!,
+      source,
+      city: city?.trim() || null,
+      referredByCollaboratorId: refc || null,
+    }).catch(() => {});
 
     // Notifica Telegram (canal central)
     const sourceLabel: Record<string, string> = {

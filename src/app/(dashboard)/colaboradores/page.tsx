@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Users, Plus, Search, Phone, MapPin, ChevronDown, Upload, UserCheck, ExternalLink, CheckSquare, Square, X, ArrowUpCircle, UserMinus, ThumbsUp, PhoneCall, AlertTriangle, SlidersHorizontal, Download } from "lucide-react";
+import { Users, Plus, Search, Phone, MapPin, ChevronDown, Upload, UserCheck, ExternalLink, CheckSquare, Square, X, ArrowUpCircle, UserMinus, ThumbsUp, PhoneCall, AlertTriangle, SlidersHorizontal, Download, Link2, Copy, Check } from "lucide-react";
 import { differenceInDays } from "date-fns";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -65,6 +65,7 @@ export default function ColaboradoresPage() {
   const [expanded, setExpanded] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkLoading, setBulkLoading] = useState(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/leaders").then((r) => r.ok ? r.json() : []).then(setLeaders).catch(() => {});
@@ -186,6 +187,14 @@ export default function ColaboradoresPage() {
     params.delete("limit");
     params.delete("offset");
     window.open(`/api/collaborators/export?${params.toString()}`, "_blank");
+  }
+
+  function copyReferralLink(collaboratorId: string) {
+    const url = `${window.location.origin}/cadastro?refc=${collaboratorId}`;
+    navigator.clipboard.writeText(url).then(() => {
+      setCopiedId(collaboratorId);
+      setTimeout(() => setCopiedId(null), 2000);
+    }).catch(() => {});
   }
 
   const waInviteHref = (phone: string, name: string) => {
@@ -704,6 +713,16 @@ export default function ColaboradoresPage() {
                         onClick={() => markContact(c.id)}>
                         <PhoneCall className="w-3 h-3" /> Registrar contato
                       </Button>
+                      <button
+                        onClick={() => copyReferralLink(c.id)}
+                        className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md text-xs font-medium border border-violet-500/30 text-violet-400 bg-violet-500/[0.06] hover:bg-violet-500/15 transition-colors"
+                        title="Link de indicação — compartilhe com esse apoiador para ele trazer novos leads"
+                      >
+                        {copiedId === c.id
+                          ? <><Check className="w-3 h-3" /> Copiado!</>
+                          : <><Link2 className="w-3 h-3" /> Link indicação</>
+                        }
+                      </button>
                       <Button size="sm" variant="outline" className="h-7 text-xs sm:hidden" onClick={() => openEdit(c)}>Editar</Button>
                       <Button size="sm" variant="ghost" className="h-7 text-xs text-destructive hover:text-destructive hover:bg-destructive/10 sm:hidden" onClick={() => setDeleting(c)}>Excluir</Button>
                     </div>

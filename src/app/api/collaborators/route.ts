@@ -4,6 +4,7 @@ import { getCampaignContext } from "@/lib/campaign-context";
 import { recalcTier } from "@/lib/tier";
 import { normalizeCity } from "@/lib/utils";
 import { ensureCityGoal } from "@/lib/municipality-goals";
+import { triggerLeadWebhook } from "@/lib/n8n";
 import { CollaboratorRole, CollaboratorStatus } from "@prisma/client";
 
 
@@ -140,6 +141,17 @@ export async function POST(req: NextRequest) {
 
     // Garante meta automática para a cidade (idempotente)
     ensureCityGoal(collaborator.city, db, cid).catch(() => {});
+
+    // Dispara n8n se cadastrado como LEAD com telefone (fire-and-forget)
+    if (collaborator.status === "LEAD" && collaborator.phone) {
+      triggerLeadWebhook({
+        collaboratorId: collaborator.id,
+        name: collaborator.name,
+        phone: collaborator.phone,
+        source: collaborator.source ?? null,
+        city: collaborator.city ?? null,
+      }).catch(() => {});
+    }
 
     // status padrão é ACTIVE → recalcula tier do registrador
     await recalcTier(session.user.id).catch(() => {});
