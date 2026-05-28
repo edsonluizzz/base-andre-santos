@@ -8,15 +8,11 @@ declare module "next-auth" {
       email?: string | null;
       image?: string | null;
       role?: string;
-      establishmentId?: string;  // legado — mantido para backward compat
       campaignId?: string;       // Ovile Eleitoral: identificador da campanha
       dbUrl?: string;            // Ovile Eleitoral: DATABASE_URL da campanha
       isSuperAdmin?: boolean;
-      needsChurchSelection?: boolean;
       suspended?: boolean;
       isImpersonating?: boolean;
-      originalEstablishmentId?: string;
-      noEstablishment?: boolean;
     };
   }
 }
@@ -30,6 +26,5 @@ declare module "next-auth/jwt" {
     isSuperAdmin?: boolean;
     isImpersonating?: boolean;
     impersonationExpiry?: number; // timestamp ms — TTL 2h
-    originalEstablishmentId?: string;
   }
 }

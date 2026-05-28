@@ -112,7 +112,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           if (dbUser?.name) token.name = dbUser.name;
         }
 
-        if (trigger === "update" && token.id && !session?.selectedEstablishmentId) {
+        if (trigger === "update" && token.id) {
           const dbUser = await db.user.findUnique({ where: { id: token.id as string }, select: { role: true } });
           if (dbUser) token.role = dbUser.role;
         }
@@ -156,7 +156,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.user.role = token.role as string;
         if (token.name) session.user.name = token.name as string;
         if (token.image) session.user.image = token.image as string;
-        session.user.establishmentId = (token.campaignId as string) ?? CAMPAIGN_ID;
         session.user.campaignId = (token.campaignId as string) ?? CAMPAIGN_ID;
         session.user.dbUrl = token.dbUrl as string | undefined;
         // Re-avalia isSuperAdmin em toda sessão — garante tokens criados antes do campo funcionem
@@ -164,10 +163,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           .split(",").map((e) => e.trim()).filter(Boolean);
         session.user.isSuperAdmin = Boolean(token.isSuperAdmin) ||
           (!!session.user.email && superAdminEmails.includes(session.user.email));
-        session.user.needsChurchSelection = false;
         session.user.suspended = false;
         session.user.isImpersonating = Boolean(token.isImpersonating);
-        session.user.noEstablishment = false;
       }
       return session;
     },
