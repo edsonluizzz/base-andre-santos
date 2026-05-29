@@ -155,7 +155,13 @@
         },
         "sendBody": true,
         "contentType": "json",
-        "body": "={\n  \"phone\": \"{{ $json.leadPhone.slice(-13) }}\",\n  \"message\": \"{{ $json.mensagem.replace(/\"/g, '\\\\\"') }}\"\n}",
+        "specifyBody": "keypair",
+        "bodyParameters": {
+          "parameters": [
+            { "name": "phone", "value": "={{ $json.leadPhone.slice(-13) }}" },
+            { "name": "message", "value": "={{ $json.mensagem }}" }
+          ]
+        },
         "options": {}
       },
       "id": "b2c3d4e5-0002-0002-0002-000000000008",
@@ -173,7 +179,14 @@
         "genericAuthType": "httpHeaderAuth",
         "sendBody": true,
         "contentType": "json",
-        "body": "={\n  \"collaboratorId\": \"{{ $('Montar dados do envio').item.json.leadId }}\",\n  \"action\": \"CONTACTED\",\n  \"campaignId\": \"andre-santos-2026\"\n}",
+        "specifyBody": "keypair",
+        "bodyParameters": {
+          "parameters": [
+            { "name": "collaboratorId", "value": "={{ $('Montar dados do envio').item.json.leadId }}" },
+            { "name": "action", "value": "CONTACTED" },
+            { "name": "campaignId", "value": "andre-santos-2026" }
+          ]
+        },
         "options": {}
       },
       "id": "b2c3d4e5-0002-0002-0002-000000000009",
