@@ -236,6 +236,7 @@ export async function POST(req: NextRequest) {
         collaboratorId: l.collaboratorId,
         name: l.name,
         phone: l.phone,
+        campaignId: cid,
         source: l.source,
         city: l.city,
       }))).catch(() => {});

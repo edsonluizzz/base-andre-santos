@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
-
-const CAMPAIGN_ID = "andre-santos-2026";
+import { getCampaignContext } from "@/lib/campaign-context";
+import { getCampaignDbUrl } from "@/lib/meta-db";
 
 function authCheck(req: NextRequest): boolean {
   const key = process.env.N8N_API_KEY;
@@ -16,8 +15,9 @@ function authCheck(req: NextRequest): boolean {
  * Critérios: status LEAD, tem telefone, não foi contactado nos últimos `cooldown_days` dias (padrão 7).
  *
  * Query params:
- *   limit        (int, 1–100, padrão 20) — máx leads por lote
- *   cooldown_days (int, padrão 7)         — dias desde o último contato
+ *   campaign_id   (string, padrão "andre-santos-2026") — id da campanha
+ *   limit         (int, 1–100, padrão 20)              — máx leads por lote
+ *   cooldown_days (int, padrão 7)                      — dias desde o último contato
  *
  * Autenticação: Authorization: Bearer <N8N_API_KEY>
  */
@@ -27,14 +27,19 @@ export async function GET(req: NextRequest) {
   }
 
   const { searchParams } = new URL(req.url);
+  const campaignId = searchParams.get("campaign_id") ?? "andre-santos-2026";
   const limit = Math.min(parseInt(searchParams.get("limit") ?? "20"), 100);
   const cooldownDays = parseInt(searchParams.get("cooldown_days") ?? "7");
+
+  // Resolve o banco correto para a campanha (multi-tenant)
+  const dbUrl = (await getCampaignDbUrl(campaignId)) ?? process.env.DATABASE_URL;
+  const { db } = getCampaignContext({ user: { campaignId, dbUrl: dbUrl ?? undefined } });
 
   const cutoff = new Date(Date.now() - cooldownDays * 24 * 60 * 60 * 1000);
 
   const leads = await db.collaborator.findMany({
     where: {
-      campaignId: CAMPAIGN_ID,
+      campaignId,
       status: "LEAD",
       phone: { not: null },
       OR: [
@@ -61,6 +66,7 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({
     data: leads,
     count: leads.length,
+    campaignId,
     cooldown_days: cooldownDays,
   });
 }

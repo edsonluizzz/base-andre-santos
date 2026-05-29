@@ -3,12 +3,18 @@
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
-import { Settings, Upload, Key, X, Calendar, CheckCircle2, AlertCircle, RefreshCw, Unlink, Target, Zap, Database, MessageSquare } from "lucide-react";
+import { Settings, Upload, Key, X, Calendar, CheckCircle2, AlertCircle, RefreshCw, Unlink, Target, Zap, Database, MessageSquare, Webhook, Copy, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Image from "next/image";
+
+interface N8nStatus {
+  status: { apiKeySet: boolean; leadWebhookSet: boolean; importWebhookSet: boolean; allConfigured: boolean };
+  endpoints: { leadsQueue: string; updateLead: string; config: string; notifyReferrer: string };
+  apiKeyPreview: string | null;
+}
 
 function ConfiguracoesContent() {
   const searchParams = useSearchParams();
@@ -25,6 +31,7 @@ function ConfiguracoesContent() {
   const [normCitiesLoading, setNormCitiesLoading] = useState(false);
   const [unmatchedCities, setUnmatchedCities] = useState<string[]>([]);
   const [syncGoalsLoading, setSyncGoalsLoading] = useState(false);
+  const [n8nStatus, setN8nStatus] = useState<N8nStatus | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -46,6 +53,11 @@ function ConfiguracoesContent() {
     fetch("/api/campaign")
       .then((r) => r.json())
       .then((c) => { if (c.joinCode) setJoinCode(c.joinCode); })
+      .catch(() => {});
+
+    fetch("/api/admin/n8n-status")
+      .then((r) => r.json())
+      .then((d) => setN8nStatus(d))
       .catch(() => {});
   }, [searchParams]);
 
@@ -388,6 +400,86 @@ function ConfiguracoesContent() {
           </div>
         </div>
       </div>
+
+      {/* ── Integração n8n — full width ── */}
+      {n8nStatus && (
+        <div className="glass-card rounded-2xl p-5 border border-white/[0.08] space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Webhook className="w-4 h-4 text-orange-400" />
+              <h2 className="text-sm font-semibold">Integração n8n (Automação WhatsApp)</h2>
+            </div>
+            <a
+              href="https://andresantos.app.n8n.cloud/home/workflows"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 text-[11px] text-orange-400 hover:text-orange-300 transition-colors"
+            >
+              Abrir n8n <ExternalLink className="w-3 h-3" />
+            </a>
+          </div>
+
+          {/* Status dos 3 env vars */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            {[
+              { label: "N8N_API_KEY", ok: n8nStatus.status.apiKeySet },
+              { label: "N8N_LEAD_WEBHOOK_URL", ok: n8nStatus.status.leadWebhookSet },
+              { label: "N8N_IMPORT_WEBHOOK_URL", ok: n8nStatus.status.importWebhookSet },
+            ].map(({ label, ok }) => (
+              <div
+                key={label}
+                className={`flex items-center gap-2 rounded-lg px-3 py-2 border ${ok ? "border-green-500/25 bg-green-500/[0.06]" : "border-amber-500/25 bg-amber-500/[0.06]"}`}
+              >
+                {ok
+                  ? <CheckCircle2 className="w-3.5 h-3.5 text-green-400 flex-shrink-0" />
+                  : <AlertCircle className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
+                }
+                <span className="text-[11px] font-mono text-muted-foreground truncate">{label}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Endpoints que o n8n chama no Ovile */}
+          <div className="space-y-2">
+            <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Endpoints — n8n chama o Ovile</p>
+            {Object.entries(n8nStatus.endpoints).map(([key, url]) => (
+              <div key={key} className="flex items-center gap-2">
+                <code className="flex-1 text-[11px] bg-white/[0.04] border border-white/[0.08] rounded px-2 py-1 text-muted-foreground truncate">{url}</code>
+                <button
+                  onClick={() => { navigator.clipboard.writeText(url); toast.success("Copiado!"); }}
+                  className="flex-shrink-0 p-1.5 rounded hover:bg-white/[0.06] transition-colors"
+                >
+                  <Copy className="w-3.5 h-3.5 text-muted-foreground" />
+                </button>
+              </div>
+            ))}
+          </div>
+
+          {/* Instruções rápidas */}
+          <div className="rounded-lg border border-white/[0.08] bg-white/[0.02] p-3 space-y-2">
+            <p className="text-[11px] font-semibold text-muted-foreground">Como configurar:</p>
+            <ol className="space-y-1 list-decimal list-inside">
+              {[
+                `No Vercel → Settings → Environment Variables: adicione N8N_API_KEY = ${n8nStatus.apiKeyPreview ? n8nStatus.apiKeyPreview + "..." : "gerar chave segura"}`,
+                "No n8n: crie credencial 'Header Auth' com Name=Authorization e Value='Bearer <N8N_API_KEY>'",
+                "Importe os 3 workflows JSON da pasta n8n-workflows/ do repositório",
+                "Copie a URL do webhook do WF3 e adicione como N8N_LEAD_WEBHOOK_URL no Vercel",
+                "Copie a URL do webhook de importação e adicione como N8N_IMPORT_WEBHOOK_URL no Vercel",
+                "Quando WPPConnect estiver ativo: preencha Evolution API URL + chave nos workflows",
+              ].map((step, i) => (
+                <li key={i} className="text-[11px] text-muted-foreground">{step}</li>
+              ))}
+            </ol>
+          </div>
+
+          {n8nStatus.status.allConfigured && (
+            <div className="flex items-center gap-2 text-sm text-green-400">
+              <CheckCircle2 className="w-4 h-4" />
+              <span>Integração n8n totalmente configurada ✓</span>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Salvar — full width */}
       <Button onClick={handleSave} disabled={saving} className="bg-primary text-primary-foreground">

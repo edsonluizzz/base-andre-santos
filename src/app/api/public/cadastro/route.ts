@@ -171,6 +171,7 @@ export async function POST(req: NextRequest) {
       collaboratorId: created.id,
       name: created.name,
       phone: created.phone!,
+      campaignId: CID,
       source,
       city: city?.trim() || null,
       referredByCollaboratorId: refc || null,

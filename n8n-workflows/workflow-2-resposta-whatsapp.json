@@ -1,0 +1,335 @@
+{
+  "name": "Ovile — WF2: Resposta WhatsApp (Detecta SIM/NÃO)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ovile-resposta-wa",
+        "responseMode": "onReceived",
+        "responseData": "firstEntryJson"
+      },
+      "id": "c3d4e5f6-0003-0003-0003-000000000001",
+      "name": "Webhook — Resposta Evolution API",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "ovile-resposta-wa",
+      "notes": "Configure esta URL no Evolution API como webhook de mensagens recebidas"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "cond-type",
+              "leftValue": "={{ $json.data?.messageType ?? $json.event }}",
+              "rightValue": "conversation",
+              "operator": { "type": "string", "operation": "contains" }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "c3d4e5f6-0003-0003-0003-000000000002",
+      "name": "É mensagem de texto?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [460, 300],
+      "notes": "Filtra apenas mensagens de texto (ignora áudio, imagem, etc.)"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "set-phone",
+              "name": "fromPhone",
+              "value": "={{ ($json.data?.key?.remoteJid ?? $json.data?.remoteJid ?? '').replace('@s.whatsapp.net', '').replace(/\\D/g, '').slice(-11) }}",
+              "type": "string"
+            },
+            {
+              "id": "set-msg",
+              "name": "mensagemTexto",
+              "value": "={{ ($json.data?.message?.conversation ?? $json.data?.message?.extendedTextMessage?.text ?? '').toLowerCase().trim() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c3d4e5f6-0003-0003-0003-000000000003",
+      "name": "Extrair telefone e texto",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [680, 200]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "strict" },
+                "conditions": [
+                  {
+                    "id": "sim-cond",
+                    "leftValue": "={{ $json.mensagemTexto }}",
+                    "rightValue": "sim",
+                    "operator": { "type": "string", "operation": "contains" }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "SIM"
+            },
+            {
+              "conditions": {
+                "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "strict" },
+                "conditions": [
+                  {
+                    "id": "nao-cond",
+                    "leftValue": "={{ $json.mensagemTexto }}",
+                    "rightValue": "não",
+                    "operator": { "type": "string", "operation": "contains" }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "NÃO"
+            },
+            {
+              "conditions": {
+                "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "strict" },
+                "conditions": [
+                  {
+                    "id": "nao-sem-acento",
+                    "leftValue": "={{ $json.mensagemTexto }}",
+                    "rightValue": "nao",
+                    "operator": { "type": "string", "operation": "contains" }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "NÃO"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra",
+          "renameFallbackOutput": "OUTRO"
+        }
+      },
+      "id": "c3d4e5f6-0003-0003-0003-000000000004",
+      "name": "Detectar SIM / NÃO",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [900, 200]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://ovile.com.br/api/n8n/config?campaign_id=andre-santos-2026",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "c3d4e5f6-0003-0003-0003-000000000005",
+      "name": "Buscar link do grupo (SIM)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1120, 100],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "SUBSTITUIR_ID_CREDENTIAL_OVILE",
+          "name": "Ovile API — Bearer Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "set-welcome",
+              "name": "mensagemBoasVindas",
+              "value": "={{ $json.messages.welcome?.replace('{nome}', 'amigo(a)') ?? 'Que ótimo! Bem-vindo(a)! ' + $json.whatsappGroupLink }}",
+              "type": "string"
+            },
+            {
+              "id": "set-phone-sim",
+              "name": "phoneParaEnviar",
+              "value": "={{ $('Extrair telefone e texto').item.json.fromPhone }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c3d4e5f6-0003-0003-0003-000000000006",
+      "name": "Montar boas-vindas",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1340, 100]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://EVOLUTION_API_URL/message/sendText/NOME_DA_INSTANCIA",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [{ "name": "apikey", "value": "EVOLUTION_API_KEY" }]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "number", "value": "=55{{ $json.phoneParaEnviar }}" },
+            { "name": "text", "value": "={{ $json.mensagemBoasVindas }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c3d4e5f6-0003-0003-0003-000000000007",
+      "name": "Enviar boas-vindas + link grupo",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1560, 100]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://ovile.com.br/api/n8n/update-lead",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={\n  \"phone\": \"{{ $('Extrair telefone e texto').item.json.fromPhone }}\",\n  \"action\": \"CONVERT\",\n  \"campaignId\": \"andre-santos-2026\"\n}",
+        "options": {}
+      },
+      "id": "c3d4e5f6-0003-0003-0003-000000000008",
+      "name": "CONVERT — Ovile",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1780, 100],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "SUBSTITUIR_ID_CREDENTIAL_OVILE",
+          "name": "Ovile API — Bearer Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://EVOLUTION_API_URL/message/sendText/NOME_DA_INSTANCIA",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [{ "name": "apikey", "value": "EVOLUTION_API_KEY" }]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "number", "value": "=55{{ $('Extrair telefone e texto').item.json.fromPhone }}" },
+            { "name": "text", "value": "Tudo bem! Sem problemas. Se mudar de ideia, estaremos por aqui. 🙏" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c3d4e5f6-0003-0003-0003-000000000009",
+      "name": "Enviar despedida (NÃO)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1120, 320]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://ovile.com.br/api/n8n/update-lead",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={\n  \"phone\": \"{{ $('Extrair telefone e texto').item.json.fromPhone }}\",\n  \"action\": \"OPT_OUT\",\n  \"campaignId\": \"andre-santos-2026\"\n}",
+        "options": {}
+      },
+      "id": "c3d4e5f6-0003-0003-0003-000000000010",
+      "name": "OPT_OUT — Ovile",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1340, 320],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "SUBSTITUIR_ID_CREDENTIAL_OVILE",
+          "name": "Ovile API — Bearer Token"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook — Resposta Evolution API": {
+      "main": [
+        [{ "node": "É mensagem de texto?", "type": "main", "index": 0 }]
+      ]
+    },
+    "É mensagem de texto?": {
+      "main": [
+        [{ "node": "Extrair telefone e texto", "type": "main", "index": 0 }],
+        []
+      ]
+    },
+    "Extrair telefone e texto": {
+      "main": [
+        [{ "node": "Detectar SIM / NÃO", "type": "main", "index": 0 }]
+      ]
+    },
+    "Detectar SIM / NÃO": {
+      "SIM": [
+        [{ "node": "Buscar link do grupo (SIM)", "type": "main", "index": 0 }]
+      ],
+      "NÃO": [
+        [{ "node": "Enviar despedida (NÃO)", "type": "main", "index": 0 }]
+      ],
+      "OUTRO": []
+    },
+    "Buscar link do grupo (SIM)": {
+      "main": [
+        [{ "node": "Montar boas-vindas", "type": "main", "index": 0 }]
+      ]
+    },
+    "Montar boas-vindas": {
+      "main": [
+        [{ "node": "Enviar boas-vindas + link grupo", "type": "main", "index": 0 }]
+      ]
+    },
+    "Enviar boas-vindas + link grupo": {
+      "main": [
+        [{ "node": "CONVERT — Ovile", "type": "main", "index": 0 }]
+      ]
+    },
+    "Enviar despedida (NÃO)": {
+      "main": [
+        [{ "node": "OPT_OUT — Ovile", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true
+  },
+  "staticData": null,
+  "tags": ["ovile", "whatsapp", "resposta"],
+  "__readme": {
+    "workflow": "WF2 — Resposta WhatsApp",
+    "descricao": "Recebe o webhook da Evolution API quando uma mensagem chega. Detecta SIM ou NÃO no texto. SIM → envia link do grupo + converte lead no Ovile. NÃO → envia despedida + marca OPT_OUT no Ovile. Qualquer outra mensagem é ignorada.",
+    "configurar": [
+      "1. Configure esta URL como webhook no painel Evolution API (ou WPPConnect) — Events: messages.upsert",
+      "2. Crie a credencial 'Header Auth' com Name=Authorization e Value='Bearer <N8N_API_KEY>'",
+      "3. Preencha EVOLUTION_API_URL, NOME_DA_INSTANCIA e EVOLUTION_API_KEY nos nós de envio",
+      "4. Ative o workflow"
+    ]
+  }
+}

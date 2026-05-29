@@ -2,6 +2,7 @@
  * Helpers de integração com n8n.
  *
  * Env vars necessárias (Vercel):
+ *   N8N_API_KEY            — chave secreta compartilhada entre Ovile ↔ n8n
  *   N8N_LEAD_WEBHOOK_URL   — webhook disparado quando 1 lead é criado (formulário público / manual)
  *   N8N_IMPORT_WEBHOOK_URL — webhook disparado após importação em lote (CSV/XLSX)
  *
@@ -12,6 +13,7 @@ export interface LeadPayload {
   collaboratorId: string;
   name: string;
   phone: string;
+  campaignId: string;
   source?: string | null;
   city?: string | null;
   referredByCollaboratorId?: string | null;

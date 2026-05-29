@@ -1,0 +1,239 @@
+{
+  "name": "Ovile — WF3: Lead Novo (Imediato)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ovile-lead-novo",
+        "responseMode": "onReceived",
+        "responseData": "firstEntryJson"
+      },
+      "id": "a1b2c3d4-0001-0001-0001-000000000001",
+      "name": "Webhook — Recebe Lead Novo",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "ovile-lead-novo"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "cond-phone",
+              "leftValue": "={{ $json.phone }}",
+              "rightValue": "",
+              "operator": { "type": "string", "operation": "notEmpty" }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "a1b2c3d4-0001-0001-0001-000000000002",
+      "name": "Tem telefone?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "amount": 2,
+        "unit": "minutes"
+      },
+      "id": "a1b2c3d4-0001-0001-0001-000000000003",
+      "name": "Aguardar 2 min (parece natural)",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [680, 200]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://ovile.com.br/api/n8n/config",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {},
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $credentials.httpHeaderAuth.value }}"
+            }
+          ]
+        }
+      },
+      "id": "a1b2c3d4-0001-0001-0001-000000000004",
+      "name": "Buscar config Ovile",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 200],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "SUBSTITUIR_ID_CREDENTIAL_OVILE",
+          "name": "Ovile API — Bearer Token"
+        }
+      },
+      "notes": "CONFIGURE: Crie uma credencial 'Header Auth' no n8n com Name=Authorization e Value=Bearer <N8N_API_KEY>"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "assign-nome",
+              "name": "leadName",
+              "value": "={{ $('Webhook — Recebe Lead Novo').item.json.name }}",
+              "type": "string"
+            },
+            {
+              "id": "assign-phone",
+              "name": "leadPhone",
+              "value": "={{ $('Webhook — Recebe Lead Novo').item.json.phone }}",
+              "type": "string"
+            },
+            {
+              "id": "assign-collab",
+              "name": "collaboratorId",
+              "value": "={{ $('Webhook — Recebe Lead Novo').item.json.collaboratorId }}",
+              "type": "string"
+            },
+            {
+              "id": "assign-campaign",
+              "name": "campaignId",
+              "value": "={{ $('Webhook — Recebe Lead Novo').item.json.campaignId ?? 'andre-santos-2026' }}",
+              "type": "string"
+            },
+            {
+              "id": "assign-msg",
+              "name": "mensagem",
+              "value": "={{ $json.messages.invite.replace('{nome}', $('Webhook — Recebe Lead Novo').item.json.name) }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a1b2c3d4-0001-0001-0001-000000000005",
+      "name": "Montar dados do envio",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1120, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://EVOLUTION_API_URL/message/sendText/NOME_DA_INSTANCIA",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "EVOLUTION_API_KEY"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "number",
+              "value": "=55{{ $json.leadPhone.replace(/\\D/g, '').slice(-11) }}"
+            },
+            {
+              "name": "text",
+              "value": "={{ $json.mensagem }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a1b2c3d4-0001-0001-0001-000000000006",
+      "name": "Enviar WhatsApp (Evolution API)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1340, 200],
+      "notes": "CONFIGURE quando WPPConnect estiver ativo: substitua EVOLUTION_API_URL, NOME_DA_INSTANCIA e EVOLUTION_API_KEY"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://ovile.com.br/api/n8n/update-lead",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={\n  \"collaboratorId\": \"{{ $('Montar dados do envio').item.json.collaboratorId }}\",\n  \"action\": \"CONTACTED\",\n  \"campaignId\": \"{{ $('Montar dados do envio').item.json.campaignId }}\"\n}",
+        "options": {}
+      },
+      "id": "a1b2c3d4-0001-0001-0001-000000000007",
+      "name": "Marcar CONTACTED no Ovile",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1560, 200],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "SUBSTITUIR_ID_CREDENTIAL_OVILE",
+          "name": "Ovile API — Bearer Token"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook — Recebe Lead Novo": {
+      "main": [
+        [{ "node": "Tem telefone?", "type": "main", "index": 0 }]
+      ]
+    },
+    "Tem telefone?": {
+      "main": [
+        [{ "node": "Aguardar 2 min (parece natural)", "type": "main", "index": 0 }],
+        []
+      ]
+    },
+    "Aguardar 2 min (parece natural)": {
+      "main": [
+        [{ "node": "Buscar config Ovile", "type": "main", "index": 0 }]
+      ]
+    },
+    "Buscar config Ovile": {
+      "main": [
+        [{ "node": "Montar dados do envio", "type": "main", "index": 0 }]
+      ]
+    },
+    "Montar dados do envio": {
+      "main": [
+        [{ "node": "Enviar WhatsApp (Evolution API)", "type": "main", "index": 0 }]
+      ]
+    },
+    "Enviar WhatsApp (Evolution API)": {
+      "main": [
+        [{ "node": "Marcar CONTACTED no Ovile", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": ""
+  },
+  "staticData": null,
+  "tags": ["ovile", "whatsapp", "leads"],
+  "triggerCount": 0,
+  "updatedAt": "2026-05-29T00:00:00.000Z",
+  "versionId": "v1",
+  "__readme": {
+    "workflow": "WF3 — Lead Novo (Imediato)",
+    "descricao": "Disparado pelo Ovile via webhook quando um novo lead é cadastrado com telefone. Aguarda 2 min para parecer natural, busca o template de mensagem, envia via WhatsApp (Evolution API) e marca o lead como CONTACTED.",
+    "configurar": [
+      "1. No n8n: crie uma credencial 'Header Auth' com Name=Authorization e Value='Bearer <N8N_API_KEY>'",
+      "2. Substitua a credencial nos nós 'Buscar config Ovile' e 'Marcar CONTACTED no Ovile'",
+      "3. Após WPPConnect ativo: preencha EVOLUTION_API_URL, NOME_DA_INSTANCIA e EVOLUTION_API_KEY no nó 'Enviar WhatsApp'",
+      "4. Copie a URL do webhook deste workflow e coloque em N8N_LEAD_WEBHOOK_URL no Vercel",
+      "5. Ative o workflow"
+    ]
+  }
+}

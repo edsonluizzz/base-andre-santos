@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
-
-const CAMPAIGN_ID = "andre-santos-2026";
+import { getCampaignContext } from "@/lib/campaign-context";
+import { getCampaignDbUrl } from "@/lib/meta-db";
 
 function authCheck(req: NextRequest): boolean {
   const key = process.env.N8N_API_KEY;
@@ -16,7 +15,12 @@ function authCheck(req: NextRequest): boolean {
  * ou pelo id do colaborador.
  *
  * Body JSON:
- *   { phone?: string, collaboratorId?: string, action: "CONTACTED" | "CONVERT" | "OPT_OUT" }
+ *   {
+ *     phone?: string,
+ *     collaboratorId?: string,
+ *     action: "CONTACTED" | "CONVERT" | "OPT_OUT",
+ *     campaignId?: string   (padrão "andre-santos-2026")
+ *   }
  *
  * Ações:
  *   CONTACTED  → registra lastContactedAt = agora (mensagem enviada, aguardando resposta)
@@ -30,14 +34,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  let body: { phone?: string; collaboratorId?: string; action?: string };
+  let body: { phone?: string; collaboratorId?: string; action?: string; campaignId?: string };
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: "JSON inválido" }, { status: 400 });
   }
 
-  const { phone, collaboratorId, action } = body;
+  const { phone, collaboratorId, action, campaignId = "andre-santos-2026" } = body;
 
   if (!action || !["CONTACTED", "CONVERT", "OPT_OUT"].includes(action)) {
     return NextResponse.json(
@@ -52,6 +56,10 @@ export async function POST(req: NextRequest) {
       { status: 400 }
     );
   }
+
+  // Resolve o banco correto para a campanha (multi-tenant)
+  const dbUrl = (await getCampaignDbUrl(campaignId)) ?? process.env.DATABASE_URL;
+  const { db } = getCampaignContext({ user: { campaignId, dbUrl: dbUrl ?? undefined } });
 
   // Localizar o colaborador
   let collaborator: { id: string; name: string; status: string } | null = null;
@@ -68,7 +76,7 @@ export async function POST(req: NextRequest) {
 
     collaborator = await db.collaborator.findFirst({
       where: {
-        campaignId: CAMPAIGN_ID,
+        campaignId,
         phone: { contains: suffix },
       },
       select: { id: true, name: true, status: true },
@@ -103,6 +111,17 @@ export async function POST(req: NextRequest) {
         lastContactedAt: now,
       },
     });
+
+    // Dispara notificação ao indicador (fire-and-forget)
+    fetch(`${process.env.NEXTAUTH_URL ?? "https://ovile.com.br"}/api/n8n/notify-referrer`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.N8N_API_KEY}`,
+      },
+      body: JSON.stringify({ collaboratorId: collaborator.id, campaignId }),
+    }).catch(() => {});
+
     return NextResponse.json({
       ok: true,
       action: "CONVERTED",
@@ -133,4 +152,7 @@ export async function POST(req: NextRequest) {
       name: collaborator.name,
     });
   }
+
+  // Fallback — nunca deve chegar aqui (action já foi validado acima)
+  return NextResponse.json({ error: "action inválida" }, { status: 400 });
 }
