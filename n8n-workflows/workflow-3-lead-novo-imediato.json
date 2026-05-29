@@ -53,16 +53,7 @@
         "url": "https://ovile.com.br/api/n8n/config",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
-        "options": {},
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Authorization",
-              "value": "Bearer {{ $credentials.httpHeaderAuth.value }}"
-            }
-          ]
-        }
+        "options": {}
       },
       "id": "a1b2c3d4-0001-0001-0001-000000000004",
       "name": "Buscar config Ovile",
@@ -74,8 +65,7 @@
           "id": "SUBSTITUIR_ID_CREDENTIAL_OVILE",
           "name": "Ovile API — Bearer Token"
         }
-      },
-      "notes": "CONFIGURE: Crie uma credencial 'Header Auth' no n8n com Name=Authorization e Value=Bearer <N8N_API_KEY>"
+      }
     },
     {
       "parameters": {
@@ -90,7 +80,7 @@
             {
               "id": "assign-phone",
               "name": "leadPhone",
-              "value": "={{ $('Webhook — Recebe Lead Novo').item.json.phone }}",
+              "value": "={{ $('Webhook — Recebe Lead Novo').item.json.phone.replace(/\\D/g, '') }}",
               "type": "string"
             },
             {
@@ -124,37 +114,27 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "=https://EVOLUTION_API_URL/message/sendText/NOME_DA_INSTANCIA",
+        "url": "https://api.z-api.io/instances/3F3DB93D8FCE11FDF2216E531F01401A/token/30BC72BA6F47BE762085BE77/send-text",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
-              "name": "apikey",
-              "value": "EVOLUTION_API_KEY"
+              "name": "Client-Token",
+              "value": "Ffd62620c670443338f8d7bd0936987a8S"
             }
           ]
         },
         "sendBody": true,
-        "bodyParameters": {
-          "parameters": [
-            {
-              "name": "number",
-              "value": "=55{{ $json.leadPhone.replace(/\\D/g, '').slice(-11) }}"
-            },
-            {
-              "name": "text",
-              "value": "={{ $json.mensagem }}"
-            }
-          ]
-        },
+        "contentType": "json",
+        "body": "={\n  \"phone\": \"{{ $json.leadPhone.slice(-13) }}\",\n  \"message\": \"{{ $json.mensagem.replace(/\"/g, '\\\\\"') }}\"\n}",
         "options": {}
       },
       "id": "a1b2c3d4-0001-0001-0001-000000000006",
-      "name": "Enviar WhatsApp (Evolution API)",
+      "name": "Enviar WhatsApp (Z-API)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [1340, 200],
-      "notes": "CONFIGURE quando WPPConnect estiver ativo: substitua EVOLUTION_API_URL, NOME_DA_INSTANCIA e EVOLUTION_API_KEY"
+      "notes": "Z-API: phone deve ter código do país (ex: 5541987272587)"
     },
     {
       "parameters": {
@@ -204,10 +184,10 @@
     },
     "Montar dados do envio": {
       "main": [
-        [{ "node": "Enviar WhatsApp (Evolution API)", "type": "main", "index": 0 }]
+        [{ "node": "Enviar WhatsApp (Z-API)", "type": "main", "index": 0 }]
       ]
     },
-    "Enviar WhatsApp (Evolution API)": {
+    "Enviar WhatsApp (Z-API)": {
       "main": [
         [{ "node": "Marcar CONTACTED no Ovile", "type": "main", "index": 0 }]
       ]
@@ -224,16 +204,14 @@
   "tags": ["ovile", "whatsapp", "leads"],
   "triggerCount": 0,
   "updatedAt": "2026-05-29T00:00:00.000Z",
-  "versionId": "v1",
+  "versionId": "v2",
   "__readme": {
-    "workflow": "WF3 — Lead Novo (Imediato)",
-    "descricao": "Disparado pelo Ovile via webhook quando um novo lead é cadastrado com telefone. Aguarda 2 min para parecer natural, busca o template de mensagem, envia via WhatsApp (Evolution API) e marca o lead como CONTACTED.",
+    "workflow": "WF3 — Lead Novo (Imediato) — Z-API",
+    "descricao": "Disparado pelo Ovile via webhook quando um novo lead é cadastrado com telefone. Aguarda 2 min para parecer natural, busca o template de mensagem, envia via WhatsApp (Z-API) e marca o lead como CONTACTED.",
     "configurar": [
-      "1. No n8n: crie uma credencial 'Header Auth' com Name=Authorization e Value='Bearer <N8N_API_KEY>'",
-      "2. Substitua a credencial nos nós 'Buscar config Ovile' e 'Marcar CONTACTED no Ovile'",
-      "3. Após WPPConnect ativo: preencha EVOLUTION_API_URL, NOME_DA_INSTANCIA e EVOLUTION_API_KEY no nó 'Enviar WhatsApp'",
-      "4. Copie a URL do webhook deste workflow e coloque em N8N_LEAD_WEBHOOK_URL no Vercel",
-      "5. Ative o workflow"
+      "1. No n8n: verifique a credencial 'Ovile API — Bearer Token' nos nós HTTP do Ovile",
+      "2. A URL do webhook deste workflow deve estar em N8N_LEAD_WEBHOOK_URL no Vercel",
+      "3. Ative o workflow"
     ]
   }
 }

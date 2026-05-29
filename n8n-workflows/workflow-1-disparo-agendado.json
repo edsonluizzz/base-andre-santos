@@ -5,18 +5,9 @@
       "parameters": {
         "rule": {
           "interval": [
-            {
-              "field": "cronExpression",
-              "expression": "30 11 * * 1-6"
-            },
-            {
-              "field": "cronExpression",
-              "expression": "0 15 * * 1-6"
-            },
-            {
-              "field": "cronExpression",
-              "expression": "0 19 * * 1-6"
-            }
+            { "field": "cronExpression", "expression": "30 11 * * 1-6" },
+            { "field": "cronExpression", "expression": "0 15 * * 1-6" },
+            { "field": "cronExpression", "expression": "0 19 * * 1-6" }
           ]
         }
       },
@@ -130,7 +121,7 @@
             {
               "id": "set-lead-phone",
               "name": "leadPhone",
-              "value": "={{ $('Split — 1 lead por vez').item.json.phone }}",
+              "value": "={{ $('Split — 1 lead por vez').item.json.phone.replace(/\\D/g, '') }}",
               "type": "string"
             },
             {
@@ -152,37 +143,27 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "=https://EVOLUTION_API_URL/message/sendText/NOME_DA_INSTANCIA",
+        "url": "https://api.z-api.io/instances/3F3DB93D8FCE11FDF2216E531F01401A/token/30BC72BA6F47BE762085BE77/send-text",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
-              "name": "apikey",
-              "value": "EVOLUTION_API_KEY"
+              "name": "Client-Token",
+              "value": "Ffd62620c670443338f8d7bd0936987a8S"
             }
           ]
         },
         "sendBody": true,
-        "bodyParameters": {
-          "parameters": [
-            {
-              "name": "number",
-              "value": "=55{{ $json.leadPhone.replace(/\\D/g, '').slice(-11) }}"
-            },
-            {
-              "name": "text",
-              "value": "={{ $json.mensagem }}"
-            }
-          ]
-        },
+        "contentType": "json",
+        "body": "={\n  \"phone\": \"{{ $json.leadPhone.slice(-13) }}\",\n  \"message\": \"{{ $json.mensagem.replace(/\"/g, '\\\\\"') }}\"\n}",
         "options": {}
       },
       "id": "b2c3d4e5-0002-0002-0002-000000000008",
-      "name": "Enviar WhatsApp (Evolution API)",
+      "name": "Enviar WhatsApp (Z-API)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [1780, 200],
-      "notes": "CONFIGURE quando WPPConnect estiver ativo: EVOLUTION_API_URL, NOME_DA_INSTANCIA, EVOLUTION_API_KEY"
+      "notes": "Z-API: phone = dígitos com código do país (ex: 5541987272587)"
     },
     {
       "parameters": {
@@ -242,10 +223,10 @@
     },
     "Montar dados do envio": {
       "main": [
-        [{ "node": "Enviar WhatsApp (Evolution API)", "type": "main", "index": 0 }]
+        [{ "node": "Enviar WhatsApp (Z-API)", "type": "main", "index": 0 }]
       ]
     },
-    "Enviar WhatsApp (Evolution API)": {
+    "Enviar WhatsApp (Z-API)": {
       "main": [
         [{ "node": "Marcar CONTACTED no Ovile", "type": "main", "index": 0 }]
       ]
@@ -259,13 +240,11 @@
   "staticData": null,
   "tags": ["ovile", "whatsapp", "leads", "agendado"],
   "__readme": {
-    "workflow": "WF1 — Disparo Agendado (3x/dia)",
-    "descricao": "Executa às 08:30, 12:00 e 16:00 (horário de Brasília, seg-sab). Busca até 20 leads com status LEAD que não foram contactados nos últimos 7 dias. Para cada um: aguarda 2-4 min aleatórios (anti-banimento), busca o template, envia WhatsApp e marca como CONTACTED.",
+    "workflow": "WF1 — Disparo Agendado (3x/dia) — Z-API",
+    "descricao": "Executa às 08:30, 12:00 e 16:00 (horário de Brasília, seg-sab). Busca até 20 leads com status LEAD que não foram contactados nos últimos 7 dias. Para cada um: aguarda 2-4 min aleatórios (anti-banimento), busca o template, envia WhatsApp via Z-API e marca como CONTACTED.",
     "configurar": [
-      "1. No n8n: crie uma credencial 'Header Auth' com Name=Authorization e Value='Bearer <N8N_API_KEY>'",
-      "2. Substitua a credencial nos nós HTTP que chamam Ovile",
-      "3. Após WPPConnect ativo: preencha EVOLUTION_API_URL, NOME_DA_INSTANCIA e EVOLUTION_API_KEY",
-      "4. Ative o workflow (não precisa de URL — usa schedule)"
+      "1. Verifique a credencial 'Ovile API — Bearer Token' nos nós HTTP do Ovile",
+      "2. Ative o workflow (não precisa de URL — usa schedule)"
     ]
   }
 }
