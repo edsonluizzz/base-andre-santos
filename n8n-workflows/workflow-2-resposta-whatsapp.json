@@ -29,9 +29,9 @@
             },
             {
               "id": "cond-fromme",
-              "leftValue": "={{ $json.body.fromMe }}",
-              "rightValue": false,
-              "operator": { "type": "boolean", "operation": "equals" }
+              "leftValue": "={{ String($json.body.fromMe) }}",
+              "rightValue": "false",
+              "operator": { "type": "string", "operation": "equals" }
             }
           ],
           "combinator": "and"
