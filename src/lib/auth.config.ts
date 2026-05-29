@@ -52,6 +52,7 @@ export const authConfig: NextAuthConfig = {
         pathname.startsWith("/api/telegram/") ||
         pathname.startsWith("/api/join") ||
         pathname.startsWith("/api/cep/") ||
+        pathname.startsWith("/api/n8n/") ||
         pathname === "/privacidade" ||
         pathname === "/api/onboarding";
 
