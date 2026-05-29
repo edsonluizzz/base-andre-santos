@@ -23,13 +23,13 @@
           "conditions": [
             {
               "id": "cond-type",
-              "leftValue": "={{ $json.type }}",
+              "leftValue": "={{ $json.body.type }}",
               "rightValue": "ReceivedCallback",
               "operator": { "type": "string", "operation": "equals" }
             },
             {
               "id": "cond-fromme",
-              "leftValue": "={{ $json.fromMe }}",
+              "leftValue": "={{ $json.body.fromMe }}",
               "rightValue": false,
               "operator": { "type": "boolean", "operation": "equals" }
             }
@@ -51,13 +51,13 @@
             {
               "id": "set-phone",
               "name": "fromPhone",
-              "value": "={{ $json.phone.replace(/\\D/g, '').slice(-13) }}",
+              "value": "={{ $json.body.phone.replace(/\\D/g, '').slice(-13) }}",
               "type": "string"
             },
             {
               "id": "set-msg",
               "name": "mensagemTexto",
-              "value": "={{ ($json.text?.message ?? $json.text ?? '').toLowerCase().trim() }}",
+              "value": "={{ ($json.body.text?.message ?? $json.body.text ?? '').toLowerCase().trim() }}",
               "type": "string"
             }
           ]

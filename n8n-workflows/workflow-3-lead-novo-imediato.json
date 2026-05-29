@@ -22,7 +22,7 @@
           "conditions": [
             {
               "id": "cond-phone",
-              "leftValue": "={{ $json.phone }}",
+              "leftValue": "={{ $json.body.phone }}",
               "rightValue": "",
               "operator": { "type": "string", "operation": "notEmpty" }
             }
@@ -74,31 +74,31 @@
             {
               "id": "assign-nome",
               "name": "leadName",
-              "value": "={{ $('Webhook — Recebe Lead Novo').item.json.name }}",
+              "value": "={{ $('Webhook — Recebe Lead Novo').item.json.body.name }}",
               "type": "string"
             },
             {
               "id": "assign-phone",
               "name": "leadPhone",
-              "value": "={{ $('Webhook — Recebe Lead Novo').item.json.phone.replace(/\\D/g, '') }}",
+              "value": "={{ $('Webhook — Recebe Lead Novo').item.json.body.phone.replace(/\\D/g, '') }}",
               "type": "string"
             },
             {
               "id": "assign-collab",
               "name": "collaboratorId",
-              "value": "={{ $('Webhook — Recebe Lead Novo').item.json.collaboratorId }}",
+              "value": "={{ $('Webhook — Recebe Lead Novo').item.json.body.collaboratorId }}",
               "type": "string"
             },
             {
               "id": "assign-campaign",
               "name": "campaignId",
-              "value": "={{ $('Webhook — Recebe Lead Novo').item.json.campaignId ?? 'andre-santos-2026' }}",
+              "value": "={{ $('Webhook — Recebe Lead Novo').item.json.body.campaignId ?? 'andre-santos-2026' }}",
               "type": "string"
             },
             {
               "id": "assign-msg",
               "name": "mensagem",
-              "value": "={{ $json.messages.invite.replace('{nome}', $('Webhook — Recebe Lead Novo').item.json.name) }}",
+              "value": "={{ $json.messages.invite.replace('{nome}', $('Webhook — Recebe Lead Novo').item.json.body.name) }}",
               "type": "string"
             }
           ]
