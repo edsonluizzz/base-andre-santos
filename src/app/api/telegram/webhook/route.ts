@@ -10,10 +10,12 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { getCampaignContext } from "@/lib/campaign-context";
+import { db } from "@/lib/db";
 import { sendTelegram } from "@/lib/telegram";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+
+const CID = "andre-santos-2026";
 
 // BRT = UTC-3. Vercel roda em UTC; usar estas helpers em todas as operações de data.
 const BRT_OFFSET = 3 * 60 * 60 * 1000;
