@@ -193,7 +193,13 @@
         },
         "sendBody": true,
         "contentType": "json",
-        "body": "={\n  \"phone\": \"{{ $json.phoneParaEnviar }}\",\n  \"message\": \"{{ $json.mensagemBoasVindas.replace(/\"/g, '\\\\\"') }}\"\n}",
+        "specifyBody": "keypair",
+        "bodyParameters": {
+          "parameters": [
+            { "name": "phone", "value": "={{ $json.phoneParaEnviar }}" },
+            { "name": "message", "value": "={{ $json.mensagemBoasVindas }}" }
+          ]
+        },
         "options": {}
       },
       "id": "c3d4e5f6-0003-0003-0003-000000000007",
@@ -210,7 +216,14 @@
         "genericAuthType": "httpHeaderAuth",
         "sendBody": true,
         "contentType": "json",
-        "body": "={\n  \"phone\": \"{{ $('Extrair telefone e texto').item.json.fromPhone }}\",\n  \"action\": \"CONVERT\",\n  \"campaignId\": \"andre-santos-2026\"\n}",
+        "specifyBody": "keypair",
+        "bodyParameters": {
+          "parameters": [
+            { "name": "phone", "value": "={{ $('Extrair telefone e texto').item.json.fromPhone }}" },
+            { "name": "action", "value": "CONVERT" },
+            { "name": "campaignId", "value": "andre-santos-2026" }
+          ]
+        },
         "options": {}
       },
       "id": "c3d4e5f6-0003-0003-0003-000000000008",
@@ -237,7 +250,13 @@
         },
         "sendBody": true,
         "contentType": "json",
-        "body": "={\n  \"phone\": \"{{ $('Extrair telefone e texto').item.json.fromPhone }}\",\n  \"message\": \"Tudo bem! Sem problemas. Se mudar de ideia, estaremos por aqui. 🙏\"\n}",
+        "specifyBody": "keypair",
+        "bodyParameters": {
+          "parameters": [
+            { "name": "phone", "value": "={{ $('Extrair telefone e texto').item.json.fromPhone }}" },
+            { "name": "message", "value": "Tudo bem! Sem problemas. Se mudar de ideia, estaremos por aqui. 🙏" }
+          ]
+        },
         "options": {}
       },
       "id": "c3d4e5f6-0003-0003-0003-000000000009",
@@ -254,7 +273,14 @@
         "genericAuthType": "httpHeaderAuth",
         "sendBody": true,
         "contentType": "json",
-        "body": "={\n  \"phone\": \"{{ $('Extrair telefone e texto').item.json.fromPhone }}\",\n  \"action\": \"OPT_OUT\",\n  \"campaignId\": \"andre-santos-2026\"\n}",
+        "specifyBody": "keypair",
+        "bodyParameters": {
+          "parameters": [
+            { "name": "phone", "value": "={{ $('Extrair telefone e texto').item.json.fromPhone }}" },
+            { "name": "action", "value": "OPT_OUT" },
+            { "name": "campaignId", "value": "andre-santos-2026" }
+          ]
+        },
         "options": {}
       },
       "id": "c3d4e5f6-0003-0003-0003-000000000010",
