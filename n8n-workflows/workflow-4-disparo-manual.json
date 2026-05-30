@@ -80,7 +80,7 @@
           "name": "Ovile API — Bearer Token"
         }
       },
-      "notes": "?name=... → API renderiza mensagem com gênero detectado, primeiro nome formatado e variação sorteada. Também retorna credenciais Z-API do tenant."
+      "notes": "?name=... → API renderiza mensagens com gênero detectado, primeiro nome formatado e variação sorteada. Tanto invite quanto reactivation vêm no response."
     },
     {
       "parameters": {
@@ -107,7 +107,7 @@
             {
               "id": "set-mensagem",
               "name": "mensagem",
-              "value": "={{ $json.messages.invite }}",
+              "value": "={{ ($('Webhook — Recebe Lote Manual').item.json.body.kind === 'reactivation') ? $json.messages.reactivation : $json.messages.invite }}",
               "type": "string"
             }
           ]

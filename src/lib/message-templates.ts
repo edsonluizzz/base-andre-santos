@@ -73,6 +73,23 @@ export const WELCOME_TEMPLATES: string[] = [
   `{nome}, que alegria! 🤩\n\nVocê acaba de ganhar um lugar especial no nosso grupo de apoiadores 💚\n\n👉 {groupLink}\n\nConta com a gente, {querido}! 🙏`,
 ];
 
+export const REACTIVATION_TEMPLATES: string[] = [
+  // V1 — Formal, retomada cordial
+  `Olá, {querido} {nome}. Como tem passado?\n\nAqui é da equipe do {candidato}. Notamos que faz algum tempo desde nosso último contato, e queríamos retomar essa conversa.\n\nCaso ainda tenha interesse em acompanhar nossa {periodo}, estamos à disposição para conversar.\n\nUm abraço.`,
+
+  // V2 — Formal, reabertura de canal
+  `Boa tarde, {nome}.\n\nEm nome da equipe do {candidato}, gostaríamos de reabrir esse diálogo.\n\nSabemos que a vida é corrida, mas queremos saber se ainda podemos contar com você nessa caminhada de 2026.\n\nAguardamos seu retorno quando possível.`,
+
+  // V3 — Formal, retomar contato
+  `{nome}, tudo bem?\n\nEquipe do {candidato} aqui. Faz algum tempo que não trocamos uma palavra e queremos reabrir esse canal.\n\nSe ainda tiver interesse em receber novidades e participar do nosso grupo de apoiadores, basta nos avisar.\n\nCordialmente.`,
+
+  // V4 — Formal, oferta de grupo
+  `Olá, {nome}.\n\nEsperamos que esteja bem. A equipe do {candidato} gostaria de retomar contato com você.\n\nSe for de seu interesse, podemos te incluir no nosso grupo de apoiadores no WhatsApp e mantê-lo informado sobre os próximos passos.\n\nAguardamos sua resposta.`,
+
+  // V5 — Formal, novo olá
+  `{nome}, boa tarde.\n\nEm nome do {candidato} e de toda a equipe, queremos dar um novo "olá" e saber como está.\n\nCaso ainda deseje fazer parte da nossa rede de apoiadores, é só nos avisar — temos materiais e informações relevantes pra compartilhar.\n\nUm abraço cordial.`,
+];
+
 export const OPTOUT_TEMPLATES: string[] = [
   // V1
   `Tudo bem, {nome}! Sem problema nenhum 😊\n\nSe mudar de ideia, a porta tá sempre aberta. Um abraço da equipe! 🤝`,
@@ -114,12 +131,13 @@ function pickRandom(arr: string[]): string {
   return arr[Math.floor(Math.random() * arr.length)] ?? arr[0];
 }
 
-export type MessageKind = "invite" | "welcome" | "optOut";
+export type MessageKind = "invite" | "welcome" | "optOut" | "reactivation";
 
 const POOLS: Record<MessageKind, string[]> = {
   invite: INVITE_TEMPLATES,
   welcome: WELCOME_TEMPLATES,
   optOut: OPTOUT_TEMPLATES,
+  reactivation: REACTIVATION_TEMPLATES,
 };
 
 /**
@@ -134,13 +152,14 @@ export function renderMessage(kind: MessageKind, ctx: RenderContext): string {
 }
 
 /**
- * Renderiza todas as 3 mensagens (invite, welcome, optOut) já com o mesmo contexto.
- * Cada uma sorteia a sua variação independentemente.
+ * Renderiza todas as 4 mensagens (invite, welcome, optOut, reactivation)
+ * com o mesmo contexto. Cada uma sorteia a sua variação independentemente.
  */
 export function renderAllMessages(ctx: RenderContext): Record<MessageKind, string> {
   return {
     invite: renderMessage("invite", ctx),
     welcome: renderMessage("welcome", ctx),
     optOut: renderMessage("optOut", ctx),
+    reactivation: renderMessage("reactivation", ctx),
   };
 }

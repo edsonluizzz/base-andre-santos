@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCampaignContext } from "@/lib/campaign-context";
 import { getCampaignDbUrl } from "@/lib/meta-db";
+import { logContact } from "@/lib/contact-log";
 
 function authCheck(req: NextRequest): boolean {
   const key = process.env.N8N_API_KEY;
@@ -94,6 +95,13 @@ export async function POST(req: NextRequest) {
       where: { id: collaborator.id },
       data: { lastContactedAt: now },
     });
+    await logContact(db, {
+      collaboratorId: collaborator.id,
+      campaignId,
+      kind: "SENT_INVITE",
+      channel: "WHATSAPP",
+      source: "n8n",
+    });
     return NextResponse.json({
       ok: true,
       action: "CONTACTED",
@@ -110,6 +118,13 @@ export async function POST(req: NextRequest) {
         supportStatus: "CONFIRMADO",
         lastContactedAt: now,
       },
+    });
+    await logContact(db, {
+      collaboratorId: collaborator.id,
+      campaignId,
+      kind: "CONVERT",
+      channel: "WHATSAPP",
+      source: "n8n",
     });
 
     // Busca o referrer inline (evita roundtrip HTTP de auto-call)
@@ -152,6 +167,13 @@ export async function POST(req: NextRequest) {
           ? `${currentNotes}\n[n8n] Optou por não participar via WhatsApp`
           : "[n8n] Optou por não participar via WhatsApp",
       },
+    });
+    await logContact(db, {
+      collaboratorId: collaborator.id,
+      campaignId,
+      kind: "OPT_OUT",
+      channel: "WHATSAPP",
+      source: "n8n",
     });
     return NextResponse.json({
       ok: true,

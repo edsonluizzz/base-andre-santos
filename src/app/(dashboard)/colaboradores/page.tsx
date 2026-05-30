@@ -72,11 +72,13 @@ export default function ColaboradoresPage() {
   // Aqui mostramos o botão sempre que houver seleção; UX falha com toast caso não-admin.
   const [invitePreview, setInvitePreview] = useState<{
     eligibleCount: number;
-    skipped: { noPhone: number; inactive: number; cooldown: number; notFound: number };
+    skipped: { noPhone: number; inactive: number; cooldown: number; notFound: number; notEligible?: number };
     selected: number;
     cooldownDays: number;
+    kind: "invite" | "reactivation";
   } | null>(null);
   const [inviteSending, setInviteSending] = useState(false);
+  const [inviteKind, setInviteKind] = useState<"invite" | "reactivation">("invite");
 
   // Portal precisa de window (CSR) — só monta depois que o componente renderizou
   const [mounted, setMounted] = useState(false);
@@ -195,17 +197,18 @@ export default function ColaboradoresPage() {
   }
 
   // ── Disparo manual de convite WhatsApp ─────────────────────────────────
-  async function openInviteModal() {
+  async function openInviteModal(kind: "invite" | "reactivation" = "invite") {
     if (selected.size === 0) {
       toast.error("Selecione pelo menos 1 colaborador");
       return;
     }
+    setInviteKind(kind);
     setInviteSending(true);
     try {
       const res = await fetch("/api/collaborators/bulk-invite", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ids: [...selected], preview: true }),
+        body: JSON.stringify({ ids: [...selected], kind, preview: true }),
       });
       const text = await res.text();
       if (!res.ok) {
@@ -238,13 +241,14 @@ export default function ColaboradoresPage() {
       const res = await fetch("/api/collaborators/bulk-invite", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ids: [...selected] }),
+        body: JSON.stringify({ ids: [...selected], kind: inviteKind }),
       });
       if (res.ok) {
         const d = await res.json();
         const horas = Math.ceil((d.sent * 3) / 60);
+        const label = inviteKind === "reactivation" ? "reativação" : "convite";
         toast.success(
-          `✅ Fluxo n8n ativado — ${d.sent} convite${d.sent !== 1 ? "s" : ""} em processamento (entrega em até ~${horas}h)`,
+          `✅ Fluxo n8n ativado — ${d.sent} ${label}${d.sent !== 1 ? "s" : ""} em processamento (entrega em até ~${horas}h)`,
           { duration: 6000 },
         );
         setSelected(new Set());
@@ -859,12 +863,23 @@ export default function ColaboradoresPage() {
               <Button
                 size="sm"
                 disabled={inviteSending || selected.size === 0}
-                onClick={openInviteModal}
+                onClick={() => openInviteModal("invite")}
                 className="h-7 gap-1.5 text-xs bg-green-600 hover:bg-green-500 text-white border-0 shrink-0"
                 title="Disparar fluxo de convite WhatsApp em lote (admin)"
               >
                 <Send className="w-3 h-3" />
-                {inviteSending ? "Verificando..." : "Enviar convite"}
+                {inviteSending && inviteKind === "invite" ? "Verificando..." : "Enviar convite"}
+              </Button>
+              <Button
+                size="sm"
+                disabled={inviteSending || selected.size === 0}
+                onClick={() => openInviteModal("reactivation")}
+                variant="outline"
+                className="h-7 gap-1.5 text-xs border-purple-500/40 text-purple-400 hover:bg-purple-500/10 shrink-0"
+                title="Reativar leads em silêncio há 30+ dias (admin)"
+              >
+                <PhoneCall className="w-3 h-3" />
+                {inviteSending && inviteKind === "reactivation" ? "Verificando..." : "Reativar"}
               </Button>
             </div>
           </div>
@@ -912,8 +927,17 @@ export default function ColaboradoresPage() {
             style={{ background: "rgba(13,27,42,0.98)", backdropFilter: "blur(20px)" }}
           >
             <div className="flex items-center gap-2 mb-3">
-              <Send className="w-5 h-5 text-green-400" />
-              <h3 className="text-base font-semibold">Disparar convite WhatsApp</h3>
+              {invitePreview.kind === "reactivation" ? (
+                <>
+                  <PhoneCall className="w-5 h-5 text-purple-400" />
+                  <h3 className="text-base font-semibold">Disparar mensagem de reativação</h3>
+                </>
+              ) : (
+                <>
+                  <Send className="w-5 h-5 text-green-400" />
+                  <h3 className="text-base font-semibold">Disparar convite WhatsApp</h3>
+                </>
+              )}
             </div>
 
             {invitePreview.eligibleCount > 0 ? (
@@ -941,7 +965,8 @@ export default function ColaboradoresPage() {
             {(invitePreview.skipped.noPhone +
               invitePreview.skipped.inactive +
               invitePreview.skipped.cooldown +
-              invitePreview.skipped.notFound) > 0 && (
+              invitePreview.skipped.notFound +
+              (invitePreview.skipped.notEligible ?? 0)) > 0 && (
               <div className="mt-4 rounded-lg border border-white/[0.06] bg-white/[0.02] p-3 space-y-1">
                 <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
                   Pulados ({invitePreview.selected - invitePreview.eligibleCount})
@@ -960,8 +985,22 @@ export default function ColaboradoresPage() {
                 )}
                 {invitePreview.skipped.cooldown > 0 && (
                   <p className="text-xs text-muted-foreground flex justify-between">
-                    <span>Contactados nos últimos {invitePreview.cooldownDays} dia(s)</span>
+                    <span>
+                      {invitePreview.kind === "reactivation"
+                        ? `Contactados nos últimos ${invitePreview.cooldownDays} dias (não está em silêncio)`
+                        : `Contactados nos últimos ${invitePreview.cooldownDays} dia(s)`}
+                    </span>
                     <span className="font-semibold text-foreground">{invitePreview.skipped.cooldown}</span>
+                  </p>
+                )}
+                {(invitePreview.skipped.notEligible ?? 0) > 0 && (
+                  <p className="text-xs text-muted-foreground flex justify-between">
+                    <span>
+                      {invitePreview.kind === "reactivation"
+                        ? "Sem contato anterior (mande convite primeiro)"
+                        : "Não elegíveis"}
+                    </span>
+                    <span className="font-semibold text-foreground">{invitePreview.skipped.notEligible}</span>
                   </p>
                 )}
                 {invitePreview.skipped.notFound > 0 && (
@@ -985,9 +1024,15 @@ export default function ColaboradoresPage() {
               <Button
                 onClick={confirmBulkInvite}
                 disabled={inviteSending || invitePreview.eligibleCount === 0}
-                className="flex-1 bg-green-600 hover:bg-green-500 text-white gap-2"
+                className={`flex-1 text-white gap-2 ${
+                  invitePreview.kind === "reactivation"
+                    ? "bg-purple-600 hover:bg-purple-500"
+                    : "bg-green-600 hover:bg-green-500"
+                }`}
               >
-                <Send className="w-4 h-4" />
+                {invitePreview.kind === "reactivation"
+                  ? <PhoneCall className="w-4 h-4" />
+                  : <Send className="w-4 h-4" />}
                 {inviteSending
                   ? "Disparando..."
                   : `Confirmar (${invitePreview.eligibleCount})`}

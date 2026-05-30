@@ -165,6 +165,13 @@ CREATE TABLE "MunicipalityGoal" (
     CONSTRAINT "MunicipalityGoal_pkey" PRIMARY KEY ("id")
 );
 
+CREATE TABLE "ContactLog" (
+    "id" TEXT NOT NULL, "campaignId" TEXT NOT NULL, "collaboratorId" TEXT NOT NULL,
+    "kind" TEXT NOT NULL, "channel" TEXT, "actorId" TEXT, "source" TEXT, "notes" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "ContactLog_pkey" PRIMARY KEY ("id")
+);
+
 CREATE TABLE "AuditLog" (
     "id" TEXT NOT NULL, "action" TEXT NOT NULL, "actorId" TEXT NOT NULL,
     "targetId" TEXT, "metadata" JSONB, "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -224,6 +231,10 @@ CREATE INDEX "MunicipalityGoal_campaignId_idx" ON "MunicipalityGoal"("campaignId
 CREATE UNIQUE INDEX "MunicipalityGoal_campaignId_city_key" ON "MunicipalityGoal"("campaignId", "city");
 CREATE INDEX "AuditLog_actorId_idx" ON "AuditLog"("actorId");
 CREATE INDEX "AuditLog_createdAt_idx" ON "AuditLog"("createdAt");
+CREATE INDEX "ContactLog_collaboratorId_createdAt_idx" ON "ContactLog"("collaboratorId", "createdAt");
+CREATE INDEX "ContactLog_campaignId_createdAt_idx" ON "ContactLog"("campaignId", "createdAt");
+CREATE INDEX "ContactLog_campaignId_kind_idx" ON "ContactLog"("campaignId", "kind");
+ALTER TABLE "ContactLog" ADD CONSTRAINT "ContactLog_collaboratorId_fkey" FOREIGN KEY ("collaboratorId") REFERENCES "Collaborator"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 CREATE INDEX "Task_campaignId_idx" ON "Task"("campaignId");
 CREATE INDEX "Task_assignedToId_idx" ON "Task"("assignedToId");
 CREATE INDEX "Task_status_idx" ON "Task"("status");

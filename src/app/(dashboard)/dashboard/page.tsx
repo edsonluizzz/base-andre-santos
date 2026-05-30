@@ -7,6 +7,7 @@ import { TIER_LABEL, TIER_THRESHOLDS } from "@/lib/contribution";
 import { ROLE_LABEL } from "@/lib/labels";
 import { CopyButton } from "@/components/dashboard/copy-button";
 import { FunnelPanel } from "@/components/dashboard/funnel-panel";
+import { ConversionPanel } from "@/components/dashboard/conversion-panel";
 import { InstagramPanel } from "@/components/dashboard/instagram-panel";
 import { VelocityPanel } from "@/components/dashboard/velocity-panel";
 import { ElectionCountdown } from "@/components/dashboard/election-countdown";
@@ -218,8 +219,11 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {/* Funil de conversão */}
+      {/* Funil de conversão (status agregado) */}
       <FunnelPanel />
+
+      {/* Funil de conversão WhatsApp (ContactLog) */}
+      <ConversionPanel />
 
       {/* Instagram Analytics */}
       <InstagramPanel />

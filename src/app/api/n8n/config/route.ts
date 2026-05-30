@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCampaignContext } from "@/lib/campaign-context";
 import { getCampaignDbUrl, getCampaignIntegrations } from "@/lib/meta-db";
-import { renderAllMessages, INVITE_TEMPLATES, WELCOME_TEMPLATES, OPTOUT_TEMPLATES, periodoEleitoral } from "@/lib/message-templates";
+import { renderAllMessages, INVITE_TEMPLATES, WELCOME_TEMPLATES, OPTOUT_TEMPLATES, REACTIVATION_TEMPLATES, periodoEleitoral } from "@/lib/message-templates";
 
 function authCheck(req: NextRequest): boolean {
   const key = process.env.N8N_API_KEY;
@@ -95,6 +95,10 @@ export async function GET(req: NextRequest) {
         .replaceAll("{amigo}", "amigo(a)")
         .replaceAll("{bem-vindo}", "bem-vindo(a)"),
       optOut: OPTOUT_TEMPLATES[0]
+        .replaceAll("{candidato}", candidateName)
+        .replaceAll("{periodo}", periodoEleitoral())
+        .replaceAll("{querido}", "amigo(a)"),
+      reactivation: REACTIVATION_TEMPLATES[0]
         .replaceAll("{candidato}", candidateName)
         .replaceAll("{periodo}", periodoEleitoral())
         .replaceAll("{querido}", "amigo(a)"),

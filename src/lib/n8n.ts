@@ -79,6 +79,7 @@ export interface ManualBatchResult {
 export async function triggerManualInviteBatch(
   leads: LeadPayload[],
   actorId: string,
+  kind: "invite" | "reactivation" = "invite",
 ): Promise<ManualBatchResult> {
   const webhookUrl = process.env.N8N_MANUAL_WEBHOOK_URL;
   if (!webhookUrl) {
@@ -96,6 +97,7 @@ export async function triggerManualInviteBatch(
         leads,
         count: leads.length,
         source: "manual",
+        kind,
         actorId,
         triggeredAt: new Date().toISOString(),
       }),

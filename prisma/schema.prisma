@@ -125,6 +125,22 @@ model Notification {
   @@index([userId, read])
 }
 
+model ContactLog {
+  id             String   @id @default(cuid())
+  campaignId     String
+  collaboratorId String
+  kind           String   // SENT_INVITE, SENT_REACTIVATION, RECEIVED_YES, RECEIVED_NO, CONVERT, OPT_OUT, MANUAL_NOTE
+  channel        String?  // WHATSAPP, EMAIL, MANUAL
+  actorId        String?  // userId que disparou (se manual)
+  source         String?  // WF1, WF3, WF4, MANUAL_FORM, MANUAL_ADMIN
+  notes          String?  @db.Text
+  createdAt      DateTime @default(now())
+  collaborator Collaborator @relation(fields: [collaboratorId], references: [id], onDelete: Cascade)
+  @@index([collaboratorId, createdAt])
+  @@index([campaignId, createdAt])
+  @@index([campaignId, kind])
+}
+
 model Collaborator {
   id           String             @id @default(cuid())
   campaignId   String
@@ -159,6 +175,7 @@ model Collaborator {
   whatsappGroups WhatsAppGroupMember[]
   attendances    Attendance[]
   rsvps          EventRsvp[]
+  contactLogs    ContactLog[]
   @@index([campaignId])
   @@index([email])
   @@index([city])

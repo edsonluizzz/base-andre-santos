@@ -3,43 +3,48 @@ import { auth } from "@/lib/auth";
 import { getCampaignContext } from "@/lib/campaign-context";
 import { db as globalDb } from "@/lib/db"; // AuditLog é global
 import { triggerManualInviteBatch, type LeadPayload } from "@/lib/n8n";
+import { logContactBulk } from "@/lib/contact-log"; // ContactKind inferido pelo template literal abaixo
 
-// Cooldown menor pra disparo manual (3 dias) — WF1 usa 7 dias
-const COOLDOWN_DAYS = 3;
+// Cooldown por kind
+const INVITE_COOLDOWN_DAYS = 3;          // disparo manual de convite (WF1 usa 7)
+const REACTIVATION_MIN_SILENCE_DAYS = 30; // só reativar quem está em silêncio há 30d+
+
 const MAX_PER_REQUEST = 200;
 
-// n8n webhook pode demorar até 8s + lookup banco + audit log = setar 30s pra folga
+// n8n webhook pode demorar até 8s + lookup banco + audit log
 export const maxDuration = 30;
+
+type Kind = "invite" | "reactivation";
 
 interface BulkInviteBody {
   ids: string[];
-  kind?: "invite"; // futura extensão: "reactivation"
-  preview?: boolean; // se true, só calcula elegíveis sem disparar
+  kind?: Kind;
+  preview?: boolean;
 }
 
 interface SkippedBreakdown {
   noPhone: number;
   inactive: number;
-  cooldown: number;
+  cooldown: number;       // invite: contactado há < 3d  |  reactivation: contactado há < 30d
   notFound: number;
+  notEligible: number;    // só reactivation: status diferente de LEAD|ACTIVE
 }
 
 /**
  * POST /api/collaborators/bulk-invite
  *
- * Admin seleciona N colaboradores e dispara fluxo de convite WhatsApp em massa.
+ * Admin dispara convite ou reativação WhatsApp em massa.
  *
- * Body: { ids: string[], kind?: "invite", preview?: boolean }
+ * Body: { ids: string[], kind?: "invite"|"reactivation", preview?: boolean }
  *
- * Filtros de elegibilidade:
- *   - tem phone (não-nulo, não-vazio)
- *   - status != INACTIVE (não envia pra quem fez opt-out)
- *   - lastContactedAt > 3 dias atrás (ou null)
+ * Filtros:
+ *   invite:        phone + status!=INACTIVE + lastContactedAt > 3d  (ou nulo)
+ *   reactivation:  phone + status IN (LEAD,ACTIVE) + lastContactedAt > 30d  (não-nulo)
  *
  * Limite: 200 por requisição.
  *
- * preview=true → retorna { eligible, skipped } sem disparar (pra modal)
- * preview=false → dispara n8n + registra audit log
+ * preview=true → { eligibleCount, skipped, ... } sem disparar
+ * preview=false → dispara n8n + ContactLog + audit log
  */
 export async function POST(req: NextRequest) {
   try {
@@ -50,6 +55,7 @@ export async function POST(req: NextRequest) {
     const { db, cid: campaignId } = getCampaignContext(session);
     const body = (await req.json()) as BulkInviteBody;
     const ids = Array.isArray(body.ids) ? body.ids.filter((x) => typeof x === "string") : [];
+    const kind: Kind = body.kind === "reactivation" ? "reactivation" : "invite";
 
     if (ids.length === 0) {
       return NextResponse.json({ error: "ids vazio" }, { status: 400 });
@@ -61,7 +67,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const cutoff = new Date(Date.now() - COOLDOWN_DAYS * 24 * 60 * 60 * 1000);
+    const cooldownDays = kind === "reactivation" ? REACTIVATION_MIN_SILENCE_DAYS : INVITE_COOLDOWN_DAYS;
+    const cutoff = new Date(Date.now() - cooldownDays * 24 * 60 * 60 * 1000);
 
     const collabs = await db.collaborator.findMany({
       where: { id: { in: ids }, campaignId },
@@ -80,6 +87,7 @@ export async function POST(req: NextRequest) {
       inactive: 0,
       cooldown: 0,
       notFound: ids.length - collabs.length,
+      notEligible: 0,
     };
     const eligible: LeadPayload[] = [];
 
@@ -88,21 +96,34 @@ export async function POST(req: NextRequest) {
         skipped.noPhone++;
         continue;
       }
-      if (c.status === "INACTIVE") {
-        skipped.inactive++;
-        continue;
+
+      if (kind === "invite") {
+        // invite: bloqueia INACTIVE
+        if (c.status === "INACTIVE") { skipped.inactive++; continue; }
+      } else {
+        // reactivation: só status LEAD ou ACTIVE
+        if (c.status !== "LEAD" && c.status !== "ACTIVE") {
+          if (c.status === "INACTIVE") skipped.inactive++;
+          else skipped.notEligible++;
+          continue;
+        }
+        // reactivation: precisa estar em silêncio há 30+ dias
+        // (lastContactedAt nulo NÃO entra em reativação — esses são convite primeiro)
+        if (!c.lastContactedAt) { skipped.notEligible++; continue; }
       }
+
       if (c.lastContactedAt && c.lastContactedAt >= cutoff) {
         skipped.cooldown++;
         continue;
       }
+
       eligible.push({
         collaboratorId: c.id,
         name: c.name,
         phone: c.phone,
         campaignId,
         city: c.city,
-        source: "MANUAL_BULK",
+        source: kind === "reactivation" ? "MANUAL_REACTIVATION" : "MANUAL_BULK",
       });
     }
 
@@ -112,7 +133,8 @@ export async function POST(req: NextRequest) {
         eligibleCount: eligible.length,
         skipped,
         selected: ids.length,
-        cooldownDays: COOLDOWN_DAYS,
+        cooldownDays,
+        kind,
       });
     }
 
@@ -133,12 +155,13 @@ export async function POST(req: NextRequest) {
         ok: true,
         sent: 0,
         skipped,
+        kind,
         message: "Nenhum elegível. Nada enviado.",
       });
     }
 
     // Bloqueante: aguarda confirmação que o webhook chegou ao n8n
-    const trigger = await triggerManualInviteBatch(eligible, session.user.id);
+    const trigger = await triggerManualInviteBatch(eligible, session.user.id, kind);
 
     if (!trigger.ok) {
       return NextResponse.json(
@@ -151,13 +174,23 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // ContactLog para cada elegível (no tenant DB)
+    await logContactBulk(
+      db,
+      campaignId,
+      eligible.map((e) => e.collaboratorId),
+      kind === "reactivation" ? "SENT_REACTIVATION" : "SENT_INVITE",
+      { channel: "WHATSAPP", actorId: session.user.id, source: "MANUAL_ADMIN" },
+    );
+
     // Audit log no banco GLOBAL
     await globalDb.auditLog.create({
       data: {
-        action: "BULK_INVITE",
+        action: kind === "reactivation" ? "BULK_REACTIVATION" : "BULK_INVITE",
         actorId: session.user.id,
         metadata: {
           campaignId,
+          kind,
           requested: ids.length,
           sent: eligible.length,
           skipped,
@@ -172,7 +205,8 @@ export async function POST(req: NextRequest) {
       ok: true,
       sent: eligible.length,
       skipped,
-      cooldownDays: COOLDOWN_DAYS,
+      cooldownDays,
+      kind,
       n8nStatus: trigger.status,
     });
   } catch (err) {

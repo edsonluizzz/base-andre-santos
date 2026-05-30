@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowLeft, Phone, MapPin, Mail, Calendar, Star, UserCheck, ShieldCheck, ShieldAlert, Monitor, Zap, Radio, PhoneCall } from "lucide-react";
 import { InviteToSystem } from "@/components/collaborators/invite-to-system";
 import { EditCollaboratorButton } from "@/components/collaborators/edit-collaborator-button";
+import { ContactTimeline } from "@/components/collaborators/contact-timeline";
 import { CONTRIBUTION_OPTIONS, TIER_LABEL } from "@/lib/contribution";
 import { ROLE_LABEL, PROFILE_LABEL, STATUS_LABEL } from "@/lib/labels";
 import { calcMobilizationScore } from "@/lib/mobilization";
@@ -260,6 +261,9 @@ export default async function CollaboratorProfilePage({ params }: { params: { id
           </div>
         </div>
       )}
+
+      {/* Histórico de contato */}
+      <ContactTimeline collaboratorId={collaborator.id} />
 
       {/* Presenças em eventos */}
       {collaborator.attendances.length > 0 && (
