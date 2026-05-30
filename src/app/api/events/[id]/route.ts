@@ -33,7 +33,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     const today = new Date();
     const evDate = new Date(updated.date);
     if (evDate.toDateString() === today.toDateString()) {
-      sendTelegram(buildEventNotification("atualizado", { ...updated, date: updated.date.toISOString() })).catch(() => {});
+      sendTelegram(CID, buildEventNotification("atualizado", { ...updated, date: updated.date.toISOString() })).catch(() => {});
     }
 
     return NextResponse.json(updated);
@@ -57,7 +57,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: { id: stri
     // Notifica Telegram se o evento for hoje (antes de deletar)
     const today = new Date();
     if (existing.date.toDateString() === today.toDateString()) {
-      sendTelegram(buildEventNotification("removido", { ...existing, date: existing.date.toISOString() })).catch(() => {});
+      sendTelegram(CID, buildEventNotification("removido", { ...existing, date: existing.date.toISOString() })).catch(() => {});
     }
 
     await db.event.delete({ where: { id: params.id } });

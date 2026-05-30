@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
     const evDate = new Date(date);
     const isToday = evDate.toDateString() === today.toDateString();
     if (isToday) {
-      sendTelegram(buildEventNotification("criado", { ...event, date: event.date.toISOString() })).catch(() => {});
+      sendTelegram(CID, buildEventNotification("criado", { ...event, date: event.date.toISOString() })).catch(() => {});
     }
 
     return NextResponse.json(event, { status: 201 });

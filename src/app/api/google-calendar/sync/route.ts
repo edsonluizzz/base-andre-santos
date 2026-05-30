@@ -84,6 +84,7 @@ export async function DELETE() {
   try {
     const session = await auth();
     if (!session?.user?.id || session.user.role !== "ADMIN") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    const { db } = getCampaignContext(session);
     await db.settings.update({ where: { id: "singleton" }, data: { googleRefreshToken: null } });
     return NextResponse.json({ ok: true });
   } catch (err) {

@@ -58,10 +58,10 @@ export async function POST(req: NextRequest) {
       emailsSent = await sendBroadcastEmails(list, title.trim(), message.trim());
     }
 
-    // Envia para Telegram (não aguarda resposta para não travar)
-    const telegramSent = isTelegramConfigured();
+    // Envia para Telegram (não aguarda resposta para não travar) — tenant-aware
+    const telegramSent = await isTelegramConfigured(CID);
     if (telegramSent) {
-      sendTelegram(buildBroadcastMessage(title.trim(), message.trim())).catch(() => {});
+      sendTelegram(CID, buildBroadcastMessage(title.trim(), message.trim())).catch(() => {});
     }
 
     const broadcast = await db.broadcast.create({

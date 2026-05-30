@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { getCampaignContext } from "@/lib/campaign-context";
 
 export async function GET() {
   try {
     const session = await auth();
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const { db } = getCampaignContext(session);
     const settings = await db.settings.upsert({
       where: { id: "singleton" },
       update: {},
@@ -23,6 +24,7 @@ export async function PUT(req: NextRequest) {
     const session = await auth();
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     if (session.user.role !== "ADMIN") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    const { db } = getCampaignContext(session);
     const { campaignName, logoBase64, whatsappGroupLink } = await req.json();
     const settings = await db.settings.upsert({
       where: { id: "singleton" },

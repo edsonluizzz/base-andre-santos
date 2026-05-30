@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { getCampaignContext } from "@/lib/campaign-context";
 import { getOAuth2Client } from "@/lib/google-calendar";
 
 const APP_URL = process.env.APP_URL ?? "";
@@ -11,6 +11,7 @@ export async function GET(req: NextRequest) {
     if (!session?.user?.id || session.user.role !== "ADMIN") {
       return NextResponse.redirect(`${APP_URL}/configuracoes?gcal=error`);
     }
+    const { db } = getCampaignContext(session);
 
     const code = req.nextUrl.searchParams.get("code");
     if (!code) return NextResponse.redirect(`${APP_URL}/configuracoes?gcal=error`);
