@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { getCampaignContext } from "@/lib/campaign-context";
+import { getCampaignIntegrations } from "@/lib/meta-db";
 
 const BASE = "https://app.metricool.com/api";
 
@@ -9,10 +10,14 @@ export async function GET(req: NextRequest) {
     const session = await auth();
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const { db, cid } = getCampaignContext(session);
-    const CID = cid;
 
-    const token = process.env.METRICOOL_TOKEN;
-    if (!token) return NextResponse.json({ error: "Metricool não configurado" }, { status: 503 });
+    // Token Metricool POR CAMPANHA — env global é fallback APENAS para André enquanto não migra.
+    const integrations = await getCampaignIntegrations(cid);
+    const isAndre = cid === "andre-santos-2026";
+    const token = integrations.metricoolToken ?? (isAndre ? process.env.METRICOOL_TOKEN : null);
+    if (!token) {
+      return NextResponse.json({ error: "Metricool não conectado para esta campanha" }, { status: 503 });
+    }
 
     const days = Math.min(parseInt(req.nextUrl.searchParams.get("days") ?? "30"), 90);
     const tz = "America/Sao_Paulo";
@@ -23,23 +28,23 @@ export async function GET(req: NextRequest) {
       .replace(/\.\d{3}Z$/, "");
 
     const h = { "X-Mc-Auth": token, Accept: "application/json" };
+    const blogParam = integrations.metricoolBlogId ? `&blogId=${integrations.metricoolBlogId}` : "";
 
     const fromDate = new Date(from);
     const toDate = new Date(to);
 
     const [postsRes, reelsRes, storiesRes, avgReachRes, avgEngRes, instagramCount] = await Promise.all([
-      fetch(`${BASE}/v2/analytics/posts/instagram?from=${from}&to=${to}&timezone=${tz}`, { headers: h }),
-      fetch(`${BASE}/v2/analytics/reels/instagram?from=${from}&to=${to}&timezone=${tz}`, { headers: h }),
-      fetch(`${BASE}/v2/analytics/stories/instagram?from=${from}&to=${to}&timezone=${tz}`, { headers: h }),
-      fetch(`${BASE}/v2/analytics/aggregation?network=instagram&metric=reach&subject=posts&from=${from}&to=${to}&timezone=${tz}`, { headers: h }),
-      fetch(`${BASE}/v2/analytics/aggregation?network=instagram&metric=engagement&subject=posts&from=${from}&to=${to}&timezone=${tz}`, { headers: h }),
+      fetch(`${BASE}/v2/analytics/posts/instagram?from=${from}&to=${to}&timezone=${tz}${blogParam}`, { headers: h }),
+      fetch(`${BASE}/v2/analytics/reels/instagram?from=${from}&to=${to}&timezone=${tz}${blogParam}`, { headers: h }),
+      fetch(`${BASE}/v2/analytics/stories/instagram?from=${from}&to=${to}&timezone=${tz}${blogParam}`, { headers: h }),
+      fetch(`${BASE}/v2/analytics/aggregation?network=instagram&metric=reach&subject=posts&from=${from}&to=${to}&timezone=${tz}${blogParam}`, { headers: h }),
+      fetch(`${BASE}/v2/analytics/aggregation?network=instagram&metric=engagement&subject=posts&from=${from}&to=${to}&timezone=${tz}${blogParam}`, { headers: h }),
       db.collaborator.count({
-        where: { campaignId: CID, createdAt: { gte: fromDate, lte: toDate }, channel: "INSTAGRAM" },
+        where: { campaignId: cid, createdAt: { gte: fromDate, lte: toDate }, channel: "INSTAGRAM" },
       }),
     ]);
 
     const storiesText = await storiesRes.text();
-    console.log("[metricool/instagram] stories status:", storiesRes.status, "body:", storiesText.slice(0, 500));
 
     const [postsData, reelsData, avgReachData, avgEngData] = await Promise.all([
       postsRes.json(),

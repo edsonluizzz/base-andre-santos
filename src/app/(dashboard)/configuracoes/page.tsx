@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Image from "next/image";
+import { IntegrationsSection } from "@/components/configuracoes/integrations-section";
 
 interface N8nStatus {
   status: { apiKeySet: boolean; leadWebhookSet: boolean; importWebhookSet: boolean; allConfigured: boolean };
@@ -399,6 +400,12 @@ function ConfiguracoesContent() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* ── Integrações por tenant — Metricool, Telegram, Z-API, Domínio ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <IntegrationsSection />
+        <div className="hidden lg:block" />
       </div>
 
       {/* ── Integração n8n — full width ── */}
