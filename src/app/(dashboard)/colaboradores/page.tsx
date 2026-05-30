@@ -900,10 +900,10 @@ export default function ColaboradoresPage() {
       <ImportCsvDialog open={importOpen} onOpenChange={setImportOpen} onSuccess={() => { fetchCollaborators(); toast.success("CSV importado com sucesso!"); }} />
       {deleting && <DeleteConfirm name={deleting.name} onConfirm={handleDelete} onCancel={() => setDeleting(null)} />}
 
-      {/* Modal de confirmação — disparo manual de convites */}
-      {invitePreview && (
+      {/* Modal de confirmação — disparo manual de convites (portal pra escapar de transforms) */}
+      {mounted && invitePreview && createPortal(
         <div
-          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+          className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
           onClick={() => !inviteSending && setInvitePreview(null)}
         >
           <div
@@ -994,7 +994,8 @@ export default function ColaboradoresPage() {
               </Button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   );
