@@ -196,7 +196,10 @@ export default function ColaboradoresPage() {
 
   // ── Disparo manual de convite WhatsApp ─────────────────────────────────
   async function openInviteModal() {
-    if (selected.size === 0) return;
+    if (selected.size === 0) {
+      toast.error("Selecione pelo menos 1 colaborador");
+      return;
+    }
     setInviteSending(true);
     try {
       const res = await fetch("/api/collaborators/bulk-invite", {
@@ -204,13 +207,22 @@ export default function ColaboradoresPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ids: [...selected], preview: true }),
       });
+      const text = await res.text();
       if (!res.ok) {
-        const d = await res.json().catch(() => ({}));
-        toast.error(d.error ?? "Erro ao calcular elegíveis");
+        let detail = text;
+        try { detail = JSON.parse(text).error || JSON.parse(text).detail || text; } catch { /* keep raw */ }
+        toast.error(`[${res.status}] ${detail.slice(0, 200)}`, { duration: 8000 });
         return;
       }
-      const data = await res.json();
+      let data;
+      try { data = JSON.parse(text); } catch {
+        toast.error(`Resposta inválida: ${text.slice(0, 100)}`);
+        return;
+      }
       setInvitePreview(data);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "erro desconhecido";
+      toast.error(`Falha no request: ${msg}`, { duration: 8000 });
     } finally {
       setInviteSending(false);
     }
