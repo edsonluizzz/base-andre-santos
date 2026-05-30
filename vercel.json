@@ -1,18 +1,6 @@
 {
   "crons": [
     {
-      "path": "/api/cron/birthday-notifications",
-      "schedule": "0 11 * * *"
-    },
-    {
-      "path": "/api/cron/nurturing",
-      "schedule": "0 13 * * *"
-    },
-    {
-      "path": "/api/cron/weekly-report",
-      "schedule": "0 10 * * 0"
-    },
-    {
       "path": "/api/cron/agenda-telegram",
       "schedule": "0 10 * * *"
     },
