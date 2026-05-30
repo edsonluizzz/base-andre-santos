@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useSession } from "next-auth/react";
+import { createPortal } from "react-dom";
 import { Users, Plus, Search, Phone, MapPin, ChevronDown, Upload, UserCheck, ExternalLink, CheckSquare, Square, X, ArrowUpCircle, UserMinus, ThumbsUp, PhoneCall, AlertTriangle, SlidersHorizontal, Download, Link2, Check, Send } from "lucide-react";
 import { differenceInDays } from "date-fns";
 import Link from "next/link";
@@ -68,9 +68,8 @@ export default function ColaboradoresPage() {
   const [bulkLoading, setBulkLoading] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  // Disparo manual de convite
-  const { data: session } = useSession();
-  const isAdmin = (session?.user as { role?: string })?.role === "ADMIN";
+  // Disparo manual de convite — admin check é feito no backend (403 se não for ADMIN).
+  // Aqui mostramos o botão sempre que houver seleção; UX falha com toast caso não-admin.
   const [invitePreview, setInvitePreview] = useState<{
     eligibleCount: number;
     skipped: { noPhone: number; inactive: number; cooldown: number; notFound: number };
@@ -78,6 +77,10 @@ export default function ColaboradoresPage() {
     cooldownDays: number;
   } | null>(null);
   const [inviteSending, setInviteSending] = useState(false);
+
+  // Portal precisa de window (CSR) — só monta depois que o componente renderizou
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
     fetch("/api/leaders").then((r) => r.ok ? r.json() : []).then(setLeaders).catch(() => {});
@@ -804,9 +807,9 @@ export default function ColaboradoresPage() {
         </div>
       )}
 
-      {/* Barra de ação em massa */}
-      {selected.size > 0 && (
-        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-[calc(100vw-2rem)] max-w-2xl shadow-2xl rounded-2xl border border-white/[0.12]"
+      {/* Barra de ação em massa — renderizada em portal pra escapar de ancestors com transform */}
+      {mounted && selected.size > 0 && createPortal(
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[60] w-[calc(100vw-2rem)] max-w-2xl shadow-2xl rounded-2xl border border-white/[0.12]"
           style={{ background: "rgba(13,27,42,0.97)", backdropFilter: "blur(16px)" }}>
 
           {/* Linha 1 — Status */}
@@ -832,24 +835,22 @@ export default function ColaboradoresPage() {
             </button>
           </div>
 
-          {/* Linha extra — Disparo WhatsApp (só ADMIN) */}
-          {isAdmin && (
-            <div className="flex items-center gap-1.5 px-3 pt-1.5 pb-1.5 border-b border-white/[0.07]">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/50 shrink-0 w-14">Contato</span>
-              <div className="flex items-center gap-1.5 flex-1 overflow-x-auto scrollbar-none">
-                <Button
-                  size="sm"
-                  disabled={inviteSending || selected.size === 0}
-                  onClick={openInviteModal}
-                  className="h-7 gap-1.5 text-xs bg-green-600 hover:bg-green-500 text-white border-0 shrink-0"
-                  title="Selecione colaboradores e dispare o fluxo de convite WhatsApp em lote"
-                >
-                  <Send className="w-3 h-3" />
-                  {inviteSending ? "Verificando..." : "Enviar convite"}
-                </Button>
-              </div>
+          {/* Linha extra — Disparo WhatsApp (backend valida ADMIN) */}
+          <div className="flex items-center gap-1.5 px-3 pt-1.5 pb-1.5 border-b border-white/[0.07]">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/50 shrink-0 w-14">Contato</span>
+            <div className="flex items-center gap-1.5 flex-1 overflow-x-auto scrollbar-none">
+              <Button
+                size="sm"
+                disabled={inviteSending || selected.size === 0}
+                onClick={openInviteModal}
+                className="h-7 gap-1.5 text-xs bg-green-600 hover:bg-green-500 text-white border-0 shrink-0"
+                title="Disparar fluxo de convite WhatsApp em lote (admin)"
+              >
+                <Send className="w-3 h-3" />
+                {inviteSending ? "Verificando..." : "Enviar convite"}
+              </Button>
             </div>
-          )}
+          </div>
 
           {/* Linha 2 — Apoio + contador */}
           <div className="flex items-center gap-1.5 px-3 pt-1.5 pb-2.5">
@@ -874,7 +875,8 @@ export default function ColaboradoresPage() {
             </div>
             <span className="text-xs font-semibold text-muted-foreground shrink-0 ml-1">{selected.size} sel.</span>
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
 
       <CollaboratorDialog open={dialogOpen} onOpenChange={setDialogOpen} collaborator={editing} onSuccess={handleSuccess} />
