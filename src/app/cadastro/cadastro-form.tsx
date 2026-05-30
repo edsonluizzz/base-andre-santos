@@ -7,8 +7,8 @@ import { CONTRIBUTION_OPTIONS } from "@/lib/contribution";
 
 // Substitua pelo ID real do vídeo do YouTube do André (parte final da URL: youtube.com/watch?v=ISSO)
 const YT_VIDEO_ID = "z_9zver8iN0";
-// Fallback usado se /api/public/stats não retornar whatsappGroupLink configurado
-const WA_GROUP_FALLBACK = "https://chat.whatsapp.com/GbrqkfHopOEDlgx0Rt0mCp?s=cl&p=a&ilr=1";
+// Página /cadastro é exclusiva da campanha André Santos — link fixo (não vem do Settings).
+const WA_GROUP_URL = "https://chat.whatsapp.com/GbrqkfHopOEDlgx0Rt0mCp?s=cl&p=a&ilr=1";
 
 type Step = "form" | "success";
 
@@ -41,8 +41,8 @@ export function CadastroForm() {
     ? `${typeof window !== "undefined" ? window.location.origin : ""}/cadastro?refc=${collaboratorId}`
     : "";
 
-  // Link do grupo: vem do tenant via /api/public/stats; cai no fallback se vazio
-  const waGroupUrl = stats.whatsappGroupLink ?? WA_GROUP_FALLBACK;
+  // Link do grupo fixo — página /cadastro é exclusiva do André
+  const waGroupUrl = WA_GROUP_URL;
 
   useEffect(() => {
     fetch("/api/public/stats")
