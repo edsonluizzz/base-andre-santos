@@ -1,9 +1,12 @@
-import { db } from "@/lib/db";
+import type { PrismaClient } from "@prisma/client";
 import { TrendingUp, TrendingDown, Minus, AlertTriangle } from "lucide-react";
 
-const CID = "andre-santos-2026";
+interface VelocityPanelProps {
+  db: PrismaClient;
+  cid: string;
+}
 
-export async function VelocityPanel() {
+export async function VelocityPanel({ db, cid: CID }: VelocityPanelProps) {
   const now        = new Date();
   const weekStart  = new Date(now); weekStart.setDate(weekStart.getDate() - 7);  weekStart.setHours(0, 0, 0, 0);
   const week2Start = new Date(now); week2Start.setDate(week2Start.getDate() - 14); week2Start.setHours(0, 0, 0, 0);

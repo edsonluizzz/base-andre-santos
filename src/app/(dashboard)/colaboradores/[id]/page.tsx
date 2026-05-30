@@ -1,5 +1,5 @@
 import { auth } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { getCampaignContext } from "@/lib/campaign-context";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Phone, MapPin, Mail, Calendar, Star, UserCheck, ShieldCheck, ShieldAlert, Monitor, Zap, Radio, PhoneCall } from "lucide-react";
@@ -28,8 +28,9 @@ const CONTRIB_LABEL = Object.fromEntries(CONTRIBUTION_OPTIONS.map((o) => [o.valu
 
 export default async function CollaboratorProfilePage({ params }: { params: { id: string } }) {
   const session = await auth();
-  const CID = session?.user?.campaignId ?? "andre-santos-2026";
-  const isAdmin = ["ADMIN", "LEADER"].includes(session?.user?.role ?? "");
+  if (!session?.user) notFound();
+  const { db, cid: CID } = getCampaignContext(session);
+  const isAdmin = ["ADMIN", "LEADER"].includes(session.user.role ?? "");
 
   const collaborator = await db.collaborator.findFirst({
     where: { id: params.id, campaignId: CID },

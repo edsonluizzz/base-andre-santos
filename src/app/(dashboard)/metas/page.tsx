@@ -1,5 +1,5 @@
 import { auth } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { getCampaignContext } from "@/lib/campaign-context";
 import { redirect } from "next/navigation";
 import { MetasClient } from "./MetasClient";
 
@@ -7,8 +7,9 @@ export const dynamic = "force-dynamic";
 
 export default async function MetasPage() {
   const session = await auth();
-  const CID = session?.user?.campaignId ?? "andre-santos-2026";
-  const role = (session?.user as { role?: string })?.role ?? "MEMBER";
+  if (!session?.user) redirect("/login");
+  const { db, cid: CID } = getCampaignContext(session);
+  const role = (session.user as { role?: string }).role ?? "MEMBER";
   if (!["LEADER", "ADMIN"].includes(role)) redirect("/dashboard");
 
   const thirtyDaysAgo = new Date();

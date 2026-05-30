@@ -1,6 +1,6 @@
 import { auth } from "@/lib/auth";
 import { getCampaignContext } from "@/lib/campaign-context";
-import { db } from "@/lib/db";
+import type { PrismaClient } from "@prisma/client";
 import { redirect } from "next/navigation";
 import {
   TrendingUp, CheckCircle2, XCircle, Clock,
@@ -18,7 +18,7 @@ interface GapResult {
   detail: string;
 }
 
-async function colExists(table: string, col: string): Promise<boolean> {
+async function colExists(db: PrismaClient, table: string, col: string): Promise<boolean> {
   try {
     const r = await db.$queryRaw<Array<{ exists: boolean }>>`
       SELECT EXISTS (
@@ -31,7 +31,7 @@ async function colExists(table: string, col: string): Promise<boolean> {
   } catch { return false; }
 }
 
-async function tableExists(table: string): Promise<boolean> {
+async function tableExists(db: PrismaClient, table: string): Promise<boolean> {
   try {
     const r = await db.$queryRaw<Array<{ exists: boolean }>>`
       SELECT EXISTS (
@@ -43,7 +43,7 @@ async function tableExists(table: string): Promise<boolean> {
   } catch { return false; }
 }
 
-async function enumHasValue(enumType: string, value: string): Promise<boolean> {
+async function enumHasValue(db: PrismaClient, enumType: string, value: string): Promise<boolean> {
   try {
     const r = await db.$queryRaw<Array<{ exists: boolean }>>`
       SELECT EXISTS (
@@ -57,7 +57,7 @@ async function enumHasValue(enumType: string, value: string): Promise<boolean> {
   } catch { return false; }
 }
 
-async function groupsTerritorialized(cid: string): Promise<number> {
+async function groupsTerritorialized(db: PrismaClient, cid: string): Promise<number> {
   try {
     const r = await db.$queryRaw<Array<{ total: bigint; with_zone: bigint }>>`
       SELECT COUNT(*) as total, COUNT("zoneId") as with_zone
@@ -71,7 +71,7 @@ async function groupsTerritorialized(cid: string): Promise<number> {
   } catch { return 0; }
 }
 
-async function checkAllGaps(cid: string): Promise<GapResult[]> {
+async function checkAllGaps(db: PrismaClient, cid: string): Promise<GapResult[]> {
   const [
     hasNeighborhood,
     hasChannel,
@@ -81,13 +81,13 @@ async function checkAllGaps(cid: string): Promise<GapResult[]> {
     hasMobScore,
     groupsPct,
   ] = await Promise.all([
-    colExists("Collaborator", "neighborhood"),
-    colExists("Collaborator", "channel"),
-    colExists("Collaborator", "source"),
-    enumHasValue("CollaboratorProfile", "LIDER_RELIGIOSO"),
-    tableExists("MunicipalityGoal"),
-    colExists("Collaborator", "mobilizationScore"),
-    groupsTerritorialized(cid),
+    colExists(db, "Collaborator", "neighborhood"),
+    colExists(db, "Collaborator", "channel"),
+    colExists(db, "Collaborator", "source"),
+    enumHasValue(db, "CollaboratorProfile", "LIDER_RELIGIOSO"),
+    tableExists(db, "MunicipalityGoal"),
+    colExists(db, "Collaborator", "mobilizationScore"),
+    groupsTerritorialized(db, cid),
   ]);
 
   // Dynamic import: resolve em build time — true se o módulo existe no bundle
@@ -183,7 +183,7 @@ export default async function PlanejamentoPage() {
   const { db, cid } = getCampaignContext(session);
 
   const [gaps, cityRaw, goals] = await Promise.all([
-    checkAllGaps(cid),
+    checkAllGaps(db, cid),
     db.collaborator.findMany({
       where: { campaignId: cid, status: "ACTIVE", city: { not: null } },
       select: { city: true },

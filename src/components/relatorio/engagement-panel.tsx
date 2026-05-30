@@ -1,21 +1,35 @@
-import { db } from "@/lib/db";
-
-const CID = "andre-santos-2026";
+import type { PrismaClient } from "@prisma/client";
 import { Trophy, Zap, AlertTriangle } from "lucide-react";
 
+interface EngagementPanelProps {
+  db: PrismaClient;
+  cid: string;
+}
 
-export async function EngagementPanel() {
+export async function EngagementPanel({ db, cid: CID }: EngagementPanelProps) {
   const thirtyDaysAgo = new Date(); thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
+  // Atendances precisam ser filtradas pelo tenant — só conta presenças de collaborators desta campanha
+  const tenantCollabs = await db.collaborator.findMany({
+    where: { campaignId: CID },
+    select: { id: true },
+  });
+  const tenantCollabIds = tenantCollabs.map((c) => c.id);
+
   const [topAttendance, topScores, staleActive] = await Promise.all([
-    // Top 5 por presenças confirmadas
-    db.attendance.groupBy({
-      by: ["collaboratorId"],
-      where: { status: "PRESENT", collaboratorId: { not: null } },
-      _count: { id: true },
-      orderBy: { _count: { id: "desc" } },
-      take: 5,
-    }),
+    // Top 5 por presenças confirmadas — restrito aos collaborators do tenant
+    tenantCollabIds.length === 0
+      ? Promise.resolve([] as Array<{ collaboratorId: string | null; _count: { id: number } }>)
+      : db.attendance.groupBy({
+          by: ["collaboratorId"],
+          where: {
+            status: "PRESENT",
+            collaboratorId: { in: tenantCollabIds },
+          },
+          _count: { id: true },
+          orderBy: { _count: { id: "desc" } },
+          take: 5,
+        }),
     // Top 5 por score de mobilização
     db.collaborator.findMany({
       where: { campaignId: CID, status: "ACTIVE", mobilizationScore: { not: null } },

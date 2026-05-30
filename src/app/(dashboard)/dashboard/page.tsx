@@ -1,5 +1,6 @@
 import { auth } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { getCampaignContext } from "@/lib/campaign-context";
+import { db as globalDb } from "@/lib/db"; // UserCampaign vive no banco global
 import { Users, MapPin, MessageCircle, Calendar, TrendingUp, Star, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { TIER_LABEL, TIER_THRESHOLDS } from "@/lib/contribution";
@@ -37,8 +38,9 @@ const EVENT_TYPE_LABEL: Record<string, string> = {
 
 export default async function DashboardPage() {
   const session = await auth();
-  const userId = session?.user?.id;
-  const CID = session?.user?.campaignId ?? "andre-santos-2026";
+  if (!session?.user) return null;
+  const userId = session.user.id;
+  const { db, cid: CID } = getCampaignContext(session);
 
   const [[total, byRole, cityRaw, groups, zones, upcomingEvents], [myTotal, myActive, myTier]] = await Promise.all([
     Promise.all([
@@ -52,7 +54,7 @@ export default async function DashboardPage() {
     Promise.all([
       userId ? db.collaborator.count({ where: { campaignId: CID, registeredById: userId } }) : Promise.resolve(0),
       userId ? db.collaborator.count({ where: { campaignId: CID, registeredById: userId, status: "ACTIVE" } }) : Promise.resolve(0),
-      userId ? db.userCampaign.findFirst({ where: { userId, campaignId: CID }, select: { tier: true } }) : Promise.resolve(null),
+      userId ? globalDb.userCampaign.findFirst({ where: { userId, campaignId: CID }, select: { tier: true } }) : Promise.resolve(null),
     ]),
   ]);
 
@@ -224,7 +226,7 @@ export default async function DashboardPage() {
 
       {/* Velocidade por município */}
       <Suspense fallback={<div className="glass-card rounded-2xl p-6 border border-border h-32 animate-pulse" />}>
-        <VelocityPanel />
+        <VelocityPanel db={db} cid={CID} />
       </Suspense>
 
       {/* Cobertura por município */}
