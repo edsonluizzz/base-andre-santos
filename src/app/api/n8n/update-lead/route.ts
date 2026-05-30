@@ -112,21 +112,29 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // Dispara notificação ao indicador (fire-and-forget)
-    fetch(`${process.env.NEXTAUTH_URL ?? "https://ovile.com.br"}/api/n8n/notify-referrer`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.N8N_API_KEY}`,
-      },
-      body: JSON.stringify({ collaboratorId: collaborator.id, campaignId }),
-    }).catch(() => {});
+    // Busca o referrer inline (evita roundtrip HTTP de auto-call)
+    let referrer: { id: string; name: string; phone: string | null } | null = null;
+    try {
+      const leadWithRef = await db.collaborator.findUnique({
+        where: { id: collaborator.id },
+        select: { registeredById: true },
+      });
+      if (leadWithRef?.registeredById) {
+        referrer = await db.collaborator.findFirst({
+          where: { campaignId, userId: leadWithRef.registeredById },
+          select: { id: true, name: true, phone: true },
+        });
+      }
+    } catch (err) {
+      console.warn("[update-lead] falha buscando referrer:", err);
+    }
 
     return NextResponse.json({
       ok: true,
       action: "CONVERTED",
       id: collaborator.id,
       name: collaborator.name,
+      referrer,
     });
   }
 

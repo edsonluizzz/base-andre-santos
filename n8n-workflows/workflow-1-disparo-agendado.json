@@ -143,13 +143,13 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://api.z-api.io/instances/3F3DB93D8FCE11FDF2216E531F01401A/token/30BC72BA6F47BE762085BE77/send-text",
+        "url": "={{ $('Buscar template de mensagem').item.json.zapi.sendTextUrl }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "Client-Token",
-              "value": "Ffd62620c670443338f8d7bd0936987a8S"
+              "value": "={{ $('Buscar template de mensagem').item.json.zapi.clientToken }}"
             }
           ]
         },
@@ -169,7 +169,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [1780, 200],
-      "notes": "Z-API: phone = dígitos com código do país (ex: 5541987272587)"
+      "notes": "Z-API: URL e Client-Token vêm do /api/n8n/config (por tenant)"
     },
     {
       "parameters": {
