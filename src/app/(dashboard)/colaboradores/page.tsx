@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Users, Plus, Search, Phone, MapPin, ChevronDown, Upload, UserCheck, ExternalLink, CheckSquare, Square, X, ArrowUpCircle, UserMinus, ThumbsUp, PhoneCall, AlertTriangle, SlidersHorizontal, Download, Link2, Check } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { Users, Plus, Search, Phone, MapPin, ChevronDown, Upload, UserCheck, ExternalLink, CheckSquare, Square, X, ArrowUpCircle, UserMinus, ThumbsUp, PhoneCall, AlertTriangle, SlidersHorizontal, Download, Link2, Check, Send } from "lucide-react";
 import { differenceInDays } from "date-fns";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -66,6 +67,17 @@ export default function ColaboradoresPage() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkLoading, setBulkLoading] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  // Disparo manual de convite
+  const { data: session } = useSession();
+  const isAdmin = (session?.user as { role?: string })?.role === "ADMIN";
+  const [invitePreview, setInvitePreview] = useState<{
+    eligibleCount: number;
+    skipped: { noPhone: number; inactive: number; cooldown: number; notFound: number };
+    selected: number;
+    cooldownDays: number;
+  } | null>(null);
+  const [inviteSending, setInviteSending] = useState(false);
 
   useEffect(() => {
     fetch("/api/leaders").then((r) => r.ok ? r.json() : []).then(setLeaders).catch(() => {});
@@ -176,6 +188,55 @@ export default function ColaboradoresPage() {
       fetchCollaborators();
     } else {
       toast.error("Erro ao atualizar em massa");
+    }
+  }
+
+  // ── Disparo manual de convite WhatsApp ─────────────────────────────────
+  async function openInviteModal() {
+    if (selected.size === 0) return;
+    setInviteSending(true);
+    try {
+      const res = await fetch("/api/collaborators/bulk-invite", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: [...selected], preview: true }),
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        toast.error(d.error ?? "Erro ao calcular elegíveis");
+        return;
+      }
+      const data = await res.json();
+      setInvitePreview(data);
+    } finally {
+      setInviteSending(false);
+    }
+  }
+
+  async function confirmBulkInvite() {
+    if (!invitePreview || invitePreview.eligibleCount === 0) {
+      setInvitePreview(null);
+      return;
+    }
+    setInviteSending(true);
+    try {
+      const res = await fetch("/api/collaborators/bulk-invite", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: [...selected] }),
+      });
+      if (res.ok) {
+        const d = await res.json();
+        toast.success(`${d.sent} convite${d.sent !== 1 ? "s" : ""} na fila — entregas em até ~${Math.ceil(d.sent * 3 / 60)}h`);
+        setSelected(new Set());
+        setInvitePreview(null);
+        fetchCollaborators();
+      } else {
+        const d = await res.json().catch(() => ({}));
+        toast.error(d.error ?? "Erro ao disparar convites");
+      }
+    } finally {
+      setInviteSending(false);
     }
   }
 
@@ -771,6 +832,25 @@ export default function ColaboradoresPage() {
             </button>
           </div>
 
+          {/* Linha extra — Disparo WhatsApp (só ADMIN) */}
+          {isAdmin && (
+            <div className="flex items-center gap-1.5 px-3 pt-1.5 pb-1.5 border-b border-white/[0.07]">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/50 shrink-0 w-14">Contato</span>
+              <div className="flex items-center gap-1.5 flex-1 overflow-x-auto scrollbar-none">
+                <Button
+                  size="sm"
+                  disabled={inviteSending || selected.size === 0}
+                  onClick={openInviteModal}
+                  className="h-7 gap-1.5 text-xs bg-green-600 hover:bg-green-500 text-white border-0 shrink-0"
+                  title="Selecione colaboradores e dispare o fluxo de convite WhatsApp em lote"
+                >
+                  <Send className="w-3 h-3" />
+                  {inviteSending ? "Verificando..." : "Enviar convite"}
+                </Button>
+              </div>
+            </div>
+          )}
+
           {/* Linha 2 — Apoio + contador */}
           <div className="flex items-center gap-1.5 px-3 pt-1.5 pb-2.5">
             <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/50 shrink-0 w-14">Apoio</span>
@@ -800,6 +880,103 @@ export default function ColaboradoresPage() {
       <CollaboratorDialog open={dialogOpen} onOpenChange={setDialogOpen} collaborator={editing} onSuccess={handleSuccess} />
       <ImportCsvDialog open={importOpen} onOpenChange={setImportOpen} onSuccess={() => { fetchCollaborators(); toast.success("CSV importado com sucesso!"); }} />
       {deleting && <DeleteConfirm name={deleting.name} onConfirm={handleDelete} onCancel={() => setDeleting(null)} />}
+
+      {/* Modal de confirmação — disparo manual de convites */}
+      {invitePreview && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+          onClick={() => !inviteSending && setInvitePreview(null)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-md rounded-2xl border border-white/[0.12] p-6 shadow-2xl"
+            style={{ background: "rgba(13,27,42,0.98)", backdropFilter: "blur(20px)" }}
+          >
+            <div className="flex items-center gap-2 mb-3">
+              <Send className="w-5 h-5 text-green-400" />
+              <h3 className="text-base font-semibold">Disparar convite WhatsApp</h3>
+            </div>
+
+            {invitePreview.eligibleCount > 0 ? (
+              <>
+                <p className="text-sm text-slate-300">
+                  Vai enviar para{" "}
+                  <span className="font-bold text-green-400">{invitePreview.eligibleCount}</span>{" "}
+                  de {invitePreview.selected} selecionados.
+                </p>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Janela estimada de entrega: até{" "}
+                  <span className="font-semibold text-foreground">
+                    ~{Math.ceil((invitePreview.eligibleCount * 3) / 60)}h
+                  </span>{" "}
+                  (delay 2-4 min entre cada mensagem, anti-banimento Z-API).
+                </p>
+              </>
+            ) : (
+              <p className="text-sm text-amber-400">
+                Nenhum elegível na seleção. Confira os filtros abaixo.
+              </p>
+            )}
+
+            {/* Breakdown dos pulados */}
+            {(invitePreview.skipped.noPhone +
+              invitePreview.skipped.inactive +
+              invitePreview.skipped.cooldown +
+              invitePreview.skipped.notFound) > 0 && (
+              <div className="mt-4 rounded-lg border border-white/[0.06] bg-white/[0.02] p-3 space-y-1">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
+                  Pulados ({invitePreview.selected - invitePreview.eligibleCount})
+                </p>
+                {invitePreview.skipped.noPhone > 0 && (
+                  <p className="text-xs text-muted-foreground flex justify-between">
+                    <span>Sem telefone válido</span>
+                    <span className="font-semibold text-foreground">{invitePreview.skipped.noPhone}</span>
+                  </p>
+                )}
+                {invitePreview.skipped.inactive > 0 && (
+                  <p className="text-xs text-muted-foreground flex justify-between">
+                    <span>Inativos / opt-out</span>
+                    <span className="font-semibold text-foreground">{invitePreview.skipped.inactive}</span>
+                  </p>
+                )}
+                {invitePreview.skipped.cooldown > 0 && (
+                  <p className="text-xs text-muted-foreground flex justify-between">
+                    <span>Contactados nos últimos {invitePreview.cooldownDays} dia(s)</span>
+                    <span className="font-semibold text-foreground">{invitePreview.skipped.cooldown}</span>
+                  </p>
+                )}
+                {invitePreview.skipped.notFound > 0 && (
+                  <p className="text-xs text-muted-foreground flex justify-between">
+                    <span>Não encontrados nesta campanha</span>
+                    <span className="font-semibold text-foreground">{invitePreview.skipped.notFound}</span>
+                  </p>
+                )}
+              </div>
+            )}
+
+            <div className="flex gap-2 mt-5">
+              <Button
+                variant="outline"
+                onClick={() => setInvitePreview(null)}
+                disabled={inviteSending}
+                className="flex-1"
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={confirmBulkInvite}
+                disabled={inviteSending || invitePreview.eligibleCount === 0}
+                className="flex-1 bg-green-600 hover:bg-green-500 text-white gap-2"
+              >
+                <Send className="w-4 h-4" />
+                {inviteSending
+                  ? "Disparando..."
+                  : `Confirmar (${invitePreview.eligibleCount})`}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

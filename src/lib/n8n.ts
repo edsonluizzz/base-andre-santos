@@ -5,8 +5,9 @@
  *   N8N_API_KEY            — chave secreta compartilhada entre Ovile ↔ n8n
  *   N8N_LEAD_WEBHOOK_URL   — webhook disparado quando 1 lead é criado (formulário público / manual)
  *   N8N_IMPORT_WEBHOOK_URL — webhook disparado após importação em lote (CSV/XLSX)
+ *   N8N_MANUAL_WEBHOOK_URL — webhook disparado quando admin dispara convite em massa (WF4)
  *
- * Ambas são fire-and-forget: falhas não bloqueiam a resposta ao usuário.
+ * Todas são fire-and-forget: falhas não bloqueiam a resposta ao usuário.
  */
 
 export interface LeadPayload {
@@ -59,5 +60,34 @@ export async function triggerImportBatchWebhook(
     });
   } catch {
     console.warn("[n8n] Import batch webhook falhou");
+  }
+}
+
+/**
+ * Dispara quando admin seleciona colaboradores e clica "Enviar convite".
+ * WF4 (n8n) recebe o lote e processa com mesmo pacing 2-4min entre mensagens.
+ */
+export async function triggerManualInviteBatch(
+  leads: LeadPayload[],
+  actorId: string,
+): Promise<void> {
+  const webhookUrl = process.env.N8N_MANUAL_WEBHOOK_URL;
+  if (!webhookUrl || leads.length === 0) return;
+
+  try {
+    await fetch(webhookUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        leads,
+        count: leads.length,
+        source: "manual",
+        actorId,
+        triggeredAt: new Date().toISOString(),
+      }),
+      signal: AbortSignal.timeout(5_000),
+    });
+  } catch {
+    console.warn("[n8n] Manual invite batch webhook falhou");
   }
 }

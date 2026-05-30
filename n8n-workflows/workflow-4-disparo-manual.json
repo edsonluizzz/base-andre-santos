@@ -1,0 +1,241 @@
+{
+  "name": "Ovile — WF4: Disparo Manual em Lote (Admin)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ovile-disparo-manual",
+        "responseMode": "onReceived",
+        "responseData": "firstEntryJson"
+      },
+      "id": "d4e5f6a7-0004-0004-0004-000000000001",
+      "name": "Webhook — Recebe Lote Manual",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "ovile-disparo-manual",
+      "notes": "Disparado por POST /api/collaborators/bulk-invite quando admin clica 'Enviar convite'. Payload: { leads: [...], count, source:'manual', actorId, triggeredAt }"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "cond-count",
+              "leftValue": "={{ $json.body.count }}",
+              "rightValue": 0,
+              "operator": { "type": "number", "operation": "gt" }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "d4e5f6a7-0004-0004-0004-000000000002",
+      "name": "Tem leads no lote?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "body.leads",
+        "options": {}
+      },
+      "id": "d4e5f6a7-0004-0004-0004-000000000003",
+      "name": "Split — 1 lead por vez",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [680, 200],
+      "notes": "Itera cada lead do lote separadamente."
+    },
+    {
+      "parameters": {
+        "amount": "={{ Math.floor(Math.random() * 3) + 2 }}",
+        "unit": "minutes"
+      },
+      "id": "d4e5f6a7-0004-0004-0004-000000000004",
+      "name": "Aguardar 2-4 min (anti-spam)",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [900, 200],
+      "notes": "Delay aleatório entre cada envio para evitar banimento do número Z-API."
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://ovile.com.br/api/n8n/config?campaign_id={{ encodeURIComponent($json.campaignId ?? 'andre-santos-2026') }}&name={{ encodeURIComponent($json.name) }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "d4e5f6a7-0004-0004-0004-000000000005",
+      "name": "Buscar config Ovile",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1120, 200],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "SUBSTITUIR_ID_CREDENTIAL_OVILE",
+          "name": "Ovile API — Bearer Token"
+        }
+      },
+      "notes": "?name=... → API renderiza mensagem com gênero detectado, primeiro nome formatado e variação sorteada. Também retorna credenciais Z-API do tenant."
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "set-lead-id",
+              "name": "leadId",
+              "value": "={{ $('Split — 1 lead por vez').item.json.collaboratorId }}",
+              "type": "string"
+            },
+            {
+              "id": "set-lead-phone",
+              "name": "leadPhone",
+              "value": "={{ $('Split — 1 lead por vez').item.json.phone.replace(/\\D/g, '').slice(-13) }}",
+              "type": "string"
+            },
+            {
+              "id": "set-campaign",
+              "name": "campaignId",
+              "value": "={{ $('Split — 1 lead por vez').item.json.campaignId ?? 'andre-santos-2026' }}",
+              "type": "string"
+            },
+            {
+              "id": "set-mensagem",
+              "name": "mensagem",
+              "value": "={{ $json.messages.invite }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "d4e5f6a7-0004-0004-0004-000000000006",
+      "name": "Montar dados do envio",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1340, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Buscar config Ovile').item.json.zapi.sendTextUrl }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Client-Token",
+              "value": "={{ $('Buscar config Ovile').item.json.zapi.clientToken }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "keypair",
+        "bodyParameters": {
+          "parameters": [
+            { "name": "phone", "value": "={{ $json.leadPhone }}" },
+            { "name": "message", "value": "={{ $json.mensagem }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "d4e5f6a7-0004-0004-0004-000000000007",
+      "name": "Enviar WhatsApp (Z-API)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1560, 200],
+      "notes": "Z-API: URL e Client-Token vêm do /api/n8n/config (por tenant). Body em keypair pra evitar erro de raw JSON com {{ }}."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://ovile.com.br/api/n8n/update-lead",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "keypair",
+        "bodyParameters": {
+          "parameters": [
+            { "name": "collaboratorId", "value": "={{ $('Montar dados do envio').item.json.leadId }}" },
+            { "name": "action", "value": "CONTACTED" },
+            { "name": "campaignId", "value": "={{ $('Montar dados do envio').item.json.campaignId }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "d4e5f6a7-0004-0004-0004-000000000008",
+      "name": "Marcar CONTACTED no Ovile",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1780, 200],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "SUBSTITUIR_ID_CREDENTIAL_OVILE",
+          "name": "Ovile API — Bearer Token"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook — Recebe Lote Manual": {
+      "main": [
+        [{ "node": "Tem leads no lote?", "type": "main", "index": 0 }]
+      ]
+    },
+    "Tem leads no lote?": {
+      "main": [
+        [{ "node": "Split — 1 lead por vez", "type": "main", "index": 0 }],
+        []
+      ]
+    },
+    "Split — 1 lead por vez": {
+      "main": [
+        [{ "node": "Aguardar 2-4 min (anti-spam)", "type": "main", "index": 0 }]
+      ]
+    },
+    "Aguardar 2-4 min (anti-spam)": {
+      "main": [
+        [{ "node": "Buscar config Ovile", "type": "main", "index": 0 }]
+      ]
+    },
+    "Buscar config Ovile": {
+      "main": [
+        [{ "node": "Montar dados do envio", "type": "main", "index": 0 }]
+      ]
+    },
+    "Montar dados do envio": {
+      "main": [
+        [{ "node": "Enviar WhatsApp (Z-API)", "type": "main", "index": 0 }]
+      ]
+    },
+    "Enviar WhatsApp (Z-API)": {
+      "main": [
+        [{ "node": "Marcar CONTACTED no Ovile", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true
+  },
+  "staticData": null,
+  "tags": ["ovile", "whatsapp", "leads", "manual"],
+  "__readme": {
+    "workflow": "WF4 — Disparo Manual em Lote (Admin) — Z-API",
+    "descricao": "Disparado quando admin seleciona N colaboradores em /colaboradores e clica 'Enviar convite'. Backend valida (phone + status!=INACTIVE + cooldown 3d, máx 200) e envia o lote pro webhook. Cada lead recebe com delay 2-4 min entre eles. Mensagem vem renderizada pelo /api/n8n/config?name=... com gênero detectado e variação sorteada.",
+    "configurar": [
+      "1. Verifique a credencial 'Ovile API — Bearer Token' nos 2 nós HTTP do Ovile",
+      "2. Copie a Production URL deste webhook",
+      "3. Adicione no Vercel como N8N_MANUAL_WEBHOOK_URL",
+      "4. Ative o workflow"
+    ],
+    "diferenca_wf1": "WF1 é cron (3x/dia, busca fila automática). WF4 é por requisição (admin escolhe quem). Mesmo pacing 2-4min entre mensagens."
+  }
+}
