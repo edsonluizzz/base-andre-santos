@@ -73,13 +73,13 @@
     {
       "parameters": {
         "method": "GET",
-        "url": "https://ovile.com.br/api/n8n/config?campaign_id=andre-santos-2026",
+        "url": "=https://ovile.com.br/api/n8n/lead-by-phone?phone={{ encodeURIComponent($('Extrair telefone e texto').item.json.fromPhone) }}&campaign_id=andre-santos-2026",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "options": {}
       },
-      "id": "c3d4e5f6-0003-0003-0003-000000000011",
-      "name": "Buscar config Ovile",
+      "id": "c3d4e5f6-0003-0003-0003-000000000012",
+      "name": "Buscar nome do lead",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [900, 200],
@@ -89,7 +89,28 @@
           "name": "Ovile API — Bearer Token"
         }
       },
-      "notes": "Carrega templates + credenciais Z-API do tenant. Usado por ambos os ramos do switch."
+      "notes": "Busca name do lead via phone (últimos 9 dígitos). Necessário para personalizar mensagens com gênero."
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://ovile.com.br/api/n8n/config?campaign_id=andre-santos-2026&name={{ encodeURIComponent($('Buscar nome do lead').item.json.name ?? '') }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "c3d4e5f6-0003-0003-0003-000000000011",
+      "name": "Buscar config Ovile",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1120, 200],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "SUBSTITUIR_ID_CREDENTIAL_OVILE",
+          "name": "Ovile API — Bearer Token"
+        }
+      },
+      "notes": "Templates + credenciais Z-API do tenant. ?name=... renderiza mensagens prontas com gênero."
     },
     {
       "parameters": {
@@ -154,33 +175,7 @@
       "name": "Detectar SIM / NÃO",
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3,
-      "position": [1120, 200]
-    },
-    {
-      "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "id": "set-welcome",
-              "name": "mensagemBoasVindas",
-              "value": "={{ $('Buscar config Ovile').item.json.messages.welcome?.replace('{nome}', 'amigo(a)') ?? 'Que ótimo! Bem-vindo(a)! ' + $('Buscar config Ovile').item.json.whatsappGroupLink }}",
-              "type": "string"
-            },
-            {
-              "id": "set-phone-sim",
-              "name": "phoneParaEnviar",
-              "value": "={{ $('Extrair telefone e texto').item.json.fromPhone }}",
-              "type": "string"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "id": "c3d4e5f6-0003-0003-0003-000000000006",
-      "name": "Montar boas-vindas",
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [1340, 100]
+      "position": [1340, 200]
     },
     {
       "parameters": {
@@ -197,8 +192,8 @@
         "specifyBody": "keypair",
         "bodyParameters": {
           "parameters": [
-            { "name": "phone", "value": "={{ $json.phoneParaEnviar }}" },
-            { "name": "message", "value": "={{ $json.mensagemBoasVindas }}" }
+            { "name": "phone", "value": "={{ $('Extrair telefone e texto').item.json.fromPhone }}" },
+            { "name": "message", "value": "={{ $('Buscar config Ovile').item.json.messages.welcome }}" }
           ]
         },
         "options": {}
@@ -255,7 +250,7 @@
         "bodyParameters": {
           "parameters": [
             { "name": "phone", "value": "={{ $('Extrair telefone e texto').item.json.fromPhone }}" },
-            { "name": "message", "value": "={{ $('Buscar config Ovile').item.json.messages.optOut?.replace('{nome}', 'amigo(a)') ?? 'Tudo bem! Sem problemas. Se mudar de ideia, estaremos por aqui. 🙏' }}" }
+            { "name": "message", "value": "={{ $('Buscar config Ovile').item.json.messages.optOut }}" }
           ]
         },
         "options": {}
@@ -264,7 +259,7 @@
       "name": "Enviar despedida (NÃO)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1340, 320]
+      "position": [1560, 320]
     },
     {
       "parameters": {
@@ -288,7 +283,7 @@
       "name": "OPT_OUT — Ovile",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1560, 320],
+      "position": [1780, 320],
       "credentials": {
         "httpHeaderAuth": {
           "id": "SUBSTITUIR_ID_CREDENTIAL_OVILE",
@@ -311,6 +306,11 @@
     },
     "Extrair telefone e texto": {
       "main": [
+        [{ "node": "Buscar nome do lead", "type": "main", "index": 0 }]
+      ]
+    },
+    "Buscar nome do lead": {
+      "main": [
         [{ "node": "Buscar config Ovile", "type": "main", "index": 0 }]
       ]
     },
@@ -321,17 +321,12 @@
     },
     "Detectar SIM / NÃO": {
       "SIM": [
-        [{ "node": "Montar boas-vindas", "type": "main", "index": 0 }]
+        [{ "node": "Enviar boas-vindas + link grupo", "type": "main", "index": 0 }]
       ],
       "NÃO": [
         [{ "node": "Enviar despedida (NÃO)", "type": "main", "index": 0 }]
       ],
       "OUTRO": []
-    },
-    "Montar boas-vindas": {
-      "main": [
-        [{ "node": "Enviar boas-vindas + link grupo", "type": "main", "index": 0 }]
-      ]
     },
     "Enviar boas-vindas + link grupo": {
       "main": [
@@ -352,14 +347,13 @@
   "staticData": null,
   "tags": ["ovile", "whatsapp", "resposta"],
   "__readme": {
-    "workflow": "WF2 — Resposta WhatsApp — Z-API (multi-tenant via config)",
-    "descricao": "Recebe webhook Z-API. Detecta SIM/NÃO. Credenciais Z-API e templates vêm de /api/n8n/config (por tenant).",
+    "workflow": "WF2 — Resposta WhatsApp — Z-API (mensagens personalizadas)",
+    "descricao": "Recebe webhook Z-API. Busca nome do lead via /api/n8n/lead-by-phone, depois /api/n8n/config?name=... renderiza mensagens prontas com gênero detectado, primeiro nome e variação sorteada.",
     "configurar": [
       "1. Copie a Production URL deste webhook",
-      "2. No painel Z-API: Webhooks → On Message Received → cole a URL (via API PUT /update-webhook-received)",
+      "2. No painel Z-API: PUT /update-webhook-received com a URL",
       "3. Verifique a credencial 'Ovile API — Bearer Token'",
-      "4. No Ovile → Configurações → Z-API: cadastre as credenciais da campanha",
-      "5. Ative o workflow"
+      "4. Ative o workflow"
     ]
   }
 }

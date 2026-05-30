@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCampaignContext } from "@/lib/campaign-context";
 import { getCampaignDbUrl, getCampaignIntegrations } from "@/lib/meta-db";
+import { renderAllMessages, INVITE_TEMPLATES, WELCOME_TEMPLATES, OPTOUT_TEMPLATES, periodoEleitoral } from "@/lib/message-templates";
 
 function authCheck(req: NextRequest): boolean {
   const key = process.env.N8N_API_KEY;
@@ -20,15 +21,17 @@ const LEGACY_ZAPI_CLIENT_TOKEN = "Ffd62620c670443338f8d7bd0936987a8S";
  * Retorna configurações usadas pelos workflows n8n:
  * - Link do grupo WhatsApp
  * - Nome da campanha
- * - Templates de mensagem humanizados
- * - Credenciais Z-API DO TENANT (não mais hardcoded nos workflows)
+ * - Mensagens (3 tipos × 5 variações com gênero detectado e período eleitoral)
+ * - Credenciais Z-API do tenant
  *
  * Query params:
  *   campaign_id (string, padrão "andre-santos-2026")
+ *   name        (string, opcional) — se presente, retorna messages.{invite,welcome,optOut}
+ *               já prontos (uma variação sorteada por chamada, gênero detectado,
+ *               primeiro nome formatado). Se ausente, retorna templates raw para
+ *               compat com workflows antigos.
  *
  * Autenticação: Authorization: Bearer <N8N_API_KEY>
- *
- * Variável {nome} é substituída pelo n8n com o nome real do lead.
  */
 export async function GET(req: NextRequest) {
   if (!authCheck(req)) {
@@ -37,6 +40,7 @@ export async function GET(req: NextRequest) {
 
   const { searchParams } = new URL(req.url);
   const campaignId = searchParams.get("campaign_id") ?? LEGACY_CID;
+  const name = searchParams.get("name") ?? null;
 
   const dbUrl = (await getCampaignDbUrl(campaignId)) ?? process.env.DATABASE_URL;
   const { db } = getCampaignContext({ user: { campaignId, dbUrl: dbUrl ?? undefined } });
@@ -52,7 +56,7 @@ export async function GET(req: NextRequest) {
   const groupLink = settings?.whatsappGroupLink ?? null;
   const candidateName = settings?.campaignName ?? "André Santos";
 
-  // Z-API: prioridade campos do tenant; fallback legado só para André
+  // Z-API
   const isLegacyCampaign = campaignId === LEGACY_CID;
   const zapi = {
     instance: integrations.zApiInstance ?? (isLegacyCampaign ? LEGACY_ZAPI_INSTANCE : null),
@@ -60,27 +64,49 @@ export async function GET(req: NextRequest) {
     clientToken: integrations.zApiClientToken ?? (isLegacyCampaign ? LEGACY_ZAPI_CLIENT_TOKEN : null),
   };
 
-  // URL completa para envio (workflow concatena ?token e ?phone) — facilita pra workflow
   const zApiSendTextUrl = zapi.instance && zapi.token
     ? `https://api.z-api.io/instances/${zapi.instance}/token/${zapi.token}/send-text`
     : null;
+
+  // Mensagens: se receber `name`, renderiza prontas (com gênero e período)
+  // Se não receber, devolve templates raw — workflow antigo continua funcionando
+  let messages;
+  if (name) {
+    messages = renderAllMessages({
+      fullName: name,
+      candidateName,
+      groupLink,
+    });
+  } else {
+    // Compat: retorna apenas V1 de cada com placeholder {nome} sem gênero
+    // (workflows antigos não passam name e usam .replace('{nome}', ...))
+    messages = {
+      invite: INVITE_TEMPLATES[0]
+        .replaceAll("{candidato}", candidateName)
+        .replaceAll("{periodo}", periodoEleitoral())
+        .replaceAll("{querido}", "amigo(a)")
+        .replaceAll("{amigo}", "amigo(a)")
+        .replaceAll("{bem-vindo}", "bem-vindo(a)"),
+      welcome: (WELCOME_TEMPLATES[0])
+        .replaceAll("{candidato}", candidateName)
+        .replaceAll("{periodo}", periodoEleitoral())
+        .replaceAll("{groupLink}", groupLink ?? "")
+        .replaceAll("{querido}", "amigo(a)")
+        .replaceAll("{amigo}", "amigo(a)")
+        .replaceAll("{bem-vindo}", "bem-vindo(a)"),
+      optOut: OPTOUT_TEMPLATES[0]
+        .replaceAll("{candidato}", candidateName)
+        .replaceAll("{periodo}", periodoEleitoral())
+        .replaceAll("{querido}", "amigo(a)"),
+    };
+  }
 
   return NextResponse.json({
     campaignId,
     candidateName,
     whatsappGroupLink: groupLink,
-    messages: {
-      // Mensagem de convite — tom pessoal, não parece robô
-      invite: `Oi, {nome}! Tudo bem? 😊\n\nSou da equipe do ${candidateName} e vi que você demonstrou interesse em apoiar nossa campanha para 2026.\n\nEstamos montando um grupo de apoiadores no WhatsApp pra ficar mais próximo de quem acredita nessa causa com a gente.\n\nVocê toparia entrar? É rápido, sem compromisso 🙏\n\nResponda *SIM* ou *NÃO*`,
-
-      // Mensagem de boas-vindas quando SIM
-      welcome: groupLink
-        ? `Que alegria, {nome}! 🎉\n\nObrigado de coração por topar essa caminhada com a gente!\n\nAqui está o link do nosso grupo de apoiadores:\n👉 ${groupLink}\n\nNos vemos lá! Juntos vamos fazer bonito pelo Paraná 🇧🇷💚`
-        : `Que alegria, {nome}! 🎉\n\nObrigado por topar estar nessa caminhada com a gente!\n\nEm breve você vai receber o link do nosso grupo de apoiadores. Fique de olho no WhatsApp!\n\nForça, ${candidateName} 💚`,
-
-      // Mensagem quando NÃO
-      optOut: `Tudo bem, {nome}! Sem nenhum problema 😊\n\nSe um dia mudar de ideia, pode contar com a gente. A porta tá sempre aberta!\n\nUm abraço 🤝`,
-    },
+    periodoEleitoral: periodoEleitoral(),
+    messages,
     zapi: {
       instance: zapi.instance,
       token: zapi.token,

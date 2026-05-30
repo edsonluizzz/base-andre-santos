@@ -50,7 +50,7 @@
     {
       "parameters": {
         "method": "GET",
-        "url": "https://ovile.com.br/api/n8n/config",
+        "url": "=https://ovile.com.br/api/n8n/config?campaign_id={{ encodeURIComponent($('Webhook — Recebe Lead Novo').item.json.body.campaignId ?? 'andre-santos-2026') }}&name={{ encodeURIComponent($('Webhook — Recebe Lead Novo').item.json.body.name) }}",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "options": {}
@@ -60,6 +60,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [900, 200],
+      "notes": "?name=... faz a API renderizar mensagens prontas com gênero detectado e primeiro nome.",
       "credentials": {
         "httpHeaderAuth": {
           "id": "SUBSTITUIR_ID_CREDENTIAL_OVILE",
@@ -98,7 +99,7 @@
             {
               "id": "assign-msg",
               "name": "mensagem",
-              "value": "={{ $json.messages.invite.replace('{nome}', $('Webhook — Recebe Lead Novo').item.json.body.name) }}",
+              "value": "={{ $json.messages.invite }}",
               "type": "string"
             }
           ]

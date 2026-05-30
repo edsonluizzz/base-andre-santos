@@ -85,7 +85,7 @@
     {
       "parameters": {
         "method": "GET",
-        "url": "https://ovile.com.br/api/n8n/config?campaign_id=andre-santos-2026",
+        "url": "=https://ovile.com.br/api/n8n/config?campaign_id=andre-santos-2026&name={{ encodeURIComponent($('Split — 1 lead por vez').item.json.name) }}",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "options": {}
@@ -95,6 +95,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [1340, 200],
+      "notes": "?name=... — mensagem vem pronta com gênero detectado e primeiro nome",
       "credentials": {
         "httpHeaderAuth": {
           "id": "SUBSTITUIR_ID_CREDENTIAL_OVILE",
@@ -127,7 +128,7 @@
             {
               "id": "set-mensagem",
               "name": "mensagem",
-              "value": "={{ $json.messages.invite.replace('{nome}', $('Split — 1 lead por vez').item.json.name) }}",
+              "value": "={{ $json.messages.invite }}",
               "type": "string"
             }
           ]
