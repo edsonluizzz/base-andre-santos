@@ -8,6 +8,9 @@ import { triggerManualInviteBatch, type LeadPayload } from "@/lib/n8n";
 const COOLDOWN_DAYS = 3;
 const MAX_PER_REQUEST = 200;
 
+// n8n webhook pode demorar até 8s + lookup banco + audit log = setar 30s pra folga
+export const maxDuration = 30;
+
 interface BulkInviteBody {
   ids: string[];
   kind?: "invite"; // futura extensão: "reactivation"
