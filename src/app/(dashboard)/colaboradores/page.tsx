@@ -71,7 +71,7 @@ export default function ColaboradoresPage() {
     fetch("/api/leaders").then((r) => r.ok ? r.json() : []).then(setLeaders).catch(() => {});
     fetch("/api/cities").then((r) => r.ok ? r.json() : []).then(setCities).catch(() => {});
     fetch("/api/collaborators/sources").then((r) => r.ok ? r.json() : []).then(setSources).catch(() => {});
-    fetch("/api/settings").then((r) => r.ok ? r.json() : {}).then((s) => {
+    fetch("/api/settings").then((r) => r.ok ? r.json() : {}).then((s: { whatsappGroupLink?: string | null }) => {
       if (s.whatsappGroupLink) setWaGroupLink(s.whatsappGroupLink);
     }).catch(() => {});
   }, []);
