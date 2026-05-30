@@ -7,9 +7,18 @@ import { CONTRIBUTION_OPTIONS } from "@/lib/contribution";
 
 // Substitua pelo ID real do vídeo do YouTube do André (parte final da URL: youtube.com/watch?v=ISSO)
 const YT_VIDEO_ID = "z_9zver8iN0";
-const WA_GROUP_URL = "https://chat.whatsapp.com/GbrqkfHopOEDlgx0Rt0mCp";
+// Fallback usado se /api/public/stats não retornar whatsappGroupLink configurado
+const WA_GROUP_FALLBACK = "https://chat.whatsapp.com/GbrqkfHopOEDlgx0Rt0mCp";
 
 type Step = "form" | "success";
+
+interface PublicStats {
+  apoiadores: number;
+  municipios: number;
+  grupos: number;
+  whatsappGroupLink?: string | null;
+  campaignName?: string | null;
+}
 
 export function CadastroForm() {
   const searchParams = useSearchParams();
@@ -22,7 +31,7 @@ export function CadastroForm() {
   const [step, setStep] = useState<Step>("form");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [stats, setStats] = useState({ apoiadores: 0, municipios: 0, grupos: 0 });
+  const [stats, setStats] = useState<PublicStats>({ apoiadores: 0, municipios: 0, grupos: 0 });
   const [collaboratorId, setCollaboratorId] = useState("");
   const [copied, setCopied] = useState(false);
   const [countdown, setCountdown] = useState(60);
@@ -31,6 +40,9 @@ export function CadastroForm() {
   const shareUrl = collaboratorId
     ? `${typeof window !== "undefined" ? window.location.origin : ""}/cadastro?refc=${collaboratorId}`
     : "";
+
+  // Link do grupo: vem do tenant via /api/public/stats; cai no fallback se vazio
+  const waGroupUrl = stats.whatsappGroupLink ?? WA_GROUP_FALLBACK;
 
   useEffect(() => {
     fetch("/api/public/stats")
@@ -50,10 +62,10 @@ export function CadastroForm() {
   // Contagem regressiva para o grupo WhatsApp
   useEffect(() => {
     if (step !== "success" || redirectCancelled) return;
-    if (countdown <= 0) { window.location.href = WA_GROUP_URL; return; }
+    if (countdown <= 0) { window.location.href = waGroupUrl; return; }
     const t = setTimeout(() => setCountdown((c) => c - 1), 1000);
     return () => clearTimeout(t);
-  }, [step, countdown, redirectCancelled]);
+  }, [step, countdown, redirectCancelled, waGroupUrl]);
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -192,7 +204,7 @@ export function CadastroForm() {
                   Seu link foi copiado! Entrando no grupo em <span className="font-bold text-white">{countdown}s</span>...
                 </p>
                 <a
-                  href={WA_GROUP_URL}
+                  href={waGroupUrl}
                   onClick={() => setRedirectCancelled(true)}
                   className="flex items-center justify-center gap-2 rounded-xl py-3 text-sm font-semibold transition-all active:scale-95 w-full"
                   style={{ background: "rgba(37,211,102,0.18)", border: "1px solid rgba(37,211,102,0.4)", color: "#25d366" }}
@@ -202,7 +214,7 @@ export function CadastroForm() {
               </>
             ) : (
               <a
-                href={WA_GROUP_URL}
+                href={waGroupUrl}
                 className="flex items-center justify-center gap-2 rounded-xl py-3 text-sm font-semibold transition-all active:scale-95 w-full"
                 style={{ background: "rgba(37,211,102,0.18)", border: "1px solid rgba(37,211,102,0.4)", color: "#25d366" }}
               >

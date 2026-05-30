@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
 import { recalcTier } from "@/lib/tier";
 import { sendNewLeadNotificationEmail } from "@/lib/email";
 import { sendTelegram } from "@/lib/telegram";
 import { ensureCityGoal } from "@/lib/municipality-goals";
 import { triggerLeadWebhook } from "@/lib/n8n";
+import { resolvePublicTenant } from "@/lib/tenant-resolver";
 import { z } from "zod";
 
 const cadastroSchema = z.object({
@@ -20,9 +20,8 @@ const cadastroSchema = z.object({
   source: z.string().max(50).optional(),
   eventId: z.string().optional().or(z.literal("")),
   channel: z.enum(["INSTAGRAM", "WHATSAPP", "EVENTO", "LINK", "OUTRO"]).optional(),
+  campaignId: z.string().optional(), // tenant explícito (raro)
 });
-
-const CID = "andre-santos-2026";
 
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
 
@@ -50,7 +49,10 @@ export async function POST(req: NextRequest) {
       const msg = parsed.error.errors[0]?.message ?? "Dados inválidos";
       return NextResponse.json({ error: msg }, { status: 400 });
     }
-    const { name, phone, city, neighborhood, email, contributionTypes, refUserId, refc, lgpdConsent, source: sourceParam, eventId, channel } = parsed.data;
+    const { name, phone, city, neighborhood, email, contributionTypes, refUserId, refc, source: sourceParam, channel, campaignId: explicitCampaign } = parsed.data;
+
+    // Resolve tenant pelo host (ou explicit/fallback)
+    const { db, cid: CID } = await resolvePublicTenant(req, explicitCampaign ?? null);
 
     const cleanPhone = phone.replace(/\D/g, "");
     if (cleanPhone.length < 10) {
@@ -65,10 +67,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: "Cadastro já realizado! Entraremos em contato.", collaboratorId: existing.id }, { status: 200 });
     }
 
-    // Valida refUserId se fornecido (usuário logado que indicou)
+    // Valida refUserId se fornecido (usuário logado que indicou) — User está no banco GLOBAL
     let registeredById: string | null = null;
     if (refUserId) {
-      const refUser = await db.user.findUnique({ where: { id: refUserId }, select: { id: true } });
+      const { db: globalDb } = await import("@/lib/db");
+      const refUser = await globalDb.user.findUnique({ where: { id: refUserId }, select: { id: true } });
       if (refUser) registeredById = refUser.id;
     }
 
@@ -103,13 +106,14 @@ export async function POST(req: NextRequest) {
     });
 
     // Garante meta automática para a cidade (idempotente, sem bloquear resposta)
-    ensureCityGoal(city?.trim() || null).catch(() => {});
+    ensureCityGoal(city?.trim() || null, db, CID).catch(() => {});
 
     // Leads não contam para tier (status=LEAD) — recalc só ao ativar
     if (registeredById) {
       await recalcTier(registeredById).catch(() => {});
-      // Notifica o líder de célula por email
-      const refUser = await db.user.findUnique({
+      // Notifica o líder de célula por email — User está no banco global
+      const { db: globalDb } = await import("@/lib/db");
+      const refUser = await globalDb.user.findUnique({
         where: { id: registeredById },
         select: { email: true, name: true },
       }).catch(() => null);
@@ -122,8 +126,8 @@ export async function POST(req: NextRequest) {
           leadPhone: phone.trim(),
         }).catch(() => {});
       }
-      // Notificação in-app para o líder
-      await db.notification.create({
+      // Notificação in-app para o líder — Notification está no banco global
+      await globalDb.notification.create({
         data: {
           userId: registeredById,
           title: "Novo apoiador cadastrado",
@@ -154,7 +158,8 @@ export async function POST(req: NextRequest) {
       }).catch(() => null);
 
       if (zoneLeader?.collaborator?.userId) {
-        await db.notification.create({
+        const { db: globalDb } = await import("@/lib/db");
+        await globalDb.notification.create({
           data: {
             userId: zoneLeader.collaborator.userId,
             title: "Novo lead em sua zona",
@@ -177,13 +182,13 @@ export async function POST(req: NextRequest) {
       referredByCollaboratorId: refc || null,
     }).catch(() => {});
 
-    // Notifica Telegram (canal central)
+    // Notifica Telegram (canal central) — tenant-aware
     const sourceLabel: Record<string, string> = {
       EVENTO: "📍 Evento", INDICACAO: "🤝 Indicação", INSTAGRAM: "📸 Instagram",
       WHATSAPP: "💬 WhatsApp", CADASTRO_PUBLICO: "🌐 Site",
     };
     const cityLine = city?.trim() ? ` · 📍 ${city.trim()}` : "";
-    sendTelegram(`📥 <b>Novo lead:</b> ${name.trim()}${cityLine}\n<i>${sourceLabel[source] ?? source}</i>`).catch(() => {});
+    sendTelegram(CID, `📥 <b>Novo lead:</b> ${name.trim()}${cityLine}\n<i>${sourceLabel[source] ?? source}</i>`).catch(() => {});
 
     return NextResponse.json({ message: "Cadastro realizado com sucesso!", collaboratorId: created.id }, { status: 201 });
   } catch (err) {
