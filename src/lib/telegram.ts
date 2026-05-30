@@ -1,8 +1,12 @@
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { getCampaignIntegrations } from "./meta-db";
 
-const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN ?? "";
-const CHAT_ID   = process.env.TELEGRAM_CHAT_ID   ?? "";
+// Fallback global mantido APENAS para a campanha original (andre-santos-2026)
+// enquanto não migra para Campaign.telegramBotToken/telegramChatId.
+const FALLBACK_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN ?? "";
+const FALLBACK_CHAT_ID   = process.env.TELEGRAM_CHAT_ID   ?? "";
+const FALLBACK_CID = "andre-santos-2026";
 
 /**
  * Converte qualquer Date/string/number para horário de Brasília (BRT = UTC-3).
@@ -14,18 +18,43 @@ function toBRT(d: Date | string | number): Date {
 /** Retorna "agora" no fuso de Brasília */
 function nowBRT(): Date { return toBRT(Date.now()); }
 
-export function isTelegramConfigured() {
-  return Boolean(BOT_TOKEN && CHAT_ID);
+interface TelegramCreds { botToken: string; chatId: string }
+
+async function resolveCreds(campaignId: string): Promise<TelegramCreds | null> {
+  // 1) Tenta credenciais por campanha (Campaign.telegram*)
+  const integ = await getCampaignIntegrations(campaignId);
+  if (integ.telegramBotToken && integ.telegramChatId) {
+    return { botToken: integ.telegramBotToken, chatId: integ.telegramChatId };
+  }
+  // 2) Fallback global apenas para a campanha do André
+  if (campaignId === FALLBACK_CID && FALLBACK_BOT_TOKEN && FALLBACK_CHAT_ID) {
+    return { botToken: FALLBACK_BOT_TOKEN, chatId: FALLBACK_CHAT_ID };
+  }
+  return null;
 }
 
-export async function sendTelegram(text: string): Promise<void> {
-  if (!isTelegramConfigured()) return;
+/**
+ * Checa configuração Telegram da campanha. Aceita campaignId opcional —
+ * sem ele, checa só o fallback global (André).
+ */
+export async function isTelegramConfigured(campaignId?: string): Promise<boolean> {
+  const cid = campaignId ?? FALLBACK_CID;
+  return Boolean(await resolveCreds(cid));
+}
+
+/**
+ * Envia mensagem Telegram para a campanha. Sempre passe campaignId — sem ele,
+ * cai no fallback global do André (legado).
+ */
+export async function sendTelegram(campaignId: string, text: string): Promise<void> {
+  const creds = await resolveCreds(campaignId);
+  if (!creds) return;
   try {
-    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+    await fetch(`https://api.telegram.org/bot${creds.botToken}/sendMessage`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        chat_id: CHAT_ID,
+        chat_id: creds.chatId,
         text,
         parse_mode: "HTML",
         disable_web_page_preview: true,
@@ -34,6 +63,14 @@ export async function sendTelegram(text: string): Promise<void> {
   } catch (err) {
     console.error("[telegram] erro ao enviar mensagem:", err);
   }
+}
+
+/**
+ * Envia para a campanha André — atalho legado para callers que ainda não passam campaignId.
+ * Em produção, prefira sendTelegram(campaignId, text).
+ */
+export async function sendTelegramLegacy(text: string): Promise<void> {
+  return sendTelegram(FALLBACK_CID, text);
 }
 
 // ─── Formatadores ─────────────────────────────────────────────────────────────

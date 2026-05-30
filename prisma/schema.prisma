@@ -24,6 +24,16 @@ model Campaign {
   primaryColor    String?
   secondaryColor  String?
   adminEmail      String?
+  // Domínio customizado para resolver tenant em rotas públicas (/cadastro, /api/public/*)
+  domain          String?  @unique
+  // Integrações por tenant (Sprint 8 — multi-tenant real)
+  metricoolToken  String?  @db.Text
+  metricoolBlogId String?
+  telegramBotToken String? @db.Text
+  telegramChatId  String?
+  zApiInstance    String?
+  zApiToken       String?  @db.Text
+  zApiClientToken String?  @db.Text
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
   collaborators  Collaborator[]
