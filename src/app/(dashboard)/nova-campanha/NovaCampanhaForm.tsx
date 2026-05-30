@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, Loader2, Copy, Zap, Database } from "lucide-react";
+import { CheckCircle2, Loader2, Zap, Database } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type FormData = {
@@ -88,7 +88,6 @@ export function NovaCampanhaForm() {
   }
 
   if (created) {
-    const initCmd = `DATABASE_URL="${created.dbUrl}" npx prisma db push`;
     return (
       <div className="space-y-5">
         <div className="p-5 rounded-xl bg-green-500/10 border border-green-500/30">
@@ -99,33 +98,12 @@ export function NovaCampanhaForm() {
           <div className="text-sm text-muted-foreground">
             ID: <code className="text-foreground font-mono">{created.id}</code>
           </div>
-          {mode === "auto" && (
-            <div className="text-sm text-green-400 mt-1">
-              Banco Neon criado e schema aplicado automaticamente.
-            </div>
-          )}
-        </div>
-
-        {mode === "manual" && (
-          <div className="p-5 rounded-xl bg-amber-500/10 border border-amber-500/30 space-y-3">
-            <p className="text-sm font-semibold text-amber-400">Próximo passo — inicializar o banco</p>
-            <p className="text-sm text-muted-foreground">
-              Execute este comando localmente para criar as tabelas:
-            </p>
-            <div className="flex items-start gap-2">
-              <code className="flex-1 text-xs bg-black/30 p-3 rounded-lg break-all font-mono text-foreground">
-                {initCmd}
-              </code>
-              <button
-                onClick={() => navigator.clipboard.writeText(initCmd)}
-                className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors flex-shrink-0"
-                title="Copiar"
-              >
-                <Copy className="h-4 w-4 text-muted-foreground" />
-              </button>
-            </div>
+          <div className="text-sm text-green-400 mt-1">
+            {mode === "auto"
+              ? "Banco Neon criado e schema aplicado automaticamente."
+              : "Schema aplicado automaticamente no banco informado. Tudo pronto."}
           </div>
-        )}
+        </div>
 
         {form.adminEmail && (
           <p className="text-sm text-muted-foreground">

@@ -4,8 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import {
-  LayoutDashboard, Users, MapPin, MessageCircle, Calendar,
-  Megaphone, Settings, LogOut, Menu, X, Shield, Star, Map, BarChart2, Network, Trophy, FileText, Target, ClipboardList, Camera, Award, Building2, Plus,
+  LayoutDashboard, Users, MessageCircle, Calendar,
+  Megaphone, Settings, LogOut, Menu, X, Shield, Star, Map, BarChart2, Network, Trophy, Target, ClipboardList, Camera, Award, Building2, Plus,
   ChevronLeft, ChevronRight, Sun, Moon,
 } from "lucide-react";
 import { NotificationBell } from "@/components/notifications/notification-bell";

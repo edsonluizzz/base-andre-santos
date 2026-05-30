@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { Pool } from "@neondatabase/serverless";
+import { getTenantInitSql } from "@/lib/tenant-init-sql";
+
+export const maxDuration = 60; // DDL pode demorar
 
 export async function GET() {
   try {
@@ -53,6 +57,47 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: `Slug "${effectiveSlug}" já está em uso por outra campanha` }, { status: 409 });
     }
 
+    // Aplicar schema no tenant DB ANTES de criar Campaign record
+    // (evita Campaign apontando para banco sem tabelas, que quebra qualquer query subsequente)
+    const initSql = getTenantInitSql(id, name);
+    const statements = initSql
+      .split(/;\s*\n/)
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0 && !s.startsWith("--"));
+
+    const pool = new Pool({ connectionString: dbUrl });
+    let schemaApplied = false;
+    let schemaError: string | null = null;
+    try {
+      // Detecta se já tem schema aplicado (idempotência)
+      const check = await pool.query<{ exists: boolean }>(`
+        SELECT EXISTS (
+          SELECT 1 FROM information_schema.tables
+          WHERE table_schema = 'public' AND table_name = 'Campaign'
+        ) AS exists
+      `);
+      if (check.rows[0]?.exists) {
+        schemaApplied = true; // já aplicado anteriormente
+      } else {
+        for (const stmt of statements) {
+          await pool.query(stmt);
+        }
+        schemaApplied = true;
+      }
+    } catch (err) {
+      schemaError = err instanceof Error ? err.message : String(err);
+      console.error("[campaigns POST] schema apply failed:", err);
+    } finally {
+      await pool.end().catch(() => {});
+    }
+
+    if (!schemaApplied) {
+      return NextResponse.json({
+        error: "Não foi possível aplicar o schema no banco informado. Verifique a URL e tente novamente.",
+        detail: schemaError,
+      }, { status: 502 });
+    }
+
     const campaign = await db.campaign.create({
       data: {
         id,
@@ -71,7 +116,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    return NextResponse.json({ ok: true, campaign });
+    return NextResponse.json({ ok: true, campaign, schemaApplied });
   } catch (err) {
     console.error("[campaigns POST]", err);
     const msg = err instanceof Error ? err.message : "Erro interno desconhecido";

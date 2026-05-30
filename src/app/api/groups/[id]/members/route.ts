@@ -56,8 +56,7 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
   try {
     const session = await auth();
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    const { db, cid } = getCampaignContext(session);
-    const CID = cid;
+    const { db } = getCampaignContext(session);
     if (!["ADMIN", "LEADER"].includes(session.user.role ?? "")) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
     const { collaboratorId } = await req.json();

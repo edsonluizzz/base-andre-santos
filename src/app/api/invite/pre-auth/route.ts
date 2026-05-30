@@ -1,21 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCampaignContext } from "@/lib/campaign-context";
-
-
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
-function isRateLimited(ip: string): boolean {
-  const now = Date.now();
-  const entry = rateLimitMap.get(ip);
-  if (!entry || now > entry.resetAt) { rateLimitMap.set(ip, { count: 1, resetAt: now + 60_000 }); return false; }
-  if (entry.count >= 10) return true;
-  entry.count++;
-  return false;
-}
+import { db } from "@/lib/db";
+import { isRateLimited } from "@/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
   try {
     const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
-    if (isRateLimited(ip)) return NextResponse.json({ error: "Muitas tentativas. Aguarde 1 minuto." }, { status: 429 });
+    if (await isRateLimited("invite_pre_auth", ip, 10, 60)) {
+      return NextResponse.json({ error: "Muitas tentativas. Aguarde 1 minuto." }, { status: 429 });
+    }
 
     const { token, email } = await req.json();
     if (!token) return NextResponse.json({ error: "Token ausente" }, { status: 400 });
@@ -27,9 +19,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Convite expirado" }, { status: 410 });
     }
 
+    const cid = link.campaignId;
     const normalizedEmail = email.toLowerCase().trim();
 
-    // Verifica se já existe usuário com esse email aceito
+    // Verifica se já existe usuário com esse email aceito na campanha
     const existingUser = await db.user.findUnique({ where: { email: normalizedEmail }, select: { id: true } });
     if (existingUser) {
       const alreadyAccepted = await db.userCampaign.findFirst({

@@ -5,6 +5,7 @@ import { sendTelegram } from "@/lib/telegram";
 import { ensureCityGoal } from "@/lib/municipality-goals";
 import { triggerLeadWebhook } from "@/lib/n8n";
 import { resolvePublicTenant } from "@/lib/tenant-resolver";
+import { isRateLimited } from "@/lib/rate-limit";
 import { z } from "zod";
 
 const cadastroSchema = z.object({
@@ -23,24 +24,10 @@ const cadastroSchema = z.object({
   campaignId: z.string().optional(), // tenant explícito (raro)
 });
 
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
-
-function isRateLimited(ip: string): boolean {
-  const now = Date.now();
-  const entry = rateLimitMap.get(ip);
-  if (!entry || now > entry.resetAt) {
-    rateLimitMap.set(ip, { count: 1, resetAt: now + 60_000 });
-    return false;
-  }
-  if (entry.count >= 5) return true;
-  entry.count++;
-  return false;
-}
-
 export async function POST(req: NextRequest) {
   try {
     const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
-    if (isRateLimited(ip)) {
+    if (await isRateLimited("cadastro_public", ip, 5, 60)) {
       return NextResponse.json({ error: "Muitas tentativas. Aguarde 1 minuto." }, { status: 429 });
     }
 

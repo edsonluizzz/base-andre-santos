@@ -2,11 +2,11 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { getCampaignContext } from "@/lib/campaign-context";
 
-
 export async function GET() {
   try {
     const session = await auth();
     if (!session?.user?.id) return NextResponse.json([], { status: 200 });
+    const { db, cid: CID } = getCampaignContext(session);
 
     const rows = await db.collaborator.findMany({
       where: { campaignId: CID, city: { not: null } },
