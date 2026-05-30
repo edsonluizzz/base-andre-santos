@@ -63,19 +63,33 @@ export async function triggerImportBatchWebhook(
   }
 }
 
+export interface ManualBatchResult {
+  ok: boolean;
+  error?: string;
+  status?: number;
+}
+
 /**
  * Dispara quando admin seleciona colaboradores e clica "Enviar convite".
  * WF4 (n8n) recebe o lote e processa com mesmo pacing 2-4min entre mensagens.
+ *
+ * Bloqueante: aguarda a resposta do webhook pra confirmar que o fluxo foi acionado.
+ * Retorna { ok, error?, status? } pro endpoint informar o cliente.
  */
 export async function triggerManualInviteBatch(
   leads: LeadPayload[],
   actorId: string,
-): Promise<void> {
+): Promise<ManualBatchResult> {
   const webhookUrl = process.env.N8N_MANUAL_WEBHOOK_URL;
-  if (!webhookUrl || leads.length === 0) return;
+  if (!webhookUrl) {
+    return { ok: false, error: "N8N_MANUAL_WEBHOOK_URL não configurado no Vercel" };
+  }
+  if (leads.length === 0) {
+    return { ok: false, error: "Lista de leads vazia" };
+  }
 
   try {
-    await fetch(webhookUrl, {
+    const res = await fetch(webhookUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -85,9 +99,15 @@ export async function triggerManualInviteBatch(
         actorId,
         triggeredAt: new Date().toISOString(),
       }),
-      signal: AbortSignal.timeout(5_000),
+      signal: AbortSignal.timeout(8_000),
     });
-  } catch {
-    console.warn("[n8n] Manual invite batch webhook falhou");
+    if (!res.ok) {
+      return { ok: false, status: res.status, error: `n8n respondeu HTTP ${res.status}` };
+    }
+    return { ok: true, status: res.status };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "fetch falhou";
+    console.warn("[n8n] Manual batch webhook falhou:", msg);
+    return { ok: false, error: msg };
   }
 }

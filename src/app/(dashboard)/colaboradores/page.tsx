@@ -230,13 +230,18 @@ export default function ColaboradoresPage() {
       });
       if (res.ok) {
         const d = await res.json();
-        toast.success(`${d.sent} convite${d.sent !== 1 ? "s" : ""} na fila — entregas em até ~${Math.ceil(d.sent * 3 / 60)}h`);
+        const horas = Math.ceil((d.sent * 3) / 60);
+        toast.success(
+          `✅ Fluxo n8n ativado — ${d.sent} convite${d.sent !== 1 ? "s" : ""} em processamento (entrega em até ~${horas}h)`,
+          { duration: 6000 },
+        );
         setSelected(new Set());
         setInvitePreview(null);
         fetchCollaborators();
       } else {
         const d = await res.json().catch(() => ({}));
-        toast.error(d.error ?? "Erro ao disparar convites");
+        const msg = d.detail ? `${d.error}: ${d.detail}` : d.error ?? "Erro ao disparar convites";
+        toast.error(msg, { duration: 8000 });
       }
     } finally {
       setInviteSending(false);

@@ -134,8 +134,19 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Fire-and-forget — n8n processará em background
-    triggerManualInviteBatch(eligible, session.user.id).catch(() => {});
+    // Bloqueante: aguarda confirmação que o webhook chegou ao n8n
+    const trigger = await triggerManualInviteBatch(eligible, session.user.id);
+
+    if (!trigger.ok) {
+      return NextResponse.json(
+        {
+          error: "Falha ao acionar fluxo no n8n",
+          detail: trigger.error,
+          hint: "Verifique se o WF4 está ATIVO no n8n (toggle verde) e se a URL configurada em N8N_MANUAL_WEBHOOK_URL existe.",
+        },
+        { status: 502 },
+      );
+    }
 
     // Audit log no banco GLOBAL
     await globalDb.auditLog.create({
@@ -159,6 +170,7 @@ export async function POST(req: NextRequest) {
       sent: eligible.length,
       skipped,
       cooldownDays: COOLDOWN_DAYS,
+      n8nStatus: trigger.status,
     });
   } catch (err) {
     console.error("[bulk-invite POST]", err);
