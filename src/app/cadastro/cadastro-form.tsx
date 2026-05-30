@@ -8,7 +8,7 @@ import { CONTRIBUTION_OPTIONS } from "@/lib/contribution";
 // Substitua pelo ID real do vídeo do YouTube do André (parte final da URL: youtube.com/watch?v=ISSO)
 const YT_VIDEO_ID = "z_9zver8iN0";
 // Fallback usado se /api/public/stats não retornar whatsappGroupLink configurado
-const WA_GROUP_FALLBACK = "https://chat.whatsapp.com/GbrqkfHopOEDlgx0Rt0mCp";
+const WA_GROUP_FALLBACK = "https://chat.whatsapp.com/GbrqkfHopOEDlgx0Rt0mCp?s=cl&p=a&ilr=1";
 
 type Step = "form" | "success";
 
