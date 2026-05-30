@@ -1,4 +1,5 @@
 import { db } from "./db";
+import { decrypt } from "./crypto";
 
 /**
  * Resolve a DATABASE_URL de uma campanha a partir do registro Campaign.
@@ -43,13 +44,13 @@ export async function getCampaignIntegrations(campaignId: string): Promise<Campa
       },
     });
     return {
-      metricoolToken: c?.metricoolToken ?? null,
+      metricoolToken: decrypt(c?.metricoolToken ?? null),
       metricoolBlogId: c?.metricoolBlogId ?? null,
-      telegramBotToken: c?.telegramBotToken ?? null,
+      telegramBotToken: decrypt(c?.telegramBotToken ?? null),
       telegramChatId: c?.telegramChatId ?? null,
       zApiInstance: c?.zApiInstance ?? null,
-      zApiToken: c?.zApiToken ?? null,
-      zApiClientToken: c?.zApiClientToken ?? null,
+      zApiToken: decrypt(c?.zApiToken ?? null),
+      zApiClientToken: decrypt(c?.zApiClientToken ?? null),
     };
   } catch {
     return {

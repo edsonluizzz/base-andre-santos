@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db as globalDb } from "@/lib/db";
 import { getCalendarClient } from "@/lib/google-calendar";
 import { getCampaignContext } from "@/lib/campaign-context";
+import { decrypt } from "@/lib/crypto";
 
 const GCAL_ID = process.env.GOOGLE_CALENDAR_ID ?? "primary";
 
@@ -25,12 +26,13 @@ export async function GET(req: NextRequest) {
         const { db } = getCampaignContext({ user: { campaignId: camp.id, dbUrl: camp.dbUrl ?? undefined } });
 
         const settings = await db.settings.findUnique({ where: { id: "singleton" }, select: { googleRefreshToken: true } });
-        if (!settings?.googleRefreshToken) {
+        const refreshToken = decrypt(settings?.googleRefreshToken ?? null);
+        if (!refreshToken) {
           summary.push({ campaignId: camp.id, pushed: 0, pulled: 0, skipped: "no-token" });
           continue;
         }
 
-        const calendar = await getCalendarClient(settings.googleRefreshToken);
+        const calendar = await getCalendarClient(refreshToken);
         let pushed = 0;
         let pulled = 0;
 

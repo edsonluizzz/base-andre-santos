@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db"; // Campaign é tabela GLOBAL (não tenant)
+import { encrypt } from "@/lib/crypto";
 
 /**
  * GET /api/campaign/integrations
@@ -71,6 +72,11 @@ export async function PATCH(req: NextRequest) {
     const cid = session.user.campaignId ?? "andre-santos-2026";
     const body = (await req.json()) as IntegrationPatch;
 
+    // Campos sensíveis — criptografar antes de salvar
+    const SECRET_FIELDS = new Set<keyof IntegrationPatch>([
+      "metricoolToken", "telegramBotToken", "zApiToken", "zApiClientToken",
+    ]);
+
     const data: IntegrationPatch = {};
     const fields: (keyof IntegrationPatch)[] = [
       "domain",
@@ -81,7 +87,8 @@ export async function PATCH(req: NextRequest) {
     for (const f of fields) {
       if (f in body) {
         const v = body[f];
-        data[f] = typeof v === "string" && v.trim() === "" ? null : (v ?? null);
+        const normalized = typeof v === "string" && v.trim() === "" ? null : (v ?? null);
+        data[f] = SECRET_FIELDS.has(f) ? encrypt(normalized) : normalized;
       }
     }
 

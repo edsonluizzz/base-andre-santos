@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { getCampaignContext } from "@/lib/campaign-context";
 import { getOAuth2Client } from "@/lib/google-calendar";
+import { encrypt } from "@/lib/crypto";
 
 const APP_URL = process.env.APP_URL ?? "";
 
@@ -22,10 +23,11 @@ export async function GET(req: NextRequest) {
       return NextResponse.redirect(`${APP_URL}/configuracoes?gcal=no_refresh_token`);
     }
 
+    const encryptedToken = encrypt(tokens.refresh_token);
     await db.settings.upsert({
       where: { id: "singleton" },
-      update: { googleRefreshToken: tokens.refresh_token },
-      create: { id: "singleton", campaignName: "Base Andre Santos", googleRefreshToken: tokens.refresh_token, updatedAt: new Date() },
+      update: { googleRefreshToken: encryptedToken },
+      create: { id: "singleton", campaignName: "Base Andre Santos", googleRefreshToken: encryptedToken, updatedAt: new Date() },
     });
 
     return NextResponse.redirect(`${APP_URL}/configuracoes?gcal=connected`);
