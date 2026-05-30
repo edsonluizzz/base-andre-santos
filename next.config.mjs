@@ -1,8 +1,6 @@
 /** @type {import("next").NextConfig} */
-// build: 2026-05-27
+// build: 2026-05-30 — TS/ESLint validation ativada
 const nextConfig = {
-  typescript: { ignoreBuildErrors: true }, // TODO Sprint1: remover após corrigir erros de tipo
-  eslint: { ignoreDuringBuilds: true },    // TODO Sprint1: remover após corrigir warnings
   async headers() {
     return [
       {
