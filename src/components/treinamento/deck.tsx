@@ -11,8 +11,8 @@ import {
   Smartphone,
   Shield,
   Heart,
-  ChevronLeft,
-  ChevronRight,
+  ChevronUp,
+  ChevronDown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -33,7 +33,6 @@ type Slide = {
 export function TreinamentoDeck({ candidateName, userName, userRole }: DeckProps) {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const [index, setIndex] = useState(0);
-  const [mounted, setMounted] = useState(false);
   const firstName = userName.split(" ")[0] || "apoiador";
   const roleLabel =
     userRole === "ADMIN" ? "Administrador"
@@ -48,16 +47,16 @@ export function TreinamentoDeck({ candidateName, userName, userRole }: DeckProps
       accent: "from-primary/20 to-primary/5",
       body: (
         <>
-          <p className="text-lg lg:text-xl text-muted-foreground leading-relaxed">
+          <p className="text-base lg:text-xl text-muted-foreground leading-relaxed">
             Este é o <strong className="text-foreground">sistema oficial</strong> da
             base de apoio do <strong className="text-primary">{candidateName}</strong> a
             Deputado Estadual pelo Paraná em 2026.
           </p>
-          <p className="text-base text-muted-foreground/80 mt-4">
-            Você está na frente de uma das ferramentas mais avançadas de gestão eleitoral do
-            Brasil. Em poucos minutos vamos te mostrar como funciona.
+          <p className="text-sm lg:text-base text-muted-foreground/80 mt-3">
+            Em poucos minutos vamos te mostrar como funciona uma das ferramentas mais avançadas
+            de gestão eleitoral do Brasil.
           </p>
-          <div className="mt-6 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20">
+          <div className="mt-5 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20">
             <Sparkles className="w-3.5 h-3.5 text-primary" />
             <span className="text-xs text-primary font-medium">Você é: {roleLabel}</span>
           </div>
@@ -71,12 +70,11 @@ export function TreinamentoDeck({ candidateName, userName, userRole }: DeckProps
       accent: "from-blue-500/20 to-blue-500/5",
       body: (
         <>
-          <p className="text-lg lg:text-xl text-muted-foreground leading-relaxed">
-            Cada apoiador cadastrado é registrado no banco de dados central, classificado por
-            zona e nível de engajamento, e contatado automaticamente pelo WhatsApp para
-            entrar no grupo dos apoiadores.
+          <p className="text-base lg:text-xl text-muted-foreground leading-relaxed">
+            Cada apoiador é cadastrado no banco central, classificado por zona e nível de
+            engajamento, e contatado automaticamente pelo WhatsApp.
           </p>
-          <ul className="mt-6 space-y-3">
+          <ul className="mt-5 space-y-2.5">
             {[
               "Cadastro inteligente — telefone, cidade, zona e perfil",
               "WhatsApp automático — convite e boas-vindas sem você levantar um dedo",
@@ -99,15 +97,15 @@ export function TreinamentoDeck({ candidateName, userName, userRole }: DeckProps
       accent: "from-green-500/20 to-green-500/5",
       body: (
         <>
-          <p className="text-base text-muted-foreground mb-4">
+          <p className="text-sm lg:text-base text-muted-foreground mb-4">
             É rápido — cerca de 30 segundos por pessoa.
           </p>
-          <ol className="space-y-3">
+          <ol className="space-y-2.5">
             {[
               ["1", "Toque em Colaboradores no menu inferior."],
-              ["2", 'Toque no botão "Novo" no topo da tela.'],
+              ["2", 'Toque em "Novo" no topo da tela.'],
               ["3", "Preencha nome, telefone e cidade. O resto é opcional."],
-              ["4", 'Salve. O sistema dispara o convite WhatsApp automaticamente se a pessoa for um lead com telefone.'],
+              ["4", "Salve. O sistema dispara o convite WhatsApp automaticamente."],
               ["5", "Pronto. A pessoa entra na sua célula e conta nos seus indicadores."],
             ].map(([num, text]) => (
               <li key={num} className="flex gap-3">
@@ -130,26 +128,23 @@ export function TreinamentoDeck({ candidateName, userName, userRole }: DeckProps
       accent: "from-yellow-500/20 to-yellow-500/5",
       body: (
         <>
-          <p className="text-base text-muted-foreground mb-4">
+          <p className="text-sm lg:text-base text-muted-foreground mb-4">
             Quanto mais apoiadores ativos você cadastra, mais alto é o seu nível.
           </p>
-          <div className="space-y-3">
+          <div className="space-y-2.5">
             {[
               { tier: "Colaborador", desc: "Você começa aqui. Cadastra livremente seus contatos.", color: "bg-slate-500/15 text-slate-300 border-slate-500/30" },
               { tier: "Coordenador", desc: "Quando seu time cresce, você vira referência regional.", color: "bg-blue-500/15 text-blue-400 border-blue-500/30" },
               { tier: "Administrador", desc: "Acesso completo. Toma decisões estratégicas da base.", color: "bg-yellow-500/15 text-yellow-400 border-yellow-500/30" },
             ].map((t) => (
-              <div key={t.tier} className="glass-card rounded-xl p-4 border border-white/[0.06]">
-                <div className={cn("inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold border mb-2", t.color)}>
+              <div key={t.tier} className="glass-card rounded-xl p-3.5 border border-white/[0.06]">
+                <div className={cn("inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold border mb-1.5", t.color)}>
                   {t.tier}
                 </div>
                 <p className="text-sm text-muted-foreground">{t.desc}</p>
               </div>
             ))}
           </div>
-          <p className="text-xs text-muted-foreground/70 mt-4 italic">
-            Veja o ranking ao vivo na aba <strong>Ranking</strong>.
-          </p>
         </>
       ),
     },
@@ -160,11 +155,11 @@ export function TreinamentoDeck({ candidateName, userName, userRole }: DeckProps
       accent: "from-rose-500/20 to-rose-500/5",
       body: (
         <>
-          <p className="text-base text-muted-foreground mb-5">
+          <p className="text-sm lg:text-base text-muted-foreground mb-4">
             Cada apoiador tem um <strong className="text-foreground">score de 0 a 100</strong> calculado
-            automaticamente com base na atividade dele.
+            pelo sistema com base na atividade.
           </p>
-          <div className="space-y-4">
+          <div className="space-y-3">
             {[
               { value: 85, label: "Engajado", color: "text-green-400", desc: "Está confirmado, responde rápido, foi contatado recentemente." },
               { value: 55, label: "Moderado", color: "text-amber-400", desc: "Cadastrado, mas há tempo sem contato." },
@@ -180,9 +175,9 @@ export function TreinamentoDeck({ candidateName, userName, userRole }: DeckProps
                     }}
                   />
                 </div>
-                <div className="min-w-[120px]">
-                  <p className={cn("text-sm font-semibold", row.color)}>{row.value} · {row.label}</p>
-                  <p className="text-[11px] text-muted-foreground/70 leading-tight mt-0.5">{row.desc}</p>
+                <div className="min-w-[110px]">
+                  <p className={cn("text-xs lg:text-sm font-semibold", row.color)}>{row.value} · {row.label}</p>
+                  <p className="text-[10px] text-muted-foreground/70 leading-tight mt-0.5">{row.desc}</p>
                 </div>
               </div>
             ))}
@@ -197,37 +192,22 @@ export function TreinamentoDeck({ candidateName, userName, userRole }: DeckProps
       accent: "from-emerald-500/20 to-emerald-500/5",
       body: (
         <>
-          <p className="text-lg text-muted-foreground leading-relaxed">
-            Você não precisa mandar mensagem para cada apoiador. O sistema faz isso por você.
+          <p className="text-base lg:text-lg text-muted-foreground leading-relaxed">
+            Você não precisa mandar mensagem para cada apoiador. O sistema faz isso.
           </p>
-          <div className="mt-6 space-y-4">
-            <div className="glass-card rounded-xl p-4 border border-emerald-500/20 bg-emerald-500/[0.04]">
-              <p className="text-xs uppercase tracking-wider text-emerald-400 font-semibold mb-1">
-                1 · Convite automático
-              </p>
-              <p className="text-sm text-foreground/85">
-                Assim que o apoiador é cadastrado como lead, ele recebe um convite formal pelo
-                WhatsApp para entrar no grupo oficial.
-              </p>
-            </div>
-            <div className="glass-card rounded-xl p-4 border border-emerald-500/20 bg-emerald-500/[0.04]">
-              <p className="text-xs uppercase tracking-wider text-emerald-400 font-semibold mb-1">
-                2 · Resposta SIM/NÃO
-              </p>
-              <p className="text-sm text-foreground/85">
-                Quem responde <strong>SIM</strong> recebe o link do grupo e vira apoiador ativo.
-                Quem responde <strong>NÃO</strong> é desativado com respeito.
-              </p>
-            </div>
-            <div className="glass-card rounded-xl p-4 border border-emerald-500/20 bg-emerald-500/[0.04]">
-              <p className="text-xs uppercase tracking-wider text-emerald-400 font-semibold mb-1">
-                3 · Reativação inteligente
-              </p>
-              <p className="text-sm text-foreground/85">
-                Apoiadores frios há muito tempo recebem uma mensagem cordial de retomada — só
-                quando você decide, e só em massa controlada.
-              </p>
-            </div>
+          <div className="mt-4 space-y-2.5">
+            {[
+              ["1 · Convite automático", "Assim que o apoiador é cadastrado, recebe um convite formal pelo WhatsApp para entrar no grupo oficial."],
+              ["2 · Resposta SIM/NÃO", "Quem responde SIM recebe o link do grupo e vira apoiador ativo. Quem responde NÃO é desativado com respeito."],
+              ["3 · Reativação inteligente", "Apoiadores frios há muito tempo recebem mensagem cordial de retomada — só quando você decide."],
+            ].map(([title, desc]) => (
+              <div key={title} className="glass-card rounded-xl p-3.5 border border-emerald-500/20 bg-emerald-500/[0.04]">
+                <p className="text-xs uppercase tracking-wider text-emerald-400 font-semibold mb-1">
+                  {title}
+                </p>
+                <p className="text-sm text-foreground/85">{desc}</p>
+              </div>
+            ))}
           </div>
         </>
       ),
@@ -239,11 +219,10 @@ export function TreinamentoDeck({ candidateName, userName, userRole }: DeckProps
       accent: "from-cyan-500/20 to-cyan-500/5",
       body: (
         <>
-          <p className="text-base text-muted-foreground mb-5">
-            O sistema foi feito primeiro para o celular. Você pode instalar como aplicativo e
-            usar offline.
+          <p className="text-sm lg:text-base text-muted-foreground mb-4">
+            O sistema foi feito primeiro para o celular. Você pode instalar como aplicativo.
           </p>
-          <div className="glass-card rounded-2xl p-5 border border-cyan-500/20 bg-gradient-to-br from-cyan-500/[0.05] to-transparent">
+          <div className="glass-card rounded-2xl p-4 border border-cyan-500/20 bg-gradient-to-br from-cyan-500/[0.05] to-transparent">
             <p className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
               <Smartphone className="w-4 h-4 text-cyan-400" />
               Como adicionar à tela inicial
@@ -259,8 +238,8 @@ export function TreinamentoDeck({ candidateName, userName, userRole }: DeckProps
               </li>
             </ul>
           </div>
-          <p className="text-xs text-muted-foreground/70 mt-4">
-            Vai parecer um aplicativo nativo. Sem App Store, sem download. Só abrir e usar.
+          <p className="text-xs text-muted-foreground/70 mt-3">
+            Vai parecer um aplicativo nativo. Sem App Store, sem download.
           </p>
         </>
       ),
@@ -272,14 +251,14 @@ export function TreinamentoDeck({ candidateName, userName, userRole }: DeckProps
       accent: "from-purple-500/20 to-purple-500/5",
       body: (
         <>
-          <p className="text-base text-muted-foreground mb-4">
+          <p className="text-sm lg:text-base text-muted-foreground mb-3">
             Estamos em conformidade com a LGPD e com a legislação eleitoral.
           </p>
-          <ul className="space-y-3">
+          <ul className="space-y-2.5">
             {[
               ["Dados protegidos", "Telefones, endereços e mensagens ficam em banco seguro com acesso por níveis."],
               ["Consentimento ativo", "Quem responde NÃO é desativado imediatamente. Sem insistência."],
-              ["Termo de uso", 'Antes de 16 de agosto de 2026, o sistema usa "base de apoio", não "campanha" — exigência legal pré-eleitoral.'],
+              ["Termo de uso", 'Antes de 16/08/2026, o sistema usa "base de apoio" — exigência legal pré-eleitoral.'],
               ["Auditoria", "Cada mensagem enviada fica registrada com data, usuário e canal."],
             ].map(([title, desc]) => (
               <li key={title} className="flex gap-3">
@@ -301,27 +280,27 @@ export function TreinamentoDeck({ candidateName, userName, userRole }: DeckProps
       accent: "from-primary/30 to-primary/5",
       body: (
         <>
-          <p className="text-lg lg:text-xl text-muted-foreground leading-relaxed">
+          <p className="text-base lg:text-xl text-muted-foreground leading-relaxed">
             Cada apoiador que você cadastra é um voto a mais somado, uma rua a mais coberta,
             uma comunidade a mais representada.
           </p>
-          <p className="text-base text-foreground/85 mt-4 leading-relaxed">
-            Se ficar com qualquer dúvida, peça ajuda à sua coordenação. Estamos juntos do
-            primeiro cadastro até a posse.
+          <p className="text-sm lg:text-base text-foreground/85 mt-3 leading-relaxed">
+            Se ficar com dúvida, peça ajuda à sua coordenação. Estamos juntos do primeiro
+            cadastro até a posse.
           </p>
-          <div className="mt-8 grid grid-cols-2 gap-3">
+          <div className="mt-6 grid grid-cols-2 gap-3">
             <a
               href="/dashboard"
-              className="glass-card rounded-xl p-4 border border-white/[0.08] hover:border-primary/40 transition-colors text-center"
+              className="glass-card rounded-xl p-3.5 border border-white/[0.08] hover:border-primary/40 transition-colors text-center"
             >
-              <p className="text-xs text-muted-foreground mb-1">Voltar para</p>
+              <p className="text-xs text-muted-foreground mb-0.5">Voltar para</p>
               <p className="text-sm font-semibold text-foreground">Dashboard</p>
             </a>
             <a
               href="/colaboradores"
-              className="glass-card rounded-xl p-4 border border-primary/30 bg-primary/[0.06] hover:bg-primary/[0.10] transition-colors text-center"
+              className="glass-card rounded-xl p-3.5 border border-primary/30 bg-primary/[0.06] hover:bg-primary/[0.10] transition-colors text-center"
             >
-              <p className="text-xs text-primary/80 mb-1">Cadastrar agora</p>
+              <p className="text-xs text-primary/80 mb-0.5">Cadastrar agora</p>
               <p className="text-sm font-semibold text-primary">Apoiadores</p>
             </a>
           </div>
@@ -334,11 +313,11 @@ export function TreinamentoDeck({ candidateName, userName, userRole }: DeckProps
   const goTo = useCallback((i: number) => {
     if (!scrollerRef.current) return;
     const clamped = Math.max(0, Math.min(slides.length - 1, i));
-    const w = scrollerRef.current.clientWidth;
-    scrollerRef.current.scrollTo({ left: clamped * w, behavior: "smooth" });
+    const h = scrollerRef.current.clientHeight;
+    scrollerRef.current.scrollTo({ top: clamped * h, behavior: "smooth" });
   }, [slides.length]);
 
-  // Detecta slide ativo pelo scroll
+  // Detecta slide ativo pelo scroll vertical
   useEffect(() => {
     const el = scrollerRef.current;
     if (!el) return;
@@ -346,8 +325,9 @@ export function TreinamentoDeck({ candidateName, userName, userRole }: DeckProps
     const onScroll = () => {
       cancelAnimationFrame(raf);
       raf = requestAnimationFrame(() => {
-        const w = el.clientWidth;
-        const i = Math.round(el.scrollLeft / w);
+        const h = el.clientHeight;
+        if (h === 0) return;
+        const i = Math.round(el.scrollTop / h);
         setIndex(i);
       });
     };
@@ -361,37 +341,44 @@ export function TreinamentoDeck({ candidateName, userName, userRole }: DeckProps
   // Teclado
   useEffect(() => {
     const handle = (e: KeyboardEvent) => {
-      if (e.key === "ArrowRight" || e.key === " ") { e.preventDefault(); goTo(index + 1); }
-      if (e.key === "ArrowLeft") { e.preventDefault(); goTo(index - 1); }
-      if (e.key === "Home") { goTo(0); }
-      if (e.key === "End") { goTo(slides.length - 1); }
+      if (e.key === "ArrowDown" || e.key === "PageDown" || e.key === " ") {
+        e.preventDefault();
+        goTo(index + 1);
+      }
+      if (e.key === "ArrowUp" || e.key === "PageUp") {
+        e.preventDefault();
+        goTo(index - 1);
+      }
+      if (e.key === "Home") goTo(0);
+      if (e.key === "End") goTo(slides.length - 1);
     };
     window.addEventListener("keydown", handle);
     return () => window.removeEventListener("keydown", handle);
   }, [index, goTo, slides.length]);
 
-  // Mount + entrada animada via anime.js v4
+  // Entrada animada via anime.js v4
   useEffect(() => {
-    setMounted(true);
     import("animejs")
       .then(({ animate }) => {
         animate(".treino-hero", {
           opacity: [0, 1],
           translateY: [16, 0],
-          duration: 700,
+          duration: 600,
           ease: "outCubic",
           delay: 80,
         });
       })
       .catch(() => {});
-  }, []);
+  }, [index]);
 
   const progress = ((index + 1) / slides.length) * 100;
 
   return (
-    <div className="-mt-4 -mx-3 lg:-mt-8 lg:-mx-8 lg:-mb-8 relative">
-      {/* Top bar: badge + progresso + contador */}
-      <div className="sticky top-0 z-20 backdrop-blur-xl bg-background/80 border-b border-white/[0.06] px-4 py-3 lg:px-8 lg:py-4">
+    <div
+      className="relative -mt-4 -mx-3 lg:-mt-8 lg:-mx-8 lg:-mb-8 flex flex-col h-[calc(100dvh-3.5rem-env(safe-area-inset-bottom))] lg:h-[100dvh]"
+    >
+      {/* Top bar — fixa */}
+      <div className="shrink-0 z-20 backdrop-blur-xl bg-background/85 border-b border-white/[0.06] px-4 py-3 lg:px-8 lg:py-4">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 min-w-0">
             <div className="w-7 h-7 rounded-lg bg-primary/15 border border-primary/30 flex items-center justify-center shrink-0">
@@ -413,11 +400,11 @@ export function TreinamentoDeck({ candidateName, userName, userRole }: DeckProps
         </div>
       </div>
 
-      {/* Scroller horizontal com scroll-snap */}
+      {/* Scroller vertical com snap — ocupa o espaço restante */}
       <div
         ref={scrollerRef}
-        className="flex overflow-x-auto snap-x snap-mandatory scrollbar-none touch-pan-x"
-        style={{ scrollBehavior: mounted ? "smooth" : "auto" }}
+        className="flex-1 overflow-y-auto snap-y snap-mandatory scrollbar-none overscroll-contain"
+        style={{ scrollBehavior: "smooth" }}
       >
         {slides.map((s, i) => {
           const Icon = s.icon;
@@ -425,7 +412,8 @@ export function TreinamentoDeck({ candidateName, userName, userRole }: DeckProps
             <section
               key={i}
               data-index={i}
-              className="w-full shrink-0 snap-center min-h-[calc(100dvh-9rem)] lg:min-h-[calc(100dvh-7rem)] flex items-center justify-center px-5 lg:px-12 py-8"
+              className="w-full snap-start flex items-center justify-center px-5 lg:px-12 py-8"
+              style={{ minHeight: "100%" }}
               aria-roledescription="slide"
               aria-label={`${s.badge} — ${s.title}`}
             >
@@ -434,7 +422,7 @@ export function TreinamentoDeck({ candidateName, userName, userRole }: DeckProps
                 i === index && "treino-hero",
               )}>
                 <div className={cn(
-                  "inline-flex items-center gap-2 px-3 py-1 rounded-full border border-white/[0.10] bg-gradient-to-r mb-5",
+                  "inline-flex items-center gap-2 px-3 py-1 rounded-full border border-white/[0.10] bg-gradient-to-r mb-4",
                   s.accent,
                 )}>
                   <Icon className="w-3.5 h-3.5 text-primary" />
@@ -442,7 +430,7 @@ export function TreinamentoDeck({ candidateName, userName, userRole }: DeckProps
                     {s.badge}
                   </span>
                 </div>
-                <h2 className="text-3xl lg:text-5xl font-bold text-foreground leading-tight mb-6 lg:mb-8">
+                <h2 className="text-2xl lg:text-5xl font-bold text-foreground leading-tight mb-5 lg:mb-7">
                   {s.title}
                 </h2>
                 <div className="text-foreground/90">{s.body}</div>
@@ -452,41 +440,52 @@ export function TreinamentoDeck({ candidateName, userName, userRole }: DeckProps
         })}
       </div>
 
-      {/* Controles inferiores: setas + dots */}
-      <div className="sticky bottom-[calc(3.5rem+env(safe-area-inset-bottom))] lg:bottom-4 z-20 px-4 pb-3 lg:px-8">
-        <div className="glass-card rounded-2xl border border-white/[0.08] px-3 py-2 flex items-center gap-2 shadow-xl mx-auto max-w-md backdrop-blur-xl">
-          <button
-            onClick={() => goTo(index - 1)}
-            disabled={index === 0}
-            aria-label="Slide anterior"
-            className="touch-target w-10 h-10 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
-          >
-            <ChevronLeft className="w-5 h-5" />
-          </button>
+      {/* Controles flutuantes — embaixo, acima do bottom-nav mobile */}
+      <div
+        className="absolute right-3 lg:right-6 z-30 flex flex-col gap-2"
+        style={{
+          bottom: "calc(3.5rem + env(safe-area-inset-bottom) + 0.75rem)",
+        }}
+      >
+        <button
+          onClick={() => goTo(index - 1)}
+          disabled={index === 0}
+          aria-label="Slide anterior"
+          className="touch-target w-11 h-11 rounded-full glass-card border border-white/[0.10] hover:border-primary/40 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition-colors backdrop-blur-xl shadow-lg"
+        >
+          <ChevronUp className="w-5 h-5" />
+        </button>
+        <button
+          onClick={() => goTo(index + 1)}
+          disabled={index === slides.length - 1}
+          aria-label="Próximo slide"
+          className="touch-target w-11 h-11 rounded-full bg-primary/90 hover:bg-primary disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center text-primary-foreground transition-colors shadow-lg shadow-primary/30"
+        >
+          <ChevronDown className="w-5 h-5" />
+        </button>
+      </div>
 
-          <div className="flex-1 flex items-center justify-center gap-1.5 py-1">
-            {slides.map((_, i) => (
-              <button
-                key={i}
-                onClick={() => goTo(i)}
-                aria-label={`Ir para slide ${i + 1}`}
-                className={cn(
-                  "h-1.5 rounded-full transition-all duration-300",
-                  i === index ? "w-6 bg-primary" : "w-1.5 bg-white/20 hover:bg-white/40",
-                )}
-              />
-            ))}
-          </div>
-
+      {/* Dots indicator — barra lateral esquerda */}
+      <div
+        className="absolute left-3 lg:left-6 z-30 flex flex-col gap-1.5 items-center"
+        style={{
+          top: "50%",
+          transform: "translateY(-50%)",
+        }}
+      >
+        {slides.map((_, i) => (
           <button
-            onClick={() => goTo(index + 1)}
-            disabled={index === slides.length - 1}
-            aria-label="Próximo slide"
-            className="touch-target w-10 h-10 rounded-xl bg-primary/15 hover:bg-primary/25 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition-colors text-primary"
-          >
-            <ChevronRight className="w-5 h-5" />
-          </button>
-        </div>
+            key={i}
+            onClick={() => goTo(i)}
+            aria-label={`Ir para slide ${i + 1}`}
+            className={cn(
+              "rounded-full transition-all duration-300",
+              i === index
+                ? "w-1.5 h-6 bg-primary"
+                : "w-1.5 h-1.5 bg-white/30 hover:bg-white/60",
+            )}
+          />
+        ))}
       </div>
     </div>
   );
