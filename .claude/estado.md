@@ -1,6 +1,6 @@
 # Estado — Ovile Eleitoral (Base André Santos)
 
-**Última atualização:** 2026-05-22 (rebrand ISSACAR.IA → Ovile Eleitoral · landing page / · domínio ovile.com.br)
+**Última atualização:** 2026-05-31 (Sprint 14 mobile-first concluída — PWA, bottom nav, KPIs, score gradient, /treinamento, cards mobile em tabelas; bugs WhatsApp tom + {nome} corrigidos)
 **Plano de produto:** `.claude/ovile-plano.md` — SaaS multi-tenant eleitoral
 **Domínio:** ovile.com.br (migrado do projeto Ovile igreja)
 **GitHub:** https://github.com/edsonluizzz/base-andre-santos
@@ -325,3 +325,66 @@ const CID = cid;
 - N+1 queries parcialmente corrigido; `console.error` pode vazar stack traces
 
 **Plano completo:** `PLAN.md` (Sprints 1–4, criado 2026-05-27)
+
+---
+
+## Sprint 14 — Mobile-first UI + Treinamento + bugs WhatsApp (2026-05-30/31)
+
+**Motivação:** "Nosso sistema primordialmente será usado em celulares e tablets" — auditoria mobile mostrou: sem PWA, sem bottom nav, KPIs com 1 coluna apenas no mobile, score sem visualização, tabelas escondendo dados, bugs visíveis no WhatsApp.
+
+### Fases entregues
+
+| Fase | Tema | Status |
+|------|------|--------|
+| A | Auditoria mobile inicial | ✅ |
+| B | PWA + viewport cover + safe-area + touch targets 44px + manifest com 8 ícones + 3 shortcuts | ✅ commit `cca9960` |
+| C | Bottom nav fixo (5 itens: Início, Apoiadores, Agenda, Relatório, Menu) + drawer mobile sincronizado via SidebarContext | ✅ commit `34a660b` |
+| D | 6 KPI cards em `/colaboradores` com delta % 7d (`/api/collaborators/stats`) | ✅ commit `04723ea` |
+| E | `ScoreBar` (gradient red→amber→green) plugada em perfil + lista de colaboradores | ✅ commit `77ab2d2` |
+| F | Tabelas → cards mobile (Ranking + Relatório cobertura municípios) | ✅ commit `f0e3f69` |
+| G | Dashboard mobile stack (KPIs 2 cols mobile, padding reduzido, tipografia ajustada) | ✅ commit `d2a4e4b` |
+| H | Polish + memória + estado.md atualizado | em curso |
+| I | Página `/treinamento` com slide deck (9 slides, scroll vertical com snap, anime.js v4) | ✅ commits `4c7c6ef` + `258d50b` |
+
+### Bugs WhatsApp corrigidos (commit `6357607`)
+- **`{nome}` literal nas boas-vindas**: `/api/n8n/config` compat path não substituía `{nome}` quando workflow não passava `?name=`. Fallback "apoiador(a)" adicionado.
+- **404 "Lead não encontrado"** no node `CONVERT — Ovile` do n8n: agora retorna `{ searched, campaignId, action }` para facilitar debug.
+- **Tom dos templates**: reescritos invite/welcome/optout em tom formal (memória `feedback_commit_push`). Removidas gírias ("tava", "grupinho", "demais", "bora", "tá", "Aaaa", "Sem stress"), saudação "Olá, {nome}" em vez de "Oi, {nome}! 😊", "Responda *SIM* ou *NÃO*" no lugar de "Manda SIM ou NÃO 🙏". Bandeira 🇧🇷 → 🇵🇷 (André é Deputado Estadual pelo Paraná). REACTIVATION mantido (já estava formal).
+
+### Arquivos criados
+- `public/manifest.json` — PWA manifest
+- `src/components/mobile-bottom-nav.tsx` — bottom nav mobile (lg:hidden)
+- `src/app/api/collaborators/stats/route.ts` — KPIs com delta 7d/14d
+- `src/components/collaborators/kpi-cards.tsx` — 6 KPI cards do CRM
+- `src/components/ui/score-bar.tsx` — barra gradient reutilizável
+- `src/app/(dashboard)/treinamento/page.tsx` — server component (auth + Settings)
+- `src/components/treinamento/deck.tsx` — slide deck client com scroll-snap-y
+
+### Arquivos modificados
+- `src/app/layout.tsx` — viewport "cover", appleWebApp, manifest, Toaster top-center
+- `src/app/globals.css` — utilities `.safe-*`, `.touch-target`, `.touchable`, font-size 16px mobile/14 lg
+- `src/contexts/sidebar-context.tsx` — `mobileOpen`/`setMobileOpen` no contexto
+- `src/components/sidebar.tsx` — usa context + item "Treinamento" (icon GraduationCap)
+- `src/components/sidebar-main-wrapper.tsx` — renderiza MobileBottomNav + padding bottom safe-area
+- `src/app/(dashboard)/colaboradores/page.tsx` — KpiCards + ScoreBar inline + tipo `mobilizationScore`
+- `src/app/(dashboard)/colaboradores/[id]/page.tsx` — ScoreBar grande no perfil
+- `src/lib/message-templates.ts` — 4 pools reescritos
+- `src/app/api/n8n/config/route.ts` — fix `{nome}` fallback
+- `src/app/api/n8n/update-lead/route.ts` — diagnóstico no 404
+- `src/app/(dashboard)/ranking/page.tsx` — cards mobile + grid desktop
+- `src/app/(dashboard)/relatorio/page.tsx` — cards cobertura mobile + tabela desktop
+- `src/app/(dashboard)/dashboard/page.tsx` — densidade mobile
+- `src/components/dashboard/kpi-card.tsx` — padding/tipo responsivos
+- `src/app/(dashboard)/eleitos-2022/page.tsx` — header sem `p-6` extra
+
+### Débito técnico assumido
+- `typescript.ignoreBuildErrors = true` mantido durante Sprint 14 para velocidade. Sprint 13 (TS cleanup) pausada — retomar após estabilizar o mobile-first.
+
+### Pendências operacionais (usuário)
+- N8N_IMPORT_WEBHOOK_URL no Vercel
+- APP_ENCRYPTION_KEY no Vercel
+- UPSTASH_REDIS_REST_URL/TOKEN no Vercel (rate limit serverless)
+- Multi-tenant Miriam: Configurações → Integrações (Metricool, Telegram, Z-API)
+- Reimport WF4 (kind=reactivation) — Sprint 12
+- Verificar deploy do `/treinamento` no Vercel após push
+
