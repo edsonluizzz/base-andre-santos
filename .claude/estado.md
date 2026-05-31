@@ -1,6 +1,6 @@
 # Estado — Ovile Eleitoral (Base André Santos)
 
-**Última atualização:** 2026-05-31 (Sprint 14 mobile-first concluída — PWA, bottom nav, KPIs, score gradient, /treinamento, cards mobile em tabelas; bugs WhatsApp tom + {nome} corrigidos)
+**Última atualização:** 2026-05-31 (Sprint 14 + WF2 reimport + fix phone lookup; card n8n nas Integrações; ebook capture aguardando decisão)
 **Plano de produto:** `.claude/ovile-plano.md` — SaaS multi-tenant eleitoral
 **Domínio:** ovile.com.br (migrado do projeto Ovile igreja)
 **GitHub:** https://github.com/edsonluizzz/base-andre-santos
@@ -386,5 +386,47 @@ const CID = cid;
 - UPSTASH_REDIS_REST_URL/TOKEN no Vercel (rate limit serverless)
 - Multi-tenant Miriam: Configurações → Integrações (Metricool, Telegram, Z-API)
 - Reimport WF4 (kind=reactivation) — Sprint 12
-- Verificar deploy do `/treinamento` no Vercel após push
+- Verificar deploy do `/treinamento` no Vercel após push (concluído — está no ar)
+
+---
+
+## Sessão 2026-05-31 (tarde) — WF2 reimport via API + card n8n nas Integrações
+
+### Bugs corrigidos
+
+1. **WF2 com body form-urlencoded em vez de json (commit `cebdcea` antes; reimport via n8n API)**: a versão do WF2 importada anteriormente não tinha `contentType: json` + `specifyBody: keypair` nos nós CONVERT, OPT_OUT, Welcome e Despedida. Backend (`req.json()`) falhava silenciosamente em parsear → 400 → não atualizava status. Substituído via API n8n (`PUT /api/v1/workflows/ZDkd1oS1P8VdSh2l`) usando JSON do repo + credential ID real `lQQNPGFAlsKMbUfL`. Webhook Z-API NÃO precisou reconfigurar (mesmo ID do workflow → mesmo path `/webhook/ovile-resposta-wa`).
+
+2. **Phone lookup com 9 dígitos não bate quando Z-API manda celular sem o "9" (commit `3111084`)**: Z-API às vezes manda 12 dígitos (55+DDD+8) enquanto banco salva com 13 (55+DDD+9). Sufix9 não bate. Fix: tenta sufix9 → fallback sufix8 em `/api/n8n/update-lead` e `/api/n8n/lead-by-phone`.
+
+3. **Build quebrado por ESLint `_req unused` (commit `8cd7bc4`)**: bloqueou 10 deploys de produção da sprint 14 inteira. Fix: remover `_req` da rota `/api/collaborators/stats`. **Lição:** ESLint do projeto não aceita prefixo `_` para argumentos não usados — usar `export async function GET()` sem args quando não precisa.
+
+### Diagnóstico WF2 (9 SIMs perdidos)
+
+- 26 execuções do WF2 listadas via API n8n: 9 SIM com CONVERT 404, 17 outros
+- Rota temporária `/api/n8n/debug-phone` (criada e removida na mesma sessão) confirmou: **nenhum dos 9 phones tinha sequer 6-9 dígitos em comum com qualquer registro do banco**
+- Conclusão: os 9 SIMs vieram de pessoas **não cadastradas** no Ovile (testes pessoais via WhatsApp do Edson, indicações de terceiros, etc). Nada a recuperar
+- Stats da base: 1463 colaboradores com phone, 1659 LEAD, formato padrão 11 dígitos (sem +55)
+
+### Nova feature — card n8n nas Integrações (commit `cebdcea`)
+
+`Configurações → Integrações` ganhou 5º card "n8n (Workflows)":
+- Status de N8N_API_KEY (Bearer)
+- Status de 3 webhooks (Lead novo / Disparo manual / Import bulk) com hint do host+path
+- Link "Abrir n8n Cloud" externo
+- Nota explicando que WF2 (Resposta WhatsApp) não usa webhook nosso (Z-API → n8n direto)
+- API GET `/api/campaign/integrations` retorna agora também `n8n: {...}`
+
+### Limpeza n8n (via API)
+
+- 3 workflows duplicados deletados: `0Nm5Y6WujlDWU9pb`, `GqqPEHnmWHRsbMjs` (ambos "wf2"), `SOD4yQfe1S8wtd2z` ("resposta-whatsapp")
+- WF2 ativo (`ZDkd1oS1P8VdSh2l`) preservado e atualizado
+
+### Cadastro público dos ebooks (proposta pendente)
+
+Hoje os cadastros dos 2 ebooks vão para uma planilha Google. Edson importa manual no Ovile. Solução proposta — pendente decisão:
+- **(A)** Landing `/ebook/[slug]` dentro do Ovile com form custom (recomendado — sem dependência externa)
+- **(B)** Apps Script no Google Forms chamando `/api/public/cadastro`
+- **(C)** Make/Zapier intermediário
+
+Endpoint `/api/public/cadastro` já existe e está robusto: aceita name, phone, email, city, neighborhood, source, channel, refUserId, refc, contributionTypes, lgpdConsent. Já dispara WF3 (WhatsApp imediato), Telegram, e notifica líder de zona.
 
