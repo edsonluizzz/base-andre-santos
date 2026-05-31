@@ -66,7 +66,7 @@ export function KpiCard({ icon, label, value, href, color, delay = 0 }: KpiCardP
     <Link
       ref={cardRef}
       href={href}
-      className="glass-card rounded-2xl p-5 border border-border group relative overflow-hidden"
+      className="glass-card rounded-2xl p-3 lg:p-5 border border-border group relative overflow-hidden touchable tap-transparent"
       style={{ opacity: 0, transform: "translateY(16px)" }}
     >
       {/* Glow hover radial */}
@@ -76,20 +76,20 @@ export function KpiCard({ icon, label, value, href, color, delay = 0 }: KpiCardP
       />
 
       <div className="relative z-10">
-        <div className="flex items-center justify-between mb-3">
-          <span className="text-xs text-muted-foreground font-medium tracking-wide">{label}</span>
-          <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-foreground/[0.04] border border-foreground/[0.06] group-hover:border-primary/20 transition-colors">
+        <div className="flex items-center justify-between mb-2 lg:mb-3">
+          <span className="text-[10px] lg:text-xs text-muted-foreground font-medium tracking-wide truncate pr-1">{label}</span>
+          <div className="w-7 h-7 lg:w-8 lg:h-8 rounded-xl flex items-center justify-center bg-foreground/[0.04] border border-foreground/[0.06] group-hover:border-primary/20 transition-colors shrink-0">
             {icon}
           </div>
         </div>
 
-        <p className={`text-3xl font-black tabular-nums leading-none ${color}`}>
+        <p className={`text-2xl lg:text-3xl font-black tabular-nums leading-none ${color}`}>
           <span ref={numRef}>0</span>
         </p>
 
         {/* Barra decorativa */}
         <div
-          className="mt-3 h-px w-0 group-hover:w-full transition-all duration-500 ease-out"
+          className="mt-2 lg:mt-3 h-px w-0 group-hover:w-full transition-all duration-500 ease-out"
           style={{ background: "linear-gradient(to right, rgba(212,175,55,0.4), transparent)" }}
         />
       </div>

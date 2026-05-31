@@ -85,10 +85,10 @@ export default async function DashboardPage() {
   const next = nextTierInfo();
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-5 lg:space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
-        <p className="text-sm text-muted-foreground mt-1">
+        <h1 className="text-xl lg:text-2xl font-bold text-foreground">Dashboard</h1>
+        <p className="text-xs lg:text-sm text-muted-foreground mt-1">
           Bem-vindo, {session?.user?.name?.split(" ")[0]}. Visão geral da base de apoio.
         </p>
       </div>
@@ -97,7 +97,7 @@ export default async function DashboardPage() {
 
       {/* Banner de boas-vindas para quem ainda não cadastrou ninguém */}
       {myTotal === 0 && (
-        <Link href="/onboarding" className="block glass-card rounded-2xl p-5 border border-primary/20 bg-primary/[0.04] hover:border-primary/40 transition-colors">
+        <Link href="/onboarding" className="block glass-card rounded-2xl p-4 lg:p-5 border border-primary/20 bg-primary/[0.04] hover:border-primary/40 transition-colors touchable tap-transparent">
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="font-semibold text-foreground text-sm">Comece por aqui</p>
@@ -108,17 +108,17 @@ export default async function DashboardPage() {
         </Link>
       )}
 
-      {/* KPI Cards — ícones passados como JSX (não como função) para respeitar boundary RSC→Client */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* KPI Cards — 2 cols mobile (denso), 4 lg+ */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 lg:gap-4">
         <KpiCard icon={<Users className="w-3.5 h-3.5 text-primary" />}         label="Colaboradores"  value={total}                 href="/colaboradores" color="text-primary"     delay={0} />
         <KpiCard icon={<MapPin className="w-3.5 h-3.5 text-blue-400" />}        label="Zonas"          value={zones}                 href="/zonas"         color="text-blue-400"    delay={1} />
         <KpiCard icon={<MessageCircle className="w-3.5 h-3.5 text-green-400" />} label="Grupos WA"      value={groups}                href="/grupos"        color="text-green-400"   delay={2} />
         <KpiCard icon={<Calendar className="w-3.5 h-3.5 text-purple-400" />}    label="Próx. Eventos"  value={upcomingEvents.length}  href="/agenda"        color="text-purple-400"  delay={3} />
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-6">
+      <div className="grid lg:grid-cols-3 gap-4 lg:gap-6">
         {/* Colaboradores por cargo */}
-        <div className="glass-card rounded-2xl p-6 border border-border lg:col-span-1">
+        <div className="glass-card rounded-2xl p-4 lg:p-6 border border-border lg:col-span-1">
           <div className="flex items-center gap-2 mb-5">
             <TrendingUp className="w-4 h-4 text-primary" />
             <h2 className="text-sm font-semibold text-foreground">Por Cargo</h2>
@@ -143,7 +143,7 @@ export default async function DashboardPage() {
         </div>
 
         {/* Minha Célula */}
-        <div className="glass-card rounded-2xl p-6 border border-border lg:col-span-1">
+        <div className="glass-card rounded-2xl p-4 lg:p-6 border border-border lg:col-span-1">
           <div className="flex items-center gap-2 mb-5">
             <Star className="w-4 h-4 text-primary" />
             <h2 className="text-sm font-semibold text-foreground">Minha Célula</h2>
@@ -190,7 +190,7 @@ export default async function DashboardPage() {
         </div>
 
         {/* Próximos eventos */}
-        <div className="glass-card rounded-2xl p-6 border border-border lg:col-span-1">
+        <div className="glass-card rounded-2xl p-4 lg:p-6 border border-border lg:col-span-1">
           <div className="flex items-center justify-between mb-5">
             <div className="flex items-center gap-2">
               <Calendar className="w-4 h-4 text-primary" />
@@ -235,12 +235,12 @@ export default async function DashboardPage() {
 
       {/* Cobertura por município */}
       {topCities.length > 0 && (
-        <div className="glass-card rounded-2xl p-6 border border-border">
-          <div className="flex items-center justify-between mb-5">
+        <div className="glass-card rounded-2xl p-4 lg:p-6 border border-border">
+          <div className="flex items-center justify-between mb-4 lg:mb-5">
             <h2 className="text-sm font-semibold text-foreground">Cobertura por Município</h2>
-            <Link href="/relatorio" className="text-xs text-primary hover:text-primary/80">Ver relatório completo</Link>
+            <Link href="/relatorio" className="text-xs text-primary hover:text-primary/80">Ver tudo</Link>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 lg:gap-3">
             {topCities.map(([city, data]) => {
               const pct = data.total > 0 ? Math.round((data.confirmados / data.total) * 100) : 0;
               const borderColor = data.hasLeader ? "border-green-500/25" : "border-border";
