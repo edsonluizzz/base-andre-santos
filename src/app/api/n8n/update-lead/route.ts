@@ -85,7 +85,15 @@ export async function POST(req: NextRequest) {
   }
 
   if (!collaborator) {
-    return NextResponse.json({ error: "Lead não encontrado" }, { status: 404 });
+    // Diagnóstico para WF do n8n: indica o que foi buscado e onde
+    const searched = collaboratorId
+      ? { by: "collaboratorId", value: collaboratorId }
+      : { by: "phoneSuffix9", value: phone?.replace(/\D/g, "").slice(-9) ?? null, rawPhone: phone };
+    console.warn("[update-lead] 404", { campaignId, action, searched });
+    return NextResponse.json(
+      { error: "Lead não encontrado", searched, campaignId, action },
+      { status: 404 },
+    );
   }
 
   const now = new Date();

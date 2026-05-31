@@ -40,37 +40,37 @@ const PRONOUNS: Record<Gender, Pronouns> = {
 // ─── Templates ─────────────────────────────────────────────────────────────
 
 export const INVITE_TEMPLATES: string[] = [
-  // V1
-  `Oi, {nome}! 😊\n\nAqui é da equipe do {candidato} e ficamos super felizes em ver seu interesse em apoiar nossa {periodo} pra 2026!\n\nTô montando um grupo só com {amigo}s que acreditam na nossa causa pra caminhar junto até as eleições.\n\nTopa entrar? É rapidinho, sem compromisso 🙏\n\nManda *SIM* ou *NÃO* 😉`,
+  // V1 — Formal, convite direto
+  `Olá, {nome}. Tudo bem?\n\nAqui é da equipe do {candidato}. Recebemos seu cadastro de apoio à nossa {periodo} para 2026 e ficamos honrados com seu interesse.\n\nEstamos formando um grupo no WhatsApp com os apoiadores que querem acompanhar de perto cada etapa. Gostaríamos de te incluir.\n\nPodemos contar com você? Responda *SIM* ou *NÃO*.`,
 
-  // V2
-  `E aí, {nome}! Tudo bom? 😊\n\nVi que você se interessou em apoiar o {candidato} pra Deputado Estadual em 2026 — que alegria ter você com a gente!\n\nTô formando um grupo aqui no WhatsApp com {amigo}s que estão nessa caminhada. Quer fazer parte?\n\nResponde *SIM* ou *NÃO* 🤝`,
+  // V2 — Formal, agradecimento e proposta
+  `{nome}, boa tarde.\n\nEm nome de toda a equipe do {candidato}, agradecemos pelo seu cadastro de apoio.\n\nMantemos um grupo no WhatsApp onde compartilhamos as principais novidades da {periodo} e a agenda do candidato. Seria uma honra ter você conosco.\n\nDeseja participar? Responda *SIM* ou *NÃO*.`,
 
-  // V3
-  `Olá, {querido} {nome}! 😄\n\nEquipe do {candidato} aqui. Recebemos seu cadastro e queríamos chamar você pro nosso grupo de apoiadores no WhatsApp — é onde as coisas acontecem primeiro 🚀\n\nPosso te incluir? Responde *SIM* se topar, ou *NÃO* se preferir 🙏`,
+  // V3 — Formal, cordial
+  `Olá, {nome}. Esperamos que esteja bem.\n\nSou da equipe do {candidato}, candidato a Deputado Estadual pelo Paraná em 2026. Recebemos seu apoio e gostaríamos de mantê-lo informado sobre cada passo da nossa {periodo}.\n\nTemos um grupo de apoiadores no WhatsApp e gostaríamos de incluir você. Podemos?\n\nResponda *SIM* ou *NÃO*.`,
 
-  // V4
-  `Oi, {nome}! 👋\n\nTô passando aqui em nome do {candidato} pra agradecer demais pelo apoio e te chamar pro grupo dos apoiadores 💚\n\nA gente compartilha novidades, agenda de eventos, materiais... bem família mesmo.\n\nPosso te adicionar? Responde *SIM* ou *NÃO* 😊`,
+  // V4 — Formal, foco em proximidade institucional
+  `{nome}, olá.\n\nEquipe do {candidato} entrando em contato para agradecer pelo seu cadastro.\n\nO próximo passo é te convidar para o nosso grupo no WhatsApp — espaço reservado aos apoiadores que recebem em primeira mão a agenda, os materiais e os comunicados oficiais.\n\nPodemos te adicionar? Responda *SIM* ou *NÃO*.`,
 
-  // V5
-  `{nome}, oi! 😊\n\nAqui é da equipe do {candidato}. Tava olhando seu cadastro e queria dar um abraço de boas-vindas!\n\nTemos um grupinho no WhatsApp com os {amigo}s mais próximos da {periodo} — gostaria de fazer parte?\n\nManda *SIM* ou *NÃO* 🙏`,
+  // V5 — Formal, com toque pessoal moderado
+  `Olá, {nome}.\n\nAqui é da equipe do {candidato}. Acabamos de receber seu cadastro e gostaríamos de te dar as boas-vindas à nossa {periodo}.\n\nMantemos um grupo de apoiadores no WhatsApp para compartilhar comunicados, agenda e oportunidades de participação. Gostaria de fazer parte?\n\nResponda *SIM* ou *NÃO*.`,
 ];
 
 export const WELCOME_TEMPLATES: string[] = [
-  // V1
-  `Aaaa que alegria, {nome}! 🎉💚\n\nDemais ter você nessa caminhada com a gente!\n\nAqui tá o link do grupo dos apoiadores:\n👉 {groupLink}\n\nBora fazer bonito juntos pelo Paraná 🇧🇷`,
+  // V1 — Formal, agradecimento institucional
+  `{nome}, muito obrigado pela confirmação.\n\nÉ uma honra contar com seu apoio na nossa {periodo}. Segue o link do grupo dos apoiadores:\n\n👉 {groupLink}\n\nJuntos pelo Paraná. 🇵🇷`,
 
-  // V2
-  `{querido} {nome}, muito obrigado de coração! 🥰\n\nQue coisa boa ter mais um {amigo} no time! Link do grupo:\n👉 {groupLink}\n\nTe vejo lá! 💚`,
+  // V2 — Formal, boas-vindas cordiais
+  `{nome}, seja {bem-vindo}.\n\nEm nome de toda a equipe do {candidato}, agradecemos pela sua confiança. Acesse o grupo dos apoiadores pelo link abaixo:\n\n👉 {groupLink}\n\nNos vemos por lá.`,
 
-  // V3
-  `Eba, {nome}! Que legal! 🎊\n\n{bem-vindo} de coração ao nosso grupo:\n👉 {groupLink}\n\nJuntos a gente vai longe 🚀`,
+  // V3 — Formal, sucinto
+  `Olá, {nome}.\n\nConfirmamos sua inclusão no grupo dos apoiadores do {candidato}. Acesse pelo link:\n\n👉 {groupLink}\n\nContamos com você nessa {periodo}.`,
 
-  // V4
-  `Sensacional, {nome}! 🙌\n\nTá feita! {bem-vindo} oficialmente ao grupo dos apoiadores 😄\n\n👉 {groupLink}\n\nA {periodo} agradece muito! 💚`,
+  // V4 — Formal, com reconhecimento
+  `{nome}, agradecemos seu interesse em apoiar o {candidato}.\n\nVocê faz parte agora do grupo oficial de apoiadores no WhatsApp:\n\n👉 {groupLink}\n\nLá compartilhamos a agenda, os comunicados e os próximos passos da {periodo}.`,
 
-  // V5
-  `{nome}, que alegria! 🤩\n\nVocê acaba de ganhar um lugar especial no nosso grupo de apoiadores 💚\n\n👉 {groupLink}\n\nConta com a gente, {querido}! 🙏`,
+  // V5 — Formal, valorização
+  `{nome}, obrigado por confirmar seu apoio.\n\nSua participação é fundamental para a nossa {periodo}. Link do grupo dos apoiadores:\n\n👉 {groupLink}\n\nUm abraço da equipe do {candidato}.`,
 ];
 
 export const REACTIVATION_TEMPLATES: string[] = [
@@ -91,20 +91,20 @@ export const REACTIVATION_TEMPLATES: string[] = [
 ];
 
 export const OPTOUT_TEMPLATES: string[] = [
-  // V1
-  `Tudo bem, {nome}! Sem problema nenhum 😊\n\nSe mudar de ideia, a porta tá sempre aberta. Um abraço da equipe! 🤝`,
+  // V1 — Formal, respeitoso
+  `Tudo bem, {nome}. Respeitamos sua decisão.\n\nSe mudar de ideia, basta nos avisar. Um abraço da equipe do {candidato}.`,
 
-  // V2
-  `Beleza, {nome}! Respeitamos sua decisão 🙏\n\nQualquer coisa, é só dar um toque. Abraço!`,
+  // V2 — Formal, breve
+  `{nome}, entendido. Agradecemos pelo retorno.\n\nSe um dia desejar voltar, estaremos à disposição. Um abraço.`,
 
-  // V3
-  `Sem stress, {nome}! 😉\n\nA gente entende. Mas se um dia mudar de ideia, é só falar! Um abraço 💚`,
+  // V3 — Formal, cordial
+  `Olá, {nome}. Compreendemos perfeitamente.\n\nAgradecemos pelo seu cadastro e pela sinceridade. As portas continuam abertas caso mude de opinião.\n\nUm abraço cordial.`,
 
-  // V4
-  `Tranquilo, {querido} {nome}! 😊\n\nObrigado pelo retorno. A gente fica por aqui, e se precisar de qualquer coisa, conta com a gente. Abraço!`,
+  // V4 — Formal, agradecimento
+  `{nome}, obrigado pelo retorno.\n\nA equipe do {candidato} respeita sua decisão e fica à disposição para o que precisar no futuro.\n\nUm abraço.`,
 
-  // V5
-  `Ok, {nome}, entendido! 🙏\n\nAgradecemos demais pelo cadastro. Se quiser voltar, é só mandar uma mensagem! 💚`,
+  // V5 — Formal, encerramento polido
+  `Entendido, {nome}. Agradecemos pela sua atenção.\n\nCaso queira retomar contato no futuro, basta enviar uma mensagem. Um abraço da equipe.`,
 ];
 
 // ─── Renderização ──────────────────────────────────────────────────────────

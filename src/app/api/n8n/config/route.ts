@@ -78,30 +78,23 @@ export async function GET(req: NextRequest) {
       groupLink,
     });
   } else {
-    // Compat: retorna apenas V1 de cada com placeholder {nome} sem gênero
-    // (workflows antigos não passam name e usam .replace('{nome}', ...))
+    // Compat: workflows antigos não passam ?name — devolvemos a V1 com {nome}
+    // substituído por "apoiador(a)" como salvaguarda para nunca enviar placeholder cru.
+    // Sintaxe markdown do WhatsApp preservada (*texto*, 👉).
+    const FALLBACK_NAME = "apoiador(a)";
+    const fillCommon = (tpl: string) =>
+      tpl
+        .replaceAll("{nome}", FALLBACK_NAME)
+        .replaceAll("{candidato}", candidateName)
+        .replaceAll("{periodo}", periodoEleitoral())
+        .replaceAll("{querido}", "amigo(a)")
+        .replaceAll("{amigo}", "amigo(a)")
+        .replaceAll("{bem-vindo}", "bem-vindo(a)");
     messages = {
-      invite: INVITE_TEMPLATES[0]
-        .replaceAll("{candidato}", candidateName)
-        .replaceAll("{periodo}", periodoEleitoral())
-        .replaceAll("{querido}", "amigo(a)")
-        .replaceAll("{amigo}", "amigo(a)")
-        .replaceAll("{bem-vindo}", "bem-vindo(a)"),
-      welcome: (WELCOME_TEMPLATES[0])
-        .replaceAll("{candidato}", candidateName)
-        .replaceAll("{periodo}", periodoEleitoral())
-        .replaceAll("{groupLink}", groupLink ?? "")
-        .replaceAll("{querido}", "amigo(a)")
-        .replaceAll("{amigo}", "amigo(a)")
-        .replaceAll("{bem-vindo}", "bem-vindo(a)"),
-      optOut: OPTOUT_TEMPLATES[0]
-        .replaceAll("{candidato}", candidateName)
-        .replaceAll("{periodo}", periodoEleitoral())
-        .replaceAll("{querido}", "amigo(a)"),
-      reactivation: REACTIVATION_TEMPLATES[0]
-        .replaceAll("{candidato}", candidateName)
-        .replaceAll("{periodo}", periodoEleitoral())
-        .replaceAll("{querido}", "amigo(a)"),
+      invite: fillCommon(INVITE_TEMPLATES[0]),
+      welcome: fillCommon(WELCOME_TEMPLATES[0]).replaceAll("{groupLink}", groupLink ?? ""),
+      optOut: fillCommon(OPTOUT_TEMPLATES[0]),
+      reactivation: fillCommon(REACTIVATION_TEMPLATES[0]),
     };
   }
 
