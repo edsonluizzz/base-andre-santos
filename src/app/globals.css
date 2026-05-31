@@ -70,8 +70,9 @@
     }
   }
 
-  /* Overscroll behavior */
-  html, body { overscroll-behavior-y: contain; }
+  /* Smooth scroll baseline (não usar overscroll-behavior aqui — quebra momentum
+     scroll em alguns navegadores mobile) */
+  html { -webkit-overflow-scrolling: touch; }
 }
 
 @layer base {
@@ -165,24 +166,24 @@
 
   body {
     @apply text-foreground;
-    background-color: #0a1220;
-    background-image: radial-gradient(
+    background: #0a1220 radial-gradient(
       ellipse 80% 50% at 50% -10%,
       #1a2f4e 0%,
       #0a1220 65%
-    );
-    background-attachment: fixed;
+    ) no-repeat;
+    /* Sem background-attachment: fixed (trava scroll em iOS Safari).
+       Em vez disso usamos pseudo-element fixed abaixo. */
     font-family: "Inter", "DM Sans", sans-serif;
     -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
   }
 
   html.light body {
-    background-color: #f1f5f9;
-    background-image: radial-gradient(
+    background: #f1f5f9 radial-gradient(
       ellipse 80% 50% at 50% -10%,
       #dbeafe 0%,
       #f1f5f9 65%
-    );
+    ) no-repeat;
   }
 
   html { @apply font-sans; overflow-x: hidden; }
