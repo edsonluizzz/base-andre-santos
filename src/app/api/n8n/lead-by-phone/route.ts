@@ -32,22 +32,28 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "phone obrigatório" }, { status: 400 });
   }
 
+  // Z-API às vezes manda celular sem o 9 (12 dígitos: 55+DDD+8); o banco pode
+  // ter salvo com (13 dígitos: 55+DDD+9). Tenta 9 dígitos, fallback 8.
   const digits = phone.replace(/\D/g, "");
-  const suffix = digits.slice(-9);
-  if (suffix.length < 8) {
+  const sufix9 = digits.slice(-9);
+  const sufix8 = digits.slice(-8);
+  if (sufix8.length < 8) {
     return NextResponse.json({ found: false });
   }
 
   const dbUrl = (await getCampaignDbUrl(campaignId)) ?? process.env.DATABASE_URL;
   const { db } = getCampaignContext({ user: { campaignId, dbUrl: dbUrl ?? undefined } });
 
-  const collab = await db.collaborator.findFirst({
-    where: {
-      campaignId,
-      phone: { contains: suffix },
-    },
+  let collab = await db.collaborator.findFirst({
+    where: { campaignId, phone: { contains: sufix9 } },
     select: { id: true, name: true },
   });
+  if (!collab) {
+    collab = await db.collaborator.findFirst({
+      where: { campaignId, phone: { contains: sufix8 } },
+      select: { id: true, name: true },
+    });
+  }
 
   if (!collab) {
     return NextResponse.json({ found: false });

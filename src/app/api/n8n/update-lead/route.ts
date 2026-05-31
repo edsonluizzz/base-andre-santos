@@ -71,17 +71,23 @@ export async function POST(req: NextRequest) {
       select: { id: true, name: true, status: true },
     });
   } else if (phone) {
-    // Normaliza para os últimos 9 dígitos (único o suficiente no BR)
+    // Z-API às vezes manda número sem o 9 do celular (12 dígitos: 55+DDD+8 dígitos),
+    // enquanto o banco pode ter salvo com 9 (13 dígitos: 55+DDD+9 dígitos).
+    // Tenta primeiro pelo suffix de 9 dígitos; se falhar, cai para 8 dígitos.
     const digits = phone.replace(/\D/g, "");
-    const suffix = digits.slice(-9);
+    const sufix9 = digits.slice(-9);
+    const sufix8 = digits.slice(-8);
 
     collaborator = await db.collaborator.findFirst({
-      where: {
-        campaignId,
-        phone: { contains: suffix },
-      },
+      where: { campaignId, phone: { contains: sufix9 } },
       select: { id: true, name: true, status: true },
     });
+    if (!collaborator && sufix8.length === 8) {
+      collaborator = await db.collaborator.findFirst({
+        where: { campaignId, phone: { contains: sufix8 } },
+        select: { id: true, name: true, status: true },
+      });
+    }
   }
 
   if (!collaborator) {
