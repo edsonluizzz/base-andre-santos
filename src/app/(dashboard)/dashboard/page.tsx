@@ -116,9 +116,9 @@ export default async function DashboardPage() {
         <KpiCard icon={<Calendar className="w-3.5 h-3.5 text-purple-400" />}    label="Próx. Eventos"  value={upcomingEvents.length}  href="/agenda"        color="text-purple-400"  delay={3} />
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-4 lg:gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
         {/* Colaboradores por cargo */}
-        <div className="glass-card rounded-2xl p-4 lg:p-6 border border-border lg:col-span-1">
+        <div className="glass-card rounded-2xl p-4 lg:p-6 border border-border lg:col-span-1 overflow-hidden min-w-0">
           <div className="flex items-center gap-2 mb-5">
             <TrendingUp className="w-4 h-4 text-primary" />
             <h2 className="text-sm font-semibold text-foreground">Por Cargo</h2>
@@ -143,7 +143,7 @@ export default async function DashboardPage() {
         </div>
 
         {/* Minha Célula */}
-        <div className="glass-card rounded-2xl p-4 lg:p-6 border border-border lg:col-span-1">
+        <div className="glass-card rounded-2xl p-4 lg:p-6 border border-border lg:col-span-1 overflow-hidden min-w-0">
           <div className="flex items-center gap-2 mb-5">
             <Star className="w-4 h-4 text-primary" />
             <h2 className="text-sm font-semibold text-foreground">Minha Célula</h2>
@@ -190,7 +190,7 @@ export default async function DashboardPage() {
         </div>
 
         {/* Próximos eventos */}
-        <div className="glass-card rounded-2xl p-4 lg:p-6 border border-border lg:col-span-1">
+        <div className="glass-card rounded-2xl p-4 lg:p-6 border border-border lg:col-span-1 overflow-hidden min-w-0">
           <div className="flex items-center justify-between mb-5">
             <div className="flex items-center gap-2">
               <Calendar className="w-4 h-4 text-primary" />

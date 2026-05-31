@@ -44,7 +44,7 @@ export function FunnelPanel() {
     <div className="glass-card rounded-2xl p-6 border border-white/[0.08]">
       <div className="flex items-center gap-2 mb-5">
         <TrendingUp className="w-4 h-4 text-primary" />
-        <h2 className="text-sm font-semibold text-foreground">Funil de Conversão</h2>
+        <h2 className="text-sm font-semibold text-foreground">Base · Status atual</h2>
         <span className="ml-auto text-[10px] text-muted-foreground">{data.leads} lead{data.leads !== 1 ? "s" : ""} · {data.inativos} inativo{data.inativos !== 1 ? "s" : ""}</span>
       </div>
       <div className="space-y-3">

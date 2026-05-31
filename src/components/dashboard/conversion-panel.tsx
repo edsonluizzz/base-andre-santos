@@ -38,7 +38,7 @@ export function ConversionPanel() {
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-2">
           <TrendingUp className="w-4 h-4 text-primary" />
-          <h2 className="text-sm font-semibold">Funil de Conversão</h2>
+          <h2 className="text-sm font-semibold">WhatsApp · Conversão</h2>
           <span className="text-[10px] text-muted-foreground">últimos {periodLabel}</span>
         </div>
         <div className="flex gap-1">
