@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { getCampaignContext } from "@/lib/campaign-context";
 
@@ -18,7 +18,7 @@ import { getCampaignContext } from "@/lib/campaign-context";
  *
  * Deltas semanais (vs últimos 7d): retorna +/- número absoluto e % de variação
  */
-export async function GET(_req: NextRequest) {
+export async function GET() {
   try {
     const session = await auth();
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
