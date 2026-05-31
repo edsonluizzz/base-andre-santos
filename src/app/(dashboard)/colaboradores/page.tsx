@@ -456,7 +456,7 @@ export default function ColaboradoresPage() {
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-2 gap-y-3">
                 <div>
                   <FilterLabel>Forma de entrada</FilterLabel>
-                  <Select value={filterSourceType} onValueChange={(v) => { setFilterSourceType(v); if (v) setFilterSource(""); }}>
+                  <Select value={filterSourceType} onValueChange={(v) => { setFilterSourceType(v ?? ""); if (v) setFilterSource(""); }}>
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Qualquer origem" />
                     </SelectTrigger>
@@ -472,7 +472,7 @@ export default function ColaboradoresPage() {
                 {sources.length > 0 && (
                   <div>
                     <FilterLabel>Origem específica</FilterLabel>
-                    <Select value={filterSource} onValueChange={(v) => { setFilterSource(v); if (v) setFilterSourceType(""); }}>
+                    <Select value={filterSource} onValueChange={(v) => { setFilterSource(v ?? ""); if (v) setFilterSourceType(""); }}>
                       <SelectTrigger className="w-full">
                         <SelectValue placeholder="Todas as origens" />
                       </SelectTrigger>
