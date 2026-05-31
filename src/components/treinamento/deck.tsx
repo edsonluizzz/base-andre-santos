@@ -377,8 +377,8 @@ export function TreinamentoDeck({ candidateName, userName, userRole }: DeckProps
     <div
       className="relative -mt-4 -mx-3 lg:-mt-8 lg:-mx-8 lg:-mb-8 flex flex-col h-[calc(100dvh-3.5rem-env(safe-area-inset-bottom))] lg:h-[100dvh]"
     >
-      {/* Top bar — fixa */}
-      <div className="shrink-0 z-20 backdrop-blur-xl bg-background/85 border-b border-white/[0.06] px-4 py-3 lg:px-8 lg:py-4">
+      {/* Top bar — fixa (sem backdrop-blur: destrói scroll em iOS) */}
+      <div className="shrink-0 z-20 bg-background/98 border-b border-white/[0.06] px-4 py-3 lg:px-8 lg:py-4">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 min-w-0">
             <div className="w-7 h-7 rounded-lg bg-primary/15 border border-primary/30 flex items-center justify-center shrink-0">
@@ -451,7 +451,7 @@ export function TreinamentoDeck({ candidateName, userName, userRole }: DeckProps
           onClick={() => goTo(index - 1)}
           disabled={index === 0}
           aria-label="Slide anterior"
-          className="touch-target w-11 h-11 rounded-full glass-card border border-white/[0.10] hover:border-primary/40 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition-colors backdrop-blur-xl shadow-lg"
+          className="touch-target w-11 h-11 rounded-full glass-card border border-white/[0.10] hover:border-primary/40 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition-colors shadow-lg"
         >
           <ChevronUp className="w-5 h-5" />
         </button>

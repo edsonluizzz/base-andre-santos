@@ -125,12 +125,15 @@ export function Sidebar({
       <aside
         className={cn(
           "fixed top-0 left-0 h-full max-h-[100dvh] z-40 flex flex-col transition-all duration-300 overflow-y-auto overflow-x-hidden",
-          "border-r border-sidebar-border bg-sidebar",
+          "border-r border-sidebar-border",
           "lg:translate-x-0",
           mobileOpen ? "translate-x-0" : "-translate-x-full",
           isCollapsed ? "w-16" : "w-64"
         )}
-        style={{ backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)" }}
+        style={{
+          // Background sólido (sem backdrop-blur — destrói scroll em iOS)
+          backgroundColor: "rgba(10,18,32,0.98)",
+        }}
       >
         {/* Header */}
         <div className="p-3 border-b border-sidebar-border flex-shrink-0">
