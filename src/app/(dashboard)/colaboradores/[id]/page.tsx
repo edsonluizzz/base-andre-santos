@@ -6,6 +6,7 @@ import { ArrowLeft, Phone, MapPin, Mail, Calendar, Star, UserCheck, ShieldCheck,
 import { InviteToSystem } from "@/components/collaborators/invite-to-system";
 import { EditCollaboratorButton } from "@/components/collaborators/edit-collaborator-button";
 import { ContactTimeline } from "@/components/collaborators/contact-timeline";
+import { ScoreBar } from "@/components/ui/score-bar";
 import { CONTRIBUTION_OPTIONS, TIER_LABEL } from "@/lib/contribution";
 import { ROLE_LABEL, PROFILE_LABEL, STATUS_LABEL } from "@/lib/labels";
 import { calcMobilizationScore } from "@/lib/mobilization";
@@ -240,11 +241,11 @@ export default async function CollaboratorProfilePage({ params }: { params: { id
             <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
               <Zap className="w-4 h-4 text-primary" /> Score de Mobilização
             </h2>
-            <span className="text-2xl font-bold text-primary">{computedScore}<span className="text-xs text-muted-foreground font-normal">/100</span></span>
+            <span className={`text-2xl font-bold ${computedScore >= 70 ? "text-green-400" : computedScore >= 40 ? "text-amber-400" : computedScore > 0 ? "text-red-400" : "text-muted-foreground"}`}>
+              {computedScore}<span className="text-xs text-muted-foreground font-normal">/100</span>
+            </span>
           </div>
-          <div className="h-2 bg-white/[0.06] rounded-full mb-4">
-            <div className="h-full bg-primary/60 rounded-full" style={{ width: `${computedScore}%` }} />
-          </div>
+          <ScoreBar value={computedScore} size="md" showValue={false} className="mb-4" />
           <div className="grid grid-cols-2 gap-2 text-xs">
             {[
               { label: "Perfil", detail: PROFILE_LABEL[collaborator.profile] },

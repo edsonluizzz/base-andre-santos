@@ -13,6 +13,7 @@ import { CollaboratorDialog } from "@/components/collaborators/collaborator-dial
 import { DeleteConfirm } from "@/components/collaborators/delete-confirm";
 import { ImportCsvDialog } from "@/components/collaborators/import-csv-dialog";
 import { KpiCards } from "@/components/collaborators/kpi-cards";
+import { ScoreBar } from "@/components/ui/score-bar";
 import { CONTRIBUTION_OPTIONS } from "@/lib/contribution";
 import { ROLE_LABEL, PROFILE_LABEL, CHANNEL_LABEL, SUPPORT_LABEL, PROFILE_ORDER, CHANNEL_ORDER, SUPPORT_ORDER } from "@/lib/labels";
 
@@ -30,6 +31,7 @@ type Collaborator = {
   id: string; name: string; email?: string; phone?: string; city?: string;
   neighborhood?: string; campaignRole: string; status: string; supportStatus?: string; notes?: string;
   birthday?: string; contributionTypes?: string[]; lastContactedAt?: string | null; source?: string;
+  mobilizationScore?: number | null;
   registeredBy?: { name: string | null; email: string | null } | null;
   zones: { zone: { id: string; name: string } }[];
   whatsappGroups: { group: { id: string; name: string } }[];
@@ -719,6 +721,14 @@ export default function ColaboradoresPage() {
                         </a>
                       )}
                     </div>
+                    {typeof c.mobilizationScore === "number" && c.mobilizationScore > 0 && (
+                      <div className="flex items-center gap-2 mt-1.5">
+                        <span className="text-[10px] uppercase tracking-wider text-muted-foreground/70 shrink-0">
+                          Mobilização
+                        </span>
+                        <ScoreBar value={c.mobilizationScore} size="sm" showValue />
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex items-center gap-2 shrink-0">
