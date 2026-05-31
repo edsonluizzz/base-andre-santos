@@ -382,7 +382,7 @@ export default function ColaboradoresPage() {
           <div className="flex flex-wrap gap-x-2 gap-y-1 items-end">
             <div>
               <FilterLabel>Cargo</FilterLabel>
-              <Select value={filterRole} onValueChange={setFilterRole}>
+              <Select value={filterRole} onValueChange={(v) => setFilterRole(v ?? "")}>
                 <SelectTrigger className="w-40">
                   <SelectValue placeholder="Todos os cargos" />
                 </SelectTrigger>
@@ -395,7 +395,7 @@ export default function ColaboradoresPage() {
 
             <div>
               <FilterLabel>Status</FilterLabel>
-              <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <Select value={filterStatus} onValueChange={(v) => setFilterStatus(v ?? "")}>
                 <SelectTrigger className="w-32">
                   <SelectValue placeholder="Todos" />
                 </SelectTrigger>
@@ -488,7 +488,7 @@ export default function ColaboradoresPage() {
 
                 <div>
                   <FilterLabel>Perfil</FilterLabel>
-                  <Select value={filterProfile} onValueChange={setFilterProfile}>
+                  <Select value={filterProfile} onValueChange={(v) => setFilterProfile(v ?? "")}>
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Todos os perfis" />
                     </SelectTrigger>
@@ -503,7 +503,7 @@ export default function ColaboradoresPage() {
 
                 <div>
                   <FilterLabel>Canal</FilterLabel>
-                  <Select value={filterChannel} onValueChange={setFilterChannel}>
+                  <Select value={filterChannel} onValueChange={(v) => setFilterChannel(v ?? "")}>
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Todos os canais" />
                     </SelectTrigger>
@@ -518,7 +518,7 @@ export default function ColaboradoresPage() {
 
                 <div>
                   <FilterLabel>Apoio</FilterLabel>
-                  <Select value={filterSupportStatus} onValueChange={setFilterSupportStatus}>
+                  <Select value={filterSupportStatus} onValueChange={(v) => setFilterSupportStatus(v ?? "")}>
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Qualquer apoio" />
                     </SelectTrigger>
@@ -551,7 +551,7 @@ export default function ColaboradoresPage() {
                 {cities.length > 0 && (
                   <div>
                     <FilterLabel>Cidade</FilterLabel>
-                    <Select value={filterCity} onValueChange={setFilterCity}>
+                    <Select value={filterCity} onValueChange={(v) => setFilterCity(v ?? "")}>
                       <SelectTrigger className="w-full">
                         <SelectValue placeholder="Todas as cidades" />
                       </SelectTrigger>

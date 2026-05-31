@@ -253,7 +253,7 @@ export default function MapaPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input value={citySearch} onChange={(e) => setCitySearch(e.target.value)} placeholder="Buscar município..." className="pl-9" />
         </div>
-        <Select value={filterProfile} onValueChange={setFilterProfile}>
+        <Select value={filterProfile} onValueChange={(v) => setFilterProfile(v ?? "")}>
           <SelectTrigger className="w-full sm:w-48">
             <Filter className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
             <SelectValue />
@@ -265,7 +265,7 @@ export default function MapaPage() {
             ))}
           </SelectContent>
         </Select>
-        <Select value={filterStatus} onValueChange={setFilterStatus}>
+        <Select value={filterStatus} onValueChange={(v) => setFilterStatus(v ?? "")}>
           <SelectTrigger className="w-full sm:w-40">
             <SelectValue />
           </SelectTrigger>
@@ -406,7 +406,7 @@ export default function MapaPage() {
             )}
 
             <div className="flex items-center gap-2 ml-auto">
-              <Select value={bulkTargetStatus} onValueChange={setBulkTargetStatus}>
+              <Select value={bulkTargetStatus} onValueChange={(v) => setBulkTargetStatus(v ?? "")}>
                 <SelectTrigger className="h-8 w-44 text-xs">
                   <SelectValue placeholder="Alterar para..." />
                 </SelectTrigger>

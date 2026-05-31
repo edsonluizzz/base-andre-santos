@@ -1,10 +1,6 @@
 /** @type {import("next").NextConfig} */
-// build: 2026-05-30
-// ESLint ativado (catches reais: unused-vars, undefined imports, etc).
-// TypeScript ainda silenciado: vários erros legados de UI (Select/onValueChange,
-// fetch response sem tipo) — abordar em sprint dedicada.
+// build: 2026-05-30 — TS validation ativada (Sprint 13 TS-cleanup)
 const nextConfig = {
-  typescript: { ignoreBuildErrors: true }, // TODO sprint TS-cleanup
   async headers() {
     return [
       {

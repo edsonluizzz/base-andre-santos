@@ -79,7 +79,7 @@ export function InviteToSystem({ collaboratorId, collaboratorName, defaultEmail 
             </div>
             <div>
               <Label>Nível de acesso</Label>
-              <Select value={role} onValueChange={setRole}>
+              <Select value={role} onValueChange={(v) => setRole(v ?? "")}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="MEMBER">Colaborador — gerencia próprios cadastros</SelectItem>

@@ -322,7 +322,7 @@ export default function SuperAdminPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar por nome ou e-mail..." className="pl-9" />
         </div>
-        <Select value={roleFilter} onValueChange={setRoleFilter}>
+        <Select value={roleFilter} onValueChange={(v) => setRoleFilter(v ?? "")}>
           <SelectTrigger className="w-full sm:w-44">
             <SelectValue />
           </SelectTrigger>
@@ -759,7 +759,7 @@ export default function SuperAdminPage() {
             <div className="space-y-4">
               <div>
                 <Label>Nível de acesso</Label>
-                <Select value={linkRole} onValueChange={setLinkRole}>
+                <Select value={linkRole} onValueChange={(v) => setLinkRole(v ?? "")}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="MEMBER">Colaborador — gerencia próprios cadastros</SelectItem>
@@ -823,7 +823,7 @@ export default function SuperAdminPage() {
               </div>
               <div>
                 <Label>Nível de acesso</Label>
-                <Select value={inviteRole} onValueChange={setInviteRole}>
+                <Select value={inviteRole} onValueChange={(v) => setInviteRole(v ?? "")}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="MEMBER">Colaborador — gerencia próprios cadastros</SelectItem>
