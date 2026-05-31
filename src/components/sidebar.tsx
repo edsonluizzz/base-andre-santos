@@ -58,9 +58,8 @@ export function Sidebar({
 }) {
   const pathname = usePathname();
   const { data: session, update } = useSession();
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const { isCollapsed, toggle, mobileOpen, setMobileOpen } = useSidebar();
   const menuButtonRef = useRef<HTMLButtonElement>(null);
-  const { isCollapsed, toggle } = useSidebar();
   const { theme, setTheme } = useTheme();
   const [campaigns, setCampaigns] = useState<{ id: string; name: string }[]>([]);
   const [switcherOpen, setSwitcherOpen] = useState(false);
