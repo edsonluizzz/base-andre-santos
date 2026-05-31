@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { CollaboratorDialog } from "@/components/collaborators/collaborator-dialog";
 import { DeleteConfirm } from "@/components/collaborators/delete-confirm";
 import { ImportCsvDialog } from "@/components/collaborators/import-csv-dialog";
+import { KpiCards } from "@/components/collaborators/kpi-cards";
 import { CONTRIBUTION_OPTIONS } from "@/lib/contribution";
 import { ROLE_LABEL, PROFILE_LABEL, CHANNEL_LABEL, SUPPORT_LABEL, PROFILE_ORDER, CHANNEL_ORDER, SUPPORT_ORDER } from "@/lib/labels";
 
@@ -336,30 +337,33 @@ export default function ColaboradoresPage() {
   });
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Colaboradores</h1>
-          <p className="text-sm text-muted-foreground mt-1">
+    <div className="space-y-4 lg:space-y-6">
+      <div className="flex items-center justify-between gap-2">
+        <div className="min-w-0 flex-1">
+          <h1 className="text-xl lg:text-2xl font-bold text-foreground truncate">Colaboradores</h1>
+          <p className="text-xs lg:text-sm text-muted-foreground mt-0.5 lg:mt-1 truncate">
             {total > collaborators.length
-              ? `Exibindo ${collaborators.length} de ${total}`
+              ? `${collaborators.length} de ${total}`
               : `${total} encontrado${total !== 1 ? "s" : ""}`}
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button onClick={handleExport} variant="outline" className="gap-2 hidden sm:flex">
+        <div className="flex gap-2 shrink-0">
+          <Button onClick={handleExport} variant="outline" size="sm" className="gap-2 hidden sm:flex">
             <Download className="w-4 h-4" /> Exportar
           </Button>
-          <Button onClick={() => setImportOpen(true)} variant="outline" className="gap-2 hidden sm:flex">
+          <Button onClick={() => setImportOpen(true)} variant="outline" size="sm" className="gap-2 hidden sm:flex">
             <Upload className="w-4 h-4" /> Importar
           </Button>
-          <Button onClick={openNew} className="bg-primary text-primary-foreground hover:bg-primary/90 gap-2">
+          <Button onClick={openNew} size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90 gap-1.5 h-9 px-3 lg:h-10 lg:px-4 lg:gap-2 touch-target">
             <Plus className="w-4 h-4" />
-            <span className="sm:hidden">Novo</span>
             <span className="hidden sm:inline">Novo Colaborador</span>
+            <span className="sm:hidden">Novo</span>
           </Button>
         </div>
       </div>
+
+      {/* KPIs cards */}
+      <KpiCards />
 
       {/* Filtros */}
       {(() => {
