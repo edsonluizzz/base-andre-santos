@@ -62,9 +62,10 @@ export async function POST(req: NextRequest) {
       if (refUser) registeredById = refUser.id;
     }
 
-    // Resolve source — prioridade: INDICACAO > EVENTO > CADASTRO_PUBLICO
-    const VALID_SOURCES = new Set(["EVENTO", "INSTAGRAM", "WHATSAPP"]);
-    let source = VALID_SOURCES.has(sourceParam) ? sourceParam : "CADASTRO_PUBLICO";
+    // Resolve source — prioridade: INDICACAO > EBOOK_* > EVENTO > CADASTRO_PUBLICO
+    const VALID_SOURCES = new Set(["EVENTO", "INSTAGRAM", "WHATSAPP", "EBOOK"]);
+    const isEbookSource = typeof sourceParam === "string" && sourceParam.startsWith("EBOOK_");
+    let source = isEbookSource || VALID_SOURCES.has(sourceParam) ? sourceParam : "CADASTRO_PUBLICO";
     if (refc) {
       const refCollab = await db.collaborator.findFirst({
         where: { id: refc, campaignId: CID },
@@ -174,8 +175,11 @@ export async function POST(req: NextRequest) {
       EVENTO: "📍 Evento", INDICACAO: "🤝 Indicação", INSTAGRAM: "📸 Instagram",
       WHATSAPP: "💬 WhatsApp", CADASTRO_PUBLICO: "🌐 Site",
     };
+    const ebookLabel = source.startsWith("EBOOK_")
+      ? `📘 Ebook (${source.replace(/^EBOOK_/, "").toLowerCase().replace(/_/g, "-")})`
+      : null;
     const cityLine = city?.trim() ? ` · 📍 ${city.trim()}` : "";
-    sendTelegram(CID, `📥 <b>Novo lead:</b> ${name.trim()}${cityLine}\n<i>${sourceLabel[source] ?? source}</i>`).catch(() => {});
+    sendTelegram(CID, `📥 <b>Novo lead:</b> ${name.trim()}${cityLine}\n<i>${ebookLabel ?? sourceLabel[source] ?? source}</i>`).catch(() => {});
 
     return NextResponse.json({ message: "Cadastro realizado com sucesso!", collaboratorId: created.id }, { status: 201 });
   } catch (err) {

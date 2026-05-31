@@ -43,6 +43,7 @@ export const authConfig: NextAuthConfig = {
         pathname === "/login" ||
         pathname === "/sem-acesso" ||
         pathname.startsWith("/cadastro") ||
+        pathname.startsWith("/ebook") ||
         pathname.startsWith("/r") ||
         pathname.startsWith("/entrar") ||
         pathname.startsWith("/api/public/") ||

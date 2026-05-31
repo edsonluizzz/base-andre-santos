@@ -3,6 +3,15 @@
 // ESLint segue ativo. Quando tivermos build local funcional, reativar TS.
 const nextConfig = {
   typescript: { ignoreBuildErrors: true },
+  async rewrites() {
+    return [
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: "leads.prandresantos.com.br" }],
+        destination: "/ebook/quem-sou-eu",
+      },
+    ];
+  },
   async headers() {
     return [
       {
