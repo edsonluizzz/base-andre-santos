@@ -183,11 +183,11 @@
     ) no-repeat;
   }
 
-  /* overflow-x: clip em vez de hidden — hidden bloqueia momentum scroll
-     em iOS Safari (bug conhecido). clip clipa overflow sem criar scroll
-     container, então o scroll natural do <html> continua funcionando. */
-  html { @apply font-sans; overflow-x: clip; }
-  body { overflow-x: clip; }
+  /* IMPORTANTE: nada de overflow-x / overflow no html ou body — qualquer
+     valor diferente de 'visible' aqui quebra o scroll natural do viewport
+     em mobile (Safari iOS especialmente). O containment de overflow
+     horizontal fica a cargo do <main> em SidebarMainWrapper. */
+  html { @apply font-sans; }
 }
 
 /* ── Glass card ──────────────────────────────────────── */

@@ -10,7 +10,10 @@ export function SidebarMainWrapper({ children }: { children: React.ReactNode }) 
     <>
       <main
         className={cn(
-          "flex-1 min-w-0 overflow-x-hidden transition-all duration-300",
+          "flex-1 min-w-0 transition-all duration-300",
+          // overflow-x: clip contém overflow horizontal sem criar scroll
+          // container vertical (que bloquearia o scroll do viewport)
+          "[overflow-x:clip]",
           isCollapsed ? "lg:ml-16" : "lg:ml-64"
         )}
       >
