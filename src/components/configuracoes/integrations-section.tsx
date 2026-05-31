@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Camera, Send, MessageCircle, Globe, Save, CheckCircle2, AlertCircle, Eye, EyeOff } from "lucide-react";
+import { Camera, Send, MessageCircle, Globe, Save, CheckCircle2, AlertCircle, Eye, EyeOff, Workflow, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,13 @@ interface IntegrationsStatus {
   metricool: { tokenSet: boolean; blogId: string | null };
   telegram: { botTokenSet: boolean; chatId: string | null };
   zapi: { instance: string | null; tokenSet: boolean; clientTokenSet: boolean };
+  n8n?: {
+    apiKeySet: boolean;
+    leadWebhook: { set: boolean; hint: string | null };
+    manualWebhook: { set: boolean; hint: string | null };
+    importWebhook: { set: boolean; hint: string | null };
+    cloudUrl: string;
+  };
 }
 
 // Helper: campos string com "" significa "limpar"; null/undefined "não mexer"
@@ -300,6 +307,84 @@ export function IntegrationsSection() {
           )}
         </div>
       </div>
+
+      {/* n8n */}
+      {status.n8n && (
+        <div className="glass-card rounded-2xl p-5 border border-white/[0.08] space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Workflow className="w-4 h-4 text-orange-400" />
+              <h2 className="text-sm font-semibold">n8n (Workflows)</h2>
+            </div>
+            <StatusBadge ok={status.n8n.apiKeySet && status.n8n.leadWebhook.set} />
+          </div>
+          <p className="text-[11px] text-muted-foreground">
+            Orquestrador dos fluxos de WhatsApp (convite, resposta SIM/NÃO, reativação, disparo em massa).
+            Configurado via env vars no Vercel; este painel mostra apenas o status.
+          </p>
+
+          <div className="space-y-2">
+            <IntegrationRow
+              label="API key (Bearer)"
+              hint="usada pelo n8n para autenticar contra /api/n8n/* — definir N8N_API_KEY no Vercel"
+              ok={status.n8n.apiKeySet}
+            />
+            <IntegrationRow
+              label="WF3 · Lead novo"
+              hint={status.n8n.leadWebhook.hint ?? "definir N8N_LEAD_WEBHOOK_URL no Vercel"}
+              ok={status.n8n.leadWebhook.set}
+            />
+            <IntegrationRow
+              label="WF4 · Disparo manual"
+              hint={status.n8n.manualWebhook.hint ?? "definir N8N_MANUAL_WEBHOOK_URL no Vercel"}
+              ok={status.n8n.manualWebhook.set}
+            />
+            <IntegrationRow
+              label="WF1 · Import bulk"
+              hint={status.n8n.importWebhook.hint ?? "definir N8N_IMPORT_WEBHOOK_URL no Vercel"}
+              ok={status.n8n.importWebhook.set}
+            />
+          </div>
+
+          <div className="pt-1">
+            <a
+              href={status.n8n.cloudUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
+            >
+              <ExternalLink className="w-3 h-3" />
+              Abrir n8n Cloud
+            </a>
+          </div>
+
+          <div className="text-[10px] text-muted-foreground/70 leading-relaxed border-t border-white/[0.06] pt-3 mt-2">
+            <strong className="text-foreground/80">WF2 (Resposta WhatsApp):</strong> não usa webhook do nosso lado —
+            recebe direto do Z-API. Configure o webhook recebido apontando para{" "}
+            <code className="text-foreground/90">/webhook/ovile-resposta-wa</code> na sua instância n8n.
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function IntegrationRow({ label, hint, ok }: { label: string; hint: string | null; ok: boolean }) {
+  return (
+    <div className="flex items-center justify-between gap-3 py-1.5 px-2 rounded-lg bg-white/[0.02] border border-white/[0.04]">
+      <div className="min-w-0 flex-1">
+        <p className="text-xs font-medium text-foreground">{label}</p>
+        {hint && <p className="text-[10px] text-muted-foreground font-mono truncate">{hint}</p>}
+      </div>
+      {ok ? (
+        <span className="flex items-center gap-1 text-[10px] text-green-400 shrink-0">
+          <CheckCircle2 className="w-3 h-3" /> ok
+        </span>
+      ) : (
+        <span className="flex items-center gap-1 text-[10px] text-amber-400 shrink-0">
+          <AlertCircle className="w-3 h-3" /> faltando
+        </span>
+      )}
     </div>
   );
 }

@@ -25,6 +25,22 @@ export async function GET() {
       },
     });
 
+    // n8n: env vars do servidor (chave + webhooks) — multi-tenant ainda compartilha
+    // n8n único hoje. Mascaramos URLs para mostrar só host + path-prefix.
+    function urlHint(raw: string | undefined): string | null {
+      if (!raw) return null;
+      try {
+        const u = new URL(raw);
+        const p = u.pathname.split("/").slice(0, 3).join("/");
+        return `${u.host}${p}`;
+      } catch {
+        return raw.length > 40 ? raw.slice(0, 40) + "…" : raw;
+      }
+    }
+    const n8nLeadUrl = process.env.N8N_LEAD_WEBHOOK_URL;
+    const n8nManualUrl = process.env.N8N_MANUAL_WEBHOOK_URL;
+    const n8nImportUrl = process.env.N8N_IMPORT_WEBHOOK_URL;
+
     return NextResponse.json({
       domain: c?.domain ?? null,
       metricool: {
@@ -39,6 +55,13 @@ export async function GET() {
         instance: c?.zApiInstance ?? null,
         tokenSet: Boolean(c?.zApiToken),
         clientTokenSet: Boolean(c?.zApiClientToken),
+      },
+      n8n: {
+        apiKeySet: Boolean(process.env.N8N_API_KEY),
+        leadWebhook: { set: Boolean(n8nLeadUrl), hint: urlHint(n8nLeadUrl) },
+        manualWebhook: { set: Boolean(n8nManualUrl), hint: urlHint(n8nManualUrl) },
+        importWebhook: { set: Boolean(n8nImportUrl), hint: urlHint(n8nImportUrl) },
+        cloudUrl: "https://andresantos.app.n8n.cloud",
       },
     });
   } catch (err) {
