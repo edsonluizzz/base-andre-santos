@@ -516,16 +516,60 @@ export default async function RelatorioPage({
             </Link>
           )}
         </div>
-        <div className="overflow-x-auto">
+        {/* ─── Mobile: cards verticais com todas as métricas ─── */}
+        <div className="lg:hidden divide-y divide-white/[0.04]">
+          {filteredCities.map(([city, m]) => {
+            const score = coverageScore(m.roles);
+            return (
+              <div key={city} className={`p-3 ${COVERAGE_STYLE[score]}`}>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className={`w-2 h-2 rounded-full shrink-0 ${COVERAGE_DOT[score]}`} />
+                  <span className="font-semibold text-foreground flex-1 truncate">{city}</span>
+                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                    {score === "alta" ? "Alta" : score === "media" ? "Média" : "Baixa"}
+                  </span>
+                </div>
+                <div className="grid grid-cols-3 gap-2 mb-2">
+                  <div className="rounded-lg bg-white/[0.03] border border-white/[0.06] py-1.5 text-center">
+                    <p className="text-base font-bold text-foreground leading-none">{m.active}</p>
+                    <p className="text-[9px] uppercase tracking-wider text-muted-foreground mt-0.5">Ativos</p>
+                  </div>
+                  <div className="rounded-lg bg-amber-500/[0.06] border border-amber-500/15 py-1.5 text-center">
+                    <p className="text-base font-bold text-amber-400 leading-none">{m.leads || "—"}</p>
+                    <p className="text-[9px] uppercase tracking-wider text-muted-foreground mt-0.5">Leads</p>
+                  </div>
+                  <div className="rounded-lg bg-green-500/[0.06] border border-green-500/15 py-1.5 text-center">
+                    <p className="text-base font-bold text-green-400 leading-none">{m.confirmados || "—"}</p>
+                    <p className="text-[9px] uppercase tracking-wider text-muted-foreground mt-0.5">Confirm.</p>
+                  </div>
+                </div>
+                {/* Liderança por cargo */}
+                <div className="flex flex-wrap gap-1">
+                  {ROLE_ORDER.filter((r) => m.roles[r]).map((r) => (
+                    <span key={r} className="text-[10px] px-2 py-0.5 rounded-full bg-white/[0.04] border border-white/[0.08] text-muted-foreground">
+                      {ROLE_LABEL_SHORT[r]} <span className="text-foreground font-semibold">{m.roles[r]}</span>
+                    </span>
+                  ))}
+                  {ROLE_ORDER.filter((r) => m.roles[r]).length === 0 && (
+                    <span className="text-[10px] text-muted-foreground/60 italic">Sem liderança</span>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* ─── Desktop: tabela cruzada completa ─── */}
+        <div className="hidden lg:block overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-white/[0.08]" style={{ background: "rgba(13,27,42,0.5)" }}>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground">Município</th>
                 {ROLE_ORDER.map((r) => (
-                  <th key={r} className="text-center px-3 py-3 text-xs font-semibold text-muted-foreground hidden sm:table-cell">{ROLE_LABEL_SHORT[r]}</th>
+                  <th key={r} className="text-center px-3 py-3 text-xs font-semibold text-muted-foreground">{ROLE_LABEL_SHORT[r]}</th>
                 ))}
                 <th className="text-center px-3 py-3 text-xs font-semibold text-muted-foreground">Ativos</th>
-                <th className="text-center px-3 py-3 text-xs font-semibold text-muted-foreground hidden sm:table-cell">Leads</th>
+                <th className="text-center px-3 py-3 text-xs font-semibold text-muted-foreground">Leads</th>
                 <th className="text-center px-3 py-3 text-xs font-semibold text-green-400/80">Confirm.</th>
               </tr>
             </thead>
@@ -541,12 +585,12 @@ export default async function RelatorioPage({
                       </div>
                     </td>
                     {ROLE_ORDER.map((r) => (
-                      <td key={r} className="text-center px-3 py-3 hidden sm:table-cell">
+                      <td key={r} className="text-center px-3 py-3">
                         {m.roles[r] ? <span className="font-semibold text-foreground">{m.roles[r]}</span> : <span className="text-muted-foreground/30">—</span>}
                       </td>
                     ))}
                     <td className="text-center px-3 py-3 font-semibold text-foreground">{m.active}</td>
-                    <td className="text-center px-3 py-3 text-amber-400 hidden sm:table-cell">{m.leads || <span className="text-muted-foreground/30">—</span>}</td>
+                    <td className="text-center px-3 py-3 text-amber-400">{m.leads || <span className="text-muted-foreground/30">—</span>}</td>
                     <td className="text-center px-3 py-3 text-green-400 font-semibold">{m.confirmados || <span className="text-muted-foreground/30">—</span>}</td>
                   </tr>
                 );
@@ -556,12 +600,12 @@ export default async function RelatorioPage({
               <tr className="border-t border-white/[0.08]" style={{ background: "rgba(13,27,42,0.5)" }}>
                 <td className="px-4 py-3 text-xs font-semibold text-muted-foreground">Total ({filteredCities.length} municípios{activeCob ? ` filtrado${filteredCities.length !== 1 ? "s" : ""}` : ""})</td>
                 {ROLE_ORDER.map((r) => (
-                  <td key={r} className="text-center px-3 py-3 text-xs font-semibold text-muted-foreground hidden sm:table-cell">
+                  <td key={r} className="text-center px-3 py-3 text-xs font-semibold text-muted-foreground">
                     {filteredCities.reduce((s, [, m]) => s + (m.roles[r] ?? 0), 0) || "—"}
                   </td>
                 ))}
                 <td className="text-center px-3 py-3 text-xs font-semibold text-foreground">{filteredCities.reduce((s, [, m]) => s + m.active, 0)}</td>
-                <td className="text-center px-3 py-3 text-xs font-semibold text-amber-400 hidden sm:table-cell">{filteredCities.reduce((s, [, m]) => s + m.leads, 0) || "—"}</td>
+                <td className="text-center px-3 py-3 text-xs font-semibold text-amber-400">{filteredCities.reduce((s, [, m]) => s + m.leads, 0) || "—"}</td>
                 <td className="text-center px-3 py-3 text-xs font-semibold text-green-400">{filteredCities.reduce((s, [, m]) => s + m.confirmados, 0) || "—"}</td>
               </tr>
             </tfoot>
