@@ -26,18 +26,26 @@ export interface LeadPayload {
  */
 export async function triggerLeadWebhook(lead: LeadPayload): Promise<void> {
   const webhookUrl = process.env.N8N_LEAD_WEBHOOK_URL;
-  if (!webhookUrl || !lead.phone) return;
+  if (!webhookUrl) {
+    console.warn("[n8n] N8N_LEAD_WEBHOOK_URL nao configurado — skip", lead.collaboratorId);
+    return;
+  }
+  if (!lead.phone) {
+    console.warn("[n8n] lead sem phone — skip", lead.collaboratorId);
+    return;
+  }
 
   try {
-    await fetch(webhookUrl, {
+    const res = await fetch(webhookUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(lead),
       signal: AbortSignal.timeout(5_000),
     });
-  } catch {
-    // Silencioso — n8n é opcional, não pode derrubar o cadastro
-    console.warn("[n8n] Lead webhook falhou:", lead.collaboratorId);
+    console.log("[n8n] Lead webhook disparado:", lead.collaboratorId, "status:", res.status);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.warn("[n8n] Lead webhook falhou:", lead.collaboratorId, msg);
   }
 }
 
