@@ -2,11 +2,11 @@
  * Rate limit persistente via Upstash Redis.
  * Substitui o Map in-memory que era ineficaz em multi-instância serverless.
  *
- * Env vars:
- *   UPSTASH_REDIS_REST_URL
- *   UPSTASH_REDIS_REST_TOKEN
+ * Env vars aceitas (ordem de prioridade):
+ *   UPSTASH_REDIS_REST_URL    + UPSTASH_REDIS_REST_TOKEN     (manual)
+ *   KV_REST_API_URL           + KV_REST_API_TOKEN            (Vercel Marketplace)
  *
- * Sem essas vars, cai num fallback in-memory (dev mode / single instance).
+ * Sem nenhuma das duplas, cai num fallback in-memory (dev mode / single instance).
  */
 
 import { Ratelimit } from "@upstash/ratelimit";
@@ -15,8 +15,8 @@ import { Redis } from "@upstash/redis";
 let upstashClient: Redis | null = null;
 function getRedis(): Redis | null {
   if (upstashClient) return upstashClient;
-  const url = process.env.UPSTASH_REDIS_REST_URL;
-  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+  const url = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN;
   if (!url || !token) return null;
   upstashClient = new Redis({ url, token });
   return upstashClient;
