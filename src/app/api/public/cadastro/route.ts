@@ -103,7 +103,7 @@ export async function POST(req: NextRequest) {
       data: {
         campaignId: CID,
         name: name.trim(),
-        phone: phone.trim(),
+        phone: cleanPhone,
         email: email?.trim() || null,
         city: city?.trim() || null,
         neighborhood: neighborhood?.trim() || null,
