@@ -1,16 +1,15 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { Suspense } from "react";
 import { getEbook, EBOOK_SLUGS } from "@/lib/ebooks";
 import { EbookForm } from "./ebook-form";
 
-export const dynamicParams = false;
+export const dynamic = "force-static";
 
-export async function generateStaticParams() {
+export function generateStaticParams() {
   return EBOOK_SLUGS.map((slug) => ({ slug }));
 }
 
-export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
+export function generateMetadata({ params }: { params: { slug: string } }): Metadata {
   const ebook = getEbook(params.slug);
   if (!ebook) return { title: "Ebook não encontrado" };
   return {
@@ -32,9 +31,5 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 export default function EbookLandingPage({ params }: { params: { slug: string } }) {
   const ebook = getEbook(params.slug);
   if (!ebook) notFound();
-  return (
-    <Suspense fallback={null}>
-      <EbookForm ebook={ebook} />
-    </Suspense>
-  );
+  return <EbookForm ebook={ebook} />;
 }

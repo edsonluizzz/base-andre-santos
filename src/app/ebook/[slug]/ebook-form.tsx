@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useSearchParams } from "next/navigation";
 import type { EbookConfig } from "@/lib/ebooks";
 
 type FormState = "idle" | "loading" | "success" | "error";
@@ -28,9 +27,15 @@ function formatPhone(value: string): string {
 }
 
 export function EbookForm({ ebook }: { ebook: EbookConfig }) {
-  const searchParams = useSearchParams();
-  const refUserId = searchParams.get("ref") ?? "";
-  const refc = searchParams.get("refc") ?? "";
+  const [refUserId, setRefUserId] = useState("");
+  const [refc, setRefc] = useState("");
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const sp = new URLSearchParams(window.location.search);
+    setRefUserId(sp.get("ref") ?? "");
+    setRefc(sp.get("refc") ?? "");
+  }, []);
 
   const [state, setState] = useState<FormState>("idle");
   const [errorMessage, setErrorMessage] = useState("");
