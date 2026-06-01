@@ -11,11 +11,6 @@ const nextConfig = {
           has: [{ type: "host", value: "leads.prandresantos.com.br" }],
           destination: "/ebook/quem-sou-eu",
         },
-        {
-          source: "/:path*",
-          has: [{ type: "host", value: "leads.prandresantos.com.br" }],
-          destination: "/ebook/quem-sou-eu",
-        },
       ],
       afterFiles: [],
       fallback: [],
