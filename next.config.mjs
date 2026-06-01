@@ -4,13 +4,22 @@
 const nextConfig = {
   typescript: { ignoreBuildErrors: true },
   async rewrites() {
-    return [
-      {
-        source: "/:path*",
-        has: [{ type: "host", value: "leads.prandresantos.com.br" }],
-        destination: "/ebook/quem-sou-eu",
-      },
-    ];
+    return {
+      beforeFiles: [
+        {
+          source: "/",
+          has: [{ type: "host", value: "leads.prandresantos.com.br" }],
+          destination: "/ebook/quem-sou-eu",
+        },
+        {
+          source: "/:path*",
+          has: [{ type: "host", value: "leads.prandresantos.com.br" }],
+          destination: "/ebook/quem-sou-eu",
+        },
+      ],
+      afterFiles: [],
+      fallback: [],
+    };
   },
   async headers() {
     return [
