@@ -33,13 +33,14 @@ export async function POST(req: NextRequest) {
   const dbUrl = (await getCampaignDbUrl(campaignId)) ?? process.env.DATABASE_URL;
   const { db } = getCampaignContext({ user: { campaignId, dbUrl: dbUrl ?? undefined } });
 
-  // Postgres: regexp_replace remove tudo que não é dígito
+  // Postgres: regexp_replace remove tudo que não é dígito.
+  // Usar [^0-9] em vez de \D porque template literal JS engole o backslash.
   const result = await db.$executeRaw`
     UPDATE "Collaborator"
-    SET "phone" = regexp_replace("phone", '\D', '', 'g')
+    SET "phone" = regexp_replace("phone", '[^0-9]', '', 'g')
     WHERE "campaignId" = ${campaignId}
       AND "phone" IS NOT NULL
-      AND "phone" ~ '\D'
+      AND "phone" ~ '[^0-9]'
   `;
 
   return NextResponse.json({
