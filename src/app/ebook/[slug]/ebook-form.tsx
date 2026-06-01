@@ -7,6 +7,9 @@ type FormState = "idle" | "loading" | "success" | "error";
 
 const COUNTDOWN_SECONDS = 10;
 
+const FONT_HEADING = "var(--font-ebook-heading), 'Montserrat', 'Helvetica Neue', Arial, sans-serif";
+const FONT_SERIF = "var(--font-ebook-serif), 'Cormorant Garamond', Georgia, 'Times New Roman', serif";
+
 const inputStyle: React.CSSProperties = {
   background: "rgba(255,255,255,0.05)",
   border: "1px solid rgba(255,255,255,0.1)",
@@ -128,7 +131,10 @@ export function EbookForm({ ebook }: { ebook: EbookConfig }) {
 
       <header className="relative z-10 py-6 px-6 flex justify-center">
         <div className="flex flex-col items-center gap-1">
-          <span className="font-black tracking-[0.25em] text-sm uppercase" style={{ color: "#d4af37" }}>
+          <span
+            className="font-black tracking-[0.25em] text-sm uppercase"
+            style={{ color: "#d4af37", fontFamily: FONT_HEADING }}
+          >
             André Santos
           </span>
           <div className="w-12 h-px" style={{ background: "rgba(212,175,55,0.4)" }} />
@@ -145,6 +151,7 @@ export function EbookForm({ ebook }: { ebook: EbookConfig }) {
                   background: "rgba(212,175,55,0.1)",
                   border: "1px solid rgba(212,175,55,0.25)",
                   color: "#d4af37",
+                  fontFamily: FONT_HEADING,
                 }}
               >
                 <span className="w-1.5 h-1.5 rounded-full bg-[#d4af37]" />
@@ -152,7 +159,7 @@ export function EbookForm({ ebook }: { ebook: EbookConfig }) {
               </div>
               <h1
                 className="font-black text-4xl sm:text-5xl leading-none mb-3 tracking-tight"
-                style={{ color: "#d4af37" }}
+                style={{ color: "#d4af37", fontFamily: FONT_HEADING }}
               >
                 {ebook.titleLines.map((line, i) => (
                   <span key={i}>
@@ -163,7 +170,7 @@ export function EbookForm({ ebook }: { ebook: EbookConfig }) {
               </h1>
               <p
                 className="italic text-lg sm:text-xl mb-5"
-                style={{ color: "rgba(240,208,96,0.75)", fontFamily: "Georgia, 'Times New Roman', serif" }}
+                style={{ color: "rgba(240,208,96,0.75)", fontFamily: FONT_SERIF }}
               >
                 {ebook.subtitle}
               </p>
@@ -231,6 +238,7 @@ export function EbookForm({ ebook }: { ebook: EbookConfig }) {
                     background: state === "loading" ? "rgba(212,175,55,0.7)" : "#d4af37",
                     color: "#0d1b2a",
                     boxShadow: state === "loading" ? "none" : "0 8px 30px rgba(212,175,55,0.35)",
+                    fontFamily: FONT_HEADING,
                   }}
                 >
                   {state === "loading" ? (
@@ -273,7 +281,10 @@ export function EbookForm({ ebook }: { ebook: EbookConfig }) {
                 </svg>
               </div>
 
-              <h2 className="font-black text-3xl sm:text-4xl mb-2" style={{ color: "#d4af37" }}>
+              <h2
+                className="font-black text-3xl sm:text-4xl mb-2"
+                style={{ color: "#d4af37", fontFamily: FONT_HEADING }}
+              >
                 Seu ebook está pronto!
               </h2>
               <p className="mb-6" style={{ color: "rgba(255,255,255,0.6)" }}>
@@ -285,7 +296,12 @@ export function EbookForm({ ebook }: { ebook: EbookConfig }) {
                 href={ebook.pdfPath}
                 download={ebook.pdfDownloadName}
                 className="inline-flex items-center gap-3 px-8 py-4 rounded-xl font-black text-sm tracking-widest uppercase transition-all hover:scale-105 active:scale-95 mb-4"
-                style={{ background: "#d4af37", color: "#0d1b2a", boxShadow: "0 8px 30px rgba(212,175,55,0.4)" }}
+                style={{
+                  background: "#d4af37",
+                  color: "#0d1b2a",
+                  boxShadow: "0 8px 30px rgba(212,175,55,0.4)",
+                  fontFamily: FONT_HEADING,
+                }}
               >
                 <svg
                   width="18"
@@ -308,7 +324,7 @@ export function EbookForm({ ebook }: { ebook: EbookConfig }) {
 
               <p
                 className="text-xs mb-3 font-bold tracking-widest uppercase"
-                style={{ color: "rgba(212,175,55,0.6)" }}
+                style={{ color: "rgba(212,175,55,0.6)", fontFamily: FONT_HEADING }}
               >
                 Enquanto lê, faça parte do movimento
               </p>
@@ -322,6 +338,7 @@ export function EbookForm({ ebook }: { ebook: EbookConfig }) {
                   border: "1.5px solid rgba(37,211,102,0.4)",
                   color: "#25d366",
                   boxShadow: "0 4px 20px rgba(37,211,102,0.1)",
+                  fontFamily: FONT_HEADING,
                 }}
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
