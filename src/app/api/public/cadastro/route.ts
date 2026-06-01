@@ -8,6 +8,30 @@ import { resolvePublicTenant } from "@/lib/tenant-resolver";
 import { isRateLimited } from "@/lib/rate-limit";
 import { z } from "zod";
 
+const ALLOWED_ORIGINS = new Set([
+  "https://prandresantos.com.br",
+  "https://www.prandresantos.com.br",
+  "https://leads.prandresantos.com.br",
+  "https://ovile.com.br",
+  "https://www.ovile.com.br",
+]);
+
+function corsHeaders(req: NextRequest): Record<string, string> {
+  const origin = req.headers.get("origin") ?? "";
+  const allow = ALLOWED_ORIGINS.has(origin) ? origin : "";
+  return {
+    "Access-Control-Allow-Origin": allow,
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Max-Age": "86400",
+    Vary: "Origin",
+  };
+}
+
+export async function OPTIONS(req: NextRequest) {
+  return new NextResponse(null, { status: 204, headers: corsHeaders(req) });
+}
+
 const cadastroSchema = z.object({
   name: z.string().min(2).max(255),
   phone: z.string().min(10).max(20),
@@ -25,16 +49,17 @@ const cadastroSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
+  const cors = corsHeaders(req);
   try {
     const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
     if (await isRateLimited("cadastro_public", ip, 5, 60)) {
-      return NextResponse.json({ error: "Muitas tentativas. Aguarde 1 minuto." }, { status: 429 });
+      return NextResponse.json({ error: "Muitas tentativas. Aguarde 1 minuto." }, { status: 429, headers: cors });
     }
 
     const parsed = cadastroSchema.safeParse(await req.json());
     if (!parsed.success) {
       const msg = parsed.error.errors[0]?.message ?? "Dados inválidos";
-      return NextResponse.json({ error: msg }, { status: 400 });
+      return NextResponse.json({ error: msg }, { status: 400, headers: cors });
     }
     const { name, phone, city, neighborhood, email, contributionTypes, refUserId, refc, source: sourceParam, channel, campaignId: explicitCampaign } = parsed.data;
 
@@ -43,7 +68,7 @@ export async function POST(req: NextRequest) {
 
     const cleanPhone = phone.replace(/\D/g, "");
     if (cleanPhone.length < 10) {
-      return NextResponse.json({ error: "Número de WhatsApp inválido" }, { status: 400 });
+      return NextResponse.json({ error: "Número de WhatsApp inválido" }, { status: 400, headers: cors });
     }
 
     const existing = await db.collaborator.findFirst({
@@ -51,7 +76,7 @@ export async function POST(req: NextRequest) {
       select: { id: true },
     });
     if (existing) {
-      return NextResponse.json({ message: "Cadastro já realizado! Entraremos em contato.", collaboratorId: existing.id }, { status: 200 });
+      return NextResponse.json({ message: "Cadastro já realizado! Entraremos em contato.", collaboratorId: existing.id }, { status: 200, headers: cors });
     }
 
     // Valida refUserId se fornecido (usuário logado que indicou) — User está no banco GLOBAL
@@ -181,9 +206,9 @@ export async function POST(req: NextRequest) {
     const cityLine = city?.trim() ? ` · 📍 ${city.trim()}` : "";
     sendTelegram(CID, `📥 <b>Novo lead:</b> ${name.trim()}${cityLine}\n<i>${ebookLabel ?? sourceLabel[source] ?? source}</i>`).catch(() => {});
 
-    return NextResponse.json({ message: "Cadastro realizado com sucesso!", collaboratorId: created.id }, { status: 201 });
+    return NextResponse.json({ message: "Cadastro realizado com sucesso!", collaboratorId: created.id }, { status: 201, headers: cors });
   } catch (err) {
     console.error("[public/cadastro POST]", err);
-    return NextResponse.json({ error: "Erro interno" }, { status: 500 });
+    return NextResponse.json({ error: "Erro interno" }, { status: 500, headers: cors });
   }
 }
