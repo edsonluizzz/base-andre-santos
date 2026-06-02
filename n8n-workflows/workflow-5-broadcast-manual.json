@@ -1,0 +1,309 @@
+{
+  "name": "Ovile — WF5: Broadcast Manual (DIRECT/GROUP/BROADCAST)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ovile-disparo-manual",
+        "options": {}
+      },
+      "id": "wf5-node-001",
+      "name": "Webhook — Recebe Broadcast",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "ovile-disparo-manual",
+      "notes": "Recebe { broadcastId, campaignId, type, triggeredBy } do Ovile quando admin clica Disparar."
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://ovile.com.br/api/n8n/broadcast/next?broadcastId={{ $('Webhook — Recebe Broadcast').item.json.body.broadcastId }}&campaign_id={{ $('Webhook — Recebe Broadcast').item.json.body.campaignId ?? 'andre-santos-2026' }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "wf5-node-002",
+      "name": "Buscar próxima delivery",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 300],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "lQQNPGFAlsKMbUfL",
+          "name": "Ovile API — Bearer Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {"caseSensitive": false, "leftValue": "", "typeValidation": "strict"},
+          "conditions": [
+            {
+              "id": "cond-done",
+              "leftValue": "={{ $json.done }}",
+              "rightValue": "true",
+              "operator": {"type": "string", "operation": "equals"}
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "wf5-node-003",
+      "name": "Broadcast completo?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {"caseSensitive": false, "leftValue": "", "typeValidation": "strict"},
+          "conditions": [
+            {
+              "id": "cond-paused",
+              "leftValue": "={{ $json.paused }}",
+              "rightValue": "true",
+              "operator": {"type": "string", "operation": "equals"}
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "wf5-node-004",
+      "name": "Pausado / Daily limit?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [900, 400]
+    },
+    {
+      "parameters": {
+        "amount": "={{ Math.floor(Math.random() * ($('Buscar próxima delivery').item.json.broadcast.delaySecondsMax - $('Buscar próxima delivery').item.json.broadcast.delaySecondsMin + 1)) + $('Buscar próxima delivery').item.json.broadcast.delaySecondsMin }}",
+        "unit": "seconds"
+      },
+      "id": "wf5-node-005",
+      "name": "Delay anti-ban",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [1120, 500],
+      "notes": "Delay aleatório entre delaySecondsMin e delaySecondsMax (default 300-600s = 5-10min)"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Buscar próxima delivery').item.json.zapi.sendTextUrl }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Client-Token", "value": "={{ $('Buscar próxima delivery').item.json.zapi.clientToken }}" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "keypair",
+        "bodyParameters": {
+          "parameters": [
+            { "name": "phone", "value": "={{ $('Buscar próxima delivery').item.json.delivery.phone }}" },
+            { "name": "message", "value": "={{ $('Buscar próxima delivery').item.json.message }}" }
+          ]
+        },
+        "options": { "response": { "response": { "neverError": true } } }
+      },
+      "id": "wf5-node-006",
+      "name": "Enviar WhatsApp Z-API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1340, 500],
+      "notes": "neverError=true para não cancelar o WF quando Z-API retorna 4xx (phone inválido). Continuamos pro PATCH com FAILED."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {"caseSensitive": false, "leftValue": "", "typeValidation": "strict"},
+          "conditions": [
+            {
+              "id": "cond-zapi-ok",
+              "leftValue": "={{ $json.messageId ?? $json.id ?? '' }}",
+              "rightValue": "",
+              "operator": {"type": "string", "operation": "notEmpty"}
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "wf5-node-007",
+      "name": "Z-API enviou?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1560, 500]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://ovile.com.br/api/n8n/broadcast/delivery/{{ $('Buscar próxima delivery').item.json.delivery.id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "keypair",
+        "bodyParameters": {
+          "parameters": [
+            { "name": "status", "value": "SENT" },
+            { "name": "zapiMessageId", "value": "={{ $('Enviar WhatsApp Z-API').item.json.messageId ?? $('Enviar WhatsApp Z-API').item.json.id }}" },
+            { "name": "campaignId", "value": "={{ $('Webhook — Recebe Broadcast').item.json.body.campaignId ?? 'andre-santos-2026' }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "wf5-node-008",
+      "name": "Marcar SENT",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1780, 400],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "lQQNPGFAlsKMbUfL",
+          "name": "Ovile API — Bearer Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://ovile.com.br/api/n8n/broadcast/delivery/{{ $('Buscar próxima delivery').item.json.delivery.id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "keypair",
+        "bodyParameters": {
+          "parameters": [
+            { "name": "status", "value": "FAILED" },
+            { "name": "error", "value": "={{ JSON.stringify($('Enviar WhatsApp Z-API').item.json).slice(0, 300) }}" },
+            { "name": "campaignId", "value": "={{ $('Webhook — Recebe Broadcast').item.json.body.campaignId ?? 'andre-santos-2026' }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "wf5-node-009",
+      "name": "Marcar FAILED",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1780, 600],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "lQQNPGFAlsKMbUfL",
+          "name": "Ovile API — Bearer Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://ovile.com.br/api/n8n/broadcast/next?broadcastId={{ $('Webhook — Recebe Broadcast').item.json.body.broadcastId }}&campaign_id={{ $('Webhook — Recebe Broadcast').item.json.body.campaignId ?? 'andre-santos-2026' }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "wf5-node-010",
+      "name": "Loop — buscar próxima",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2000, 500],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "lQQNPGFAlsKMbUfL",
+          "name": "Ovile API — Bearer Token"
+        }
+      },
+      "notes": "Volta pra o IF 'Broadcast completo?'. Loop manual via conexão recursiva."
+    },
+    {
+      "parameters": {
+        "amount": 60,
+        "unit": "minutes"
+      },
+      "id": "wf5-node-011",
+      "name": "Aguardar 60min (paused)",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [1120, 400],
+      "notes": "Quando broadcast.paused (manual ou daily-limit), aguarda 60min e re-checa."
+    }
+  ],
+  "connections": {
+    "Webhook — Recebe Broadcast": {
+      "main": [
+        [{ "node": "Buscar próxima delivery", "type": "main", "index": 0 }]
+      ]
+    },
+    "Buscar próxima delivery": {
+      "main": [
+        [{ "node": "Broadcast completo?", "type": "main", "index": 0 }]
+      ]
+    },
+    "Broadcast completo?": {
+      "main": [
+        [],
+        [{ "node": "Pausado / Daily limit?", "type": "main", "index": 0 }]
+      ]
+    },
+    "Pausado / Daily limit?": {
+      "main": [
+        [{ "node": "Aguardar 60min (paused)", "type": "main", "index": 0 }],
+        [{ "node": "Delay anti-ban", "type": "main", "index": 0 }]
+      ]
+    },
+    "Aguardar 60min (paused)": {
+      "main": [
+        [{ "node": "Loop — buscar próxima", "type": "main", "index": 0 }]
+      ]
+    },
+    "Delay anti-ban": {
+      "main": [
+        [{ "node": "Enviar WhatsApp Z-API", "type": "main", "index": 0 }]
+      ]
+    },
+    "Enviar WhatsApp Z-API": {
+      "main": [
+        [{ "node": "Z-API enviou?", "type": "main", "index": 0 }]
+      ]
+    },
+    "Z-API enviou?": {
+      "main": [
+        [{ "node": "Marcar SENT", "type": "main", "index": 0 }],
+        [{ "node": "Marcar FAILED", "type": "main", "index": 0 }]
+      ]
+    },
+    "Marcar SENT": {
+      "main": [
+        [{ "node": "Loop — buscar próxima", "type": "main", "index": 0 }]
+      ]
+    },
+    "Marcar FAILED": {
+      "main": [
+        [{ "node": "Loop — buscar próxima", "type": "main", "index": 0 }]
+      ]
+    },
+    "Loop — buscar próxima": {
+      "main": [
+        [{ "node": "Broadcast completo?", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "__readme": {
+    "workflow": "WF5 — Broadcast Manual (substitui o WF4 antigo)",
+    "trigger": "Webhook POST /webhook/ovile-broadcast-manual",
+    "body_esperado": {
+      "broadcastId": "string (Broadcast.id no Ovile)",
+      "campaignId": "string (default andre-santos-2026)",
+      "type": "DIRECT|GROUP|BROADCAST",
+      "triggeredBy": "string (User.id)"
+    },
+    "fluxo": "Loop recursivo até /broadcast/next retornar done=true. Cada iteração: delay aleatório → envia Z-API → marca SENT/FAILED → busca próxima."
+  }
+}
