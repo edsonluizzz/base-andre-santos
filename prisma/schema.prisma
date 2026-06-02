@@ -292,11 +292,76 @@ model Broadcast {
   campaignId String   @default("andre-santos-2026")
   title      String
   message    String   @db.Text
-  audience   String
-  sentCount  Int      @default(0)
+  audience   String                                  // Label legível: "Gospel Class", "Apoiadores PSL", etc
+  type       BroadcastType   @default(DIRECT)        // DIRECT/GROUP/BROADCAST
+  status     BroadcastStatus @default(DRAFT)         // DRAFT/QUEUED/SENDING/PAUSED/COMPLETED/FAILED/CANCELLED
+  filters    Json?                                   // { source: "GOSPEL_CLASS", status: "LEAD", city: "Curitiba", ... }
+  groupId    String?                                 // Z-API groupId quando type=GROUP
+  attachmentUrl   String?  @db.Text                  // Vercel Blob URL de imagem/PDF (opcional)
+  attachmentType  String?                            // "image" | "document"
+  delaySecondsMin Int       @default(300)            // 5min default (anti-ban)
+  delaySecondsMax Int       @default(600)            // 10min default
+  dailyLimit      Int       @default(200)            // Máx mensagens iniciadas por dia
+  totalCount      Int       @default(0)              // Total agendadas
+  sentCount       Int       @default(0)              // Já enviadas
+  failedCount     Int       @default(0)              // Falharam (Z-API erro, phone inválido)
+  scheduledFor    DateTime?                          // Disparo agendado opcional
+  startedAt       DateTime?
+  completedAt     DateTime?
+  error           String?   @db.Text                 // Mensagem de erro quando FAILED
   createdBy  String?
   createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now()) @updatedAt
+  deliveries BroadcastDelivery[]
   @@index([campaignId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model BroadcastDelivery {
+  id             String     @id @default(cuid())
+  broadcastId    String
+  broadcast      Broadcast  @relation(fields: [broadcastId], references: [id], onDelete: Cascade)
+  collaboratorId String?                                  // Pode ser null se for número avulso
+  phone          String                                   // Phone normalizado (só dígitos)
+  name           String?                                  // Snapshot do nome no momento do envio
+  status         DeliveryStatus  @default(PENDING)        // PENDING/SENT/DELIVERED/READ/FAILED/SKIPPED
+  zapiMessageId  String?                                  // ID retornado pelo Z-API send-text
+  sentAt         DateTime?
+  deliveredAt    DateTime?
+  readAt         DateTime?
+  error          String?    @db.Text
+  attemptCount   Int        @default(0)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @default(now()) @updatedAt
+  @@index([broadcastId])
+  @@index([status])
+  @@index([phone])
+}
+
+enum BroadcastType {
+  DIRECT      // 1:1 — manda mensagem individual pra cada destinatário (com pacing)
+  GROUP       // Posta única vez num grupo WhatsApp existente
+  BROADCAST   // Lista de transmissão Z-API (até 256, recipientes não veem outros)
+}
+
+enum BroadcastStatus {
+  DRAFT       // Criado mas ainda não disparado
+  QUEUED      // Pronto pro n8n consumir
+  SENDING     // n8n está processando
+  PAUSED      // Admin pausou no meio
+  COMPLETED   // Todos os destinatários processados
+  FAILED      // Erro fatal antes de completar
+  CANCELLED   // Admin cancelou
+}
+
+enum DeliveryStatus {
+  PENDING     // Aguardando envio
+  SENT        // Enviado via Z-API, aguardando ACK
+  DELIVERED   // Z-API confirmou entrega
+  READ        // Destinatário leu
+  FAILED      // Erro no envio (Z-API/phone inválido)
+  SKIPPED     // Pulado (ex: phone duplicado dentro do batch)
 }
 
 model InviteLink {
