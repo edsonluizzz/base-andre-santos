@@ -51,6 +51,7 @@ export function ImportCsvDialog({ open, onOpenChange, onSuccess }: Props) {
   const [importing, setImporting] = useState(false);
   const [result, setResult] = useState<Result | null>(null);
   const [error, setError] = useState("");
+  const [sourceOverride, setSourceOverride] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
   function reset() {
@@ -60,6 +61,7 @@ export function ImportCsvDialog({ open, onOpenChange, onSuccess }: Props) {
     setImporting(false);
     setResult(null);
     setError("");
+    setSourceOverride("");
   }
 
   function handleClose(v: boolean) {
@@ -97,7 +99,7 @@ export function ImportCsvDialog({ open, onOpenChange, onSuccess }: Props) {
       const res = await fetch("/api/collaborators/import", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ rows }),
+        body: JSON.stringify({ rows, sourceOverride: sourceOverride.trim() || undefined }),
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error ?? "Erro ao importar"); setImporting(false); return; }
@@ -228,6 +230,25 @@ export function ImportCsvDialog({ open, onOpenChange, onSuccess }: Props) {
               </table>
             </div>
             {rows.length > 5 && <p className="text-xs text-muted-foreground text-center">+ {rows.length - 5} linha{rows.length - 5 !== 1 ? "s" : ""} não mostrada{rows.length - 5 !== 1 ? "s" : ""}</p>}
+
+            {/* Origem custom (sourceOverride) — opcional, default IMPORTACAO_XLSX */}
+            <div className="rounded-xl p-3 space-y-2" style={{ background: "rgba(212,175,55,0.06)", border: "1px solid rgba(212,175,55,0.25)" }}>
+              <label className="text-xs font-semibold tracking-wider uppercase" style={{ color: "#d4af37" }}>
+                Origem desta importação <span className="opacity-50 font-normal lowercase">(opcional)</span>
+              </label>
+              <input
+                type="text"
+                value={sourceOverride}
+                onChange={(e) => setSourceOverride(e.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, "_").slice(0, 50))}
+                placeholder="Ex: GOSPEL_CLASS, EVENTO_LANCAMENTO, PESQUISA_JUN..."
+                className="w-full px-3 py-2 rounded-lg text-sm outline-none transition-all"
+                style={{ background: "rgba(13,27,42,0.7)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff" }}
+              />
+              <p className="text-xs text-muted-foreground">
+                Permite filtrar esses leads no módulo de disparo WhatsApp depois. Default: <code>IMPORTACAO_XLSX</code>
+              </p>
+            </div>
+
             {error && <p className="text-xs text-destructive flex items-center gap-1"><AlertCircle className="w-3.5 h-3.5" />{error}</p>}
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={reset}>Voltar</Button>

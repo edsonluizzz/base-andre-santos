@@ -94,13 +94,21 @@ export async function POST(req: NextRequest) {
     const CID = cid;
     if (!["ADMIN", "LEADER"].includes(session.user.role ?? "")) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-    const { rows } = await req.json() as { rows: Record<string, string>[] };
+    const requestBody = await req.json() as { rows: Record<string, string>[]; sourceOverride?: string };
+    const rows = requestBody.rows;
     if (!Array.isArray(rows) || rows.length === 0) {
       return NextResponse.json({ error: "Nenhuma linha para importar" }, { status: 400 });
     }
     if (rows.length > 500) {
       return NextResponse.json({ error: "Máximo 500 linhas por importação" }, { status: 400 });
     }
+
+    // Origem custom (ex: "GOSPEL_CLASS", "EVENTO_LANCAMENTO_15_JUN").
+    // Sanitiza: UPPERCASE, troca espaço/hífen por _, remove caracteres inválidos.
+    // Default é IMPORTACAO_XLSX (compat com histórico).
+    const sourceOverride = (requestBody.sourceOverride ?? "")
+      .toString().trim().toUpperCase().replace(/[^A-Z0-9_]/g, "_").slice(0, 50);
+    const sourceForImport = sourceOverride || "IMPORTACAO_XLSX";
 
     let created = 0;
     let updated = 0;
@@ -149,8 +157,8 @@ export async function POST(req: NextRequest) {
       const responsavelId = responsavelEmail ? await resolveResponsavel(responsavelEmail) : null;
       const statusRaw = (row.status || row.Status || "").trim();
       const status = statusRaw ? parseStatus(statusRaw) : "ACTIVE";
-      // source = marcador fixo do sistema (para o filtro "Importado" funcionar)
-      const source = "IMPORTACAO_XLSX";
+      // source = sourceOverride do request (default IMPORTACAO_XLSX)
+      const source = sourceForImport;
       // origem do lead vai para notes, para aparecer no card do colaborador
       const origemText = (row.origem || row.source || row.Origem || "").trim();
       const notesRaw = (row.observacoes || row.notes || row.Observacoes || "").trim();

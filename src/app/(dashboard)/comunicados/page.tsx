@@ -1,7 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useEffect, useCallback } from "react";
-import { Megaphone, Plus, Clock, Users, Mail, Send } from "lucide-react";
+import { Megaphone, Plus, Clock, Users, Mail, Send, MessageCircle } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
@@ -88,12 +89,19 @@ export default function ComunicadosPage() {
           <h1 className="text-2xl font-bold text-foreground">Comunicados</h1>
           <p className="text-sm text-muted-foreground mt-1">Registro de comunicações da base de apoio</p>
         </div>
-        <Button
-          onClick={() => { setForm({ title: "", message: "", audience: "ALL" }); setDialogOpen(true); }}
-          className="bg-primary text-primary-foreground hover:bg-primary/90 gap-2"
-        >
-          <Plus className="w-4 h-4" /> Novo Comunicado
-        </Button>
+        <div className="flex gap-2">
+          <Button asChild variant="outline" className="gap-2">
+            <Link href="/comunicados/disparar">
+              <MessageCircle className="w-4 h-4" /> Disparar WhatsApp
+            </Link>
+          </Button>
+          <Button
+            onClick={() => { setForm({ title: "", message: "", audience: "ALL" }); setDialogOpen(true); }}
+            className="bg-primary text-primary-foreground hover:bg-primary/90 gap-2"
+          >
+            <Plus className="w-4 h-4" /> Novo Comunicado
+          </Button>
+        </div>
       </div>
 
       {loading ? (
