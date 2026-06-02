@@ -11,10 +11,12 @@ export async function GET(req: NextRequest) {
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const { db, cid } = getCampaignContext(session);
 
-    // Token Metricool POR CAMPANHA — env global é fallback APENAS para André enquanto não migra.
+    // Token Metricool POR CAMPANHA — isolamento estrito por tenant.
+    // O fallback de env global foi removido para evitar vazamento de dados
+    // do André para outros tenants. Cada campanha deve configurar seu próprio
+    // token em Configurações → Integrações.
     const integrations = await getCampaignIntegrations(cid);
-    const isAndre = cid === "andre-santos-2026";
-    const token = integrations.metricoolToken ?? (isAndre ? process.env.METRICOOL_TOKEN : null);
+    const token = integrations.metricoolToken;
     if (!token) {
       return NextResponse.json({ error: "Metricool não conectado para esta campanha" }, { status: 503 });
     }

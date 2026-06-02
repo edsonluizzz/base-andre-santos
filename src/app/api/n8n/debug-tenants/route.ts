@@ -32,7 +32,14 @@ export async function GET(req: NextRequest) {
       metricoolToken: true,
       telegramBotToken: true,
       zApiInstance: true,
-      _count: { select: { userCampaigns: true } },
+      userCampaigns: {
+        select: {
+          role: true,
+          inviteStatus: true,
+          user: { select: { id: true, email: true, name: true, role: true } },
+          pendingEmail: true,
+        },
+      },
     },
     orderBy: { createdAt: "asc" },
   });
@@ -55,7 +62,13 @@ export async function GET(req: NextRequest) {
         telegramSet: Boolean(c.telegramBotToken),
         zApiSet: Boolean(c.zApiInstance),
       },
-      userCount: c._count.userCampaigns,
+      users: c.userCampaigns.map((uc) => ({
+        email: uc.user?.email ?? uc.pendingEmail ?? "?",
+        name: uc.user?.name ?? "(pending)",
+        role: uc.role,
+        inviteStatus: uc.inviteStatus,
+        globalRole: uc.user?.role,
+      })),
     })),
   });
 }
