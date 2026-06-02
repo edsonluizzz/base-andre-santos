@@ -1,6 +1,6 @@
 # Estado Atual da Produção — 2026-06-02
 
-**Última atualização:** 2026-06-02 ~14:30 BRT
+**Última atualização:** 2026-06-02 ~15:30 BRT (pós seed-tenants)
 
 ---
 
@@ -10,13 +10,15 @@
 - Site/painel: `ovile.com.br`
 - Cadastro público: `ovile.com.br/cadastro`, `leads.prandresantos.com.br`, `prandresantos.com.br/casamento`
 - Base: 2.359 leads (1.702 LEAD, 655 ACTIVE, 2 INACTIVE)
-- 30 UserCampaigns (10 com duplicatas a limpar)
+- **20 UserCampaigns** (era 30, removidas 10 PENDING duplicadas em 2026-06-02 15h)
 - Banco Neon `ep-icy-recipe-aci0svlb-pooler.sa-east-1.aws.neon.tech`
 - Schema atualizado (Broadcast + BroadcastDelivery ativos)
-- Integrações funcionando via **env vars Vercel** (não migradas pro Campaign):
-  - Z-API: instance `3F3DB93D8FCE11FDF2216E531F01401A` (número `+55 41 98704-0966`)
-  - Telegram: bot ativo
-  - Metricool: ⚠️ acabei de remover fallback — precisa migrar token pra `Campaign.metricoolToken` via UI antes de usar de novo
+- `Campaign.domain = "ovile.com.br"` ✓
+- `Campaign.candidateName = "André Santos"` ✓
+- Integrações:
+  - ✓ Metricool: migrado pra `Campaign.metricoolToken` (2026-06-02)
+  - Telegram: ainda via env var fallback (funciona, sem urgência migrar)
+  - Z-API: ainda via env var fallback (funciona, sem urgência migrar)
 
 ### Módulos novos (2026-06-02 madrugada)
 - ✅ Disparo manual WhatsApp: `/comunicados/disparar` (ADMIN-only)
@@ -38,8 +40,9 @@
 ## 🔴 O que está QUEBRADO ou pendente
 
 ### Campanha Miriam Ferreira (`miriam-ferreira`)
-- ⚠️ **0 UserCampaigns** — ninguém pode logar
-- ⚠️ `Campaign.domain` = NULL
+- ⚠️ **0 UserCampaigns** — ninguém pode logar (aguardando email do admin)
+- ✓ `Campaign.domain = "miriam.ovile.com.br"` (setado em 2026-06-02 15h)
+- ✓ `Campaign.candidateName = "Miriam Ferreira"`
 - ⚠️ Schema desatualizado (banco Miriam não recebeu Broadcast/BroadcastDelivery do dia 02/06)
 - Sem Z-API/Telegram/Metricool configurados
 - Banco isolado: `ep-steep-poetry-acb6x32c.sa-east-1.aws.neon.tech`
