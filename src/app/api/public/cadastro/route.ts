@@ -45,38 +45,62 @@ const cadastroSchema = z.object({
   source: z.string().max(50).optional(),
   eventId: z.string().optional().or(z.literal("")),
   channel: z.enum(["INSTAGRAM", "WHATSAPP", "EVENTO", "LINK", "OUTRO"]).optional(),
-  campaignId: z.string().optional(), // tenant explícito (raro)
+  campaignId: z.string().optional(),
 });
+
+/**
+ * Rate-limit adaptativo por origem:
+ * - Cadastros via EBOOK_* (QR Code em eventos físicos): 100/min por IP
+ *   (mesmo WiFi de igreja/auditório, dezenas de pessoas legítimas).
+ * - Outros (Instagram, indicação 1:1): 5/min por IP para deter spam.
+ */
+function rlConfigFor(source: string | undefined): { max: number; windowSec: number } {
+  const isHighVolume = typeof source === "string" && source.startsWith("EBOOK_");
+  return isHighVolume ? { max: 100, windowSec: 60 } : { max: 5, windowSec: 60 };
+}
 
 export async function POST(req: NextRequest) {
   const cors = corsHeaders(req);
   try {
-    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
-    if (await isRateLimited("cadastro_public", ip, 5, 60)) {
-      return NextResponse.json({ error: "Muitas tentativas. Aguarde 1 minuto." }, { status: 429, headers: cors });
-    }
-
-    const parsed = cadastroSchema.safeParse(await req.json());
+    const body = await req.json();
+    const parsed = cadastroSchema.safeParse(body);
     if (!parsed.success) {
       const msg = parsed.error.errors[0]?.message ?? "Dados inválidos";
       return NextResponse.json({ error: msg }, { status: 400, headers: cors });
     }
     const { name, phone, city, neighborhood, email, contributionTypes, refUserId, refc, source: sourceParam, channel, campaignId: explicitCampaign } = parsed.data;
 
-    // Resolve tenant pelo host (ou explicit/fallback)
-    const { db, cid: CID } = await resolvePublicTenant(req, explicitCampaign ?? null);
-
     const cleanPhone = phone.replace(/\D/g, "");
     if (cleanPhone.length < 10) {
       return NextResponse.json({ error: "Número de WhatsApp inválido" }, { status: 400, headers: cors });
     }
 
+    // Resolve tenant pelo host (ou explicit/fallback)
+    const { db, cid: CID } = await resolvePublicTenant(req, explicitCampaign ?? null);
+
+    // 1) Dedup ANTES do rate-limit: cadastro repetido com mesmo phone retorna
+    //    200 cached, sem consumir cota — evita falso 429 quando o usuário
+    //    aperta "enviar" 2x ou recebe retry do browser.
     const existing = await db.collaborator.findFirst({
       where: { campaignId: CID, phone: { contains: cleanPhone.slice(-8) } },
       select: { id: true },
     });
     if (existing) {
-      return NextResponse.json({ message: "Cadastro já realizado! Entraremos em contato.", collaboratorId: existing.id }, { status: 200, headers: cors });
+      return NextResponse.json(
+        { message: "Cadastro já realizado! Entraremos em contato.", collaboratorId: existing.id },
+        { status: 200, headers: cors }
+      );
+    }
+
+    // 2) Rate-limit adaptativo (após dedup): EBOOK_* tem cota alta para
+    //    suportar evento físico com WiFi compartilhado (~50-100 cadastros/min).
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+    const rl = rlConfigFor(sourceParam);
+    if (await isRateLimited("cadastro_public", ip, rl.max, rl.windowSec)) {
+      return NextResponse.json(
+        { error: "Muitas tentativas. Aguarde 1 minuto." },
+        { status: 429, headers: cors }
+      );
     }
 
     // Valida refUserId se fornecido (usuário logado que indicou) — User está no banco GLOBAL
@@ -90,7 +114,7 @@ export async function POST(req: NextRequest) {
     // Resolve source — prioridade: INDICACAO > EBOOK_* > EVENTO > CADASTRO_PUBLICO
     const VALID_SOURCES = new Set(["EVENTO", "INSTAGRAM", "WHATSAPP", "EBOOK"]);
     const isEbookSource = typeof sourceParam === "string" && sourceParam.startsWith("EBOOK_");
-    let source = isEbookSource || VALID_SOURCES.has(sourceParam) ? sourceParam : "CADASTRO_PUBLICO";
+    let source = isEbookSource || VALID_SOURCES.has(sourceParam) ? sourceParam! : "CADASTRO_PUBLICO";
     if (refc) {
       const refCollab = await db.collaborator.findFirst({
         where: { id: refc, campaignId: CID },
@@ -118,43 +142,49 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // Garante meta automática para a cidade (idempotente, sem bloquear resposta)
+    // ─── Fire-and-forget: trabalho assíncrono que NÃO bloqueia o response ────────
+    // Em burst (500+ cadastros simultâneos), o critical path é só:
+    //   parse → dedup → rate-limit → create → return.
+    // Tudo o que segue (n8n, telegram, email, tier, zone notification) é best-effort.
+    // Cada um já tem .catch() próprio. Vercel Fluid Compute mantém o handler vivo
+    // o suficiente para esses tasks completarem antes de killing a instance.
+
+    // Garante meta automática para a cidade (idempotente)
     ensureCityGoal(city?.trim() || null, db, CID).catch(() => {});
 
-    // Leads não contam para tier (status=LEAD) — recalc só ao ativar
     if (registeredById) {
-      await recalcTier(registeredById).catch(() => {});
-      // Notifica o líder de célula por email — User está no banco global
-      const { db: globalDb } = await import("@/lib/db");
-      const refUser = await globalDb.user.findUnique({
-        where: { id: registeredById },
-        select: { email: true, name: true },
-      }).catch(() => null);
-      if (refUser?.email) {
-        await sendNewLeadNotificationEmail({
-          to: refUser.email,
-          cellLeaderName: refUser.name ?? refUser.email,
-          leadName: name.trim(),
-          leadCity: city?.trim() || null,
-          leadPhone: phone.trim(),
+      recalcTier(registeredById).catch(() => {});
+
+      import("@/lib/db").then(async ({ db: globalDb }) => {
+        const refUser = await globalDb.user.findUnique({
+          where: { id: registeredById! },
+          select: { email: true, name: true },
+        }).catch(() => null);
+        if (refUser?.email) {
+          sendNewLeadNotificationEmail({
+            to: refUser.email,
+            cellLeaderName: refUser.name ?? refUser.email,
+            leadName: name.trim(),
+            leadCity: city?.trim() || null,
+            leadPhone: cleanPhone,
+          }).catch(() => {});
+        }
+        globalDb.notification.create({
+          data: {
+            userId: registeredById!,
+            title: "Novo apoiador cadastrado",
+            body: `${name.trim()} de ${city?.trim() || "cidade não informada"} entrou pela sua célula`,
+            type: "NEW_LEAD",
+            link: "/minha-celula",
+          },
         }).catch(() => {});
-      }
-      // Notificação in-app para o líder — Notification está no banco global
-      await globalDb.notification.create({
-        data: {
-          userId: registeredById,
-          title: "Novo apoiador cadastrado",
-          body: `${name.trim()} de ${city?.trim() || "cidade não informada"} entrou pela sua célula`,
-          type: "NEW_LEAD",
-          link: "/minha-celula",
-        },
       }).catch(() => {});
     }
 
-    // Auto-atribuição: se a cidade tem um líder de zona, notifica esse líder
+    // Auto-atribuição: notifica líder de zona quando aplica
     if (city?.trim() && !registeredById) {
       const normalizedCity = city.trim();
-      const zoneLeader = await db.zoneCollaborator.findFirst({
+      db.zoneCollaborator.findFirst({
         where: {
           isLeader: true,
           zone: {
@@ -164,27 +194,24 @@ export async function POST(req: NextRequest) {
           },
           collaborator: { userId: { not: null } },
         },
-        select: {
-          collaborator: { select: { userId: true } },
-          zone: { select: { name: true } },
-        },
-      }).catch(() => null);
-
-      if (zoneLeader?.collaborator?.userId) {
-        const { db: globalDb } = await import("@/lib/db");
-        await globalDb.notification.create({
-          data: {
-            userId: zoneLeader.collaborator.userId,
-            title: "Novo lead em sua zona",
-            body: `${name.trim()} de ${normalizedCity} se cadastrou — aguarda seu contato`,
-            type: "NEW_LEAD",
-            link: "/colaboradores?status=LEAD",
-          },
-        }).catch(() => {});
-      }
+        select: { collaborator: { select: { userId: true } } },
+      }).then(async (zoneLeader) => {
+        if (zoneLeader?.collaborator?.userId) {
+          const { db: globalDb } = await import("@/lib/db");
+          globalDb.notification.create({
+            data: {
+              userId: zoneLeader.collaborator.userId,
+              title: "Novo lead em sua zona",
+              body: `${name.trim()} de ${normalizedCity} se cadastrou — aguarda seu contato`,
+              type: "NEW_LEAD",
+              link: "/colaboradores?status=LEAD",
+            },
+          }).catch(() => {});
+        }
+      }).catch(() => {});
     }
 
-    // Dispara n8n para contato imediato via WhatsApp (fire-and-forget)
+    // Dispara n8n para contato imediato via WhatsApp
     triggerLeadWebhook({
       collaboratorId: created.id,
       name: created.name,
@@ -195,7 +222,7 @@ export async function POST(req: NextRequest) {
       referredByCollaboratorId: refc || null,
     }).catch(() => {});
 
-    // Notifica Telegram (canal central) — tenant-aware
+    // Notifica Telegram — tenant-aware
     const sourceLabel: Record<string, string> = {
       EVENTO: "📍 Evento", INDICACAO: "🤝 Indicação", INSTAGRAM: "📸 Instagram",
       WHATSAPP: "💬 WhatsApp", CADASTRO_PUBLICO: "🌐 Site",
@@ -206,7 +233,10 @@ export async function POST(req: NextRequest) {
     const cityLine = city?.trim() ? ` · 📍 ${city.trim()}` : "";
     sendTelegram(CID, `📥 <b>Novo lead:</b> ${name.trim()}${cityLine}\n<i>${ebookLabel ?? sourceLabel[source] ?? source}</i>`).catch(() => {});
 
-    return NextResponse.json({ message: "Cadastro realizado com sucesso!", collaboratorId: created.id }, { status: 201, headers: cors });
+    return NextResponse.json(
+      { message: "Cadastro realizado com sucesso!", collaboratorId: created.id },
+      { status: 201, headers: cors }
+    );
   } catch (err) {
     console.error("[public/cadastro POST]", err);
     return NextResponse.json({ error: "Erro interno" }, { status: 500, headers: cors });
