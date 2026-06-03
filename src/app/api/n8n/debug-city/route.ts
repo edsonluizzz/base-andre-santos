@@ -66,10 +66,56 @@ export async function GET(req: NextRequest) {
     else if (r.supportStatus === "ADVERSARIO") mapaStatsAgg[city].adversario++;
   }
 
+  // Busca super ampla: lista TODAS as cidades distintas que começam com a primeira letra
+  const firstChar = q.charAt(0).toLowerCase();
+  const allCitiesStartingWithChar = await db.collaborator.findMany({
+    where: {
+      campaignId: "andre-santos-2026",
+      city: { startsWith: firstChar, mode: "insensitive" },
+    },
+    select: { city: true },
+    distinct: ["city"],
+    orderBy: { city: "asc" },
+  });
+
+  // Também busca em name + neighborhood (caso esteja em campo errado)
+  const leakedToName = await db.collaborator.count({
+    where: { campaignId: "andre-santos-2026", name: { contains: q, mode: "insensitive" } },
+  });
+  const leakedToNeighborhood = await db.collaborator.count({
+    where: { campaignId: "andre-santos-2026", neighborhood: { contains: q, mode: "insensitive" } },
+  });
+  const leakedToNotes = await db.collaborator.count({
+    where: { campaignId: "andre-santos-2026", notes: { contains: q, mode: "insensitive" } },
+  });
+
+  // Total de colaboradores com city NULL
+  const nullCityCount = await db.collaborator.count({
+    where: { campaignId: "andre-santos-2026", city: null },
+  });
+
+  // Top 30 cidades por count
+  const topCities = await db.collaborator.groupBy({
+    by: ["city"],
+    where: { campaignId: "andre-santos-2026", city: { not: null } },
+    _count: { _all: true },
+    orderBy: { _count: { city: "desc" } },
+    take: 30,
+  });
+
   return NextResponse.json({
     ok: true,
     query: q,
     variants,
     mapaStatsWillReturn: mapaStatsAgg,
+    cityFieldDiagnostics: {
+      citiesStartingWithChar_count: allCitiesStartingWithChar.length,
+      citiesStartingWithChar: allCitiesStartingWithChar.map((c) => c.city).slice(0, 30),
+      nullCityCount,
+      leakedToName,
+      leakedToNeighborhood,
+      leakedToNotes,
+      top30Cities: topCities.map((t) => ({ city: t.city, count: t._count._all })),
+    },
   });
 }
