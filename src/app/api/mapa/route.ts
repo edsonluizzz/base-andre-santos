@@ -16,11 +16,23 @@ export async function GET(req: NextRequest) {
     const supportStatus = searchParams.get("supportStatus") ?? "";
     const profile = searchParams.get("profile") ?? "";
 
+    // Default: mostra lideranças (não-APOIADOR) + qualquer um CONFIRMADO.
+    // Quando o usuário filtra explicitamente por profile, respeita o filtro.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const profileFilter: any = profile
+      ? { profile: profile as CollaboratorProfile }
+      : {
+          OR: [
+            { profile: { not: CollaboratorProfile.APOIADOR } },
+            { supportStatus: "CONFIRMADO" as SupportStatus },
+          ],
+        };
+
     const collaborators = await db.collaborator.findMany({
       where: {
         campaignId: CID,
         status: { not: "INACTIVE" },
-        profile: profile ? (profile as CollaboratorProfile) : { not: CollaboratorProfile.APOIADOR },
+        ...profileFilter,
         ...(city && { city: { contains: city, mode: "insensitive" } }),
         ...(supportStatus && { supportStatus: supportStatus as SupportStatus }),
       },
@@ -46,9 +58,17 @@ export async function GET(req: NextRequest) {
       byCity[key].push(c);
     }
 
-    // Estatísticas gerais (sem filtro de cidade)
+    // Estatísticas gerais (sem filtro de cidade) — mesma regra do listing:
+    // lideranças + qualquer um CONFIRMADO
     const allKeyPeople = await db.collaborator.findMany({
-      where: { campaignId: CID, status: { not: "INACTIVE" }, profile: { not: "APOIADOR" } },
+      where: {
+        campaignId: CID,
+        status: { not: "INACTIVE" },
+        OR: [
+          { profile: { not: "APOIADOR" } },
+          { supportStatus: "CONFIRMADO" },
+        ],
+      },
       select: { supportStatus: true, city: true },
     });
 
