@@ -50,6 +50,28 @@ export function EbookForm({ ebook }: { ebook: EbookConfig }) {
   const [cep, setCep] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
   const [email, setEmail] = useState("");
+  const [city, setCity] = useState("");
+  const [neighborhood, setNeighborhood] = useState("");
+
+  // Lookup ViaCEP quando CEP tem 8 dígitos — preenche city + neighborhood
+  // sem precisar de campo visível (mantém o form curto pra evento).
+  useEffect(() => {
+    const digits = cep.replace(/\D/g, "");
+    if (digits.length !== 8) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`/api/cep/${digits}`);
+        if (!res.ok || cancelled) return;
+        const d = await res.json();
+        if (d.city) setCity(d.city);
+        if (d.neighborhood) setNeighborhood(d.neighborhood);
+      } catch {
+        // silencioso — se ViaCEP falhar, salva sem cidade
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [cep]);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -63,8 +85,8 @@ export function EbookForm({ ebook }: { ebook: EbookConfig }) {
           name,
           phone: whatsapp,
           email,
-          city: "",
-          neighborhood: "",
+          city,
+          neighborhood,
           lgpdConsent: true,
           source: `EBOOK_${ebook.slug.toUpperCase().replace(/-/g, "_")}`,
           channel: "LINK",
