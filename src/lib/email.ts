@@ -1,7 +1,12 @@
 import { Resend } from "resend";
 
-const FROM = process.env.RESEND_FROM ?? "Base André Santos <noreply@baseandresantos.com.br>";
+const FROM = process.env.RESEND_FROM ?? "Base de Apoio <noreply@baseandresantos.com.br>";
 const APP_URL = process.env.APP_URL ?? "";
+
+// Helper pra formatar o nome da campanha nos emails de forma consistente.
+function campaignLabel(campaignName?: string): string {
+  return campaignName?.trim() || "Base de Apoio";
+}
 
 function getResend(): Resend | null {
   if (!process.env.RESEND_API_KEY) return null;
@@ -33,9 +38,11 @@ export async function sendBroadcastEmails(
   recipients: { email: string; name: string }[],
   title: string,
   message: string,
+  campaignName?: string,
 ): Promise<number> {
   const resend = getResend();
   if (!resend || recipients.length === 0) return 0;
+  const label = campaignLabel(campaignName);
 
   const safe = message
     .replace(/&/g, "&amp;")
@@ -47,10 +54,10 @@ export async function sendBroadcastEmails(
 <html lang="pt-BR">
 <head><meta charset="UTF-8"></head>
 <body style="${baseStyle}">
-<p style="${tagStyle}">Comunicado — Base de Apoio 2026</p>
+<p style="${tagStyle}">Comunicado — ${label}</p>
 <h1 style="font-size:20px;font-weight:700;color:#fff;margin:0 0 20px">${title}</h1>
 <div style="background:#0f1a2e;border-radius:8px;padding:20px;font-size:15px;line-height:1.7;color:#cbd5e1">${safe}</div>
-<p style="color:#475569;font-size:12px;margin-top:28px">Base André Santos 2026 — comunicação interna da base de apoio.</p>
+<p style="color:#475569;font-size:12px;margin-top:28px">${label} — comunicação interna da base de apoio.</p>
 </body>
 </html>`;
 
@@ -82,13 +89,16 @@ export async function sendBroadcastEmails(
 export async function sendAccessGrantedEmail({
   to,
   role,
+  campaignName,
 }: {
   to: string;
   role: string;
+  campaignName?: string;
 }): Promise<void> {
   const resend = getResend();
   if (!resend) return;
 
+  const label = campaignLabel(campaignName);
   const roleLabel =
     role === "ADMIN" ? "Administrador" :
     role === "LEADER" ? "Coordenador" :
@@ -97,15 +107,15 @@ export async function sendAccessGrantedEmail({
   await resend.emails.send({
     from: FROM,
     to,
-    subject: "Acesso concedido — Base André Santos 2026",
+    subject: `Acesso concedido — ${label}`,
     html: `
       <div style="${baseStyle}">
-        <p style="${tagStyle}">Base de Apoio 2026</p>
+        <p style="${tagStyle}">${label}</p>
         <h1 style="font-size:22px;font-weight:700;color:#fff;margin:0 0 16px;">
           Acesso concedido ao sistema 🎉
         </h1>
         <p style="color:#94a3b8;line-height:1.6;">
-          Você recebeu acesso à Base André Santos 2026 como
+          Você recebeu acesso a <strong style="color:#fff">${label}</strong> como
           <strong style="color:#d4af37"> ${roleLabel}</strong>.
         </p>
         <p style="color:#94a3b8;line-height:1.6;">
@@ -132,15 +142,18 @@ export async function sendNewLeadNotificationEmail({
   leadName,
   leadCity,
   leadPhone,
+  campaignName,
 }: {
   to: string;
   cellLeaderName: string;
   leadName: string;
   leadCity?: string | null;
   leadPhone?: string | null;
+  campaignName?: string;
 }): Promise<void> {
   const resend = getResend();
   if (!resend) return;
+  const label = campaignLabel(campaignName);
 
   const cityLine = leadCity
     ? `<p style="color:#94a3b8;margin:4px 0;">📍 ${leadCity}</p>`
@@ -152,10 +165,10 @@ export async function sendNewLeadNotificationEmail({
   await resend.emails.send({
     from: FROM,
     to,
-    subject: `Novo apoiador cadastrado — Base André Santos`,
+    subject: `Novo apoiador cadastrado — ${label}`,
     html: `
       <div style="${baseStyle}">
-        <p style="${tagStyle}">Base de Apoio 2026</p>
+        <p style="${tagStyle}">${label}</p>
         <h1 style="font-size:22px;font-weight:700;color:#fff;margin:0 0 16px;">
           Novo apoiador na sua célula! 🌟
         </h1>
@@ -177,7 +190,7 @@ export async function sendNewLeadNotificationEmail({
           </a>
         </div>
         <p style="color:#475569;font-size:12px;margin-top:32px;">
-          Base André Santos 2026 — sistema interno.
+          ${label} — sistema interno.
         </p>
       </div>
     `,
