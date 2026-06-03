@@ -20,6 +20,49 @@ export const authConfig: NextAuthConfig = {
   trustHost: true,
   session: { strategy: "jwt" },
   pages: { signIn: "/login" },
+  // Cookies scoped pra .ovile.com.br pra SSO entre subdomínios
+  // (andre.ovile.com.br, miriam.ovile.com.br). Em dev (localhost), o domain
+  // é omitido pra cookie funcionar normalmente.
+  cookies: {
+    sessionToken: {
+      name: process.env.NODE_ENV === "production"
+        ? "__Secure-authjs.session-token"
+        : "authjs.session-token",
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+        ...(process.env.NODE_ENV === "production" && { domain: ".ovile.com.br" }),
+      },
+    },
+    callbackUrl: {
+      name: process.env.NODE_ENV === "production"
+        ? "__Secure-authjs.callback-url"
+        : "authjs.callback-url",
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+        ...(process.env.NODE_ENV === "production" && { domain: ".ovile.com.br" }),
+      },
+    },
+    csrfToken: {
+      name: process.env.NODE_ENV === "production"
+        ? "__Host-authjs.csrf-token"
+        : "authjs.csrf-token",
+      // __Host- prefix REQUIRES NO domain attribute. CSRF cookie fica scoped
+      // pro host atual; não vaza entre subdomínios mas isso é OK (cada
+      // subdomain valida CSRF localmente).
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+      },
+    },
+  },
   callbacks: {
     session({ session, token }) {
       if (session.user) {

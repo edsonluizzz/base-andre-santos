@@ -15,9 +15,14 @@ import { db } from "./db";
  * mesmo handler quando há múltiplas calls).
  */
 
-interface CachedCampaign {
+export interface ValidatedCampaign {
   id: string;
+  name: string;
+  candidateName: string | null;
   dbUrl: string | null;
+}
+
+interface CachedCampaign extends ValidatedCampaign {
   active: boolean;
   expiresAt: number;
 }
@@ -25,26 +30,33 @@ interface CachedCampaign {
 const cache = new Map<string, CachedCampaign>();
 const TTL_MS = 60 * 1000;
 
-export async function validateCampaign(campaignId: string): Promise<{ id: string; dbUrl: string | null } | null> {
+export async function validateCampaign(campaignId: string): Promise<ValidatedCampaign | null> {
   if (!campaignId) return null;
 
   const now = Date.now();
   const cached = cache.get(campaignId);
   if (cached && cached.expiresAt > now) {
-    return cached.active ? { id: cached.id, dbUrl: cached.dbUrl } : null;
+    return cached.active
+      ? { id: cached.id, name: cached.name, candidateName: cached.candidateName, dbUrl: cached.dbUrl }
+      : null;
   }
 
   try {
     const campaign = await db.campaign.findUnique({
       where: { id: campaignId },
-      select: { id: true, dbUrl: true, active: true },
+      select: { id: true, name: true, candidateName: true, dbUrl: true, active: true },
     });
     if (!campaign) {
-      cache.set(campaignId, { id: campaignId, dbUrl: null, active: false, expiresAt: now + TTL_MS });
+      cache.set(campaignId, {
+        id: campaignId, name: "", candidateName: null, dbUrl: null,
+        active: false, expiresAt: now + TTL_MS,
+      });
       return null;
     }
     cache.set(campaignId, { ...campaign, expiresAt: now + TTL_MS });
-    return campaign.active ? { id: campaign.id, dbUrl: campaign.dbUrl } : null;
+    return campaign.active
+      ? { id: campaign.id, name: campaign.name, candidateName: campaign.candidateName, dbUrl: campaign.dbUrl }
+      : null;
   } catch {
     return null;
   }

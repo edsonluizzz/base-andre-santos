@@ -65,7 +65,10 @@ export async function GET(req: NextRequest) {
   ]);
 
   const groupLink = settings?.whatsappGroupLink ?? null;
-  const candidateName = settings?.campaignName ?? "André Santos";
+  // Prioridade: Campaign.candidateName (canônico, global) > Settings.campaignName
+  // (tenant, legado). Sem fallback hardcoded — quem usa o sistema multi-tenant
+  // tem que ter candidateName setado pelo seed-tenants ou pela UI.
+  const candidateName = validated.candidateName ?? settings?.campaignName ?? validated.name;
 
   // Z-API
   const isLegacyCampaign = campaignId === LEGACY_CID;
