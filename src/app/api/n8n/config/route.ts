@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCampaignContext } from "@/lib/campaign-context";
-import { getCampaignDbUrl, getCampaignIntegrations } from "@/lib/meta-db";
+import { getCampaignIntegrations } from "@/lib/meta-db";
+import { validateCampaign } from "@/lib/validate-campaign";
 import { renderAllMessages, INVITE_TEMPLATES, WELCOME_TEMPLATES, OPTOUT_TEMPLATES, REACTIVATION_TEMPLATES, periodoEleitoral } from "@/lib/message-templates";
 
 function authCheck(req: NextRequest): boolean {
@@ -42,7 +43,17 @@ export async function GET(req: NextRequest) {
   const campaignId = searchParams.get("campaign_id") ?? LEGACY_CID;
   const name = searchParams.get("name") ?? null;
 
-  const dbUrl = (await getCampaignDbUrl(campaignId)) ?? process.env.DATABASE_URL;
+  // Valida que Campaign existe e está ativa — evita vazamento de fallback
+  // para o banco do André quando passa campaign_id inválido.
+  const validated = await validateCampaign(campaignId);
+  if (!validated) {
+    return NextResponse.json(
+      { error: `Campaign '${campaignId}' não encontrada ou inativa` },
+      { status: 404 }
+    );
+  }
+
+  const dbUrl = validated.dbUrl ?? process.env.DATABASE_URL;
   const { db } = getCampaignContext({ user: { campaignId, dbUrl: dbUrl ?? undefined } });
 
   const [settings, integrations] = await Promise.all([

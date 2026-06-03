@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCampaignContext } from "@/lib/campaign-context";
-import { getCampaignDbUrl } from "@/lib/meta-db";
+import { validateCampaign } from "@/lib/validate-campaign";
 
 function authCheck(req: NextRequest): boolean {
   const key = process.env.N8N_API_KEY;
@@ -45,7 +45,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "collaboratorId obrigatório" }, { status: 400 });
   }
 
-  const dbUrl = (await getCampaignDbUrl(campaignId)) ?? process.env.DATABASE_URL;
+  const validated = await validateCampaign(campaignId);
+  if (!validated) {
+    return NextResponse.json(
+      { error: `Campaign '${campaignId}' não encontrada ou inativa` },
+      { status: 404 }
+    );
+  }
+  const dbUrl = validated.dbUrl ?? process.env.DATABASE_URL;
   const { db } = getCampaignContext({ user: { campaignId, dbUrl: dbUrl ?? undefined } });
 
   // Buscar o lead convertido e seu referenciador

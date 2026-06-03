@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCampaignContext } from "@/lib/campaign-context";
-import { getCampaignDbUrl } from "@/lib/meta-db";
+import { validateCampaign } from "@/lib/validate-campaign";
 import { logContact } from "@/lib/contact-log";
 
 function authCheck(req: NextRequest): boolean {
@@ -58,8 +58,15 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Resolve o banco correto para a campanha (multi-tenant)
-  const dbUrl = (await getCampaignDbUrl(campaignId)) ?? process.env.DATABASE_URL;
+  // Valida tenant (evita vazamento cross-tenant via fallback DATABASE_URL)
+  const validated = await validateCampaign(campaignId);
+  if (!validated) {
+    return NextResponse.json(
+      { error: `Campaign '${campaignId}' não encontrada ou inativa` },
+      { status: 404 }
+    );
+  }
+  const dbUrl = validated.dbUrl ?? process.env.DATABASE_URL;
   const { db } = getCampaignContext({ user: { campaignId, dbUrl: dbUrl ?? undefined } });
 
   // Localizar o colaborador

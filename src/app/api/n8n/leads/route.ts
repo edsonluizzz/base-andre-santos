@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCampaignContext } from "@/lib/campaign-context";
-import { getCampaignDbUrl } from "@/lib/meta-db";
+import { validateCampaign } from "@/lib/validate-campaign";
 
 function authCheck(req: NextRequest): boolean {
   const key = process.env.N8N_API_KEY;
@@ -31,8 +31,16 @@ export async function GET(req: NextRequest) {
   const limit = Math.min(parseInt(searchParams.get("limit") ?? "20"), 100);
   const cooldownDays = parseInt(searchParams.get("cooldown_days") ?? "7");
 
-  // Resolve o banco correto para a campanha (multi-tenant)
-  const dbUrl = (await getCampaignDbUrl(campaignId)) ?? process.env.DATABASE_URL;
+  // Valida tenant (evita vazamento cross-tenant via fallback DATABASE_URL)
+  const validated = await validateCampaign(campaignId);
+  if (!validated) {
+    return NextResponse.json(
+      { error: `Campaign '${campaignId}' não encontrada ou inativa` },
+      { status: 404 }
+    );
+  }
+
+  const dbUrl = validated.dbUrl ?? process.env.DATABASE_URL;
   const { db } = getCampaignContext({ user: { campaignId, dbUrl: dbUrl ?? undefined } });
 
   const cutoff = new Date(Date.now() - cooldownDays * 24 * 60 * 60 * 1000);

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCampaignContext } from "@/lib/campaign-context";
-import { getCampaignDbUrl } from "@/lib/meta-db";
+import { validateCampaign } from "@/lib/validate-campaign";
 
 function authCheck(req: NextRequest): boolean {
   const key = process.env.N8N_API_KEY;
@@ -41,7 +41,12 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ found: false });
   }
 
-  const dbUrl = (await getCampaignDbUrl(campaignId)) ?? process.env.DATABASE_URL;
+  // Valida tenant (evita vazamento cross-tenant via fallback DATABASE_URL)
+  const validated = await validateCampaign(campaignId);
+  if (!validated) {
+    return NextResponse.json({ found: false });
+  }
+  const dbUrl = validated.dbUrl ?? process.env.DATABASE_URL;
   const { db } = getCampaignContext({ user: { campaignId, dbUrl: dbUrl ?? undefined } });
 
   let collab = await db.collaborator.findFirst({

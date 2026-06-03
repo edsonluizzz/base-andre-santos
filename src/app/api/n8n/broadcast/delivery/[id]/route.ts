@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCampaignContext } from "@/lib/campaign-context";
-import { getCampaignDbUrl } from "@/lib/meta-db";
+import { validateCampaign } from "@/lib/validate-campaign";
 import { z } from "zod";
 
 function authCheck(req: NextRequest): boolean {
@@ -39,7 +39,14 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
   const { status, zapiMessageId, error: errMsg, campaignId: explicitCid } = parsed.data;
   const campaignId = explicitCid ?? "andre-santos-2026";
-  const dbUrl = (await getCampaignDbUrl(campaignId)) ?? process.env.DATABASE_URL;
+  const validated = await validateCampaign(campaignId);
+  if (!validated) {
+    return NextResponse.json(
+      { error: `Campaign '${campaignId}' não encontrada ou inativa` },
+      { status: 404 }
+    );
+  }
+  const dbUrl = validated.dbUrl ?? process.env.DATABASE_URL;
   const { db } = getCampaignContext({ user: { campaignId, dbUrl: dbUrl ?? undefined } });
 
   const delivery = await db.broadcastDelivery.findUnique({
