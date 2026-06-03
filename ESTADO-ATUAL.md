@@ -1,6 +1,6 @@
-# Estado Atual da Produção — 2026-06-02
+# Estado Atual da Produção — 2026-06-03
 
-**Última atualização:** 2026-06-02 ~15:30 BRT (pós seed-tenants)
+**Última atualização:** 2026-06-03 ~03:35 BRT (pós hard sprint madrugada)
 
 ---
 
@@ -110,7 +110,18 @@
 ## 🎯 Próximas 3 ações recomendadas
 
 1. **Você me passa email admin Miriam** → eu crio UserCampaign + popula `Campaign.domain`
-2. **Você adiciona `miriam.ovile.com.br` no Vercel** → eu testo acesso
+2. **Você adiciona `miriam.ovile.com.br` no Vercel** ✅ FEITO 2026-06-02
 3. **Eu rodo migration multi-tenant** → schema Miriam atualizado, ela pode usar todas as features
 
-Depois disso: branding dinâmico + remover hardcoded + warmup WhatsApp.
+## 🔒 Anti-vazamento (NOVO 2026-06-03 madrugada)
+- 7 endpoints `/api/n8n/*` validam Campaign existe → 404 se não existe (era HTTP 200 com dados do André antes)
+- Cookie domain `.ovile.com.br` permite SSO entre subdomínios
+- Hardcoded "André Santos" removido de `lib/email.ts`, `/api/n8n/config`, `/treinamento`
+- `validateCampaign` helper com cache 60s evita query repetida
+
+## 🟡 Hardcoded restante a refatorar (não bloqueante)
+- `/(dashboard)/super-admin/page.tsx` — 4 mensagens convite (CRÍTICO antes da Miriam ter admin)
+- `/(dashboard)/colaboradores`, `minha-celula`, `onboarding` — strings UI/WhatsApp
+- Placeholders de inputs e títulos internos (baixa prioridade)
+
+Detalhe em `RELATORIO-MADRUGADA-2026-06-03.md`.
