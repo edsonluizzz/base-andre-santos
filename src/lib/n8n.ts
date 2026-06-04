@@ -21,8 +21,43 @@ export interface LeadPayload {
 }
 
 /**
+ * Daily limit de mensagens WhatsApp iniciadas por campanha.
+ * Padrão sane pra warmup pós-ban — pode ser ajustado via env LEAD_DAILY_LIMIT.
+ *
+ * Lógica anti-ban:
+ *  - Conta quantos Collaborator viraram CONTACTED nas últimas 24h
+ *  - Se >= limite, NÃO chama webhook (lead fica LEAD pendente, WF1 ou ação
+ *    manual pega quando warmup avançar)
+ */
+const DEFAULT_DAILY_LIMIT = parseInt(process.env.LEAD_DAILY_LIMIT ?? "25", 10);
+
+async function checkDailyLimit(campaignId: string): Promise<{ allowed: boolean; sent24h: number; limit: number }> {
+  const limit = DEFAULT_DAILY_LIMIT;
+  if (limit <= 0) return { allowed: true, sent24h: 0, limit }; // 0 = ilimitado
+  try {
+    // Import dinâmico evita ciclo com lib/db
+    const { db } = await import("@/lib/db");
+    const { getCampaignContext } = await import("@/lib/campaign-context");
+    const { getCampaignDbUrl } = await import("@/lib/meta-db");
+    const dbUrl = (await getCampaignDbUrl(campaignId)) ?? process.env.DATABASE_URL;
+    const { db: tenantDb } = getCampaignContext({ user: { campaignId, dbUrl: dbUrl ?? undefined } });
+    void db; // unused but kept for future cross-tenant analytics
+    const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const sent24h = await tenantDb.collaborator.count({
+      where: { campaignId, lastContactedAt: { gte: since24h } },
+    });
+    return { allowed: sent24h < limit, sent24h, limit };
+  } catch (err) {
+    console.warn("[n8n] checkDailyLimit falhou — permitindo por safety:", err);
+    return { allowed: true, sent24h: 0, limit };
+  }
+}
+
+/**
  * Dispara imediatamente quando um único lead é criado com telefone.
  * Usado pelo formulário público e cadastro manual com status=LEAD.
+ *
+ * Respeita daily limit anti-ban (LEAD_DAILY_LIMIT env var, padrão 25).
  */
 export async function triggerLeadWebhook(lead: LeadPayload): Promise<void> {
   const webhookUrl = process.env.N8N_LEAD_WEBHOOK_URL;
@@ -35,6 +70,15 @@ export async function triggerLeadWebhook(lead: LeadPayload): Promise<void> {
     return;
   }
 
+  // Anti-ban: respeita daily limit de mensagens iniciadas
+  const dailyCheck = await checkDailyLimit(lead.campaignId);
+  if (!dailyCheck.allowed) {
+    console.warn(
+      `[n8n] daily-limit reached (${dailyCheck.sent24h}/${dailyCheck.limit}) — skip ${lead.collaboratorId}, lead fica LEAD pendente`
+    );
+    return;
+  }
+
   try {
     const res = await fetch(webhookUrl, {
       method: "POST",
@@ -42,7 +86,12 @@ export async function triggerLeadWebhook(lead: LeadPayload): Promise<void> {
       body: JSON.stringify(lead),
       signal: AbortSignal.timeout(5_000),
     });
-    console.log("[n8n] Lead webhook disparado:", lead.collaboratorId, "status:", res.status);
+    console.log(
+      `[n8n] Lead webhook disparado (${dailyCheck.sent24h + 1}/${dailyCheck.limit}):`,
+      lead.collaboratorId,
+      "status:",
+      res.status
+    );
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.warn("[n8n] Lead webhook falhou:", lead.collaboratorId, msg);
