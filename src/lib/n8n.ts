@@ -146,6 +146,11 @@ export async function triggerManualInviteBatch(
     return { ok: false, error: "Lista de leads vazia" };
   }
 
+  // Log de debug do destino — não inclui body, só prefixo/sufixo da URL
+  // pra evitar leak da env mas dar pistas se o path estiver errado.
+  const urlPreview = `${webhookUrl.slice(0, 40)}...${webhookUrl.slice(-30)}`;
+  console.log(`[n8n] Manual batch -> ${urlPreview} (${leads.length} leads, kind=${kind})`);
+
   try {
     const res = await fetch(webhookUrl, {
       method: "POST",
@@ -161,12 +166,15 @@ export async function triggerManualInviteBatch(
       signal: AbortSignal.timeout(8_000),
     });
     if (!res.ok) {
-      return { ok: false, status: res.status, error: `n8n respondeu HTTP ${res.status}` };
+      const respText = await res.text().catch(() => "");
+      console.warn(`[n8n] Manual batch HTTP ${res.status}: ${respText.slice(0, 200)}`);
+      return { ok: false, status: res.status, error: `n8n respondeu HTTP ${res.status}: ${respText.slice(0, 100)}` };
     }
     return { ok: true, status: res.status };
   } catch (err) {
+    const errName = err instanceof Error ? err.name : "unknown";
     const msg = err instanceof Error ? err.message : "fetch falhou";
-    console.warn("[n8n] Manual batch webhook falhou:", msg);
-    return { ok: false, error: msg };
+    console.warn(`[n8n] Manual batch webhook falhou (${errName}): ${msg} | url=${urlPreview}`);
+    return { ok: false, error: `${errName}: ${msg}` };
   }
 }
