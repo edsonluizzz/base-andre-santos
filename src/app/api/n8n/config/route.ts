@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCampaignContext } from "@/lib/campaign-context";
 import { getCampaignIntegrations } from "@/lib/meta-db";
 import { validateCampaign } from "@/lib/validate-campaign";
+import { regionForCity, type PRRegion } from "@/lib/pr-regions";
 import { renderAllMessages, INVITE_TEMPLATES, WELCOME_TEMPLATES, OPTOUT_TEMPLATES, REACTIVATION_TEMPLATES, periodoEleitoral } from "@/lib/message-templates";
 
 function authCheck(req: NextRequest): boolean {
@@ -42,6 +43,8 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const campaignId = searchParams.get("campaign_id") ?? LEGACY_CID;
   const name = searchParams.get("name") ?? null;
+  // Roteamento regional: WF2 passa lead_phone pra escolher grupo certo
+  const leadPhone = searchParams.get("lead_phone") ?? null;
 
   // Valida que Campaign existe e está ativa — evita vazamento de fallback
   // para o banco do André quando passa campaign_id inválido.
@@ -64,7 +67,57 @@ export async function GET(req: NextRequest) {
     getCampaignIntegrations(campaignId),
   ]);
 
-  const groupLink = settings?.whatsappGroupLink ?? null;
+  // ─── Roteamento de grupo regional ─────────────────────────────────────────
+  // Quando lead_phone é passado (WF2), busca o lead e mapeia city → PRRegion →
+  // grupo WhatsApp dessa região. Fallback: grupo geral (isFallback=true).
+  // Último fallback: Settings.whatsappGroupLink (legado).
+  let groupLink: string | null = settings?.whatsappGroupLink ?? null;
+  let groupRegion: PRRegion | null = null;
+  let groupSource: "matched" | "fallback" | "settings-legacy" = "settings-legacy";
+
+  if (leadPhone) {
+    const digits = leadPhone.replace(/\D/g, "");
+    const sufix9 = digits.slice(-9);
+    const sufix8 = digits.slice(-8);
+
+    if (sufix8.length >= 8) {
+      let collab = await db.collaborator.findFirst({
+        where: { campaignId, phone: { contains: sufix9 } },
+        select: { city: true },
+      });
+      if (!collab) {
+        collab = await db.collaborator.findFirst({
+          where: { campaignId, phone: { contains: sufix8 } },
+          select: { city: true },
+        });
+      }
+      const region = regionForCity(collab?.city ?? null);
+      groupRegion = region;
+
+      let regionalGroup = null as { inviteLink: string | null } | null;
+      if (region !== "OUTROS") {
+        regionalGroup = await db.whatsAppGroup.findFirst({
+          where: { campaignId, region: region as never, inviteLink: { not: null } },
+          select: { inviteLink: true },
+        });
+      }
+      if (regionalGroup?.inviteLink) {
+        groupLink = regionalGroup.inviteLink;
+        groupSource = "matched";
+      } else {
+        // Fallback: grupo geral (isFallback=true)
+        const fallbackGroup = await db.whatsAppGroup.findFirst({
+          where: { campaignId, isFallback: true, inviteLink: { not: null } },
+          select: { inviteLink: true },
+        });
+        if (fallbackGroup?.inviteLink) {
+          groupLink = fallbackGroup.inviteLink;
+          groupSource = "fallback";
+        }
+      }
+    }
+  }
+
   // Prioridade: Campaign.candidateName (canônico, global) > Settings.campaignName
   // (tenant, legado). Sem fallback hardcoded — quem usa o sistema multi-tenant
   // tem que ter candidateName setado pelo seed-tenants ou pela UI.
@@ -116,6 +169,8 @@ export async function GET(req: NextRequest) {
     campaignId,
     candidateName,
     whatsappGroupLink: groupLink,
+    groupRegion,
+    groupSource,
     periodoEleitoral: periodoEleitoral(),
     messages,
     zapi: {

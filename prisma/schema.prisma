@@ -224,6 +224,13 @@ model WhatsAppGroup {
   name        String
   inviteLink  String?
   description String?
+  // Roteamento regional do welcome WhatsApp (WF2): lead com city em
+  // região X recebe link do grupo dessa região. Se null e isFallback=false,
+  // grupo não participa do roteamento automático.
+  region      PRRegion?
+  // Grupo geral — recebe leads cuja região não bate em nenhum específico
+  // (incluindo city=NULL). Apenas 1 grupo por campanha deveria ser fallback.
+  isFallback  Boolean   @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   campaign Campaign             @relation(fields: [campaignId], references: [id], onDelete: Cascade)
@@ -231,6 +238,19 @@ model WhatsAppGroup {
   members  WhatsAppGroupMember[]
   @@index([campaignId])
   @@index([zoneId])
+  @@index([region])
+}
+
+enum PRRegion {
+  RMC
+  LITORAL
+  NORTE
+  NOROESTE
+  OESTE
+  SUDOESTE
+  SUL
+  CENTRO
+  OUTROS
 }
 
 model WhatsAppGroupMember {
