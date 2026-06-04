@@ -4,7 +4,7 @@
     {
       "parameters": {
         "httpMethod": "POST",
-        "path": "ovile-disparo-manual",
+        "path": "ovile-broadcast",
         "options": {}
       },
       "id": "wf5-node-001",
@@ -12,7 +12,7 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [240, 300],
-      "webhookId": "ovile-disparo-manual",
+      "webhookId": "ovile-broadcast",
       "notes": "Recebe { broadcastId, campaignId, type, triggeredBy } do Ovile quando admin clica Disparar."
     },
     {

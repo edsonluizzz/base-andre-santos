@@ -121,8 +121,11 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  // Dispara webhook n8n (fire-and-forget)
-  const webhookUrl = process.env.N8N_MANUAL_WEBHOOK_URL;
+  // Dispara webhook n8n (fire-and-forget). Usa env separada do bulk-invite (WF4)
+  // pois o WF5 (broadcast) espera payload diferente — { broadcastId, ... } em vez
+  // de { leads: [...] }. Fallback pro env antigo evita quebrar prod até a env
+  // nova ser configurada no Vercel.
+  const webhookUrl = process.env.N8N_BROADCAST_WEBHOOK_URL ?? process.env.N8N_MANUAL_WEBHOOK_URL;
   if (webhookUrl && data.immediate) {
     fetch(webhookUrl, {
       method: "POST",

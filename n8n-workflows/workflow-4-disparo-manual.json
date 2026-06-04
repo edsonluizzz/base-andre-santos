@@ -4,7 +4,7 @@
     {
       "parameters": {
         "httpMethod": "POST",
-        "path": "ovile-disparo-manual",
+        "path": "ovile-bulk-invite",
         "responseMode": "onReceived",
         "responseData": "firstEntryJson"
       },
@@ -13,7 +13,7 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [240, 300],
-      "webhookId": "ovile-disparo-manual",
+      "webhookId": "ovile-bulk-invite",
       "notes": "Disparado por POST /api/collaborators/bulk-invite quando admin clica 'Enviar convite'. Payload: { leads: [...], count, source:'manual', actorId, triggeredAt }"
     },
     {
