@@ -1,6 +1,54 @@
 # Estado — Ovile Eleitoral (Base André Santos)
 
-**Última atualização:** 2026-05-31 (Sprint 14 + WF2 reimport + fix phone lookup; card n8n nas Integrações; ebook capture aguardando decisão)
+**Última atualização:** 2026-06-05 (Sprint 22 — roteamento regional WhatsApp + padronização paths n8n WF4/WF5)
+
+---
+
+## Sprint 22 (2026-06-04 → 05) — Roteamento Regional + Fix n8n Webhooks
+
+### Roteamento regional WhatsApp (concluído)
+Quando lead responde SIM ao WF2, sistema identifica city → mapeia PRRegion → busca WhatsAppGroup dessa região → retorna link correto no welcome (ao invés de link fixo).
+
+- **Schema:** enum `PRRegion` (RMC/LITORAL/NORTE/NOROESTE/OESTE/SUDOESTE/SUL/CENTRO/OUTROS) + `WhatsAppGroup.region` + `WhatsAppGroup.isFallback`.
+- **`src/lib/pr-regions.ts`** — ~150 municípios PR mapeados (`regionForCity(city)` → enum). Normaliza acento+caixa, fallback OUTROS.
+- **Endpoints (Bearer N8N_API_KEY):**
+  - `POST /api/n8n/seed-whatsapp-groups` — cria/atualiza 4 grupos (OESTE, LITORAL, SUDOESTE, GERAL fallback). Já executado em prod.
+  - `GET /api/n8n/group-for-lead?phone=X` — resolve grupo pelo telefone.
+  - `GET /api/n8n/find-lead?city=X` — busca leads por city contains.
+  - `POST /api/n8n/trigger-lead?lead_id=X` — dispara WF3 manualmente (testes).
+  - `GET /api/n8n/debug-env` — inspeciona metadata das envs sem revelar (length, prefix, hasAngleBrackets).
+- **`/api/n8n/config?lead_phone=X`** — quando passado, resolve grupo regional e substitui `{groupLink}` no welcome. Retorna `groupRegion` + `groupSource`.
+- **WF2 atualizado via API n8n** — passa `lead_phone={{encodeURIComponent($('Extrair telefone e texto').item.json.fromPhone)}}` no node "Buscar config Ovile". PUT 200, active=True.
+
+### Fix paths webhooks n8n WF4/WF5 (concluído código + n8n; env Vercel PENDENTE validação)
+**Bug raiz:** WF4 e WF5 estavam com mesmo path `ovile-disparo-manual`. No n8n cloud só 1 workflow ativo escuta por path → bulk-invite (que esperava WF4) era recebido pelo WF5, que quebrava no node "Buscar próxima delivery" com 400 "broadcastId obrigatório". **Nenhuma mensagem bulk-invite foi enviada de verdade até 2026-06-04.** Pior: WF4 (disparo-manual) **nunca tinha sido importado no n8n cloud** — só existia o JSON local.
+
+Padronização aplicada:
+| WF | ID n8n | Path |
+|---|---|---|
+| WF1 disparo-agendado | `3zMetjbtuIUt3JGX` | (cron) — INACTIVE |
+| WF2 resposta-whatsapp | `ZDkd1oS1P8VdSh2l` | `ovile-resposta-wa` ATIVO |
+| WF3 lead-novo-imediato | `u7pCdMoHT5uqZKet` | `ovile-lead-novo` ATIVO |
+| WF4 disparo-manual | `gw1BlNhKzLAU1ukz` (NOVO) | `ovile-bulk-invite` ATIVO |
+| WF5 broadcast-manual | `9UD6uQGhOtLQjbAz` | `ovile-broadcast` ATIVO (renomeado) |
+
+- `broadcast/route.ts` agora usa `N8N_BROADCAST_WEBHOOK_URL` (fallback `N8N_MANUAL_WEBHOOK_URL`).
+- `triggerManualInviteBatch` em `lib/n8n.ts` ganhou log detalhado (url preview + err.name no catch + body da resposta).
+
+### ⚠️ PENDENTE — env Vercel
+Durante o teste de validação, logs mostraram URL ainda começando com `<http...` — env `N8N_MANUAL_WEBHOOK_URL` ainda tinha `<` e `>` em volta do valor. Após o usuário corrigir e redeployar (último deploy `dpl_HUhGZX...` READY), **o teste end-to-end não foi feito ainda**.
+
+Envs corretas Vercel Production (devem estar sem `<>`, sem aspas, sem espaços):
+```
+N8N_MANUAL_WEBHOOK_URL=https://andresantos.app.n8n.cloud/webhook/ovile-bulk-invite
+N8N_BROADCAST_WEBHOOK_URL=https://andresantos.app.n8n.cloud/webhook/ovile-broadcast
+```
+
+Validar: bulk-invite Foz → WF4 → 2-4min → lead recebe → SIM → WF2 → welcome com link OESTE.
+
+---
+
+**Última atualização anterior:** 2026-05-31 (Sprint 14 + WF2 reimport + fix phone lookup; card n8n nas Integrações; ebook capture aguardando decisão)
 **Plano de produto:** `.claude/ovile-plano.md` — SaaS multi-tenant eleitoral
 **Domínio:** ovile.com.br (migrado do projeto Ovile igreja)
 **GitHub:** https://github.com/edsonluizzz/base-andre-santos
