@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import {
   LayoutDashboard, Users, MessageCircle, Calendar,
-  Megaphone, Settings, LogOut, Menu, X, Shield, Star, Map, BarChart2, Network, Trophy, Target, ClipboardList, Camera, Award, Building2, Plus,
+  Megaphone, Settings, LogOut, Menu, X, Shield, Star, Map, BarChart2, Network, Target, ClipboardList, Camera, Award, Building2, Plus,
   ChevronLeft, ChevronRight, Sun, Moon, GraduationCap,
 } from "lucide-react";
 import { NotificationBell } from "@/components/notifications/notification-bell";
@@ -22,9 +22,7 @@ const navItems = [
   { href: "/dashboard",      icon: LayoutDashboard, label: "Dashboard",       minRole: "MEMBER", superAdminOnly: false },
   { href: "/treinamento",    icon: GraduationCap,    label: "Treinamento",     minRole: "MEMBER", superAdminOnly: false },
   { href: "/colaboradores",  icon: Users,            label: "Colaboradores",   minRole: "MEMBER", superAdminOnly: false },
-  { href: "/minha-celula",   icon: Star,             label: "Minha Célula",    minRole: "MEMBER", superAdminOnly: false },
   { href: "/celulas",        icon: Network,          label: "Células",         minRole: "MEMBER", superAdminOnly: false },
-  { href: "/ranking",        icon: Trophy,           label: "Ranking",         minRole: "MEMBER", superAdminOnly: false },
   { href: "/mapa",           icon: Map,              label: "Mapa de Apoio",   minRole: "LEADER", superAdminOnly: false },
   { href: "/grupos",         icon: MessageCircle,    label: "Grupos WhatsApp", minRole: "LEADER", superAdminOnly: false },
   { href: "/agenda",         icon: Calendar,         label: "Agenda",          minRole: "LEADER", superAdminOnly: false },
