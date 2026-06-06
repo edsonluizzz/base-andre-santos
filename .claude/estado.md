@@ -1,6 +1,44 @@
 # Estado — Ovile Eleitoral (Base André Santos)
 
-**Última atualização:** 2026-06-06 (Sprint 23 — unificação menus Células + design system upgrade)
+**Última atualização:** 2026-06-06 (Sprint 24 — auditoria completa + correções de segurança crítica)
+
+---
+
+## Sprint 24 (2026-06-06) — Auditoria Profunda + Segurança Crítica
+
+Auditoria em 4 eixos (segurança 4/10, performance 6.5/10, qualidade ~7/10, design 6.5/10).
+
+### Correções de segurança aplicadas (frente "Segurança crítica")
+- **Z-API hardcoded removido** (`api/n8n/config/route.ts`): instance/token/client-token
+  saíram do código → agora vêm de env vars `ZAPI_INSTANCE` / `ZAPI_TOKEN` / `ZAPI_CLIENT_TOKEN`.
+  ⚠️ **PENDENTE Edson:** setar as 3 env vars na Vercel (senão WhatsApp do André para) +
+  rotacionar no painel Z-API (credenciais antigas estiveram no Git = comprometidas).
+- **IDOR cadastro público fechado** (`lib/tenant-resolver.ts`): tenant resolve EXCLUSIVAMENTE
+  pelo host. Removidos ramos `header`/`explicit` que permitiam inserir leads cross-tenant
+  via `campaignId` no body. `cadastro/route.ts` não passa mais `explicitCampaign`.
+- **/api/settings GET** não retorna mais `googleRefreshToken` (mesmo criptografado) — só
+  `googleCalendarConnected` (boolean). `configuracoes/page.tsx` ajustado.
+- **5 endpoints debug/one-shot removidos:** `debug-env`, `debug-tenants`, `debug-city`,
+  `backfill-toledo`, `normalize-phones`. Mantidos `seed-tenants`/`seed-whatsapp-groups`
+  (provisionamento Miriam pendente).
+
+### Backlog da auditoria (NÃO feito ainda — frentes não escolhidas)
+- **Resiliência/burst:** índice em `phone` (busca `contains` faz full-scan), import N+1
+  sequencial sem `maxDuration`, `ranking`/`mapa`/`stats` puxam tabela inteira p/ agregar
+  em JS (deveriam usar `groupBy`). Risco de repetir Gospel Class via import XLSX.
+- **Build/qualidade:** `zod` não declarado no package.json (usado no cadastro público!),
+  `tsc --noEmit` nunca rodado (ignoreBuildErrors mascara), 130 console.log, dead code
+  (`src/context/`, `prisma.config.ts.bak`, `admin/seed-tenant-db/` vazio).
+  `prisma db push --accept-data-loss` roda no build de produção.
+- **Design/UX:** glow indigo (não-gold) no `button.tsx:13`, 21 de 23 páginas sem
+  `gradient-title`/`page-header`, empty states sem CTA, acessibilidade (1 aria-label no
+  app), tabelas sem `min-w` no mobile.
+- **Outros seguranças (não-críticos):** CSP com unsafe-inline/unsafe-eval, cron fail-open
+  se CRON_SECRET ausente, telegram webhook sem secret-token, comparação Bearer não timing-safe.
+
+---
+
+## Sprint 23 (2026-06-06) — Unificação Menus Células + Design System Upgrade (anterior)
 
 ---
 
