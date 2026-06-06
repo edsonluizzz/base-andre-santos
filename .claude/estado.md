@@ -1,6 +1,53 @@
 # Estado — Ovile Eleitoral (Base André Santos)
 
-**Última atualização:** 2026-06-05 (Sprint 22 — roteamento regional WhatsApp + padronização paths n8n WF4/WF5)
+**Última atualização:** 2026-06-06 (Sprint 23 — unificação menus Células + design system upgrade)
+
+---
+
+## Sprint 23 (2026-06-06) — Unificação Menus Células + Design System Upgrade
+
+### Unificação menus Células/Minha Célula/Ranking (concluído)
+- `/celulas/page.tsx` reescrito como página com 3 abas: **Minha Célula | Todas as Células | Ranking**
+- `/minha-celula/page.tsx` e `/ranking/page.tsx` → redirect simples para `/celulas`
+- Sidebar: 3 itens → 1 item "Células" (minRole MEMBER); `Trophy` removido do import, `Star` mantido (usado no header)
+- Mobile bottom nav: "Relatório" substituído por "Células"; indicador ativo corrigido (dot, não absolute bar)
+- Aba padrão: "Minha Célula" (estado local `useState`, sem `useSearchParams` — evita Suspense boundary)
+
+### Design System Upgrade (concluído)
+**`globals.css`:**
+- `glass-card` ganhou `transition` + hover glow (ring gold sutil)
+- `animate-fade-in-up` e variantes escalonadas (-1 a -4)
+- `animate-shimmer` para loading states (dark + light)
+- `.page-header` com underline gradiente gold via `::after`
+- `.gradient-title` texto em gradiente gold (dark + light)
+- `.stat-pill` badge numérico padrão
+- Body gradient mais rico (3 color stops)
+
+**Dashboard `page.tsx`:**
+- H1 com `gradient-title` e container `page-header`
+- Barras "Por Cargo" com cores individuais por cargo (`ROLE_BAR_COLOR`) e altura h-2
+- Cards de município: hover, número `text-2xl font-black`
+- Estado vazio "Próximos Eventos" com ícone + link "Agendar evento"
+- Contadores Minha Célula com bordas coloridas (primary/green)
+- Banner onboarding com ícone Star animado
+
+**KPI Card:**
+- Glow hover dinâmico baseado na cor da prop (não gold fixo)
+- Ícone container com fundo colorido a 8% de opacidade
+- Barra colorida na base (w-12 → w-full ao hover), derivada da cor
+- Padding mobile p-3 → p-3.5
+
+**Comunicados:**
+- Header responsivo (flex-col sm:flex-row) + `gradient-title`
+- Cards com barra lateral gold (gradient from-primary/60 to-primary/20)
+- Audiência e sentCount como pills com borda
+- Loading substituído por `animate-shimmer`
+- Estado vazio elaborado com ícone + CTA "Primeiro Comunicado"
+- Contador audiência como pill destacado
+
+**Sidebar:**
+- Grupos de navegação com labels: **Base / Coordenação / Administração** (apenas quando expandida)
+- Colapsada: comportamento inalterado (ícones + tooltip)
 
 ---
 
