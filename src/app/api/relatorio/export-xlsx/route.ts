@@ -7,6 +7,9 @@ import {
   CONTRIB_LABEL, ROLE_ORDER, PROFILE_ORDER, SUPPORT_ORDER,
 } from "@/lib/labels";
 
+// Geração de XLSX com a base inteira pode levar segundos — evita corte do Vercel.
+export const maxDuration = 60;
+
 
 // ─── Paleta ────────────────────────────────────────────────────────────────
 const C = {

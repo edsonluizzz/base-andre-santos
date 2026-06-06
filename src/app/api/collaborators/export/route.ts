@@ -4,6 +4,9 @@ import { getCampaignContext } from "@/lib/campaign-context";
 import { CollaboratorRole, CollaboratorStatus } from "@prisma/client";
 import ExcelJS from "exceljs";
 
+// Export da base inteira pode levar segundos — evita corte do Vercel.
+export const maxDuration = 60;
+
 const IMPORT_SOURCES = ["IMPORTACAO_CSV", "IMPORTACAO_XLSX"];
 
 const ROLE_LABEL: Record<string, string> = {

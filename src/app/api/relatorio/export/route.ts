@@ -3,6 +3,9 @@ import { auth } from "@/lib/auth";
 import { getCampaignContext } from "@/lib/campaign-context";
 import { ROLE_LABEL, STATUS_LABEL, SUPPORT_LABEL, PROFILE_LABEL, CONTRIB_LABEL } from "@/lib/labels";
 
+// Export da base inteira pode levar segundos — evita corte do Vercel.
+export const maxDuration = 60;
+
 
 export async function GET() {
   try {

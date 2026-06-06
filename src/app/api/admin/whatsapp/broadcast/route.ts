@@ -4,6 +4,9 @@ import { getCampaignContext } from "@/lib/campaign-context";
 import { resolveRecipients, type BroadcastFilters } from "@/lib/broadcast-helpers";
 import { z } from "zod";
 
+// Resolução de destinatários + criação de deliveries em massa — evita corte do Vercel.
+export const maxDuration = 60;
+
 const filtersSchema = z.object({
   source: z.union([z.string(), z.array(z.string())]).optional(),
   status: z.union([z.string(), z.array(z.string())]).optional(),
