@@ -5,6 +5,10 @@ import { normalizeCity } from "@/lib/utils";
 import { ensureCityGoal } from "@/lib/municipality-goals";
 import { triggerImportBatchWebhook } from "@/lib/n8n";
 
+// Import em lote (até 500 linhas + CEP lookups) pode levar alguns segundos —
+// evita o corte padrão do Vercel no meio do processamento.
+export const maxDuration = 60;
+
 
 const PROFILE_MAP: Record<string, string> = {
   "pastor": "PASTOR", "pr": "PASTOR", "pr.": "PASTOR",
@@ -116,17 +120,29 @@ export async function POST(req: NextRequest) {
     const errors: string[] = [];
     const newLeadsForWebhook: { collaboratorId: string; name: string; phone: string; source: string; city: string | null }[] = [];
     const cepCache = new Map<string, { city: string; neighborhood: string }>();
-    // Cache de email → userId para o campo responsavel_email
-    const userCache = new Map<string, string | null>();
 
-    async function resolveResponsavel(email: string): Promise<string | null> {
-      if (!email) return null;
-      if (userCache.has(email)) return userCache.get(email)!;
-      const u = await db.user.findUnique({ where: { email }, select: { id: true } });
-      const id = u?.id ?? null;
-      userCache.set(email, id);
-      return id;
+    // ── Pré-carregamento em lote (elimina N+1 — gargalo do incidente Gospel Class) ──
+    // 1) Duplicatas existentes: 1 query → Map por sufixo-8 do telefone, em vez de um
+    //    findFirst com `contains` (full-scan da tabela) por linha.
+    const existingPhones = await db.collaborator.findMany({
+      where: { campaignId: CID, phone: { not: null } },
+      select: { id: true, phone: true, lgpdConsent: true },
+    });
+    const dupBySuffix = new Map<string, { id: string; lgpdConsent: boolean }>();
+    for (const c of existingPhones) {
+      const sfx = (c.phone ?? "").replace(/\D/g, "").slice(-8);
+      if (sfx.length === 8 && !dupBySuffix.has(sfx)) {
+        dupBySuffix.set(sfx, { id: c.id, lgpdConsent: c.lgpdConsent });
+      }
     }
+    // 2) Responsáveis (responsavel_email): 1 query em vez de findUnique por linha.
+    const responsavelEmails = [...new Set(
+      rows.map((r) => (r.responsavel_email || r["responsavel email"] || "").trim().toLowerCase()).filter(Boolean)
+    )];
+    const responsavelUsers = responsavelEmails.length > 0
+      ? await db.user.findMany({ where: { email: { in: responsavelEmails } }, select: { id: true, email: true } })
+      : [];
+    const userIdByEmail = new Map(responsavelUsers.map((u) => [(u.email ?? "").toLowerCase(), u.id]));
 
     for (const row of rows) {
       const name = (row.nome || row.name || row.Nome || "").trim();
@@ -154,7 +170,7 @@ export async function POST(req: NextRequest) {
       const campaignRole = parseRole((row.cargo || row.Cargo || row.role || "").trim());
       const profile = parseProfile((row.perfil || row.profile || row.Perfil || "").trim());
       const responsavelEmail = (row.responsavel_email || row["responsavel email"] || "").trim();
-      const responsavelId = responsavelEmail ? await resolveResponsavel(responsavelEmail) : null;
+      const responsavelId = responsavelEmail ? (userIdByEmail.get(responsavelEmail.toLowerCase()) ?? null) : null;
       const statusRaw = (row.status || row.Status || "").trim();
       const status = statusRaw ? parseStatus(statusRaw) : "ACTIVE";
       // source = sourceOverride do request (default IMPORTACAO_XLSX)
@@ -173,14 +189,12 @@ export async function POST(req: NextRequest) {
       const lgpdConsent = lgpdRaw === "sim" || lgpdRaw === "yes" || lgpdRaw === "true";
 
       try {
-        // Verifica duplicata por telefone
+        // Verifica duplicata por telefone (lookup em memória, sem query por linha)
         let dup: { id: string; lgpdConsent: boolean } | null = null;
+        let phoneSuffix = "";
         if (phone) {
-          const cleanPhone = phone.replace(/\D/g, "");
-          dup = await db.collaborator.findFirst({
-            where: { campaignId: CID, phone: { contains: cleanPhone.slice(-8) } },
-            select: { id: true, lgpdConsent: true },
-          });
+          phoneSuffix = phone.replace(/\D/g, "").slice(-8);
+          if (phoneSuffix.length === 8) dup = dupBySuffix.get(phoneSuffix) ?? null;
         }
 
         const payload = {
@@ -218,6 +232,8 @@ export async function POST(req: NextRequest) {
             },
           });
           created++;
+          // Registra no Map para deduplicar telefones repetidos dentro do mesmo lote
+          if (phoneSuffix.length === 8) dupBySuffix.set(phoneSuffix, { id: newCollab.id, lgpdConsent });
           // Acumula leads com telefone para disparar n8n em lote
           if (newCollab.status === "LEAD" && newCollab.phone) {
             newLeadsForWebhook.push({
