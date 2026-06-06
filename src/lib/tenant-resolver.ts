@@ -1,10 +1,16 @@
 /**
- * Resolução de tenant para rotas públicas (sem sessão).
+ * Resolução de tenant para rotas PÚBLICAS (sem sessão).
+ *
+ * SEGURANÇA: o tenant é resolvido EXCLUSIVAMENTE pelo domínio do request.
+ * Rotas públicas NÃO confiam em campaignId vindo de body/query/header — isso
+ * permitiria escrita cross-tenant (IDOR): um anônimo enviaria o campaignId de
+ * outra campanha e inseriria leads no banco dela. O domínio onde o formulário
+ * está hospedado (ovile.com.br = André, miriam.ovile.com.br = Miriam) é a única
+ * fonte de verdade confiável.
+ *
  * Prioridade:
- *   1) header `x-campaign-id` (interno, usado por testes/server actions)
- *   2) campaign_id em query/body explicitamente
- *   3) host header → Campaign.domain
- *   4) fallback "andre-santos-2026" (campanha original)
+ *   1) host header → Campaign.domain (ativo)
+ *   2) fallback "andre-santos-2026" (campanha original)
  */
 
 import type { NextRequest } from "next/server";
@@ -18,26 +24,18 @@ const FALLBACK_CID = "andre-santos-2026";
 export interface PublicTenantContext {
   db: PrismaClient;
   cid: string;
-  source: "header" | "explicit" | "domain" | "fallback";
+  source: "domain" | "fallback";
 }
 
 export async function resolvePublicTenant(
-  req: NextRequest,
-  explicitCampaignId?: string | null
+  req: NextRequest
 ): Promise<PublicTenantContext> {
-  // 1) Header interno
-  const headerCid = req.headers.get("x-campaign-id");
-  if (headerCid) return buildContext(headerCid, "header");
-
-  // 2) Explícito (vindo do body/query do caller)
-  if (explicitCampaignId) return buildContext(explicitCampaignId, "explicit");
-
-  // 3) Domínio do request
+  // Domínio do request — única fonte confiável em rota pública
   const host = req.headers.get("host") ?? req.headers.get("x-forwarded-host") ?? "";
   const matched = await getCampaignByDomain(host);
   if (matched) return buildContext(matched.id, "domain", matched.dbUrl);
 
-  // 4) Fallback
+  // Fallback: campanha original
   return buildContext(FALLBACK_CID, "fallback");
 }
 

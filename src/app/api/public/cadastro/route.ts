@@ -45,7 +45,7 @@ const cadastroSchema = z.object({
   source: z.string().max(50).optional(),
   eventId: z.string().optional().or(z.literal("")),
   channel: z.enum(["INSTAGRAM", "WHATSAPP", "EVENTO", "LINK", "OUTRO"]).optional(),
-  campaignId: z.string().optional(),
+  // campaignId NÃO é aceito aqui: o tenant vem do domínio (anti-IDOR). Ver tenant-resolver.ts.
 });
 
 /**
@@ -68,15 +68,15 @@ export async function POST(req: NextRequest) {
       const msg = parsed.error.errors[0]?.message ?? "Dados inválidos";
       return NextResponse.json({ error: msg }, { status: 400, headers: cors });
     }
-    const { name, phone, city, neighborhood, email, contributionTypes, refUserId, refc, source: sourceParam, channel, campaignId: explicitCampaign } = parsed.data;
+    const { name, phone, city, neighborhood, email, contributionTypes, refUserId, refc, source: sourceParam, channel } = parsed.data;
 
     const cleanPhone = phone.replace(/\D/g, "");
     if (cleanPhone.length < 10) {
       return NextResponse.json({ error: "Número de WhatsApp inválido" }, { status: 400, headers: cors });
     }
 
-    // Resolve tenant pelo host (ou explicit/fallback)
-    const { db, cid: CID } = await resolvePublicTenant(req, explicitCampaign ?? null);
+    // Resolve tenant SEMPRE pelo host (anti-IDOR — nunca por input do usuário)
+    const { db, cid: CID } = await resolvePublicTenant(req);
 
     // 1) Dedup ANTES do rate-limit: cadastro repetido com mesmo phone retorna
     //    200 cached, sem consumir cota — evita falso 429 quando o usuário

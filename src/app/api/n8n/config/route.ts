@@ -11,11 +11,13 @@ function authCheck(req: NextRequest): boolean {
   return req.headers.get("authorization") === `Bearer ${key}`;
 }
 
-// Fallback global mantido APENAS para a campanha original (andre-santos-2026)
+// Fallback global mantido APENAS para a campanha original (andre-santos-2026).
+// Credenciais Z-API NUNCA hardcoded — vêm de env vars (Vercel) ou, idealmente,
+// de Campaign.zApi* (criptografado) via /configuracoes → Integrações.
 const LEGACY_CID = "andre-santos-2026";
-const LEGACY_ZAPI_INSTANCE = "3F3DB93D8FCE11FDF2216E531F01401A";
-const LEGACY_ZAPI_TOKEN = "30BC72BA6F47BE762085BE77";
-const LEGACY_ZAPI_CLIENT_TOKEN = "Ffd62620c670443338f8d7bd0936987a8S";
+const LEGACY_ZAPI_INSTANCE = process.env.ZAPI_INSTANCE ?? null;
+const LEGACY_ZAPI_TOKEN = process.env.ZAPI_TOKEN ?? null;
+const LEGACY_ZAPI_CLIENT_TOKEN = process.env.ZAPI_CLIENT_TOKEN ?? null;
 
 /**
  * GET /api/n8n/config

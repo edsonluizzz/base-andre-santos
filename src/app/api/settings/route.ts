@@ -11,8 +11,11 @@ export async function GET() {
       where: { id: "singleton" },
       update: {},
       create: { id: "singleton", campaignName: "Base Andre Santos", updatedAt: new Date() },
+      select: { id: true, campaignName: true, logoBase64: true, whatsappGroupLink: true, googleRefreshToken: true, updatedAt: true },
     });
-    return NextResponse.json(settings);
+    // Nunca expor o refresh token (mesmo criptografado) ao client — só o status.
+    const { googleRefreshToken, ...rest } = settings;
+    return NextResponse.json({ ...rest, googleCalendarConnected: Boolean(googleRefreshToken) });
   } catch (err) {
     console.error("[settings GET]", err);
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });

@@ -46,7 +46,7 @@ function ConfiguracoesContent() {
       .then((s) => {
         if (s.campaignName) setCampaignName(s.campaignName);
         if (s.logoBase64) setLogoPreview(s.logoBase64);
-        if (s.googleRefreshToken) setGcalConnected(true);
+        if (s.googleCalendarConnected) setGcalConnected(true);
         if (s.whatsappGroupLink) setWhatsappGroupLink(s.whatsappGroupLink);
       })
       .catch(() => {});
