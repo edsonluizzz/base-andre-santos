@@ -11,13 +11,20 @@ export async function GET() {
     const CID = cid;
     const uid = session.user.id;
 
-    const [uc, total, active, leads, inactive] = await Promise.all([
+    const [uc, grouped] = await Promise.all([
       db.userCampaign.findFirst({ where: { userId: uid, campaignId: CID }, select: { tier: true } }),
-      db.collaborator.count({ where: { campaignId: CID, registeredById: uid } }),
-      db.collaborator.count({ where: { campaignId: CID, registeredById: uid, status: "ACTIVE" } }),
-      db.collaborator.count({ where: { campaignId: CID, registeredById: uid, status: "LEAD" } }),
-      db.collaborator.count({ where: { campaignId: CID, registeredById: uid, status: "INACTIVE" } }),
+      db.collaborator.groupBy({
+        by: ["status"],
+        where: { campaignId: CID, registeredById: uid },
+        _count: { _all: true },
+      }),
     ]);
+
+    const countFor = (s: string) => grouped.find((g) => g.status === s)?._count._all ?? 0;
+    const active = countFor("ACTIVE");
+    const leads = countFor("LEAD");
+    const inactive = countFor("INACTIVE");
+    const total = grouped.reduce((sum, g) => sum + g._count._all, 0);
 
     return NextResponse.json({ tier: uc?.tier ?? "APOIADOR", total, active, leads, inactive, userId: uid });
   } catch (err) {

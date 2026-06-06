@@ -184,6 +184,10 @@ model Collaborator {
   @@index([supportStatus])
   @@index([campaignId, status])
   @@index([campaignId, createdAt])
+  // Sprint 24 — índices p/ queries quentes (ranking, my-cell, dashboard, fila n8n, stats)
+  @@index([campaignId, registeredById, status])
+  @@index([campaignId, lastContactedAt])
+  @@index([campaignId, supportStatus])
 }
 
 model Zone {

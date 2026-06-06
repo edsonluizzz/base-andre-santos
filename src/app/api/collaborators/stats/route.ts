@@ -34,21 +34,18 @@ export async function GET() {
     const fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
 
     const [
-      total,
-      confirmados, negociando, neutros, adversarios,
-      leads, inativos,
+      matrix,
       activeWithScore,
       contactadosHoje,
       newLast7d, newPrev7d,
       confirmados7d, confirmadosPrev7d,
     ] = await Promise.all([
-      db.collaborator.count({ where: { campaignId } }),
-      db.collaborator.count({ where: { campaignId, status: "ACTIVE", supportStatus: "CONFIRMADO" } }),
-      db.collaborator.count({ where: { campaignId, supportStatus: "NEGOCIANDO" } }),
-      db.collaborator.count({ where: { campaignId, supportStatus: "NEUTRO" } }),
-      db.collaborator.count({ where: { campaignId, supportStatus: "ADVERSARIO" } }),
-      db.collaborator.count({ where: { campaignId, status: "LEAD" } }),
-      db.collaborator.count({ where: { campaignId, status: "INACTIVE" } }),
+      // 1 groupBy cobre total + confirmados + negociando + neutros + adversarios + leads + inativos
+      db.collaborator.groupBy({
+        by: ["status", "supportStatus"],
+        where: { campaignId },
+        _count: { _all: true },
+      }),
       db.collaborator.aggregate({
         where: { campaignId, status: "ACTIVE", mobilizationScore: { not: null } },
         _avg: { mobilizationScore: true },
@@ -59,6 +56,17 @@ export async function GET() {
       db.collaborator.count({ where: { campaignId, supportStatus: "CONFIRMADO", updatedAt: { gte: sevenDaysAgo } } }),
       db.collaborator.count({ where: { campaignId, supportStatus: "CONFIRMADO", updatedAt: { gte: fourteenDaysAgo, lt: sevenDaysAgo } } }),
     ]);
+
+    // Deriva os contadores da matriz status × supportStatus
+    const sumWhere = (pred: (s: string, ss: string) => boolean) =>
+      matrix.reduce((acc, m) => acc + (pred(m.status, m.supportStatus) ? m._count._all : 0), 0);
+    const total       = matrix.reduce((acc, m) => acc + m._count._all, 0);
+    const confirmados = sumWhere((s, ss) => s === "ACTIVE" && ss === "CONFIRMADO");
+    const negociando  = sumWhere((s, ss) => ss === "NEGOCIANDO");
+    const neutros     = sumWhere((s, ss) => ss === "NEUTRO");
+    const adversarios = sumWhere((s, ss) => ss === "ADVERSARIO");
+    const leads       = sumWhere((s) => s === "LEAD");
+    const inativos    = sumWhere((s) => s === "INACTIVE");
 
     function deltaPct(curr: number, prev: number): number {
       if (prev === 0) return curr > 0 ? 100 : 0;
