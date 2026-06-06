@@ -32,6 +32,14 @@ const TIER_COLOR: Record<string, string> = {
   COORDENADOR: "text-yellow-400",
 };
 
+const ROLE_BAR_COLOR: Record<string, string> = {
+  COORD_GERAL:     "bg-yellow-400/70",
+  COORD_REGIONAL:  "bg-blue-400/70",
+  LIDER_MUNICIPAL: "bg-green-400/70",
+  LIDER_BAIRRO:    "bg-purple-400/70",
+  VOLUNTARIO:      "bg-slate-400/60",
+};
+
 const EVENT_TYPE_LABEL: Record<string, string> = {
   REUNIAO: "Reunião", CULTO: "Culto", PANFLETAGEM: "Panfletagem",
   TREINAMENTO: "Treinamento", VISITA: "Visita", OUTRO: "Outro",
@@ -86,8 +94,8 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-5 lg:space-y-8">
-      <div>
-        <h1 className="text-xl lg:text-2xl font-bold text-foreground">Dashboard</h1>
+      <div className="page-header">
+        <h1 className="text-xl lg:text-2xl font-bold gradient-title">Dashboard</h1>
         <p className="text-xs lg:text-sm text-muted-foreground mt-1">
           Bem-vindo, {session?.user?.name?.split(" ")[0]}. Visão geral da base de apoio.
         </p>
@@ -98,8 +106,11 @@ export default async function DashboardPage() {
       {/* Banner de boas-vindas para quem ainda não cadastrou ninguém */}
       {myTotal === 0 && (
         <Link href="/onboarding" className="block glass-card rounded-2xl p-4 lg:p-5 border border-primary/20 bg-primary/[0.04] hover:border-primary/40 transition-colors touchable tap-transparent">
-          <div className="flex items-center justify-between gap-4">
-            <div>
+          <div className="flex items-center justify-between gap-3">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0 mr-1">
+              <Star className="w-5 h-5 text-primary animate-pulse" />
+            </div>
+            <div className="flex-1">
               <p className="font-semibold text-foreground text-sm">Comece por aqui</p>
               <p className="text-xs text-muted-foreground mt-0.5">Veja como usar a base de apoio e compartilhe seu link de cadastro</p>
             </div>
@@ -133,8 +144,8 @@ export default async function DashboardPage() {
                     <span className={ROLE_COLOR[role]}>{label}</span>
                     <span className="text-muted-foreground">{count}</span>
                   </div>
-                  <div className="h-1.5 bg-foreground/[0.06] rounded-full">
-                    <div className="h-full bg-primary/60 rounded-full transition-all" style={{ width: `${pct}%` }} />
+                  <div className="h-2 bg-foreground/[0.06] rounded-full">
+                    <div className={`h-full ${ROLE_BAR_COLOR[role] ?? "bg-primary/60"} rounded-full transition-all`} style={{ width: `${pct}%` }} />
                   </div>
                 </div>
               );
@@ -157,11 +168,11 @@ export default async function DashboardPage() {
 
             {/* Contadores */}
             <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-xl p-3 text-center bg-foreground/[0.03] border border-foreground/[0.06]">
+              <div className="rounded-xl p-3 text-center bg-foreground/[0.03] border border-primary/[0.20]">
                 <p className="text-2xl font-bold text-primary">{myTotal}</p>
                 <p className="text-[10px] text-muted-foreground mt-0.5">Cadastrados</p>
               </div>
-              <div className="rounded-xl p-3 text-center bg-foreground/[0.03] border border-foreground/[0.06]">
+              <div className="rounded-xl p-3 text-center bg-foreground/[0.03] border border-green-500/20">
                 <p className="text-2xl font-bold text-green-400">{myActive}</p>
                 <p className="text-[10px] text-muted-foreground mt-0.5">Ativos</p>
               </div>
@@ -199,7 +210,15 @@ export default async function DashboardPage() {
             <Link href="/agenda" className="text-xs text-primary hover:text-primary/80">Ver todos</Link>
           </div>
           {upcomingEvents.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-6">Nenhum evento agendado</p>
+            <div className="flex flex-col items-center py-8 text-center">
+              <div className="w-10 h-10 rounded-full bg-primary/[0.08] border border-primary/[0.12] flex items-center justify-center mb-3">
+                <Calendar className="w-4 h-4 text-primary/60" />
+              </div>
+              <p className="text-sm text-muted-foreground">Sem eventos próximos</p>
+              <Link href="/agenda" className="text-xs text-primary/70 hover:text-primary mt-1 transition-colors">
+                Agendar evento
+              </Link>
+            </div>
           ) : (
             <div className="space-y-3">
               {upcomingEvents.map((ev) => (
@@ -245,12 +264,12 @@ export default async function DashboardPage() {
               const pct = data.total > 0 ? Math.round((data.confirmados / data.total) * 100) : 0;
               const borderColor = data.hasLeader ? "border-green-500/25" : "border-border";
               return (
-                <div key={city} className={`p-3 rounded-xl bg-white/[0.03] border ${borderColor} space-y-2`}>
+                <div key={city} className={`p-3 rounded-xl bg-white/[0.03] border ${borderColor} space-y-2 hover:bg-white/[0.05] transition-colors cursor-default`}>
                   <div className="flex items-center justify-between">
                     <p className="text-xs text-muted-foreground truncate flex-1">{city}</p>
                     {data.hasLeader && <span className="w-1.5 h-1.5 rounded-full bg-green-500 shrink-0 ml-1" />}
                   </div>
-                  <p className="text-xl font-bold text-primary">{data.total}</p>
+                  <p className="text-2xl font-black text-primary">{data.total}</p>
                   {data.total > 0 && (
                     <div className="space-y-1">
                       <div className="h-1 rounded-full bg-foreground/[0.06]">

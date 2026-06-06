@@ -167,9 +167,10 @@
   body {
     @apply text-foreground;
     background: #0a1220 radial-gradient(
-      ellipse 80% 50% at 50% -10%,
-      #1a2f4e 0%,
-      #0a1220 65%
+      ellipse 100% 60% at 50% -5%,
+      rgba(26,47,78,0.9) 0%,
+      rgba(15,28,50,0.5) 40%,
+      #0a1220 70%
     ) no-repeat;
     font-family: "Inter", "DM Sans", sans-serif;
     -webkit-font-smoothing: antialiased;
@@ -201,6 +202,20 @@
     box-shadow:
       inset 0 1px 0 rgba(255,255,255,0.08),
       0 4px 16px rgba(0,0,0,0.25);
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  }
+
+  .glass-card:hover {
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.10),
+      0 4px 24px rgba(0,0,0,0.35),
+      0 0 0 1px rgba(212,175,55,0.06);
+  }
+  html.light .glass-card:hover {
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.95),
+      0 4px 20px rgba(15,23,42,0.10),
+      0 0 0 1px rgba(154,122,0,0.08);
   }
 
   /* Mobile/tablet: SEM backdrop-filter — destrói performance de scroll
@@ -231,6 +246,58 @@
   .gold-glow {
     box-shadow: 0 0 20px rgba(212,175,55,0.20);
   }
+
+  /* Padrão de cabeçalho de página */
+  .page-header {
+    position: relative;
+    padding-bottom: 0.875rem;
+    margin-bottom: 0.25rem;
+  }
+  .page-header::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 3rem;
+    height: 2px;
+    background: linear-gradient(to right, rgba(212,175,55,0.7), rgba(212,175,55,0));
+    border-radius: 999px;
+  }
+  html.light .page-header::after {
+    background: linear-gradient(to right, rgba(154,122,0,0.6), rgba(154,122,0,0));
+  }
+
+  /* Texto com gradiente gold */
+  .gradient-title {
+    background: linear-gradient(135deg, #f0d060 0%, #d4af37 50%, #c4952a 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  html.light .gradient-title {
+    background: linear-gradient(135deg, #9a7a00 0%, #7a5f00 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Stat pill — badge numérico pequeno */
+  .stat-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.125rem 0.5rem;
+    border-radius: 999px;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    background: rgba(212,175,55,0.12);
+    color: rgba(212,175,55,0.9);
+    border: 1px solid rgba(212,175,55,0.20);
+  }
+  html.light .stat-pill {
+    background: rgba(154,122,0,0.10);
+    color: rgba(154,122,0,0.85);
+    border-color: rgba(154,122,0,0.18);
+  }
 }
 
 /* ── Animations ───────────────────────────────────────── */
@@ -242,6 +309,32 @@
     to   { opacity: 1; transform: translateY(0); }
   }
   .page-transition { animation: page-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+  /* Animações de entrada escalonadas */
+  @keyframes fade-in-up {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .animate-fade-in-up { animation: fade-in-up 0.4s cubic-bezier(0.16,1,0.3,1) both; }
+  .animate-fade-in-up-1 { animation: fade-in-up 0.4s cubic-bezier(0.16,1,0.3,1) 0.05s both; }
+  .animate-fade-in-up-2 { animation: fade-in-up 0.4s cubic-bezier(0.16,1,0.3,1) 0.10s both; }
+  .animate-fade-in-up-3 { animation: fade-in-up 0.4s cubic-bezier(0.16,1,0.3,1) 0.15s both; }
+  .animate-fade-in-up-4 { animation: fade-in-up 0.4s cubic-bezier(0.16,1,0.3,1) 0.20s both; }
+
+  /* Shimmer para loading states */
+  @keyframes shimmer {
+    from { background-position: -200% 0; }
+    to   { background-position: 200% 0; }
+  }
+  .animate-shimmer {
+    background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.07) 50%, rgba(255,255,255,0.03) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.8s linear infinite;
+  }
+  html.light .animate-shimmer {
+    background: linear-gradient(90deg, rgba(0,0,0,0.03) 25%, rgba(0,0,0,0.07) 50%, rgba(0,0,0,0.03) 75%);
+    background-size: 200% 100%;
+  }
 }
 
 /* ── Scrollbar ───────────────────────────────────────── */

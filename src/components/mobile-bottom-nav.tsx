@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Users, Calendar, BarChart2, Menu } from "lucide-react";
+import { LayoutDashboard, Users, Calendar, Network, Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface NavItem {
@@ -15,7 +15,7 @@ const PRIMARY_ITEMS: NavItem[] = [
   { href: "/dashboard",     icon: LayoutDashboard, label: "Início" },
   { href: "/colaboradores", icon: Users,           label: "Apoiadores" },
   { href: "/agenda",        icon: Calendar,        label: "Agenda" },
-  { href: "/relatorio",     icon: BarChart2,       label: "Relatório" },
+  { href: "/celulas",       icon: Network,         label: "Células" },
 ];
 
 interface MobileBottomNavProps {
@@ -43,7 +43,7 @@ export function MobileBottomNav({ onOpenMenu }: MobileBottomNavProps) {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex-1 flex flex-col items-center justify-center gap-0.5 tap-transparent touchable",
+                "flex-1 flex flex-col items-center justify-center gap-1 tap-transparent touchable",
                 "min-w-0 px-1",
                 active ? "text-primary" : "text-muted-foreground"
               )}
@@ -53,7 +53,7 @@ export function MobileBottomNav({ onOpenMenu }: MobileBottomNavProps) {
                 {item.label}
               </span>
               {active && (
-                <span className="absolute top-0 h-0.5 w-10 bg-primary rounded-full" />
+                <span className="w-1 h-1 rounded-full bg-primary mt-0.5" />
               )}
             </Link>
           );

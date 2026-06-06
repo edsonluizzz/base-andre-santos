@@ -84,12 +84,14 @@ export default function ComunicadosPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Comunicados</h1>
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+        <div className="page-header">
+          <h1 className="text-2xl font-bold gradient-title flex items-center gap-2">
+            <Megaphone className="w-6 h-6 text-primary" /> Comunicados
+          </h1>
           <p className="text-sm text-muted-foreground mt-1">Registro de comunicações da base de apoio</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 shrink-0">
           <Button asChild variant="outline" className="gap-2">
             <Link href="/comunicados/disparar">
               <MessageCircle className="w-4 h-4" /> Disparar WhatsApp
@@ -107,20 +109,20 @@ export default function ComunicadosPage() {
       {loading ? (
         <div className="space-y-3">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="glass-card rounded-xl p-5 border border-white/[0.08] animate-pulse">
+            <div key={i} className="glass-card rounded-xl p-5 border border-white/[0.08]">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1 space-y-2">
-                  <div className="h-4 bg-white/[0.07] rounded w-2/5" />
+                  <div className="h-4 rounded w-2/5 animate-shimmer" />
                   <div className="flex gap-3">
-                    <div className="h-3 bg-white/[0.04] rounded w-28" />
-                    <div className="h-3 bg-white/[0.04] rounded w-20" />
+                    <div className="h-3 rounded w-28 animate-shimmer" />
+                    <div className="h-3 rounded w-20 animate-shimmer" />
                   </div>
-                  <div className="h-3 bg-white/[0.04] rounded w-full" />
-                  <div className="h-3 bg-white/[0.04] rounded w-3/4" />
+                  <div className="h-3 rounded w-full animate-shimmer" />
+                  <div className="h-3 rounded w-3/4 animate-shimmer" />
                 </div>
                 <div className="flex gap-1.5 shrink-0">
-                  <div className="h-8 w-8 bg-white/[0.05] rounded-md" />
-                  <div className="h-8 w-8 bg-white/[0.05] rounded-md" />
+                  <div className="h-8 w-8 rounded-md animate-shimmer" />
+                  <div className="h-8 w-8 rounded-md animate-shimmer" />
                 </div>
               </div>
             </div>
@@ -128,33 +130,47 @@ export default function ComunicadosPage() {
         </div>
       ) : broadcasts.length === 0 ? (
         <div className="glass-card rounded-2xl p-12 text-center border border-white/[0.08]">
-          <Megaphone className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
-          <p className="text-muted-foreground">Nenhum comunicado registrado</p>
+          <div className="w-16 h-16 rounded-2xl bg-primary/[0.07] border border-primary/[0.12] flex items-center justify-center mx-auto mb-4">
+            <Megaphone className="w-7 h-7 text-primary/60" />
+          </div>
+          <p className="font-medium text-foreground mb-1">Nenhum comunicado enviado</p>
+          <p className="text-sm text-muted-foreground mb-4">Mantenha sua base informada sobre novidades e eventos</p>
+          <Button
+            onClick={() => { setForm({ title: "", message: "", audience: "ALL" }); setDialogOpen(true); }}
+            className="bg-primary text-primary-foreground hover:bg-primary/90 gap-2 mx-auto"
+          >
+            <Plus className="w-4 h-4" /> Primeiro Comunicado
+          </Button>
         </div>
       ) : (
         <div className="space-y-3">
           {broadcasts.map((b) => (
-            <div key={b.id} className="glass-card rounded-xl p-5 border border-white/[0.08]">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-foreground">{b.title}</p>
-                  <div className="flex items-center gap-3 mt-0.5 flex-wrap">
-                    <span className="text-xs text-muted-foreground flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
-                      {format(new Date(b.createdAt), "dd MMM yyyy 'às' HH:mm", { locale: ptBR })}
-                    </span>
-                    <span className="text-xs flex items-center gap-1 text-primary/70">
-                      <Users className="w-3 h-3" />
-                      {audienceLabel(b.audience)}
-                    </span>
-                    {b.sentCount > 0 && (
-                      <span className="text-xs flex items-center gap-1 text-green-400/80">
-                        <Mail className="w-3 h-3" />
-                        {b.sentCount} e-mail{b.sentCount !== 1 ? "s" : ""} enviado{b.sentCount !== 1 ? "s" : ""}
-                      </span>
-                    )}
+            <div key={b.id} className="glass-card rounded-xl border border-white/[0.08] overflow-hidden">
+              <div className="flex gap-0">
+                <div className="w-1 shrink-0 bg-gradient-to-b from-primary/60 to-primary/20 rounded-l-xl" />
+                <div className="flex-1 p-4 sm:p-5">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-sm text-foreground">{b.title}</p>
+                      <div className="flex items-center gap-2 sm:gap-3 mt-1 flex-wrap">
+                        <span className="text-[11px] text-muted-foreground flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          {format(new Date(b.createdAt), "dd MMM yyyy 'às' HH:mm", { locale: ptBR })}
+                        </span>
+                        <span className="text-[11px] flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/[0.08] text-primary/80 border border-primary/[0.12]">
+                          <Users className="w-2.5 h-2.5" />
+                          {audienceLabel(b.audience)}
+                        </span>
+                        {b.sentCount > 0 && (
+                          <span className="text-[11px] flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-500/[0.08] text-green-400/80 border border-green-500/[0.12]">
+                            <Mail className="w-2.5 h-2.5" />
+                            {b.sentCount} enviado{b.sentCount !== 1 ? "s" : ""}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-2.5 whitespace-pre-line line-clamp-3">{b.message}</p>
+                    </div>
                   </div>
-                  <p className="text-sm text-muted-foreground mt-3 whitespace-pre-line">{b.message}</p>
                 </div>
               </div>
             </div>
@@ -180,10 +196,16 @@ export default function ComunicadosPage() {
                   ))}
                 </SelectContent>
               </Select>
-              <p className="text-[11px] text-muted-foreground mt-1.5 flex items-center gap-1">
-                <Users className="w-3 h-3" />
-                {countLoading ? "Calculando..." : audienceCount !== null ? `${audienceCount} pessoa${audienceCount !== 1 ? "s" : ""} neste grupo` : ""}
-              </p>
+              {countLoading ? (
+                <span className="text-[11px] text-muted-foreground flex items-center gap-1 mt-1.5">
+                  <Users className="w-3 h-3" /> Calculando...
+                </span>
+              ) : audienceCount !== null ? (
+                <span className="inline-flex items-center gap-1 mt-1.5 text-[11px] px-2 py-0.5 rounded-full bg-primary/[0.08] text-primary/80 border border-primary/[0.12]">
+                  <Users className="w-2.5 h-2.5" />
+                  {audienceCount} pessoa{audienceCount !== 1 ? "s" : ""} receberão
+                </span>
+              ) : null}
             </div>
             <div>
               <Label>Mensagem *</Label>

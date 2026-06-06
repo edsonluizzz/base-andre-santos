@@ -18,9 +18,23 @@ function easeOutExpo(t: number) {
   return t === 1 ? 1 : 1 - Math.pow(2, -10 * t);
 }
 
+/** Mapeia a classe Tailwind de cor para o prefixo rgba (sem alpha) */
+const colorMap: Record<string, string> = {
+  "text-primary":    "rgba(212,175,55,",
+  "text-green-400":  "rgba(74,222,128,",
+  "text-blue-400":   "rgba(96,165,250,",
+  "text-purple-400": "rgba(192,132,252,",
+  "text-amber-400":  "rgba(251,191,36,",
+};
+
 export function KpiCard({ icon, label, value, href, color, delay = 0 }: KpiCardProps) {
   const numRef  = useRef<HTMLSpanElement>(null);
   const cardRef = useRef<HTMLAnchorElement>(null);
+
+  // Resolve a cor base (rgba sem alpha) a partir da classe Tailwind recebida.
+  const baseColor =
+    Object.entries(colorMap).find(([k]) => color.includes(k.split("-").slice(-2).join("-")))?.[1] ??
+    "rgba(212,175,55,";
 
   /* Animação de entrada da card (translate + fade) */
   useEffect(() => {
@@ -66,19 +80,22 @@ export function KpiCard({ icon, label, value, href, color, delay = 0 }: KpiCardP
     <Link
       ref={cardRef}
       href={href}
-      className="glass-card rounded-2xl p-3 lg:p-5 border border-border group relative overflow-hidden touchable tap-transparent"
+      className="glass-card rounded-2xl p-3.5 lg:p-5 border border-border group relative overflow-hidden touchable tap-transparent"
       style={{ opacity: 0, transform: "translateY(16px)" }}
     >
-      {/* Glow hover radial */}
+      {/* Glow hover radial — usa a cor da prop */}
       <div
         className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none rounded-2xl"
-        style={{ background: "radial-gradient(ellipse 80% 60% at 50% 100%, rgba(212,175,55,0.06) 0%, transparent 70%)" }}
+        style={{ background: `radial-gradient(ellipse 80% 60% at 50% 100%, ${baseColor}0.08) 0%, transparent 70%)` }}
       />
 
       <div className="relative z-10">
         <div className="flex items-center justify-between mb-2 lg:mb-3">
           <span className="text-[10px] lg:text-xs text-muted-foreground font-medium tracking-wide truncate pr-1">{label}</span>
-          <div className="w-7 h-7 lg:w-8 lg:h-8 rounded-xl flex items-center justify-center bg-foreground/[0.04] border border-foreground/[0.06] group-hover:border-primary/20 transition-colors shrink-0">
+          <div
+            className="w-7 h-7 lg:w-8 lg:h-8 rounded-xl flex items-center justify-center border border-foreground/[0.06] group-hover:border-primary/20 transition-colors shrink-0"
+            style={{ background: `${baseColor}0.08)` }}
+          >
             {icon}
           </div>
         </div>
@@ -87,10 +104,10 @@ export function KpiCard({ icon, label, value, href, color, delay = 0 }: KpiCardP
           <span ref={numRef}>0</span>
         </p>
 
-        {/* Barra decorativa */}
+        {/* Barra colorida na base — sempre visível (3rem), expande ao hover */}
         <div
-          className="mt-2 lg:mt-3 h-px w-0 group-hover:w-full transition-all duration-500 ease-out"
-          style={{ background: "linear-gradient(to right, rgba(212,175,55,0.4), transparent)" }}
+          className="mt-2 lg:mt-3 h-px w-12 group-hover:w-full transition-all duration-500 ease-out rounded-full"
+          style={{ background: `linear-gradient(to right, ${baseColor}0.6), ${baseColor}0.1))` }}
         />
       </div>
     </Link>

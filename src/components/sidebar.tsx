@@ -44,6 +44,12 @@ const ROLE_LABEL: Record<string, string> = {
   MEMBER: "Colaborador",
 };
 
+const NAV_GROUPS = [
+  { label: "Base",          minRole: "MEMBER", maxRole: "MEMBER" },
+  { label: "Coordenação",   minRole: "LEADER", maxRole: "LEADER" },
+  { label: "Administração", minRole: "ADMIN",  maxRole: "ADMIN"  },
+];
+
 export function Sidebar({
   serverRole,
   serverIsSuperAdmin,
@@ -150,38 +156,70 @@ export function Sidebar({
 
         {/* Nav */}
         <nav className={cn("flex-1 p-2 space-y-0.5 overflow-y-auto", isCollapsed ? "px-2" : "px-3")}>
-          {finalItems.map((item) => {
-            const active = pathname.startsWith(item.href);
-            const linkEl = (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setMobileOpen(false)}
-                className={cn(
-                  "flex items-center gap-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200",
-                  isCollapsed ? "px-0 justify-center" : "px-3",
-                  active
-                    ? "bg-primary/10 text-primary border border-primary/20"
-                    : "text-muted-foreground hover:text-sidebar-foreground hover:bg-foreground/[0.05] hover:translate-x-0.5"
-                )}
-                style={active ? { boxShadow: "inset 3px 0 0 var(--primary)" } : undefined}
-              >
-                <item.icon className="w-4 h-4 flex-shrink-0" />
-                {!isCollapsed && item.label}
-              </Link>
-            );
-
-            if (!isCollapsed) return <div key={item.href}>{linkEl}</div>;
-
-            return (
-              <Tooltip key={item.href}>
-                <TooltipTrigger asChild>{linkEl}</TooltipTrigger>
-                <TooltipContent side="right" className="font-medium">
-                  {item.label}
-                </TooltipContent>
-              </Tooltip>
-            );
-          })}
+          {!isCollapsed ? (
+            <>
+              {NAV_GROUPS.map((group) => {
+                const groupItems = finalItems.filter((item) =>
+                  ROLE_RANK[item.minRole] === ROLE_RANK[group.minRole] &&
+                  ROLE_RANK[item.minRole] <= userRank
+                );
+                if (groupItems.length === 0) return null;
+                return (
+                  <div key={group.label} className="mb-1">
+                    <p className="text-[9px] uppercase tracking-[2px] text-muted-foreground/40 px-3 pt-3 pb-1 select-none">
+                      {group.label}
+                    </p>
+                    {groupItems.map((item) => {
+                      const active = pathname.startsWith(item.href);
+                      return (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          onClick={() => setMobileOpen(false)}
+                          className={cn(
+                            "flex items-center gap-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 px-3",
+                            active
+                              ? "bg-primary/10 text-primary border border-primary/20"
+                              : "text-muted-foreground hover:text-sidebar-foreground hover:bg-foreground/[0.05] hover:translate-x-0.5"
+                          )}
+                          style={active ? { boxShadow: "inset 3px 0 0 var(--primary)" } : undefined}
+                        >
+                          <item.icon className="w-4 h-4 flex-shrink-0" />
+                          {item.label}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                );
+              })}
+            </>
+          ) : (
+            finalItems.map((item) => {
+              const active = pathname.startsWith(item.href);
+              const linkEl = (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setMobileOpen(false)}
+                  className={cn(
+                    "flex items-center gap-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 px-0 justify-center",
+                    active
+                      ? "bg-primary/10 text-primary border border-primary/20"
+                      : "text-muted-foreground hover:text-sidebar-foreground hover:bg-foreground/[0.05]"
+                  )}
+                  style={active ? { boxShadow: "inset 3px 0 0 var(--primary)" } : undefined}
+                >
+                  <item.icon className="w-4 h-4 flex-shrink-0" />
+                </Link>
+              );
+              return (
+                <Tooltip key={item.href}>
+                  <TooltipTrigger asChild>{linkEl}</TooltipTrigger>
+                  <TooltipContent side="right" className="font-medium">{item.label}</TooltipContent>
+                </Tooltip>
+              );
+            })
+          )}
         </nav>
 
         {/* Campaign switcher — visível apenas para super-admin */}
