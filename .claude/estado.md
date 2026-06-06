@@ -4,6 +4,24 @@
 
 ---
 
+## Incidente — Z-API Client-Token corrompido (2026-06-06, RESOLVIDO)
+
+**Sintoma:** WhatsApp parou de enviar (WF3/WF4) após a remoção do Z-API hardcoded.
+**Causa raiz:** `Campaign.zApiClientToken` no banco estava num formato de cripto ANTIGO
+(sem prefixo `v1:`). `decrypt()` (crypto.ts:59) retorna o valor cru quando não há `v1:`
+(assume "legado plain") → entregava 104 chars de ciphertext ao n8n → Z-API rejeitava o
+header Client-Token → 0 mensagens. Antes ficava mascarado porque o código usava o
+Client-Token hardcoded como fallback; ao removê-lo (Sprint 24 segurança), o valor
+corrompido do banco passou a valer.
+**Fix:** Edson recolou o Client-Token correto em /configuracoes → Integrações → re-salvou
+com encrypt() atual (gera `v1:`) → decrypt volta a funcionar (34 chars). Diagnóstico via
+`GET /api/n8n/config` (clientTokenLen 104→34) + Z-API `/status` (connected=true).
+**Lição:** ao migrar/remover fallback de credencial, validar que o valor do banco
+descriptografa para um formato plausível. Possível hardening futuro: sanity-check de
+comprimento no config/route.ts (cair no env fallback se o token resolvido for implausível).
+
+---
+
 ## Sprint 24 (2026-06-06) — Auditoria Profunda + Segurança Crítica
 
 Auditoria em 4 eixos (segurança 4/10, performance 6.5/10, qualidade ~7/10, design 6.5/10).
