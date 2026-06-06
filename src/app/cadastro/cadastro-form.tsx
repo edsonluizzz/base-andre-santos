@@ -5,7 +5,8 @@ import { useSearchParams } from "next/navigation";
 import { Star, CheckCircle2, ChevronRight, Users, MapPin, Smartphone, Copy, Check, Share2, UserPlus } from "lucide-react";
 import { CONTRIBUTION_OPTIONS } from "@/lib/contribution";
 
-// Substitua pelo ID real do vídeo do YouTube do André (parte final da URL: youtube.com/watch?v=ISSO)
+// Short do André no YouTube (@AndreSantos777) — lançamento da pré-candidatura.
+// Toca em autoplay mutado (mute=1) para não ser bloqueado pelos navegadores.
 const YT_VIDEO_ID = "z_9zver8iN0";
 // Página /cadastro é exclusiva da campanha André Santos — link fixo (não vem do Settings).
 const WA_GROUP_URL = "https://chat.whatsapp.com/GbrqkfHopOEDlgx0Rt0mCp?s=cl&p=a&ilr=1";
@@ -240,7 +241,7 @@ export function CadastroForm() {
           {YT_VIDEO_ID && YT_VIDEO_ID !== "COLE_O_ID_AQUI" && (
             <div className="flex justify-center rounded-2xl overflow-hidden" style={{ border: "1px solid rgba(212,175,55,0.2)" }}>
               <iframe
-                src={`https://www.youtube-nocookie.com/embed/${YT_VIDEO_ID}?autoplay=1&rel=0&modestbranding=1`}
+                src={`https://www.youtube-nocookie.com/embed/${YT_VIDEO_ID}?autoplay=1&mute=1&playsinline=1&rel=0&modestbranding=1`}
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
                 className="w-full max-w-xs aspect-[9/16]"
