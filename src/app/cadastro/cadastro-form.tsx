@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { Star, CheckCircle2, ChevronRight, Users, MapPin, Smartphone, Copy, Check, Share2 } from "lucide-react";
+import { Star, CheckCircle2, ChevronRight, Users, MapPin, Smartphone, Copy, Check, Share2, UserPlus } from "lucide-react";
 import { CONTRIBUTION_OPTIONS } from "@/lib/contribution";
 
 // Substitua pelo ID real do vídeo do YouTube do André (parte final da URL: youtube.com/watch?v=ISSO)
@@ -44,6 +44,10 @@ export function CadastroForm() {
   // Link do grupo fixo — página /cadastro é exclusiva do André
   const waGroupUrl = WA_GROUP_URL;
 
+  // Modo evento: cadastro presencial em sequência (tablet/totem) — não redireciona
+  // automaticamente pro grupo, para permitir cadastrar a próxima pessoa.
+  const isEventMode = sourceParam === "EVENTO";
+
   useEffect(() => {
     fetch("/api/public/stats")
       .then((r) => r.ok ? r.json() : null)
@@ -61,11 +65,11 @@ export function CadastroForm() {
 
   // Contagem regressiva para o grupo WhatsApp
   useEffect(() => {
-    if (step !== "success" || redirectCancelled) return;
+    if (step !== "success" || redirectCancelled || isEventMode) return;
     if (countdown <= 0) { window.location.href = waGroupUrl; return; }
     const t = setTimeout(() => setCountdown((c) => c - 1), 1000);
     return () => clearTimeout(t);
-  }, [step, countdown, redirectCancelled, waGroupUrl]);
+  }, [step, countdown, redirectCancelled, isEventMode, waGroupUrl]);
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -184,6 +188,15 @@ export function CadastroForm() {
             </div>
           </div>
 
+          {/* Cadastrar próximo — CTA destacado (essencial para cadastro em eventos) */}
+          <button
+            onClick={resetForm}
+            className="w-full flex items-center justify-center gap-2 rounded-2xl py-4 text-sm font-bold transition-all active:scale-[0.98]"
+            style={{ background: "#d4af37", color: "#0a1220" }}
+          >
+            <UserPlus className="w-4 h-4" /> Cadastrar próxima pessoa
+          </button>
+
           {/* Grupo WhatsApp — redirecionamento automático */}
           <div className="rounded-2xl p-4 space-y-3" style={{ background: "rgba(37,211,102,0.08)", border: "1px solid rgba(37,211,102,0.3)" }}>
             <div className="flex items-center justify-between">
@@ -194,11 +207,11 @@ export function CadastroForm() {
                 </svg>
                 <p className="text-sm font-semibold" style={{ color: "#25d366" }}>Grupo de Apoiadores</p>
               </div>
-              {!redirectCancelled && (
+              {!redirectCancelled && !isEventMode && (
                 <button onClick={() => setRedirectCancelled(true)} className="text-xs text-slate-500 underline underline-offset-2">Pular</button>
               )}
             </div>
-            {!redirectCancelled ? (
+            {!redirectCancelled && !isEventMode ? (
               <>
                 <p className="text-xs text-slate-400">
                   Seu link foi copiado! Entrando no grupo em <span className="font-bold text-white">{countdown}s</span>...
@@ -274,9 +287,6 @@ export function CadastroForm() {
             </div>
           )}
 
-          <button onClick={resetForm} className="w-full text-sm underline underline-offset-2 py-2" style={{ color: "rgba(212,175,55,0.6)" }}>
-            Cadastrar outra pessoa
-          </button>
         </div>
       </div>
     );
