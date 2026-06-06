@@ -11,8 +11,9 @@ Auditoria em 4 eixos (segurança 4/10, performance 6.5/10, qualidade ~7/10, desi
 ### Correções de segurança aplicadas (frente "Segurança crítica")
 - **Z-API hardcoded removido** (`api/n8n/config/route.ts`): instance/token/client-token
   saíram do código → agora vêm de env vars `ZAPI_INSTANCE` / `ZAPI_TOKEN` / `ZAPI_CLIENT_TOKEN`.
-  ⚠️ **PENDENTE Edson:** setar as 3 env vars na Vercel (senão WhatsApp do André para) +
-  rotacionar no painel Z-API (credenciais antigas estiveram no Git = comprometidas).
+  ✅ **RESOLVIDO 2026-06-06:** Edson rotacionou no Z-API e salvou em /configuracoes →
+  Integrações (gravado criptografado em Campaign.zApi*, lido via getCampaignIntegrations).
+  Não precisou de env var (banco tem prioridade). Credenciais antigas do Git = lixo.
 - **IDOR cadastro público fechado** (`lib/tenant-resolver.ts`): tenant resolve EXCLUSIVAMENTE
   pelo host. Removidos ramos `header`/`explicit` que permitiam inserir leads cross-tenant
   via `campaignId` no body. `cadastro/route.ts` não passa mais `explicitCampaign`.
