@@ -56,10 +56,19 @@ Auditoria em 4 eixos (segurança 4/10, performance 6.5/10, qualidade ~7/10, desi
 - ℹ️ `xlsx` (parse client) e `exceljs` (geração server) são ambos necessários — não remover.
 
 ### Backlog da auditoria (frentes não escolhidas)
-- **Build/qualidade:** `zod` não declarado no package.json (usado no cadastro público!),
-  `tsc --noEmit` nunca rodado (ignoreBuildErrors mascara), 130 console.log, dead code
-  (`src/context/`, `prisma.config.ts.bak`, `admin/seed-tenant-db/` vazio).
-  `prisma db push --accept-data-loss` roda no build de produção.
+### Frente "Build/qualidade" — PARCIAL (2026-06-06)
+- ✅ `zod` declarado em package.json (^3.25.76) + lock sincronizado (era transitivo; risco
+  de quebrar build da captação de leads)
+- ✅ Dead code removido: `src/context/` (vazia), `api/admin/seed-tenant-db/` (vazia),
+  `prisma.config.ts.bak`
+- ⚠️ `tsc --noEmit` NÃO rodado: ambiente do Drive tem node_modules incompleto e `npm install`
+  trava/lentíssimo (sync do Drive). Recomendação: rodar `npm install && npx tsc --noEmit`
+  num clone local fora do Drive, OU setar `ignoreBuildErrors:false` num deploy de preview
+  pra ver os erros no log da Vercel. Auditoria estática não achou erros graves além de casts contidos.
+- 📌 NÃO feito (decisão/risco): `prisma db push --accept-data-loss` no build → migrate deploy
+  (exige migrations versionadas); 130 console.log → logger condicional; next-auth.d.ts p/ tipos.
+
+### Backlog da auditoria (frente não escolhida)
 - **Design/UX:** glow indigo (não-gold) no `button.tsx:13`, 21 de 23 páginas sem
   `gradient-title`/`page-header`, empty states sem CTA, acessibilidade (1 aria-label no
   app), tabelas sem `min-w` no mobile.
