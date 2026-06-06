@@ -23,10 +23,21 @@ Auditoria em 4 eixos (segurança 4/10, performance 6.5/10, qualidade ~7/10, desi
   `backfill-toledo`, `normalize-phones`. Mantidos `seed-tenants`/`seed-whatsapp-groups`
   (provisionamento Miriam pendente).
 
-### Backlog da auditoria (NÃO feito ainda — frentes não escolhidas)
-- **Resiliência/burst:** índice em `phone` (busca `contains` faz full-scan), import N+1
-  sequencial sem `maxDuration`, `ranking`/`mapa`/`stats` puxam tabela inteira p/ agregar
-  em JS (deveriam usar `groupBy`). Risco de repetir Gospel Class via import XLSX.
+### Frente "Resiliência/burst" — APLICADA (2026-06-06)
+- ✅ +3 índices quentes em Collaborator (registeredById+status, lastContactedAt, supportStatus)
+- ✅ `ranking`/`my-cell`/`collaborators/stats`/`mapa` migrados para `groupBy` (não puxam
+  mais a tabela inteira p/ agregar em JS)
+- ✅ Import em lote: N+1 eliminado (dedup + responsável pré-carregados em Map/IN; 1000+
+  queries → ~2 + creates) + `maxDuration=60`
+- ✅ `maxDuration=60` em relatorio/export, export-xlsx, collaborators/export, whatsapp/broadcast
+- ⚠️ **PENDENTE (requer backfill — fazer com Edson presente):** dedup do **cadastro público**
+  ainda usa `phone: { contains }` (full-scan por request). Solução: campo `phoneNormalized`
+  indexado + igualdade. Não feito agora pois backfill de registros legados é operação de
+  dados delicada. Risco residual de burst no /cadastro permanece (mitigado por dedup-antes-
+  do-rate-limit + fire-and-forget já existentes).
+- ℹ️ `xlsx` (parse client) e `exceljs` (geração server) são ambos necessários — não remover.
+
+### Backlog da auditoria (frentes não escolhidas)
 - **Build/qualidade:** `zod` não declarado no package.json (usado no cadastro público!),
   `tsc --noEmit` nunca rodado (ignoreBuildErrors mascara), 130 console.log, dead code
   (`src/context/`, `prisma.config.ts.bak`, `admin/seed-tenant-db/` vazio).
