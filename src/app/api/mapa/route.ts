@@ -59,26 +59,28 @@ export async function GET(req: NextRequest) {
     }
 
     // Estatísticas gerais (sem filtro de cidade) — mesma regra do listing:
-    // lideranças + qualquer um CONFIRMADO
-    const allKeyPeople = await db.collaborator.findMany({
-      where: {
-        campaignId: CID,
-        status: { not: "INACTIVE" },
-        OR: [
-          { profile: { not: "APOIADOR" } },
-          { supportStatus: "CONFIRMADO" },
-        ],
-      },
-      select: { supportStatus: true, city: true },
-    });
-
+    // lideranças + qualquer um CONFIRMADO. Agregado no banco (groupBy) em vez de
+    // puxar todas as lideranças e contar em JS.
+    const keyPeopleWhere = {
+      campaignId: CID,
+      status: { not: "INACTIVE" as const },
+      OR: [
+        { profile: { not: "APOIADOR" as CollaboratorProfile } },
+        { supportStatus: "CONFIRMADO" as SupportStatus },
+      ],
+    };
+    const [statsByStatus, citiesGrouped] = await Promise.all([
+      db.collaborator.groupBy({ by: ["supportStatus"], where: keyPeopleWhere, _count: { _all: true } }),
+      db.collaborator.groupBy({ by: ["city"], where: { ...keyPeopleWhere, city: { not: null } }, _count: { _all: true } }),
+    ]);
+    const countSS = (s: string) => statsByStatus.find((g) => g.supportStatus === s)?._count._all ?? 0;
     const stats = {
-      total: allKeyPeople.length,
-      confirmado: allKeyPeople.filter((c) => c.supportStatus === "CONFIRMADO").length,
-      negociando: allKeyPeople.filter((c) => c.supportStatus === "NEGOCIANDO").length,
-      neutro: allKeyPeople.filter((c) => c.supportStatus === "NEUTRO").length,
-      adversario: allKeyPeople.filter((c) => c.supportStatus === "ADVERSARIO").length,
-      cidades: new Set(allKeyPeople.map((c) => c.city).filter(Boolean)).size,
+      total: statsByStatus.reduce((a, g) => a + g._count._all, 0),
+      confirmado: countSS("CONFIRMADO"),
+      negociando: countSS("NEGOCIANDO"),
+      neutro: countSS("NEUTRO"),
+      adversario: countSS("ADVERSARIO"),
+      cidades: citiesGrouped.filter((g) => g.city && g.city.trim()).length,
     };
 
     return NextResponse.json({ byCity, stats });
