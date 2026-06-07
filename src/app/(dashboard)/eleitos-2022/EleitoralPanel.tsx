@@ -364,6 +364,7 @@ export function EleitoralPanel() {
                   {/* Fav */}
                   <button
                     onClick={(e) => toggleFav(c, e)}
+                    aria-label={isFav(c) ? "Desfavoritar" : "Favoritar"}
                     className="flex-shrink-0 p-0.5 text-muted-foreground/30 hover:text-amber-400 transition-colors"
                   >
                     <Star className={cn("h-3.5 w-3.5", isFav(c) && "fill-amber-400 text-amber-400")} />

@@ -381,6 +381,7 @@ export default function GruposPage() {
                       <div className="flex items-center gap-1.5 shrink-0">
                         {m.collaborator.phone && (
                           <a href={whatsappHref(m.collaborator.phone)} target="_blank" rel="noopener noreferrer"
+                            aria-label="Abrir WhatsApp"
                             className="p-1.5 rounded-lg hover:bg-green-500/10 text-muted-foreground hover:text-green-400 transition-colors">
                             <Phone className="w-3.5 h-3.5" />
                           </a>
@@ -388,6 +389,7 @@ export default function GruposPage() {
                         <button
                           onClick={() => removeMember(m.collaborator.id)}
                           disabled={removing === m.collaborator.id}
+                          aria-label="Remover membro do grupo"
                           className="p-1.5 rounded-lg hover:bg-red-500/10 text-muted-foreground hover:text-red-400 transition-colors disabled:opacity-50"
                         >
                           <X className="w-3.5 h-3.5" />

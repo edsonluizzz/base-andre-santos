@@ -184,7 +184,7 @@ export default function TarefasPage() {
                     const due = dueDateLabel(t.dueDate);
                     return (
                       <div key={t.id} className={cn("flex items-start gap-3 px-4 py-3 transition-colors hover:bg-white/[0.02]", t.status === "DONE" && "opacity-50")}>
-                        <button onClick={() => toggleTask(t.id)} className="mt-0.5 shrink-0 text-muted-foreground hover:text-primary transition-colors">
+                        <button onClick={() => toggleTask(t.id)} aria-label={t.status === "DONE" ? "Marcar como pendente" : "Marcar como concluída"} className="mt-0.5 shrink-0 text-muted-foreground hover:text-primary transition-colors">
                           {t.status === "DONE" ? <CheckCircle2 className="w-4 h-4 text-green-400" /> : <Circle className="w-4 h-4" />}
                         </button>
                         <div className="flex-1 min-w-0">
@@ -199,7 +199,7 @@ export default function TarefasPage() {
                             )}
                           </div>
                         </div>
-                        <button onClick={() => deleteTask(t.id)} className="shrink-0 text-muted-foreground/40 hover:text-red-400 transition-colors mt-0.5">
+                        <button onClick={() => deleteTask(t.id)} aria-label="Excluir tarefa" className="shrink-0 text-muted-foreground/40 hover:text-red-400 transition-colors mt-0.5">
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>

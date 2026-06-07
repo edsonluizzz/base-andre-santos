@@ -198,13 +198,13 @@ export default function AgendaPage() {
           <div className="flex-1 glass-card rounded-2xl border border-white/[0.08] overflow-hidden">
             {/* Month nav */}
             <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.08]">
-              <button onClick={() => setCurrentMonth(subMonths(currentMonth, 1))} className="rounded-lg p-1.5 hover:bg-secondary transition-colors">
+              <button onClick={() => setCurrentMonth(subMonths(currentMonth, 1))} aria-label="Mês anterior" className="rounded-lg p-1.5 hover:bg-secondary transition-colors">
                 <ChevronLeft className="w-4 h-4 text-muted-foreground" />
               </button>
               <h2 className="text-sm font-semibold text-foreground capitalize">
                 {format(currentMonth, "MMMM yyyy", { locale: ptBR })}
               </h2>
-              <button onClick={() => setCurrentMonth(addMonths(currentMonth, 1))} className="rounded-lg p-1.5 hover:bg-secondary transition-colors">
+              <button onClick={() => setCurrentMonth(addMonths(currentMonth, 1))} aria-label="Próximo mês" className="rounded-lg p-1.5 hover:bg-secondary transition-colors">
                 <ChevronRight className="w-4 h-4 text-muted-foreground" />
               </button>
             </div>
@@ -288,7 +288,7 @@ export default function AgendaPage() {
                   </p>
                   {isToday(selectedDay) && <p className="text-[10px] text-primary font-medium">Hoje</p>}
                 </div>
-                <button onClick={() => setSelectedDay(null)} className="rounded-lg p-1 hover:bg-secondary transition-colors">
+                <button onClick={() => setSelectedDay(null)} aria-label="Fechar painel do dia" className="rounded-lg p-1 hover:bg-secondary transition-colors">
                   <X className="w-3.5 h-3.5 text-muted-foreground" />
                 </button>
               </div>
@@ -750,7 +750,7 @@ function AttendanceDialog({
                   </button>
                 ))}
               </div>
-              <button onClick={() => removeEntry(e.collaboratorId)} className="text-muted-foreground/50 hover:text-muted-foreground transition-colors shrink-0">
+              <button onClick={() => removeEntry(e.collaboratorId)} aria-label="Remover colaborador da lista" className="text-muted-foreground/50 hover:text-muted-foreground transition-colors shrink-0">
                 <X className="w-3.5 h-3.5" />
               </button>
             </div>

@@ -674,6 +674,7 @@ export default function ColaboradoresPage() {
                   {/* Checkbox */}
                   <button
                     onClick={(e) => toggleSelect(c.id, e)}
+                    aria-label={isSelected ? "Desmarcar colaborador" : "Selecionar colaborador"}
                     className="shrink-0 text-muted-foreground hover:text-primary transition-colors"
                   >
                     {isSelected
@@ -864,7 +865,7 @@ export default function ColaboradoresPage() {
                 <UserMinus className="w-3 h-3" />Inativar
               </Button>
             </div>
-            <button onClick={() => setSelected(new Set())}
+            <button onClick={() => setSelected(new Set())} aria-label="Limpar seleção"
               className="text-muted-foreground hover:text-foreground transition-colors p-1 shrink-0 ml-1">
               <X className="w-4 h-4" />
             </button>
