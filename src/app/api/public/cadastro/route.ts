@@ -82,18 +82,16 @@ export async function POST(req: NextRequest) {
     // 1) Dedup ANTES do rate-limit: cadastro repetido com mesmo phone retorna
     //    200 cached, sem consumir cota — evita falso 429 quando o usuário
     //    aperta "enviar" 2x ou recebe retry do browser.
-    //    Usa phoneNormalized (indexado) com fallback `contains` p/ legados ainda
-    //    não backfilled. Após o backfill, o fallback será removido (Step 3 do PLAN).
+    //    Lookup por phoneNormalized (índice [campaignId, phoneNormalized]) — O(log n),
+    //    sem full-scan. Todos os registros foram backfilled (PLAN phoneNormalized).
+    //    phone já validado >= 10 dígitos acima, então pNorm é sempre não-null aqui.
     const pNorm = normalizePhone(cleanPhone);
-    const existing = await db.collaborator.findFirst({
-      where: {
-        campaignId: CID,
-        ...(pNorm
-          ? { OR: [{ phoneNormalized: pNorm }, { phone: { contains: pNorm } }] }
-          : { phone: { contains: cleanPhone.slice(-8) } }),
-      },
-      select: { id: true },
-    });
+    const existing = pNorm
+      ? await db.collaborator.findFirst({
+          where: { campaignId: CID, phoneNormalized: pNorm },
+          select: { id: true },
+        })
+      : null;
     if (existing) {
       return NextResponse.json(
         { message: "Cadastro já realizado! Entraremos em contato.", collaboratorId: existing.id },
