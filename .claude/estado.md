@@ -78,9 +78,12 @@ Auditoria em 4 eixos (segurança 4/10, performance 6.5/10, qualidade ~7/10, desi
 - ✅ h1 padronizado `text-xl lg:text-2xl` (planejamento saiu de text-3xl)
 - ✅ Empty states ricos com CTA: zonas/grupos/tarefas; loading `animate-shimmer` nas mesmas
 - ✅ `min-w-[640px]` nas tabelas do planejamento (scroll mobile)
-- 📌 Backlog (não feito): `completar-perfil-form.tsx` (refactor estilos inline → tokens, a mais
-  defasada); acessibilidade fina (aria-label em botões ícone-only, `htmlFor`+`id` nos forms,
-  contraste de `text-muted-foreground/30-40`); `animate-fade-in-up` em grids; empty-CTA em metas/mapa.
+- ✅ **2026-06-07:** `completar-perfil-form.tsx` refatorado (estilos inline → tokens, suporta
+  tema claro, htmlFor/id, aria-pressed). + **14 aria-label** em botões ícone-only (celulas,
+  colaboradores, agenda, grupos, tarefas, eleitos-2022).
+- 📌 Backlog menor remanescente: `htmlFor`+`id` nos Labels dos dialogs (comunicados/grupos/zonas/
+  super-admin); contraste `text-muted-foreground/30-40` → /70; `animate-fade-in-up` em grids;
+  empty-CTA em metas/mapa.
 - **Outros seguranças (não-críticos):** CSP com unsafe-inline/unsafe-eval, cron fail-open
   se CRON_SECRET ausente, telegram webhook sem secret-token, comparação Bearer não timing-safe.
 
