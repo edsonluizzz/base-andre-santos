@@ -149,8 +149,10 @@ export function MetasClient({ goals, cityAgg, weeklyGrowthMap }: Props) {
     <div className="space-y-6">
       {/* Cabeçalho */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Metas por Município</h1>
+        <div className="page-header">
+          <h1 className="text-xl lg:text-2xl font-bold gradient-title flex items-center gap-2">
+            <Target className="w-6 h-6 text-primary" /> Metas por Município
+          </h1>
           <p className="text-sm text-muted-foreground mt-1">
             Meta × realizado por cidade — configure em{" "}
             <Link href="/configuracoes" className="text-primary hover:underline">/configuracoes</Link>

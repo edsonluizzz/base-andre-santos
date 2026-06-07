@@ -11,12 +11,12 @@ export default async function EleitoralPage() {
 
   return (
     <div className="space-y-5 lg:space-y-6">
-      <div className="flex items-center gap-3">
+      <div className="page-header flex items-center gap-3">
         <div className="p-2 rounded-lg bg-primary/10 shrink-0">
           <Award className="h-5 w-5 text-primary" />
         </div>
         <div className="min-w-0">
-          <h1 className="text-xl lg:text-2xl font-bold text-foreground">Eleitos PR 2022</h1>
+          <h1 className="text-xl lg:text-2xl font-bold gradient-title">Eleitos PR 2022</h1>
           <p className="text-xs lg:text-sm text-muted-foreground truncate">
             Dep. Estadual · Federal · Senador · Governador · Presidente
           </p>

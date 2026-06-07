@@ -24,17 +24,19 @@ export default async function CampanhasPage() {
 
   return (
     <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-foreground">Campanhas</h1>
-          <p className="text-sm text-muted-foreground">{campaigns.length} campanha{campaigns.length !== 1 ? "s" : ""} cadastrada{campaigns.length !== 1 ? "s" : ""}</p>
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+        <div className="page-header">
+          <h1 className="text-xl lg:text-2xl font-bold gradient-title">Campanhas</h1>
+          <p className="text-sm text-muted-foreground mt-1">{campaigns.length} campanha{campaigns.length !== 1 ? "s" : ""} cadastrada{campaigns.length !== 1 ? "s" : ""}</p>
         </div>
-        <Link href="/nova-campanha">
-          <Button className="gap-2">
-            <Plus className="h-4 w-4" />
-            Nova Campanha
-          </Button>
-        </Link>
+        <div className="flex gap-2 shrink-0">
+          <Link href="/nova-campanha">
+            <Button className="gap-2">
+              <Plus className="h-4 w-4" />
+              Nova Campanha
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <div className="space-y-3">

@@ -154,10 +154,12 @@ export default function AgendaPage() {
     <div className="space-y-5">
 
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Agenda</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">{upcoming.length} eventos futuros</p>
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+        <div className="page-header">
+          <h1 className="text-xl lg:text-2xl font-bold gradient-title flex items-center gap-2">
+            <Calendar className="w-6 h-6 text-primary" /> Agenda
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">{upcoming.length} eventos futuros</p>
         </div>
         <div className="flex items-center gap-2">
           {/* Toggle view */}

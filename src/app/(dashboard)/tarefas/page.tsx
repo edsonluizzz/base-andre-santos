@@ -106,18 +106,20 @@ export default function TarefasPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+        <div className="page-header">
+          <h1 className="text-xl lg:text-2xl font-bold gradient-title flex items-center gap-2">
             <ClipboardList className="w-6 h-6 text-primary" /> Tarefas da Base
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             {pending} pendente{pending !== 1 ? "s" : ""} · {done} concluída{done !== 1 ? "s" : ""}
           </p>
         </div>
-        <Button onClick={() => setDialog(true)} className="bg-primary text-primary-foreground gap-2">
-          <Plus className="w-4 h-4" /> Nova Tarefa
-        </Button>
+        <div className="flex gap-2 shrink-0">
+          <Button onClick={() => setDialog(true)} className="bg-primary text-primary-foreground gap-2">
+            <Plus className="w-4 h-4" /> Nova Tarefa
+          </Button>
+        </div>
       </div>
 
       {/* Filtro */}
@@ -133,21 +135,21 @@ export default function TarefasPage() {
       {loading ? (
         <div className="space-y-6">
           {Array.from({ length: 2 }).map((_, gi) => (
-            <div key={gi} className="glass-card rounded-2xl border border-white/[0.08] overflow-hidden animate-pulse">
+            <div key={gi} className="glass-card rounded-2xl border border-white/[0.08] overflow-hidden">
               <div className="flex items-center gap-2 px-4 py-3 border-b border-white/[0.06] bg-white/[0.02]">
-                <div className="h-3.5 w-3.5 bg-white/[0.06] rounded" />
-                <div className="h-4 bg-white/[0.07] rounded w-32" />
-                <div className="h-3 bg-white/[0.04] rounded w-12 ml-auto" />
+                <div className="h-3.5 w-3.5 animate-shimmer rounded" />
+                <div className="h-4 animate-shimmer rounded w-32" />
+                <div className="h-3 animate-shimmer rounded w-12 ml-auto" />
               </div>
               <div className="divide-y divide-white/[0.05]">
                 {Array.from({ length: 3 }).map((_, ti) => (
                   <div key={ti} className="flex items-start gap-3 px-4 py-3">
-                    <div className="w-4 h-4 rounded-full bg-white/[0.06] mt-0.5 shrink-0" />
+                    <div className="w-4 h-4 rounded-full animate-shimmer mt-0.5 shrink-0" />
                     <div className="flex-1 space-y-1.5">
-                      <div className="h-3.5 bg-white/[0.07] rounded w-3/5" />
-                      <div className="h-2.5 bg-white/[0.04] rounded w-1/3" />
+                      <div className="h-3.5 animate-shimmer rounded w-3/5" />
+                      <div className="h-2.5 animate-shimmer rounded w-1/3" />
                     </div>
-                    <div className="h-5 w-14 bg-white/[0.04] rounded-full" />
+                    <div className="h-5 w-14 animate-shimmer rounded-full" />
                   </div>
                 ))}
               </div>
@@ -156,8 +158,14 @@ export default function TarefasPage() {
         </div>
       ) : filtered.length === 0 ? (
         <div className="glass-card rounded-2xl p-12 text-center border border-white/[0.08]">
-          <ClipboardList className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
-          <p className="text-muted-foreground">Nenhuma tarefa {filter === "PENDING" ? "pendente" : filter === "DONE" ? "concluída" : ""}</p>
+          <div className="w-16 h-16 rounded-2xl bg-primary/[0.07] border border-primary/[0.12] flex items-center justify-center mx-auto mb-4">
+            <ClipboardList className="w-7 h-7 text-primary/60" />
+          </div>
+          <p className="font-medium text-foreground mb-1">Nenhuma tarefa {filter === "PENDING" ? "pendente" : filter === "DONE" ? "concluída" : ""}</p>
+          <p className="text-sm text-muted-foreground mb-4">Crie a primeira tarefa e delegue ações para a equipe da base</p>
+          <Button onClick={() => setDialog(true)} className="bg-primary text-primary-foreground hover:bg-primary/90 gap-2 mx-auto">
+            <Plus className="w-4 h-4" /> Nova Tarefa
+          </Button>
         </div>
       ) : (
         <div className="space-y-6">

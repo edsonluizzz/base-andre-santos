@@ -159,12 +159,12 @@ export default function InstagramPage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
-        <div className="flex items-center gap-3">
+        <div className="page-header flex items-center gap-3">
           <div className="w-9 h-9 rounded-full bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center">
             <Camera className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-foreground">Instagram</h1>
+            <h1 className="text-xl lg:text-2xl font-bold gradient-title">Instagram</h1>
             <a
               href="https://www.instagram.com/andresantos_as"
               target="_blank"

@@ -263,12 +263,12 @@ export default async function PlanejamentoPage() {
     <div className="max-w-6xl mx-auto space-y-8 pb-12">
 
       {/* ── Header ──────────────────────────────────────────────────────── */}
-      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
-        <div>
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+        <div className="page-header">
           <p className="text-xs font-semibold tracking-[3px] uppercase text-primary/70 mb-1">
             Inteligência Estratégica
           </p>
-          <h1 className="text-3xl font-bold text-foreground">
+          <h1 className="text-xl lg:text-2xl font-bold gradient-title">
             Análise STRIDE × Base André Santos
           </h1>
           <p className="text-muted-foreground mt-1 text-sm">
@@ -545,7 +545,7 @@ export default async function PlanejamentoPage() {
         <h2 className="text-lg font-bold text-foreground mb-1">Correlação: STRIDE propõe × Sistema entrega</h2>
         <p className="text-xs text-muted-foreground mb-5">Item a item — o que já existe, o que falta e o que é serviço externo</p>
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full min-w-[640px] text-sm">
             <thead>
               <tr className="border-b border-white/[0.08]">
                 <th className="text-left text-xs text-muted-foreground font-semibold uppercase tracking-wider pb-3 pr-4">Entregável STRIDE</th>
@@ -822,7 +822,7 @@ export default async function PlanejamentoPage() {
         </p>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-xs">
+          <table className="w-full min-w-[640px] text-xs">
             <thead>
               <tr className="border-b border-white/[0.08]">
                 <th className="text-left text-muted-foreground font-semibold uppercase tracking-wider pb-2 pr-3">#</th>

@@ -171,14 +171,18 @@ export default function GruposPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Grupos WhatsApp</h1>
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+        <div className="page-header">
+          <h1 className="text-xl lg:text-2xl font-bold gradient-title flex items-center gap-2">
+            <MessageCircle className="w-6 h-6 text-primary" /> Grupos WhatsApp
+          </h1>
           <p className="text-sm text-muted-foreground mt-1">{groups.length} grupos cadastrados</p>
         </div>
-        <Button onClick={openNew} className="bg-primary text-primary-foreground hover:bg-primary/90 gap-2">
-          <Plus className="w-4 h-4" /> Novo Grupo
-        </Button>
+        <div className="flex gap-2 shrink-0">
+          <Button onClick={openNew} className="bg-primary text-primary-foreground hover:bg-primary/90 gap-2">
+            <Plus className="w-4 h-4" /> Novo Grupo
+          </Button>
+        </div>
       </div>
 
       {/* Banner de territorialização */}
@@ -205,26 +209,32 @@ export default function GruposPage() {
       {loading ? (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="glass-card rounded-xl p-5 border border-white/[0.08] space-y-3 animate-pulse">
+            <div key={i} className="glass-card rounded-xl p-5 border border-white/[0.08] space-y-3">
               <div className="flex items-start justify-between gap-2">
                 <div className="space-y-1.5 flex-1">
-                  <div className="h-4 bg-white/[0.07] rounded w-3/5" />
-                  <div className="h-3 bg-white/[0.04] rounded w-2/5" />
+                  <div className="h-4 animate-shimmer rounded w-3/5" />
+                  <div className="h-3 animate-shimmer rounded w-2/5" />
                 </div>
-                <div className="h-4 w-10 bg-white/[0.05] rounded" />
+                <div className="h-4 w-10 animate-shimmer rounded" />
               </div>
-              <div className="h-3 bg-white/[0.04] rounded w-4/5" />
+              <div className="h-3 animate-shimmer rounded w-4/5" />
               <div className="flex gap-2 pt-1">
-                <div className="h-7 bg-white/[0.05] rounded-md flex-1" />
-                <div className="h-7 bg-white/[0.05] rounded-md flex-1" />
+                <div className="h-7 animate-shimmer rounded-md flex-1" />
+                <div className="h-7 animate-shimmer rounded-md flex-1" />
               </div>
             </div>
           ))}
         </div>
       ) : groups.length === 0 ? (
         <div className="glass-card rounded-2xl p-12 text-center border border-white/[0.08]">
-          <MessageCircle className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
-          <p className="text-muted-foreground">Nenhum grupo cadastrado</p>
+          <div className="w-16 h-16 rounded-2xl bg-primary/[0.07] border border-primary/[0.12] flex items-center justify-center mx-auto mb-4">
+            <MessageCircle className="w-7 h-7 text-primary/60" />
+          </div>
+          <p className="font-medium text-foreground mb-1">Nenhum grupo cadastrado</p>
+          <p className="text-sm text-muted-foreground mb-4">Cadastre seu primeiro grupo de WhatsApp para mobilizar a base</p>
+          <Button onClick={openNew} className="bg-primary text-primary-foreground hover:bg-primary/90 gap-2 mx-auto">
+            <Plus className="w-4 h-4" /> Novo Grupo
+          </Button>
         </div>
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">

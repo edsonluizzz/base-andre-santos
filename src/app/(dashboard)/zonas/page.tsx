@@ -69,29 +69,33 @@ export default function ZonasPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Zonas</h1>
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+        <div className="page-header">
+          <h1 className="text-xl lg:text-2xl font-bold gradient-title flex items-center gap-2">
+            <MapPin className="w-6 h-6 text-primary" /> Zonas
+          </h1>
           <p className="text-sm text-muted-foreground mt-1">{zones.length} zonas cadastradas</p>
         </div>
-        <Button onClick={openNew} className="bg-primary text-primary-foreground hover:bg-primary/90 gap-2">
-          <Plus className="w-4 h-4" /> Nova Zona
-        </Button>
+        <div className="flex gap-2 shrink-0">
+          <Button onClick={openNew} className="bg-primary text-primary-foreground hover:bg-primary/90 gap-2">
+            <Plus className="w-4 h-4" /> Nova Zona
+          </Button>
+        </div>
       </div>
 
       {loading ? (
         <div className="space-y-3">
           {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="glass-card rounded-xl border border-white/[0.08] p-4 animate-pulse">
+            <div key={i} className="glass-card rounded-xl border border-white/[0.08] p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="h-5 w-16 bg-white/[0.07] rounded-full" />
-                  <div className="h-4 w-32 bg-white/[0.07] rounded" />
-                  <div className="h-3 w-8 bg-white/[0.04] rounded" />
+                  <div className="h-5 w-16 animate-shimmer rounded-full" />
+                  <div className="h-4 w-32 animate-shimmer rounded" />
+                  <div className="h-3 w-8 animate-shimmer rounded" />
                 </div>
                 <div className="flex gap-2">
-                  <div className="h-7 w-14 bg-white/[0.05] rounded-md" />
-                  <div className="h-7 w-14 bg-white/[0.05] rounded-md" />
+                  <div className="h-7 w-14 animate-shimmer rounded-md" />
+                  <div className="h-7 w-14 animate-shimmer rounded-md" />
                 </div>
               </div>
             </div>
@@ -99,8 +103,14 @@ export default function ZonasPage() {
         </div>
       ) : zones.length === 0 ? (
         <div className="glass-card rounded-2xl p-12 text-center border border-white/[0.08]">
-          <MapPin className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
-          <p className="text-muted-foreground">Nenhuma zona cadastrada</p>
+          <div className="w-16 h-16 rounded-2xl bg-primary/[0.07] border border-primary/[0.12] flex items-center justify-center mx-auto mb-4">
+            <MapPin className="w-7 h-7 text-primary/60" />
+          </div>
+          <p className="font-medium text-foreground mb-1">Nenhuma zona cadastrada</p>
+          <p className="text-sm text-muted-foreground mb-4">Organize sua base por território criando a primeira zona</p>
+          <Button onClick={openNew} className="bg-primary text-primary-foreground hover:bg-primary/90 gap-2 mx-auto">
+            <Plus className="w-4 h-4" /> Nova Zona
+          </Button>
         </div>
       ) : (
         <div className="space-y-3">
