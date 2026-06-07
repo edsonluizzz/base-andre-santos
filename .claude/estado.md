@@ -69,9 +69,18 @@ Auditoria em 4 eixos (segurança 4/10, performance 6.5/10, qualidade ~7/10, desi
   (exige migrations versionadas); 130 console.log → logger condicional; next-auth.d.ts p/ tipos.
 
 ### Backlog da auditoria (frente não escolhida)
-- **Design/UX:** glow indigo (não-gold) no `button.tsx:13`, 21 de 23 páginas sem
-  `gradient-title`/`page-header`, empty states sem CTA, acessibilidade (1 aria-label no
-  app), tabelas sem `min-w` no mobile.
+### Frente "Design/UX" — APLICADA (2026-06-06)
+- ✅ `button.tsx`: glow hover indigo → gold (afetava todo botão primário)
+- ✅ `gradient-title` + `page-header` em 17 páginas (zonas, grupos, tarefas, agenda, metas,
+  planejamento, instagram, eleitos-2022, campanhas, nova-campanha, colaboradores,
+  colaboradores/[id], configuracoes, mapa, super-admin, comunicados/disparar; onboarding só
+  gradient-title por ser hero centralizado). + dashboard/comunicados que já tinham.
+- ✅ h1 padronizado `text-xl lg:text-2xl` (planejamento saiu de text-3xl)
+- ✅ Empty states ricos com CTA: zonas/grupos/tarefas; loading `animate-shimmer` nas mesmas
+- ✅ `min-w-[640px]` nas tabelas do planejamento (scroll mobile)
+- 📌 Backlog (não feito): `completar-perfil-form.tsx` (refactor estilos inline → tokens, a mais
+  defasada); acessibilidade fina (aria-label em botões ícone-only, `htmlFor`+`id` nos forms,
+  contraste de `text-muted-foreground/30-40`); `animate-fade-in-up` em grids; empty-CTA em metas/mapa.
 - **Outros seguranças (não-críticos):** CSP com unsafe-inline/unsafe-eval, cron fail-open
   se CRON_SECRET ausente, telegram webhook sem secret-token, comparação Bearer não timing-safe.
 
