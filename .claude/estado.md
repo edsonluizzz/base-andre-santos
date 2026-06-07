@@ -48,11 +48,11 @@ Auditoria em 4 eixos (segurança 4/10, performance 6.5/10, qualidade ~7/10, desi
 - ✅ Import em lote: N+1 eliminado (dedup + responsável pré-carregados em Map/IN; 1000+
   queries → ~2 + creates) + `maxDuration=60`
 - ✅ `maxDuration=60` em relatorio/export, export-xlsx, collaborators/export, whatsapp/broadcast
-- ⚠️ **PENDENTE (requer backfill — fazer com Edson presente):** dedup do **cadastro público**
-  ainda usa `phone: { contains }` (full-scan por request). Solução: campo `phoneNormalized`
-  indexado + igualdade. Não feito agora pois backfill de registros legados é operação de
-  dados delicada. Risco residual de burst no /cadastro permanece (mitigado por dedup-antes-
-  do-rate-limit + fire-and-forget já existentes).
+- ✅ **RESOLVIDO 2026-06-07 (PLAN phoneNormalized, 3 steps):** campo `phoneNormalized`
+  (últimos 8 dígitos) + `@@index([campaignId, phoneNormalized])`. Escrita popula em todos os
+  caminhos (cadastro público, import, POST/PUT manual). Backfill one-shot rodou: **1.520
+  registros** atualizados (2ª passada = 0, cobertura total). Dedup do cadastro público agora
+  é lookup indexado O(log n) — fim do full-scan. Fecha o último risco de burst Gospel Class.
 - ℹ️ `xlsx` (parse client) e `exceljs` (geração server) são ambos necessários — não remover.
 
 ### Backlog da auditoria (frentes não escolhidas)
