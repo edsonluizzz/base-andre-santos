@@ -34,7 +34,7 @@ export const PR_ELEITORADO_2022: Record<string, number> = {
   "Terra Rica": 22345, "Loanda": 20345, "Nova Esperança": 22345,
   "Marechal Cândido Rondon": 37212, "Paiçandu": 30456, "Iguaraçu": 7654,
   "Floresta": 10234, "Presidente Castelo Branco": 5678, "São Jorge do Ivaí": 10987,
-  "Cidade Gaúcha": 16543, "Cianorte": 53876, "Tapejara": 14567,
+  "Cidade Gaúcha": 16543, "Tapejara": 14567,
 
   // Oeste
   "Cascavel": 248698, "Foz do Iguaçu": 220344, "Toledo": 101345,
@@ -42,14 +42,14 @@ export const PR_ELEITORADO_2022: Record<string, number> = {
   "Missal": 12345, "Matelândia": 14567, "Céu Azul": 12345,
   "Palotina": 27654, "Terra Roxa": 18765, "Assis Chateaubriand": 33456,
   "Corbélia": 18765, "Tupãssi": 12345, "Nova Aurora": 14567,
-  "Marechal Cândido Rondon": 37212, "Mercedes": 10234, "Quatro Pontes": 7654,
+  "Mercedes": 10234, "Quatro Pontes": 7654,
   "Entre Rios do Oeste": 5678, "Pato Bragado": 7654, "São Miguel do Iguaçu": 19876,
   "Lindoeste": 8765, "Capitão Leônidas Marques": 17654, "Vera Cruz do Oeste": 12345,
 
   // Centro-Sul / Serra
   "Guarapuava": 137527, "Ponta Grossa": 243765, "Telêmaco Borba": 52234,
   "Irati": 52345, "Castro": 38457, "Palmeira": 27654,
-  "Lapa": 36789, "Balsa Nova": 10234, "Prudentópolis": 35678,
+  "Lapa": 36789, "Prudentópolis": 35678,
   "Laranjeiras do Sul": 29876, "Candói": 14567, "Pinhão": 23456,
   "Quedas do Iguaçu": 28344, "Turvo": 14567, "Reserva": 21456,
   "Tibagi": 22345, "Ipiranga": 14567, "Teixeira Soares": 14567,

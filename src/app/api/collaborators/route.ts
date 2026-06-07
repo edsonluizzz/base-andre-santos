@@ -156,7 +156,7 @@ export async function POST(req: NextRequest) {
     }
 
     // status padrão é ACTIVE → recalcula tier do registrador
-    await recalcTier(session.user.id).catch(() => {});
+    await recalcTier(session.user.id, db, cid).catch(() => {});
 
     return NextResponse.json(collaborator, { status: 201 });
   } catch (err) {

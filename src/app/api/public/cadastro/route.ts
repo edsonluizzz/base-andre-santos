@@ -161,7 +161,7 @@ export async function POST(req: NextRequest) {
     ensureCityGoal(city?.trim() || null, db, CID).catch(() => {});
 
     if (registeredById) {
-      recalcTier(registeredById).catch(() => {});
+      recalcTier(registeredById, db, CID).catch(() => {});
 
       import("@/lib/db").then(async ({ db: globalDb }) => {
         const refUser = await globalDb.user.findUnique({

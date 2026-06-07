@@ -81,7 +81,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
 
     // Recalcula tier do registrador se status mudou
     if (status && status !== existing.status && existing.registeredById) {
-      await recalcTier(existing.registeredById).catch(() => {});
+      await recalcTier(existing.registeredById, db, cid).catch(() => {});
     }
 
     return NextResponse.json(updated);

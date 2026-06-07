@@ -238,7 +238,7 @@ export function CadastroForm() {
           </div>
 
           {/* Vídeo do André */}
-          {YT_VIDEO_ID && YT_VIDEO_ID !== "COLE_O_ID_AQUI" && (
+          {YT_VIDEO_ID && (
             <div className="flex justify-center rounded-2xl overflow-hidden" style={{ border: "1px solid rgba(212,175,55,0.2)" }}>
               <iframe
                 src={`https://www.youtube-nocookie.com/embed/${YT_VIDEO_ID}?autoplay=1&mute=1&playsinline=1&rel=0&modestbranding=1`}
