@@ -61,10 +61,20 @@ Auditoria em 4 eixos (segurança 4/10, performance 6.5/10, qualidade ~7/10, desi
   de quebrar build da captação de leads)
 - ✅ Dead code removido: `src/context/` (vazia), `api/admin/seed-tenant-db/` (vazia),
   `prisma.config.ts.bak`
-- ⚠️ `tsc --noEmit` NÃO rodado: ambiente do Drive tem node_modules incompleto e `npm install`
-  trava/lentíssimo (sync do Drive). Recomendação: rodar `npm install && npx tsc --noEmit`
-  num clone local fora do Drive, OU setar `ignoreBuildErrors:false` num deploy de preview
-  pra ver os erros no log da Vercel. Auditoria estática não achou erros graves além de casts contidos.
+- ✅ **`tsc --noEmit` RODADO 2026-06-07** (via clone temporário em `C:\Users\usuario\ovile-tsc`,
+  fora do Drive — `npm install` funciona lá). Revelou **30 erros** mascarados.
+  - **7 bugs funcionais corrigidos:** `recalcTier()` chamado c/ 1 arg em 3 lugares (tier NUNCA
+    recalculava); 3 cidades duplicadas em tse.ts; comparação morta em cadastro-form.
+  - **23 type-errors restantes (não quebram runtime), documentados p/ correção futura:**
+    - Padrão Select `string|null` (~10): celulas:394/459, colaboradores:543, comunicados:191,
+      comunicados/disparar:238/253, metas:167, tarefas:222/246, super-admin:406/414 → fix `?? ""`
+    - Libs/workarounds (~13): choropleth-map (react-simple-maps sem @types), tenant-db:17 (Pool→
+      PoolConfig Neon), export:209 (Buffer→BodyInit ExcelJS), comunicados:95 (asChild no Button
+      base-ui), grupos:247 (title em ícone Lucide), grupos:261, super-admin:718, bulk-invite:191
+      (JSON index sig), cadastro:124, telegram/status:23, edit-collaborator-button:38, sidebar:119
+  - **Flag `ignoreBuildErrors`: MANTIDA true.** Reativar exigiria zerar os 23 E o Edson não roda
+    local (testa no Vercel) → um type-error cosmético bloquearia deploy urgente. Dívida mapeada
+    acima; corrigir incrementalmente quando conveniente, então flipar a flag.
 - 📌 NÃO feito (decisão/risco): `prisma db push --accept-data-loss` no build → migrate deploy
   (exige migrations versionadas); 130 console.log → logger condicional; next-auth.d.ts p/ tipos.
 
