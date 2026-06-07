@@ -75,8 +75,11 @@ Auditoria em 4 eixos (segurança 4/10, performance 6.5/10, qualidade ~7/10, desi
   - **Flag `ignoreBuildErrors`: MANTIDA true.** Reativar exigiria zerar os 23 E o Edson não roda
     local (testa no Vercel) → um type-error cosmético bloquearia deploy urgente. Dívida mapeada
     acima; corrigir incrementalmente quando conveniente, então flipar a flag.
-- 📌 NÃO feito (decisão/risco): `prisma db push --accept-data-loss` no build → migrate deploy
-  (exige migrations versionadas); 130 console.log → logger condicional; next-auth.d.ts p/ tipos.
+- ✅ **2026-06-07:** removido `--accept-data-loss` do build (era o risco real: dropava dados em
+  divergência). Agora aditivo aplica, destrutivo falha sem destruir. Migrate deploy completo
+  (baseline + migrations versionadas) NÃO adotado — exige resolve manual contra prod + muda o
+  workflow (sem ambiente local). Documentado como opção futura se necessário.
+- 📌 NÃO feito (baixo valor): 130 console.log → logger condicional; next-auth.d.ts p/ tipos.
 
 ### Backlog da auditoria (frente não escolhida)
 ### Frente "Design/UX" — APLICADA (2026-06-06)
