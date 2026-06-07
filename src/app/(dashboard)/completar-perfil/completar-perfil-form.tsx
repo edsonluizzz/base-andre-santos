@@ -15,6 +15,9 @@ const PROFILE_OPTIONS = [
   { value: "APOIADOR", label: "Apoiador" },
 ];
 
+const INPUT_CLASS =
+  "w-full rounded-xl px-4 py-3 text-sm bg-input border border-border text-foreground placeholder:text-muted-foreground outline-none transition-colors focus:border-primary/50";
+
 interface Props {
   userId: string;
   defaultName: string;
@@ -81,22 +84,22 @@ export function CompletarPerfilForm({ defaultName, defaultEmail }: Props) {
   }
 
   return (
-    <div className="min-h-screen p-4 pb-10" style={{ background: "#0a1220", backgroundImage: "radial-gradient(ellipse 80% 50% at 50% -10%, #1a2f4e 0%, #0a1220 65%)" }}>
+    <div className="min-h-screen p-4 pb-10 bg-background">
       <div className="max-w-md mx-auto pt-8 space-y-6">
 
         <div className="text-center space-y-3">
           <div className="flex justify-center">
-            <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ background: "rgba(212,175,55,0.12)", border: "1px solid rgba(212,175,55,0.25)" }}>
-              <Star className="w-7 h-7 fill-yellow-500/30" style={{ color: "#d4af37" }} />
+            <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-primary/10 border border-primary/25">
+              <Star className="w-7 h-7 text-primary fill-primary/30" />
             </div>
           </div>
           <div>
-            <p className="text-xs tracking-[3px] uppercase" style={{ color: "rgba(212,175,55,0.7)" }}>Ovile Eleitoral</p>
-            <h1 className="text-2xl font-bold text-white mt-1">Complete seu perfil</h1>
-            <p className="text-slate-400 text-sm mt-1">Só mais algumas informações para finalizar</p>
+            <p className="text-xs tracking-[3px] uppercase text-primary/70">Ovile Eleitoral</p>
+            <h1 className="text-2xl font-bold gradient-title mt-1">Complete seu perfil</h1>
+            <p className="text-muted-foreground text-sm mt-1">Só mais algumas informações para finalizar</p>
           </div>
           {defaultEmail && (
-            <div className="rounded-xl px-3 py-2 text-xs text-slate-400 inline-flex items-center gap-2" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
+            <div className="rounded-xl px-3 py-2 text-xs text-muted-foreground inline-flex items-center gap-2 bg-foreground/[0.04] border border-border">
               <span className="w-2 h-2 rounded-full bg-green-400 shrink-0" />
               Conta Google: {defaultEmail}
             </div>
@@ -104,57 +107,44 @@ export function CompletarPerfilForm({ defaultName, defaultEmail }: Props) {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="rounded-2xl p-5 space-y-4" style={{ background: "rgba(13,27,42,0.70)", border: "1px solid rgba(255,255,255,0.07)" }}>
+          <div className="glass-card rounded-2xl p-5 space-y-4 border border-border">
 
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-slate-300">Nome completo <span style={{ color: "#d4af37" }}>*</span></label>
-              <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Seu nome"
-                className="w-full rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 outline-none transition-all"
-                style={{ background: "#1a2f4e", border: "1px solid rgba(255,255,255,0.07)" }}
-                onFocus={(e) => e.target.style.borderColor = "rgba(212,175,55,0.5)"}
-                onBlur={(e) => e.target.style.borderColor = "rgba(255,255,255,0.07)"}
+              <label htmlFor="cp-name" className="text-xs font-medium text-muted-foreground">Nome completo <span className="text-primary">*</span></label>
+              <input id="cp-name" type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Seu nome" autoComplete="name"
+                className={INPUT_CLASS}
               />
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-slate-300">WhatsApp <span style={{ color: "#d4af37" }}>*</span></label>
-              <input type="tel" value={phone} onChange={(e) => setPhone(formatPhone(e.target.value))} placeholder="(41) 99999-9999" inputMode="numeric"
-                className="w-full rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 outline-none transition-all"
-                style={{ background: "#1a2f4e", border: "1px solid rgba(255,255,255,0.07)" }}
-                onFocus={(e) => e.target.style.borderColor = "rgba(212,175,55,0.5)"}
-                onBlur={(e) => e.target.style.borderColor = "rgba(255,255,255,0.07)"}
+              <label htmlFor="cp-phone" className="text-xs font-medium text-muted-foreground">WhatsApp <span className="text-primary">*</span></label>
+              <input id="cp-phone" type="tel" value={phone} onChange={(e) => setPhone(formatPhone(e.target.value))} placeholder="(41) 99999-9999" inputMode="numeric" autoComplete="tel"
+                className={INPUT_CLASS}
               />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-slate-300">Cidade</label>
-                <input type="text" list="city-suggestions" value={city} onChange={(e) => setCity(e.target.value)} placeholder="Ex: Curitiba"
-                  className="w-full rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 outline-none transition-all"
-                  style={{ background: "#1a2f4e", border: "1px solid rgba(255,255,255,0.07)" }}
-                  onFocus={(e) => e.target.style.borderColor = "rgba(212,175,55,0.5)"}
-                  onBlur={(e) => e.target.style.borderColor = "rgba(255,255,255,0.07)"}
+                <label htmlFor="cp-city" className="text-xs font-medium text-muted-foreground">Cidade</label>
+                <input id="cp-city" type="text" list="city-suggestions" value={city} onChange={(e) => setCity(e.target.value)} placeholder="Ex: Curitiba"
+                  className={INPUT_CLASS}
                 />
                 <datalist id="city-suggestions">
                   {citySuggestions.map((c) => <option key={c} value={c} />)}
                 </datalist>
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-slate-300">Bairro</label>
-                <input type="text" value={neighborhood} onChange={(e) => setNeighborhood(e.target.value)} placeholder="Seu bairro"
-                  className="w-full rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 outline-none transition-all"
-                  style={{ background: "#1a2f4e", border: "1px solid rgba(255,255,255,0.07)" }}
-                  onFocus={(e) => e.target.style.borderColor = "rgba(212,175,55,0.5)"}
-                  onBlur={(e) => e.target.style.borderColor = "rgba(255,255,255,0.07)"}
+                <label htmlFor="cp-neighborhood" className="text-xs font-medium text-muted-foreground">Bairro</label>
+                <input id="cp-neighborhood" type="text" value={neighborhood} onChange={(e) => setNeighborhood(e.target.value)} placeholder="Seu bairro"
+                  className={INPUT_CLASS}
                 />
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-slate-300">Perfil</label>
-              <select value={profile} onChange={(e) => setProfile(e.target.value)}
-                className="w-full rounded-xl px-4 py-3 text-sm text-white outline-none transition-all appearance-none"
-                style={{ background: "#1a2f4e", border: "1px solid rgba(255,255,255,0.07)" }}
+              <label htmlFor="cp-profile" className="text-xs font-medium text-muted-foreground">Perfil</label>
+              <select id="cp-profile" value={profile} onChange={(e) => setProfile(e.target.value)}
+                className={`${INPUT_CLASS} appearance-none`}
               >
                 {PROFILE_OPTIONS.map((o) => (
                   <option key={o.value} value={o.value}>{o.label}</option>
@@ -163,18 +153,17 @@ export function CompletarPerfilForm({ defaultName, defaultEmail }: Props) {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-slate-300">Como quer contribuir? <span className="text-slate-500">(opcional)</span></label>
+              <span className="text-xs font-medium text-muted-foreground">Como quer contribuir? <span className="text-muted-foreground/60">(opcional)</span></span>
               <div className="grid grid-cols-2 gap-2">
                 {CONTRIBUTION_OPTIONS.map((opt) => {
                   const active = selectedTypes.includes(opt.value);
                   return (
-                    <button key={opt.value} type="button" onClick={() => toggleType(opt.value)}
-                      className="rounded-xl px-3 py-2 text-xs text-left transition-all"
-                      style={{
-                        background: active ? "rgba(212,175,55,0.15)" : "rgba(26,47,78,0.6)",
-                        border: active ? "1px solid rgba(212,175,55,0.4)" : "1px solid rgba(255,255,255,0.07)",
-                        color: active ? "#d4af37" : "#94a3b8",
-                      }}
+                    <button key={opt.value} type="button" onClick={() => toggleType(opt.value)} aria-pressed={active}
+                      className={`rounded-xl px-3 py-2 text-xs text-left border transition-colors ${
+                        active
+                          ? "bg-primary/15 border-primary/40 text-primary"
+                          : "bg-foreground/[0.03] border-border text-muted-foreground hover:bg-foreground/[0.06]"
+                      }`}
                     >
                       {opt.label}
                     </button>
@@ -185,14 +174,13 @@ export function CompletarPerfilForm({ defaultName, defaultEmail }: Props) {
           </div>
 
           {error && (
-            <p className="text-sm text-center rounded-xl py-2.5 px-4" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", color: "#ef4444" }}>
+            <p className="text-sm text-center rounded-xl py-2.5 px-4 bg-destructive/10 border border-destructive/20 text-destructive">
               {error}
             </p>
           )}
 
           <button type="submit" disabled={loading}
-            className="w-full flex items-center justify-center gap-2 rounded-xl py-4 text-sm font-bold transition-all active:scale-[0.98]"
-            style={{ background: loading ? "rgba(212,175,55,0.5)" : "#d4af37", color: "#0a1220", opacity: loading ? 0.7 : 1 }}
+            className="w-full flex items-center justify-center gap-2 rounded-xl py-4 text-sm font-bold bg-primary text-primary-foreground transition-all active:scale-[0.98] disabled:opacity-70"
           >
             {loading ? <span>Salvando...</span> : <><span>Entrar no sistema</span><ChevronRight className="w-4 h-4" /></>}
           </button>
