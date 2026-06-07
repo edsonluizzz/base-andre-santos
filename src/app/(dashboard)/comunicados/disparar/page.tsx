@@ -17,8 +17,8 @@ export default async function DispararPage() {
         <div className="p-2 rounded-lg bg-primary/10 shrink-0">
           <Send className="h-5 w-5 text-primary" />
         </div>
-        <div className="min-w-0">
-          <h1 className="text-xl lg:text-2xl font-bold text-foreground">Novo disparo WhatsApp</h1>
+        <div className="min-w-0 page-header">
+          <h1 className="text-xl lg:text-2xl font-bold gradient-title">Novo disparo WhatsApp</h1>
           <p className="text-xs lg:text-sm text-muted-foreground truncate">
             Envio em massa controlado · com pacing anti-ban
           </p>

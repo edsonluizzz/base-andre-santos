@@ -341,8 +341,8 @@ export default function ColaboradoresPage() {
   return (
     <div className="space-y-4 lg:space-y-6">
       <div className="flex items-center justify-between gap-2">
-        <div className="min-w-0 flex-1">
-          <h1 className="text-xl lg:text-2xl font-bold text-foreground truncate">Colaboradores</h1>
+        <div className="page-header min-w-0 flex-1">
+          <h1 className="text-xl lg:text-2xl font-bold gradient-title truncate">Colaboradores</h1>
           <p className="text-xs lg:text-sm text-muted-foreground mt-0.5 lg:mt-1 truncate">
             {total > collaborators.length
               ? `${collaborators.length} de ${total}`

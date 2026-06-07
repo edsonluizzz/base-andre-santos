@@ -277,8 +277,8 @@ export default function SuperAdminPage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2 flex-wrap">
+        <div className="page-header">
+          <h1 className="text-xl lg:text-2xl font-bold gradient-title flex items-center gap-2 flex-wrap">
             <Shield className="w-6 h-6 text-primary" />
             Super Admin
             {currentIsSuperAdmin && (

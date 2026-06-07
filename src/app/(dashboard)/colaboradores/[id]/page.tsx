@@ -68,7 +68,7 @@ export default async function CollaboratorProfilePage({ params }: { params: { id
           <ArrowLeft className="w-4 h-4" />
         </Link>
         <div>
-          <h1 className="text-xl font-bold text-foreground">{collaborator.name}</h1>
+          <h1 className="text-xl lg:text-2xl font-bold gradient-title">{collaborator.name}</h1>
           <p className="text-xs text-muted-foreground">{PROFILE_LABEL[collaborator.profile]} · {ROLE_LABEL[collaborator.campaignRole]}</p>
         </div>
         <div className="ml-auto flex items-center gap-2">

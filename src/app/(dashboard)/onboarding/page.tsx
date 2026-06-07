@@ -66,7 +66,7 @@ export default function OnboardingPage() {
           </div>
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Bem-vindo, {firstName}!</h1>
+          <h1 className="text-xl lg:text-2xl font-bold gradient-title">Bem-vindo, {firstName}!</h1>
           <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed">
             Você agora faz parte do Ovile Eleitoral.<br />
             Veja como contribuir com a base de apoio.

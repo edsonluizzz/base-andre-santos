@@ -194,8 +194,8 @@ export default function MapaPage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+        <div className="page-header">
+          <h1 className="text-xl lg:text-2xl font-bold gradient-title flex items-center gap-2">
             <Map className="w-6 h-6 text-primary" /> Mapa de Apoio
           </h1>
           <p className="text-sm text-muted-foreground mt-1">Pastores, líderes e políticos por município</p>
