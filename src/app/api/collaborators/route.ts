@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { getCampaignContext } from "@/lib/campaign-context";
 import { recalcTier } from "@/lib/tier";
-import { normalizeCity } from "@/lib/utils";
+import { normalizeCity, normalizePhone } from "@/lib/utils";
 import { ensureCityGoal } from "@/lib/municipality-goals";
 import { triggerLeadWebhook } from "@/lib/n8n";
 import { CollaboratorRole, CollaboratorStatus } from "@prisma/client";
@@ -118,6 +118,7 @@ export async function POST(req: NextRequest) {
         name: name.trim(),
         email: email?.trim() || null,
         phone: phone?.trim() || null,
+        phoneNormalized: normalizePhone(phone),
         city: normalizeCity(city),
         neighborhood: neighborhood?.trim() || null,
         campaignRole: campaignRole ?? "VOLUNTARIO",

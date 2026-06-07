@@ -147,6 +147,7 @@ model Collaborator {
   name         String
   email        String?
   phone        String?
+  phoneNormalized String?   // últimos 8 dígitos de phone — dedup indexável (Sprint 25)
   city         String?
   neighborhood String?
   campaignRole CollaboratorRole   @default(VOLUNTARIO)
@@ -188,6 +189,7 @@ model Collaborator {
   @@index([campaignId, registeredById, status])
   @@index([campaignId, lastContactedAt])
   @@index([campaignId, supportStatus])
+  @@index([campaignId, phoneNormalized])
 }
 
 model Zone {

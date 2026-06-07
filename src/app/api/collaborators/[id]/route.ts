@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { getCampaignContext } from "@/lib/campaign-context";
 import { recalcTier } from "@/lib/tier";
-import { normalizeCity } from "@/lib/utils";
+import { normalizeCity, normalizePhone } from "@/lib/utils";
 
 
 export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
@@ -52,7 +52,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     if (isAdminOrLeader) {
       if (name) data.name = name.trim();
       if (email !== undefined) data.email = email?.trim() || null;
-      if (phone !== undefined) data.phone = phone?.trim() || null;
+      if (phone !== undefined) { data.phone = phone?.trim() || null; data.phoneNormalized = normalizePhone(phone); }
       if (city !== undefined) data.city = normalizeCity(city);
       if (neighborhood !== undefined) data.neighborhood = neighborhood?.trim() || null;
       if (campaignRole) data.campaignRole = campaignRole;

@@ -6,6 +6,7 @@ import { ensureCityGoal } from "@/lib/municipality-goals";
 import { triggerLeadWebhook } from "@/lib/n8n";
 import { resolvePublicTenant } from "@/lib/tenant-resolver";
 import { isRateLimited } from "@/lib/rate-limit";
+import { normalizePhone } from "@/lib/utils";
 import { z } from "zod";
 
 const ALLOWED_ORIGINS = new Set([
@@ -81,8 +82,16 @@ export async function POST(req: NextRequest) {
     // 1) Dedup ANTES do rate-limit: cadastro repetido com mesmo phone retorna
     //    200 cached, sem consumir cota — evita falso 429 quando o usuário
     //    aperta "enviar" 2x ou recebe retry do browser.
+    //    Usa phoneNormalized (indexado) com fallback `contains` p/ legados ainda
+    //    não backfilled. Após o backfill, o fallback será removido (Step 3 do PLAN).
+    const pNorm = normalizePhone(cleanPhone);
     const existing = await db.collaborator.findFirst({
-      where: { campaignId: CID, phone: { contains: cleanPhone.slice(-8) } },
+      where: {
+        campaignId: CID,
+        ...(pNorm
+          ? { OR: [{ phoneNormalized: pNorm }, { phone: { contains: pNorm } }] }
+          : { phone: { contains: cleanPhone.slice(-8) } }),
+      },
       select: { id: true },
     });
     if (existing) {
@@ -128,6 +137,7 @@ export async function POST(req: NextRequest) {
         campaignId: CID,
         name: name.trim(),
         phone: cleanPhone,
+        phoneNormalized: pNorm,
         email: email?.trim() || null,
         city: city?.trim() || null,
         neighborhood: neighborhood?.trim() || null,

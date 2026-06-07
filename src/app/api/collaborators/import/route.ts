@@ -213,6 +213,7 @@ export async function POST(req: NextRequest) {
             where: { id: dup.id },
             data: {
               ...payload,
+              ...(phoneSuffix.length === 8 && { phoneNormalized: phoneSuffix }),
               // Consentimento LGPD só avança — não revoga via importação
               ...(lgpdConsent && !dup.lgpdConsent && {
                 lgpdConsent: true,
@@ -226,6 +227,7 @@ export async function POST(req: NextRequest) {
             data: {
               campaignId: CID,
               ...payload,
+              phoneNormalized: phoneSuffix.length === 8 ? phoneSuffix : null,
               lgpdConsent,
               lgpdConsentAt: lgpdConsent ? new Date() : null,
               registeredById: responsavelId ?? session.user.id,

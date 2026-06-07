@@ -1,57 +1,28 @@
-# PLAN — Correções multi-tenant (madrugada 2026-05-30)
+# PLAN — phoneNormalized (dedup de telefone indexável)
 
-Auditoria identificou múltiplos vazamentos cross-tenant. Execução em fases, cada fase = 1 commit + push.
+## Objetivo
+Eliminar o full-scan do dedup por telefone (busca `contains` slice(-8)) adicionando o campo
+`phoneNormalized` (últimos 8 dígitos) com índice. Fecha o último risco de burst do tipo
+"Gospel Class" no cadastro público.
 
-## Fase 1 — Metricool por tenant (resolve o que o usuário viu na Miriam)
-- [ ] Schema: `Campaign.metricoolToken`, `Campaign.metricoolBlogId`
-- [ ] `api/metricool/instagram/route.ts` — usa credenciais do tenant ativo
-- [ ] UI `configuracoes/page.tsx` — campos para conectar Metricool
-- [ ] Frontend (`instagram-panel.tsx`, `instagram/page.tsx`) — esconder painel se tenant não conectou
-- [ ] API `/api/campaign/metricool` — PATCH para salvar
+## Steps
 
-## Fase 2 — Dashboard panels → tenant DB
-- [ ] `velocity-panel.tsx` — receber `db`, `cid` por props
-- [ ] `engagement-panel.tsx` — receber `db`, `cid` por props (+ filtrar Attendance por campaignId)
-- [ ] `dashboard/page.tsx` — usar `getCampaignContext(session)`
-- [ ] `relatorio/page.tsx` — idem
-- [ ] `metas/page.tsx` — idem
-- [ ] `colaboradores/[id]/page.tsx` — idem
-- [ ] `planejamento/page.tsx` — remover `db` global
+### Step 1 — coluna + escrita + dedup seguro  ← este commit
+- `lib/utils.ts`: helper `normalizePhone()` (últimos 8 dígitos)
+- `schema.prisma`: campo `phoneNormalized String?` + `@@index([campaignId, phoneNormalized])`
+- Cadastro público + import: **popular** `phoneNormalized` na escrita (novos registros)
+- Dedup: igualdade por `phoneNormalized` (indexada) **com fallback `contains`** para os legados
+  ainda não backfilled — garante correção durante a transição, sem quebrar nada.
+- Deploy aplica a coluna (via `db push`). Novos cadastros já populam.
 
-## Fase 3 — Settings tenant-aware
-- [ ] `api/settings/route.ts` — `getCampaignContext`
-- [ ] `api/google-calendar/callback/route.ts` — idem
-- [ ] `api/google-calendar/sync/route.ts` — idem
+### Step 2 — backfill dos existentes
+- Endpoint admin one-shot `POST /api/admin/backfill-phone` (UPDATE SQL em lote, protegido ADMIN).
+- Edson aciona uma vez → popula os ~2.400 registros existentes.
+- Confirmar cobertura (quantos atualizados).
 
-## Fase 4 — Telegram por tenant
-- [ ] Schema: `Campaign.telegramBotToken`, `Campaign.telegramChatId`
-- [ ] `lib/telegram.ts` — `sendTelegram(campaignId, msg)` recebe tenant
-- [ ] Atualizar callers para passar campaignId
-- [ ] `api/telegram/webhook/route.ts` — identificar tenant pelo bot token na URL `/api/telegram/webhook/[botToken]`
-- [ ] UI Configurações — campos Telegram
+### Step 3 — cleanup / otimização final
+- Remover o fallback `contains` do dedup (todos já backfilled) → dedup 100% indexado.
+- Remover o endpoint `backfill-phone`.
 
-## Fase 5 — /api/public/cadastro multi-tenant
-- [ ] Schema: `Campaign.domain` (já existe slug; precisamos de domain real)
-- [ ] Resolver tenant pelo host header
-- [ ] `api/public/stats` — idem
-- [ ] `cadastro-form.tsx` — WA link via API, não hardcoded
-
-## Fase 6 — Crons multi-tenant
-- [ ] `tse-sync`, `gcal-sync`, `agenda-telegram` — iterar `Campaign.findMany({ active: true })`
-- [ ] Remover crons fantasma do `vercel.json` (birthday-notifications, nurturing, weekly-report)
-
-## Fase 7 — Z-API por tenant
-- [ ] Schema: `Campaign.zApiInstance`, `Campaign.zApiToken`, `Campaign.zApiClientToken`
-- [ ] `/api/n8n/config` retorna credenciais Z-API
-- [ ] Workflows n8n: ler Z-API via `Buscar config` em vez de hardcoded
-- [ ] UI Configurações — campos Z-API
-
-## Fase 8 — Limpezas + memória
-- [ ] `notify-referrer` chamado por função local, não HTTP
-- [ ] Atualizar memória do projeto
-- [ ] Commit final + push
-
-## Notas de execução
-- Edson não roda local → sempre `npm run lint` + `npm run build` antes de commit
-- Manter fallback `"andre-santos-2026"` em todos os defaults para não quebrar prod
-- Cada fase = 1 commit atômico
+## Retomar no Step 2
+Prompt: "continuar PLAN phoneNormalized — step 2 (endpoint backfill)"
