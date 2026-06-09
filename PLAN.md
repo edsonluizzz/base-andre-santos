@@ -3,7 +3,7 @@
 > Criado 2026-06-09 (noite). Decisões: sem Vercel Pro (maximizar free) · Miriam fora do radar.
 > Validação SEMPRE no CI/Vercel — nunca rodar `npm run build` local (executa `prisma db push` contra prod).
 
-## Step 1 — E2E do /cadastro no CI (item 1) ✅ em execução
+## Step 1 — E2E do /cadastro no CI (item 1) ✅ CONCLUÍDO (commit `1634b0c`, CI verde)
 
 Objetivo: proteger a rota mais crítica da campanha (cadastro público) com testes
 Playwright rodando no GitHub Actions contra um Postgres descartável.
@@ -26,7 +26,7 @@ Playwright rodando no GitHub Actions contra um Postgres descartável.
 5. `.gitignore`: test-results/ + playwright-report/
 6. Commit + push + **monitorar o run do Actions até verde**
 
-## Step 2 — Resiliência de pico DENTRO do free (item 2)
+## Step 2 — Resiliência de pico DENTRO do free (item 2) ✅ CONCLUÍDO (commit `661f7e9`, validado em prod)
 
 Contexto: incidente Gospel Class (500 cadastros simultâneos → ExceedsBillingLimitError
 no Hobby → POSTs rejeitados antes do INSERT → 500 pessoas perdidas).

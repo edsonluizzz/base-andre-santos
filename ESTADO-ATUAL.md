@@ -20,9 +20,22 @@ Auditoria do código (em sync com git `edsonluizzz/base-andre-santos`) via skill
 - ✅ Captação dos ebooks já roda sem planilha Google (direto no CRM) há dias.
 
 **Próximos passos (ordem):**
-1. **Testes E2E do `/cadastro`** (maior valor, seguro). Pendente OK do Edson para: instalar Playwright como devDependency + tocar em `.github/workflows/deploy-guardian.yml` (rodar no CI, já que node_modules local está incompleto).
-2. **Resiliência de pico DENTRO do plano free** (fila Upstash/QStash no cadastro + connection_limit Prisma + minimizar invocações por cadastro). Sem upgrade Pro, mitigar o teto do Hobby por software.
+1. ✅ **CONCLUÍDO 2026-06-09 (commit `1634b0c`)** — E2E `/cadastro` no CI: 7 testes
+   Playwright (render, validação client-side, fluxo completo, dedup, 400, 429 rate-limit,
+   cota EBOOK) rodando no job `e2e-cadastro` do deploy-guardian contra postgres:16
+   descartável. Verde de primeira. `db.ts` agora escolhe adapter pela URL (neon.tech →
+   PrismaNeon; Postgres comum → PrismaPg) — produção inalterada.
+2. ✅ **CONCLUÍDO 2026-06-09 (commit `661f7e9`)** — Resiliência de pico no free = dieta
+   de invocações: middleware fora de /cadastro, /ebook, /privacidade, /r, /api/public,
+   /api/cep · /cadastro force-static (CDN puro, `PRERENDER` confirmado em prod) ·
+   stats s-maxage=300 e CEP s-maxage=86400 (`HIT` confirmado em prod) · /dashboard
+   continua 302→/login. QStash e pool tuning descartados (racional no PLAN.md).
 3. **Itens menores:** limpar 10 UserCampaigns duplicadas do André · setar `N8N_IMPORT_WEBHOOK_URL` · remover `/api/n8n/seed-tenants` (era p/ provisionamento Miriam) · dívida técnica mapeada (23 type-errors, CSP, cron fail-open, telegram secret).
+
+⚠️ **Achado 2026-06-09:** o job `Check & Auto-Heal` do deploy-guardian falha em TODO
+push há dias — o `npx tsc --noEmit` dele esbarra nos 23 type-errors conhecidos (a flag
+`ignoreBuildErrors` só silencia o `next build`, não esse step). O X vermelho constante
+mascara falha real. Decidir: tornar o tsc não-bloqueante no guardian OU zerar os 23 erros.
 
 ⚠️ **Não rodar `npm run build` local** — ele executa `prisma db push` e mexe no banco de produção. Validação real é no Vercel.
 
