@@ -5,5 +5,11 @@ import { authConfig } from "@/lib/auth.config";
 export const { auth: middleware } = NextAuth(authConfig);
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|manifest.json|sw.js|icons|ebooks|robots.txt|sitemap.xml).*)"],
+  // Rotas públicas de alto tráfego (cadastro em evento, landing de ebook,
+  // CEP lookup, stats) ficam FORA do middleware: páginas estáticas saem
+  // direto do CDN e cada request economiza uma invocação edge — essencial
+  // para aguentar burst de evento dentro do plano Hobby.
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|manifest.json|sw.js|icons|ebooks|robots.txt|sitemap.xml|cadastro|ebook|privacidade|r$|r/|api/public|api/cep).*)",
+  ],
 };

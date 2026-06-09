@@ -30,13 +30,20 @@ export async function GET(_req: NextRequest, { params }: { params: { cep: string
       return NextResponse.json({ error: "CEP não encontrado" }, { status: 404 });
     }
 
-    return NextResponse.json({
-      city:         data.localidade ?? "",
-      neighborhood: data.bairro ?? "",
-      street:       data.logradouro ?? "",
-      state:        data.uf ?? "",
-      cep:          data.cep ?? "",
-    });
+    return NextResponse.json(
+      {
+        city:         data.localidade ?? "",
+        neighborhood: data.bairro ?? "",
+        street:       data.logradouro ?? "",
+        state:        data.uf ?? "",
+        cep:          data.cep ?? "",
+      },
+      {
+        // CEP praticamente não muda — CDN serve repetições do mesmo CEP por 24h
+        // (em evento, dezenas de pessoas da mesma cidade digitam CEPs iguais).
+        headers: { "Cache-Control": "public, s-maxage=86400, stale-while-revalidate=604800" },
+      }
+    );
   } catch (err) {
     console.error("[cep GET]", err);
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });
