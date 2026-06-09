@@ -1,6 +1,6 @@
 # Estado Atual da Produção — 2026-06-09
 
-**Última atualização:** 2026-06-09 BRT
+**Última atualização:** 2026-06-09 (noite) BRT
 
 ---
 
@@ -12,9 +12,17 @@ Auditoria do código (em sync com git `edsonluizzz/base-andre-santos`) via skill
 - ✅ **Falhas silenciosas corrigidas** (commit `c9b79cf`): 6 telas do dashboard (configuracoes, colaboradores, mapa, agenda, completar-perfil, disparar) tinham `.catch(() => {})` vazios que deixavam a tela vazia sem avisar o usuário. Agora usam `toast.error` (loads críticos) ou `console.error` (loads de fundo). **Conferir se buildou OK no Vercel.**
 - ✅ Confirmado que o bug do `/api/n8n/config` já estava resolvido (validateCampaign).
 
+**Decisões 2026-06-09 (noite) — Edson:**
+- **Sem upgrade Vercel Pro por enquanto** — estratégia: extrair o máximo do plano free (Hobby). Resiliência de pico deve ser desenhada dentro dos limites do free.
+- **Miriam Ferreira FORA DO RADAR** — parar tudo relacionado a ela (UserCampaign, schema, integrações). Multi-tenant continua no código, mas sem segundo tenant ativo.
+- ✅ METRICOOL_TOKEN migrado pra UI · ✅ DNS `andre.ovile.com.br` adicionado · ✅ token Upstash rotacionado.
+- **WF1/WF3 (n8n) permanecem DESATIVADOS** — warmup WhatsApp adiado até nova decisão.
+- ✅ Captação dos ebooks já roda sem planilha Google (direto no CRM) há dias.
+
 **Próximos passos (ordem):**
-1. **#1 Testes E2E do `/cadastro`** (maior valor, seguro). Pendente OK do Edson para: instalar Playwright como devDependency + tocar em `.github/workflows/deploy-guardian.yml` (rodar no CI, já que node_modules local está incompleto).
-2. **#3 Resiliência de pico** (fila Upstash/QStash no cadastro + connection_limit Prisma). Fazer **depois do upgrade Vercel Pro** (sem ele, o teto de billing ainda derruba em evento grande).
+1. **Testes E2E do `/cadastro`** (maior valor, seguro). Pendente OK do Edson para: instalar Playwright como devDependency + tocar em `.github/workflows/deploy-guardian.yml` (rodar no CI, já que node_modules local está incompleto).
+2. **Resiliência de pico DENTRO do plano free** (fila Upstash/QStash no cadastro + connection_limit Prisma + minimizar invocações por cadastro). Sem upgrade Pro, mitigar o teto do Hobby por software.
+3. **Itens menores:** limpar 10 UserCampaigns duplicadas do André · setar `N8N_IMPORT_WEBHOOK_URL` · remover `/api/n8n/seed-tenants` (era p/ provisionamento Miriam) · dívida técnica mapeada (23 type-errors, CSP, cron fail-open, telegram secret).
 
 ⚠️ **Não rodar `npm run build` local** — ele executa `prisma db push` e mexe no banco de produção. Validação real é no Vercel.
 
@@ -55,7 +63,8 @@ Auditoria do código (em sync com git `edsonluizzz/base-andre-santos`) via skill
 
 ## 🔴 O que está QUEBRADO ou pendente
 
-### Campanha Miriam Ferreira (`miriam-ferreira`)
+### Campanha Miriam Ferreira (`miriam-ferreira`) — ⏸️ FORA DO RADAR (decisão 2026-06-09)
+- **Tudo relacionado à Miriam está PARADO.** Itens abaixo congelados; manter só como registro.
 - ⚠️ **0 UserCampaigns** — ninguém pode logar (aguardando email do admin)
 - ✓ `Campaign.domain = "miriam.ovile.com.br"` (setado em 2026-06-02 15h)
 - ✓ `Campaign.candidateName = "Miriam Ferreira"`
@@ -75,22 +84,19 @@ Auditoria do código (em sync com git `edsonluizzz/base-andre-santos`) via skill
 
 ---
 
-## ⚠️ Dependências de você (humano)
+## ⚠️ Dependências de você (humano) — revisado 2026-06-09 (noite)
 
-### 🔴 Crítico
-1. **Upgrade Vercel Pro** ($20/mês) — sem isso, próximo evento de 300+ pessoas trava de novo
-2. **Email do admin da Miriam** — pra eu criar UserCampaign e ela conseguir logar
-3. **Migrar `METRICOOL_TOKEN` pra `Campaign(andre).metricoolToken`** via UI em https://ovile.com.br/configuracoes (Integrações) — caso contrário, Instagram do André fica 503
-
-### 🟡 Médio
-4. **DNS no Vercel:** adicionar `miriam.ovile.com.br` e `andre.ovile.com.br` no projeto base-andre-santos
-5. **Vercel Pro Spend Management** — define limite máximo após upgrade
-6. **Rotacionar token Upstash** — colado no chat antes (já está nos arquivos)
-7. **WhatsApp warmup** — depois de 48h, plano em `docs/WHATSAPP-WARMUP.md`
+1. ~~Upgrade Vercel Pro~~ → **decisão: permanecer no free e elevar ao limite máximo do plano** (resiliência por software — ver próximos passos #2)
+2. ~~Email admin Miriam~~ → **Miriam fora do radar** (tudo dela parado)
+3. ✅ `METRICOOL_TOKEN` migrado pra UI (2026-06-09)
+4. ✅ DNS `andre.ovile.com.br` adicionado no Vercel (2026-06-09)
+5. ✅ Token Upstash rotacionado (2026-06-09)
+6. **WhatsApp warmup** — ADIADO por decisão; WF1/WF3 seguem desativados
+7. **OK pendente:** E2E `/cadastro` (instalar Playwright devDependency + tocar no `deploy-guardian.yml`)
 
 ### 🟢 Baixo (faço sozinho quando autorizar)
-8. Limpar UserCampaigns duplicadas do André
-9. Remover endpoints debug temporários (`/api/n8n/debug-tenants`, `/api/n8n/normalize-phones`)
+8. Limpar 10 UserCampaigns duplicadas do André
+9. Remover `/api/n8n/seed-tenants` (era p/ provisionamento Miriam — sem uso agora)
 10. Migrar n8n WF1 importação batch (`N8N_IMPORT_WEBHOOK_URL` ainda não setado)
 
 ---
@@ -123,11 +129,11 @@ Auditoria do código (em sync com git `edsonluizzz/base-andre-santos`) via skill
 
 ---
 
-## 🎯 Próximas 3 ações recomendadas
+## 🎯 Próximas 3 ações recomendadas (revisado 2026-06-09 noite)
 
-1. **Você me passa email admin Miriam** → eu crio UserCampaign + popula `Campaign.domain`
-2. **Você adiciona `miriam.ovile.com.br` no Vercel** ✅ FEITO 2026-06-02
-3. **Eu rodo migration multi-tenant** → schema Miriam atualizado, ela pode usar todas as features
+1. **E2E `/cadastro`** (Playwright no CI) — pendente OK do Edson
+2. **Resiliência de pico dentro do plano free** — fila QStash + connection_limit + menos invocações por cadastro
+3. **Limpeza:** UserCampaigns duplicadas · `N8N_IMPORT_WEBHOOK_URL` · remover seed-tenants
 
 ## 🔒 Anti-vazamento (NOVO 2026-06-03 madrugada)
 - 7 endpoints `/api/n8n/*` validam Campaign existe → 404 se não existe (era HTTP 200 com dados do André antes)
@@ -136,7 +142,7 @@ Auditoria do código (em sync com git `edsonluizzz/base-andre-santos`) via skill
 - `validateCampaign` helper com cache 60s evita query repetida
 
 ## 🟡 Hardcoded restante a refatorar (não bloqueante)
-- `/(dashboard)/super-admin/page.tsx` — 4 mensagens convite (CRÍTICO antes da Miriam ter admin)
+- `/(dashboard)/super-admin/page.tsx` — 4 mensagens convite (despriorizado — Miriam fora do radar; relevante só se entrar novo tenant)
 - `/(dashboard)/colaboradores`, `minha-celula`, `onboarding` — strings UI/WhatsApp
 - Placeholders de inputs e títulos internos (baixa prioridade)
 
