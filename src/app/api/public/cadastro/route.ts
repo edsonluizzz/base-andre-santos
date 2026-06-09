@@ -51,12 +51,14 @@ const cadastroSchema = z.object({
 
 /**
  * Rate-limit adaptativo por origem:
- * - Cadastros via EBOOK_* (QR Code em eventos físicos): 100/min por IP
- *   (mesmo WiFi de igreja/auditório, dezenas de pessoas legítimas).
+ * - Cadastros via EBOOK_* ou EVENTO (QR Code em eventos físicos): 100/min por IP
+ *   (mesmo WiFi de igreja/auditório = 1 IP compartilhado por dezenas de
+ *   pessoas legítimas — 5/min derrubaria o evento a partir da 6ª pessoa).
  * - Outros (Instagram, indicação 1:1): 5/min por IP para deter spam.
  */
 function rlConfigFor(source: string | undefined): { max: number; windowSec: number } {
-  const isHighVolume = typeof source === "string" && source.startsWith("EBOOK_");
+  const isHighVolume =
+    typeof source === "string" && (source.startsWith("EBOOK_") || source === "EVENTO");
   return isHighVolume ? { max: 100, windowSec: 60 } : { max: 5, windowSec: 60 };
 }
 

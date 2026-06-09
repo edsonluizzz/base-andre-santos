@@ -145,4 +145,17 @@ test.describe("API /api/public/cadastro", () => {
       expect(res.status(), `cadastro EBOOK ${i}/10 deve passar`).toBe(201);
     }
   });
+
+  test("source EVENTO tem cota alta: 10 cadastros do mesmo IP (WiFi compartilhado) passam", async ({ request }) => {
+    const ip = "10.0.5.1";
+
+    for (let i = 1; i <= 10; i++) {
+      const res = await postCadastro(
+        request,
+        { name: `Evento Presencial ${i}`, phone: uniquePhone(), source: "EVENTO" },
+        ip
+      );
+      expect(res.status(), `cadastro EVENTO ${i}/10 deve passar`).toBe(201);
+    }
+  });
 });
