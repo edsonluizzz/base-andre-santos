@@ -7,6 +7,7 @@
     "build": "prisma db push || echo 'db push skipped (offline)' && prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
+    "test:e2e": "playwright test",
     "db:seed": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seed.ts"
   },
   "prisma": {
@@ -21,6 +22,7 @@
     "@upstash/ratelimit": "^2.0.5",
     "@upstash/redis": "^1.34.3",
     "@prisma/adapter-neon": "^7.6.0",
+    "@prisma/adapter-pg": "7.6.0",
     "@prisma/client": "^7.6.0",
     "@sentry/nextjs": "^10.49.0",
     "@vercel/blob": "^2.3.1",
@@ -49,6 +51,7 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@playwright/test": "^1.49.0",
     "@types/node": "20.19.39",
     "@types/react": "18.3.28",
     "@types/react-dom": "^18",
