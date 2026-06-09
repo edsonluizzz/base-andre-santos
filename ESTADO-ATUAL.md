@@ -32,10 +32,31 @@ Auditoria do código (em sync com git `edsonluizzz/base-andre-santos`) via skill
    continua 302→/login. QStash e pool tuning descartados (racional no PLAN.md).
 3. **Itens menores:** limpar 10 UserCampaigns duplicadas do André · setar `N8N_IMPORT_WEBHOOK_URL` · remover `/api/n8n/seed-tenants` (era p/ provisionamento Miriam) · dívida técnica mapeada (23 type-errors, CSP, cron fail-open, telegram secret).
 
-⚠️ **Achado 2026-06-09:** o job `Check & Auto-Heal` do deploy-guardian falha em TODO
-push há dias — o `npx tsc --noEmit` dele esbarra nos 23 type-errors conhecidos (a flag
-`ignoreBuildErrors` só silencia o `next build`, não esse step). O X vermelho constante
-mascara falha real. Decidir: tornar o tsc não-bloqueante no guardian OU zerar os 23 erros.
+✅ **RESOLVIDO 2026-06-09 (commits `7ceb0c8` + `550cc5b`)** — guardian VERDE pela
+primeira vez. 3 causas raiz: (1) `set -e` matava o step de captura; (2) Prisma 7 lança
+erro em `new PrismaClient()` sem options → build sem DATABASE_URL morria (fix: adapter
+pg com URL placeholder em db.ts); (3) `google-calendar/callback` sem force-dynamic —
+try/catch engolia DYNAMIC_SERVER_USAGE (rota podia virar estática = callback OAuth
+cacheado). tsc agora é informativo (::warning::); auto-heal é best-effort (skip sem
+ANTHROPIC_API_KEY). **Validação local possível:** clone em `C:\Users\usuario\ovile-ci`
+(sem .env — db push cai no skip offline; lint/build rodam sem tocar prod).
+
+## 📱 Módulo Grupos — reescrito 100% AO VIVO (2026-06-09, commits `61b3382`→`39e89c2`)
+
+Decisão do Edson: "manter só o ao vivo e excluir os outros, pegar os links reais".
+- `/grupos` lista APENAS os grupos reais do número da campanha (Z-API, `lib/zapi.ts`)
+- Região do roteamento (WF2) definida no grupo real via select → `route-config` faz
+  upsert do registro espelhado (WhatsAppGroup.zapiGroupId) com nome + invite link REAIS;
+  garante 1 grupo/região e 1 fallback (estrela)
+- Participantes reais: ver/adicionar/remover pelo painel (ADMIN-only no backend)
+- Cadastros manuais antigos = seção "órfãos" com excluir (⚠️ Edson: definir regiões nos
+  grupos reais ANTES de excluir os 4 antigos OESTE/LITORAL/SUDOESTE/GERAL)
+- Removidos: criação manual, gestão de membros anotada, vínculo zonas, rota /import
+
+**Próximo (proposta aguardando OK):** "WhatsApp Web" no painel em 3 fases —
+F1 enviar texto/áudio/foto/vídeo p/ grupos e leads (Blob + Z-API send-*);
+F2 inbox com histórico (Z-API /chat-messages, polling só com aba aberta);
+F3 tempo real via relay do webhook (Z-API → nossa API → grava → repassa n8n WF2).
 
 ⚠️ **Não rodar `npm run build` local** — ele executa `prisma db push` e mexe no banco de produção. Validação real é no Vercel.
 
