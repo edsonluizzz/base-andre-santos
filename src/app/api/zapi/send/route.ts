@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth";
 import { getCampaignContext } from "@/lib/campaign-context";
 import {
   zapiSendText, zapiSendImage, zapiSendVideo, zapiSendAudio,
-  zapiListGroups, toZapiPhone, ZapiNotConfiguredError,
+  zapiGroupMetadata, zapiGetDevice, toZapiPhone, ZapiNotConfiguredError,
 } from "@/lib/zapi";
 
 export const dynamic = "force-dynamic";
@@ -18,21 +18,52 @@ type SendType = (typeof TYPES)[number];
  *
  * - Telefone: SOMENTE 10-11 dígitos locais ou 12-13 com DDI 55. Qualquer
  *   outra contagem de dígitos é rejeitada.
- * - Grupo: o ID precisa existir na lista de grupos da instância (Z-API).
+ * - Grupo: precisa existir na instância (metadata resolve) E, se o grupo for
+ *   "só admins enviam", o número da campanha precisa ser admin — senão o
+ *   WhatsApp descarta a mensagem SILENCIOSAMENTE (Z-API devolve messageId
+ *   mesmo assim; foi o caso do grupo Renova PR em 2026-06-09).
  */
-async function resolveRecipient(cid: string, raw: unknown): Promise<string | null> {
-  if (typeof raw !== "string" || !raw.trim()) return null;
+async function resolveRecipient(
+  cid: string,
+  raw: unknown
+): Promise<{ to: string } | { error: string; status: number }> {
+  if (typeof raw !== "string" || !raw.trim()) {
+    return { error: "Destinatário inválido", status: 400 };
+  }
   const v = raw.trim();
   const digits = v.replace(/\D/g, "");
 
   const isLocalPhone = !v.includes("-") && (digits.length === 10 || digits.length === 11);
   const isIntlPhone = !v.includes("-") && digits.startsWith("55") && (digits.length === 12 || digits.length === 13);
-  if (isLocalPhone || isIntlPhone) return toZapiPhone(digits);
+  if (isLocalPhone || isIntlPhone) {
+    const phone = toZapiPhone(digits);
+    return phone
+      ? { to: phone }
+      : { error: "Telefone inválido", status: 400 };
+  }
 
-  // Não é telefone válido → só aceita se for um grupo REAL da instância
-  const groups = await zapiListGroups(cid);
-  const match = groups.find((g) => g.id === v);
-  return match ? match.id : null;
+  // Não é telefone → precisa ser um grupo REAL da instância
+  let meta;
+  try {
+    meta = await zapiGroupMetadata(cid, v);
+  } catch {
+    return { error: "Destinatário inválido — não é telefone BR nem grupo da instância", status: 400 };
+  }
+
+  if (meta.adminOnlyMessage) {
+    const device = await zapiGetDevice(cid).catch(() => ({ phone: null }));
+    const mine = device.phone
+      ? meta.participants.find((p) => p.phone.replace(/\D/g, "") === device.phone!.replace(/\D/g, ""))
+      : undefined;
+    if (!mine?.isAdmin && !mine?.isSuperAdmin) {
+      return {
+        error: `O grupo "${meta.subject}" só permite mensagens de ADMINISTRADORES e o número da campanha não é admin — o WhatsApp descartaria a mensagem em silêncio. Promova o número a admin no grupo e tente de novo.`,
+        status: 409,
+      };
+    }
+  }
+
+  return { to: v };
 }
 
 /**
@@ -52,13 +83,11 @@ export async function POST(req: NextRequest) {
       to?: string; type?: string; message?: string; mediaUrl?: string; caption?: string;
     };
 
-    const to = await resolveRecipient(cid, body.to);
-    if (!to) {
-      return NextResponse.json(
-        { error: "Destinatário inválido — não é telefone BR válido nem grupo da instância" },
-        { status: 400 }
-      );
+    const resolved = await resolveRecipient(cid, body.to);
+    if ("error" in resolved) {
+      return NextResponse.json({ error: resolved.error }, { status: resolved.status });
     }
+    const to = resolved.to;
 
     const type = body.type as SendType;
     if (!TYPES.includes(type)) return NextResponse.json({ error: "Tipo inválido" }, { status: 400 });

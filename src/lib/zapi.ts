@@ -32,6 +32,8 @@ export interface ZapiGroupMetadata {
   owner?: string;
   creation?: number;
   invitationLink?: string;
+  /** true = só administradores podem enviar (WhatsApp descarta msgs de não-admin SEM erro) */
+  adminOnlyMessage: boolean;
   participants: ZapiParticipant[];
 }
 
@@ -110,6 +112,7 @@ export async function zapiGroupMetadata(cid: string, groupId: string): Promise<Z
     owner?: string;
     creation?: number;
     invitationLink?: string;
+    adminOnlyMessage?: boolean | string;
     participants?: Array<{ phone?: string; name?: string; short?: string; isAdmin?: boolean | string; isSuperAdmin?: boolean | string }>;
   }>(cid, `group-metadata/${encodeURIComponent(groupId)}`);
 
@@ -120,6 +123,7 @@ export async function zapiGroupMetadata(cid: string, groupId: string): Promise<Z
     owner: m.owner,
     creation: m.creation,
     invitationLink: m.invitationLink,
+    adminOnlyMessage: m.adminOnlyMessage === true || m.adminOnlyMessage === "true",
     participants: (m.participants ?? [])
       .filter((p) => !!p.phone)
       .map((p) => ({
@@ -130,6 +134,12 @@ export async function zapiGroupMetadata(cid: string, groupId: string): Promise<Z
         isSuperAdmin: p.isSuperAdmin === true || p.isSuperAdmin === "true",
       })),
   };
+}
+
+/** Dados do celular conectado à instância (telefone do número da campanha). */
+export async function zapiGetDevice(cid: string): Promise<{ phone: string | null }> {
+  const d = await zapiFetch<{ phone?: string }>(cid, "device");
+  return { phone: d.phone ?? null };
 }
 
 /** Adiciona participantes (telefones com DDI, ex: 5541999999999). */

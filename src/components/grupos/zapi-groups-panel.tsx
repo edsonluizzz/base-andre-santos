@@ -17,7 +17,7 @@ type RouteRecord = { id: string; region: PRRegion | null; isFallback: boolean; i
 type ZapiGroup = { id: string; name: string; record: RouteRecord | null };
 type Orphan = { id: string; name: string; region: PRRegion | null; isFallback: boolean };
 type Participant = { phone: string; name?: string; isAdmin: boolean; isSuperAdmin: boolean };
-type ZapiMeta = { id: string; subject: string; invitationLink?: string; participants: Participant[] };
+type ZapiMeta = { id: string; subject: string; invitationLink?: string; adminOnlyMessage?: boolean; participants: Participant[] };
 
 const NONE = "__none__";
 const REGION_OPTIONS = Object.entries(PR_REGION_LABEL) as [PRRegion, string][];
@@ -342,6 +342,15 @@ export function ZapiGroupsLive() {
                         <ExternalLink className="w-3.5 h-3.5" />
                       </a>
                     </div>
+                  </div>
+                )}
+
+                {meta.adminOnlyMessage && (
+                  <div className="rounded-xl px-3 py-2.5 bg-amber-500/[0.06] border border-amber-500/20">
+                    <p className="text-xs text-amber-400">
+                      🔒 Este grupo só permite mensagens de <strong>administradores</strong>. Se o número da
+                      campanha não for admin, o WhatsApp descarta o envio em silêncio — promova-o a admin no grupo.
+                    </p>
                   </div>
                 )}
 
