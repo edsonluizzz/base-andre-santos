@@ -1,0 +1,156 @@
+/**
+ * Cliente Z-API para administração de grupos do WhatsApp da campanha.
+ *
+ * Credenciais: lidas de Campaign.zApi* via getCampaignIntegrations (criptografadas
+ * no banco, fallback env ZAPI_*). Mesma base usada pelo n8n para send-text:
+ *   https://api.z-api.io/instances/{instance}/token/{token}/{endpoint}
+ * Header obrigatório: Client-Token (account security token).
+ *
+ * Docs: https://developer.z-api.io (group/get-groups, group/metadata-group,
+ * group/add-participant, group/remove-participant).
+ */
+
+import { getCampaignIntegrations } from "./meta-db";
+
+export interface ZapiGroupSummary {
+  /** ID do grupo (campo `phone` na Z-API, ex: "120363019502650977-group") */
+  id: string;
+  name: string;
+}
+
+export interface ZapiParticipant {
+  phone: string;
+  name?: string;
+  isAdmin: boolean;
+  isSuperAdmin: boolean;
+}
+
+export interface ZapiGroupMetadata {
+  id: string;
+  subject: string;
+  description?: string;
+  owner?: string;
+  creation?: number;
+  invitationLink?: string;
+  participants: ZapiParticipant[];
+}
+
+interface ZapiCreds {
+  instance: string;
+  token: string;
+  clientToken: string | null;
+}
+
+export class ZapiNotConfiguredError extends Error {
+  constructor() {
+    super("Z-API não configurada para esta campanha (Configurações → Integrações)");
+    this.name = "ZapiNotConfiguredError";
+  }
+}
+
+async function getCreds(cid: string): Promise<ZapiCreds> {
+  const integrations = await getCampaignIntegrations(cid);
+  const instance = integrations.zApiInstance ?? process.env.ZAPI_INSTANCE ?? null;
+  const token = integrations.zApiToken ?? process.env.ZAPI_TOKEN ?? null;
+  const clientToken = integrations.zApiClientToken ?? process.env.ZAPI_CLIENT_TOKEN ?? null;
+  if (!instance || !token) throw new ZapiNotConfiguredError();
+  return { instance, token, clientToken };
+}
+
+async function zapiFetch<T>(
+  cid: string,
+  path: string,
+  init?: { method?: "GET" | "POST"; body?: unknown }
+): Promise<T> {
+  const { instance, token, clientToken } = await getCreds(cid);
+  const url = `https://api.z-api.io/instances/${instance}/token/${token}/${path}`;
+
+  const res = await fetch(url, {
+    method: init?.method ?? "GET",
+    headers: {
+      "Content-Type": "application/json",
+      ...(clientToken ? { "Client-Token": clientToken } : {}),
+    },
+    body: init?.body !== undefined ? JSON.stringify(init.body) : undefined,
+    signal: AbortSignal.timeout(20_000),
+    cache: "no-store",
+  });
+
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    throw new Error(`Z-API ${path} falhou: HTTP ${res.status} ${body.slice(0, 300)}`);
+  }
+  return (await res.json()) as T;
+}
+
+/** Lista todos os grupos da instância (pagina até esvaziar, máx 200 grupos). */
+export async function zapiListGroups(cid: string): Promise<ZapiGroupSummary[]> {
+  const pageSize = 50;
+  const groups: ZapiGroupSummary[] = [];
+  for (let page = 1; page <= 4; page++) {
+    const batch = await zapiFetch<Array<{ phone?: string; name?: string; isGroup?: boolean }>>(
+      cid,
+      `groups?page=${page}&pageSize=${pageSize}`
+    );
+    if (!Array.isArray(batch) || batch.length === 0) break;
+    for (const g of batch) {
+      if (g.phone) groups.push({ id: g.phone, name: g.name ?? g.phone });
+    }
+    if (batch.length < pageSize) break;
+  }
+  return groups;
+}
+
+/** Metadata completo do grupo: participantes (com admin) + link de convite. */
+export async function zapiGroupMetadata(cid: string, groupId: string): Promise<ZapiGroupMetadata> {
+  const m = await zapiFetch<{
+    phone?: string;
+    subject?: string;
+    description?: string;
+    owner?: string;
+    creation?: number;
+    invitationLink?: string;
+    participants?: Array<{ phone?: string; name?: string; short?: string; isAdmin?: boolean | string; isSuperAdmin?: boolean | string }>;
+  }>(cid, `group-metadata/${encodeURIComponent(groupId)}`);
+
+  return {
+    id: m.phone ?? groupId,
+    subject: m.subject ?? groupId,
+    description: m.description,
+    owner: m.owner,
+    creation: m.creation,
+    invitationLink: m.invitationLink,
+    participants: (m.participants ?? [])
+      .filter((p) => !!p.phone)
+      .map((p) => ({
+        phone: p.phone!,
+        name: p.name ?? p.short,
+        // Z-API às vezes retorna booleans como string
+        isAdmin: p.isAdmin === true || p.isAdmin === "true",
+        isSuperAdmin: p.isSuperAdmin === true || p.isSuperAdmin === "true",
+      })),
+  };
+}
+
+/** Adiciona participantes (telefones com DDI, ex: 5541999999999). */
+export async function zapiAddParticipants(cid: string, groupId: string, phones: string[]): Promise<void> {
+  await zapiFetch(cid, "add-participant", {
+    method: "POST",
+    body: { groupId, phones, autoInvite: true },
+  });
+}
+
+/** Remove participantes do grupo. */
+export async function zapiRemoveParticipants(cid: string, groupId: string, phones: string[]): Promise<void> {
+  await zapiFetch(cid, "remove-participant", {
+    method: "POST",
+    body: { groupId, phones },
+  });
+}
+
+/** Normaliza telefone BR para o formato da Z-API (55 + DDD + número). */
+export function toZapiPhone(raw: string): string | null {
+  const d = raw.replace(/\D/g, "");
+  if (d.length < 10) return null;
+  return d.startsWith("55") ? d : `55${d}`;
+}

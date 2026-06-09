@@ -237,6 +237,9 @@ model WhatsAppGroup {
   // Grupo geral — recebe leads cuja região não bate em nenhum específico
   // (incluindo city=NULL). Apenas 1 grupo por campanha deveria ser fallback.
   isFallback  Boolean   @default(false)
+  // ID do grupo real na Z-API (ex: "120363019502650977-group") — vincula o
+  // registro ao grupo do WhatsApp da campanha p/ administração via painel
+  zapiGroupId String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   campaign Campaign             @relation(fields: [campaignId], references: [id], onDelete: Cascade)
