@@ -6,6 +6,11 @@ import { encrypt } from "@/lib/crypto";
 
 const APP_URL = process.env.APP_URL ?? "";
 
+// Callback OAuth NUNCA pode ser estático: o try/catch abaixo engole o sinal
+// DYNAMIC_SERVER_USAGE do auth() no build, e a rota acabaria exportada como
+// resposta cacheada (além de quebrar o build sem APP_URL).
+export const dynamic = "force-dynamic";
+
 export async function GET(req: NextRequest) {
   try {
     const session = await auth();

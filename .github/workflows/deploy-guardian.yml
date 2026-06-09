@@ -138,9 +138,16 @@ jobs:
 
       - name: Auto-heal with Claude
         if: steps.checks.outputs.has_errors == 'true'
+        # Best-effort: se o auto-heal falhar (ex: secret ausente), quem decide
+        # o status do job é a Final verification — não este step.
+        continue-on-error: true
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
+          if [ -z "$ANTHROPIC_API_KEY" ]; then
+            echo "::warning::Secret ANTHROPIC_API_KEY não configurado — auto-heal pulado"
+            exit 0
+          fi
           npm install -g @anthropic-ai/claude-code@latest
 
           # Combine guardian prompt with actual errors
