@@ -1,6 +1,22 @@
-# Estado Atual da Produção — 2026-06-03
+# Estado Atual da Produção — 2026-06-09
 
-**Última atualização:** 2026-06-03 ~03:35 BRT (pós hard sprint madrugada)
+**Última atualização:** 2026-06-09 BRT
+
+---
+
+## 📌 Sessão 2026-06-09 (auditoria com skills ECC) — RETOMAR AQUI
+
+Auditoria do código (em sync com git `edsonluizzz/base-andre-santos`) via skills novas (silent-failure-hunter / postgres-patterns / e2e-testing).
+
+**Feito nesta sessão:**
+- ✅ **Falhas silenciosas corrigidas** (commit `c9b79cf`): 6 telas do dashboard (configuracoes, colaboradores, mapa, agenda, completar-perfil, disparar) tinham `.catch(() => {})` vazios que deixavam a tela vazia sem avisar o usuário. Agora usam `toast.error` (loads críticos) ou `console.error` (loads de fundo). **Conferir se buildou OK no Vercel.**
+- ✅ Confirmado que o bug do `/api/n8n/config` já estava resolvido (validateCampaign).
+
+**Próximos passos (ordem):**
+1. **#1 Testes E2E do `/cadastro`** (maior valor, seguro). Pendente OK do Edson para: instalar Playwright como devDependency + tocar em `.github/workflows/deploy-guardian.yml` (rodar no CI, já que node_modules local está incompleto).
+2. **#3 Resiliência de pico** (fila Upstash/QStash no cadastro + connection_limit Prisma). Fazer **depois do upgrade Vercel Pro** (sem ele, o teto de billing ainda derruba em evento grande).
+
+⚠️ **Não rodar `npm run build` local** — ele executa `prisma db push` e mexe no banco de produção. Validação real é no Vercel.
 
 ---
 
@@ -54,7 +70,7 @@
 
 ### Bugs conhecidos (não bloqueantes)
 - TypeErrors no `/dashboard` e `/treinamento` (provavelmente switcher Miriam acessando schema diff) — pouco frequente
-- `/api/n8n/config?campaign_id=X` não valida X (fallback silencioso)
+- ~~`/api/n8n/config?campaign_id=X` não valida X (fallback silencioso)~~ ✅ RESOLVIDO (valida via `validateCampaign`, retorna 404)
 - 10 UserCampaigns duplicadas (ACCEPTED+PENDING) na campanha André
 
 ---
