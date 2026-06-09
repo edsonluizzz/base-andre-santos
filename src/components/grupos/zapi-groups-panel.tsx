@@ -1,49 +1,41 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import {
   Smartphone, RefreshCw, Users, Copy, ExternalLink, UserPlus, X,
-  Link2, Crown, Download, ShieldAlert,
+  Crown, ShieldAlert, Star, Trash2, MapPin,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PR_REGION_LABEL, type PRRegion } from "@/lib/pr-regions";
 
-type LinkedTo = { id: string; name: string } | null;
-type ZapiGroup = { id: string; name: string; linkedTo: LinkedTo };
+type RouteRecord = { id: string; region: PRRegion | null; isFallback: boolean; inviteLink: string | null };
+type ZapiGroup = { id: string; name: string; record: RouteRecord | null };
+type Orphan = { id: string; name: string; region: PRRegion | null; isFallback: boolean };
 type Participant = { phone: string; name?: string; isAdmin: boolean; isSuperAdmin: boolean };
-type ZapiMeta = {
-  id: string; subject: string; description?: string;
-  invitationLink?: string; participants: Participant[];
-};
-type RegisteredGroup = { id: string; name: string };
+type ZapiMeta = { id: string; subject: string; invitationLink?: string; participants: Participant[] };
 
-export function ZapiGroupsPanel({
-  registeredGroups,
-  onChanged,
-}: {
-  /** Registros WhatsAppGroup do roteamento regional (para vincular) */
-  registeredGroups: RegisteredGroup[];
-  /** Chamado quando um grupo é importado/vinculado (refaz fetch da lista principal) */
-  onChanged: () => void;
-}) {
-  const [loaded, setLoaded] = useState(false);
-  const [loading, setLoading] = useState(false);
+const NONE = "__none__";
+const REGION_OPTIONS = Object.entries(PR_REGION_LABEL) as [PRRegion, string][];
+
+export function ZapiGroupsLive() {
+  const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [zapiGroups, setZapiGroups] = useState<ZapiGroup[]>([]);
+  const [groups, setGroups] = useState<ZapiGroup[]>([]);
+  const [orphans, setOrphans] = useState<Orphan[]>([]);
 
-  // Sheet de detalhes
+  // Sheet de participantes
   const [active, setActive] = useState<ZapiGroup | null>(null);
   const [meta, setMeta] = useState<ZapiMeta | null>(null);
   const [metaLoading, setMetaLoading] = useState(false);
   const [newPhone, setNewPhone] = useState("");
-  const [acting, setActing] = useState<string | null>(null); // phone em ação ou "add"/"import"/"link"
-  const [linkTarget, setLinkTarget] = useState("");
+  const [acting, setActing] = useState<string | null>(null);
 
-  async function loadGroups() {
-    setLoading(true);
+  const load = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
     setErrorMsg(null);
     try {
       const res = await fetch("/api/zapi/groups");
@@ -52,12 +44,55 @@ export function ZapiGroupsPanel({
         setErrorMsg(data.error ?? `Erro ${res.status} ao consultar a Z-API`);
         return;
       }
-      setZapiGroups(data.groups ?? []);
-      setLoaded(true);
+      setGroups(data.groups ?? []);
+      setOrphans(data.orphans ?? []);
     } catch {
       setErrorMsg("Erro de conexão ao consultar os grupos");
     } finally {
       setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  async function setRouteConfig(g: ZapiGroup, patch: { region?: PRRegion | null; isFallback?: boolean }) {
+    setActing(g.id);
+    try {
+      const res = await fetch(`/api/zapi/groups/${encodeURIComponent(g.id)}/route-config`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(patch),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        toast.error(data.error ?? "Erro ao configurar roteamento");
+        return;
+      }
+      toast.success("Roteamento atualizado — link real do grupo salvo");
+      await load(true);
+    } catch {
+      toast.error("Erro de conexão ao configurar roteamento");
+    } finally {
+      setActing(null);
+    }
+  }
+
+  async function deleteOrphan(o: Orphan) {
+    if (!confirm(`Excluir o cadastro manual "${o.name}"?`)) return;
+    setActing(o.id);
+    try {
+      const res = await fetch(`/api/groups/${o.id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        toast.error(data.error ?? "Erro ao excluir");
+        return;
+      }
+      toast.success("Cadastro manual excluído");
+      setOrphans((os) => os.filter((x) => x.id !== o.id));
+    } catch {
+      toast.error("Erro de conexão ao excluir");
+    } finally {
+      setActing(null);
     }
   }
 
@@ -65,7 +100,6 @@ export function ZapiGroupsPanel({
     setActive(g);
     setMeta(null);
     setNewPhone("");
-    setLinkTarget("");
     setMetaLoading(true);
     try {
       const res = await fetch(`/api/zapi/groups/${encodeURIComponent(g.id)}`);
@@ -81,34 +115,6 @@ export function ZapiGroupsPanel({
       setActive(null);
     } finally {
       setMetaLoading(false);
-    }
-  }
-
-  async function importGroup(g: ZapiGroup, linkToGroupId?: string) {
-    setActing(linkToGroupId ? "link" : "import");
-    try {
-      const res = await fetch(`/api/zapi/groups/${encodeURIComponent(g.id)}/import`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(linkToGroupId ? { linkToGroupId } : {}),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        toast.error(data.error ?? "Erro ao importar grupo");
-        return;
-      }
-      toast.success(
-        data.mode === "linked"
-          ? "Grupo vinculado — link de convite atualizado com o real"
-          : "Grupo importado como novo registro"
-      );
-      onChanged();
-      await loadGroups();
-      setActive(null);
-    } catch {
-      toast.error("Erro de conexão ao importar grupo");
-    } finally {
-      setActing(null);
     }
   }
 
@@ -128,7 +134,7 @@ export function ZapiGroupsPanel({
       }
       toast.success("Convite/adição enviado ao WhatsApp");
       setNewPhone("");
-      await openDetails(active); // recarrega participantes
+      await openDetails(active);
     } catch {
       toast.error("Erro de conexão ao adicionar participante");
     } finally {
@@ -162,69 +168,142 @@ export function ZapiGroupsPanel({
 
   function copy(text: string) {
     navigator.clipboard.writeText(text)
-      .then(() => toast.success("Copiado!"))
+      .then(() => toast.success("Link copiado!"))
       .catch(() => toast.error("Não foi possível copiar"));
   }
 
-  return (
-    <div className="glass-card rounded-2xl p-5 border border-white/[0.08] space-y-4">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-          <h2 className="font-semibold text-foreground flex items-center gap-2">
-            <Smartphone className="w-4 h-4 text-green-400" /> Grupos do WhatsApp da campanha
-            <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-green-500/10 text-green-400 border border-green-500/20">ao vivo</span>
-          </h2>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Grupos reais do número conectado (Z-API): veja participantes, adicione/remova pessoas e importe o link de convite.
-          </p>
-        </div>
-        <Button
-          onClick={loadGroups}
-          disabled={loading}
-          variant="outline"
-          className="gap-2 shrink-0"
-        >
-          <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
-          {loading ? "Consultando..." : loaded ? "Atualizar" : "Carregar grupos"}
-        </Button>
+  if (loading) {
+    return (
+      <div className="space-y-3">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="glass-card rounded-xl p-5 border border-white/[0.08] space-y-3">
+            <div className="h-4 animate-shimmer rounded w-2/5" />
+            <div className="h-3 animate-shimmer rounded w-3/5" />
+          </div>
+        ))}
       </div>
+    );
+  }
 
-      {errorMsg && (
-        <div className="rounded-xl px-4 py-3 flex items-center gap-3 bg-red-500/[0.06] border border-red-500/20">
-          <ShieldAlert className="w-4 h-4 text-red-400 shrink-0" />
-          <p className="text-xs text-red-400">{errorMsg}</p>
+  return (
+    <div className="space-y-6">
+      {errorMsg ? (
+        <div className="glass-card rounded-2xl p-8 text-center border border-red-500/20 space-y-3">
+          <ShieldAlert className="w-8 h-8 text-red-400 mx-auto" />
+          <p className="text-sm text-red-400">{errorMsg}</p>
+          <Button variant="outline" onClick={() => load()} className="gap-2 mx-auto">
+            <RefreshCw className="w-4 h-4" /> Tentar de novo
+          </Button>
+        </div>
+      ) : groups.length === 0 ? (
+        <div className="glass-card rounded-2xl p-12 text-center border border-white/[0.08]">
+          <Smartphone className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
+          <p className="font-medium text-foreground mb-1">Nenhum grupo no WhatsApp da campanha</p>
+          <p className="text-sm text-muted-foreground">Crie grupos pelo WhatsApp do número conectado — eles aparecem aqui automaticamente.</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {groups.map((g) => (
+            <div key={g.id} className="glass-card rounded-xl p-4 sm:p-5 border border-white/[0.08] hover:border-primary/20 transition-colors">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-foreground truncate flex items-center gap-2">
+                    {g.name}
+                    {g.record?.isFallback && (
+                      <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 shrink-0">
+                        <Star className="w-2.5 h-2.5" /> fallback
+                      </span>
+                    )}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
+                    <MapPin className="w-3 h-3 shrink-0" />
+                    {g.record?.region
+                      ? `Recebe leads: ${PR_REGION_LABEL[g.record.region]}`
+                      : "Fora do roteamento automático"}
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+                  <Select
+                    value={g.record?.region ?? NONE}
+                    onValueChange={(v) => setRouteConfig(g, { region: v === NONE ? null : (v as PRRegion) })}
+                    disabled={acting === g.id}
+                  >
+                    <SelectTrigger className="h-9 text-xs w-full sm:w-[210px]">
+                      <SelectValue placeholder="Região do roteamento..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={NONE}>Sem região (fora do roteamento)</SelectItem>
+                      {REGION_OPTIONS.map(([value, label]) => (
+                        <SelectItem key={value} value={value}>{label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  <button
+                    onClick={() => setRouteConfig(g, { isFallback: !g.record?.isFallback })}
+                    disabled={acting === g.id}
+                    aria-label={g.record?.isFallback ? "Remover como grupo fallback" : "Definir como grupo fallback"}
+                    title={g.record?.isFallback ? "Grupo fallback (recebe leads sem região)" : "Definir como fallback"}
+                    className={`p-2 rounded-lg border transition-colors shrink-0 disabled:opacity-50 ${
+                      g.record?.isFallback
+                        ? "bg-primary/15 border-primary/30 text-primary"
+                        : "bg-white/[0.04] border-white/[0.08] text-muted-foreground hover:text-primary hover:border-primary/30"
+                    }`}
+                  >
+                    <Star className="w-4 h-4" />
+                  </button>
+
+                  {g.record?.inviteLink && (
+                    <button onClick={() => copy(g.record!.inviteLink!)} aria-label="Copiar link de convite"
+                      className="p-2 rounded-lg bg-white/[0.04] border border-white/[0.08] text-muted-foreground hover:bg-white/[0.08] transition-colors shrink-0">
+                      <Copy className="w-4 h-4" />
+                    </button>
+                  )}
+
+                  <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={() => openDetails(g)}>
+                    <Users className="w-3.5 h-3.5" /> Gerenciar
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
-      {loaded && !errorMsg && (
-        zapiGroups.length === 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-4">
-            Nenhum grupo encontrado na instância — o número da campanha não participa de grupos.
-          </p>
-        ) : (
+      {/* Cadastros manuais antigos, sem grupo real vinculado */}
+      {!errorMsg && orphans.length > 0 && (
+        <div className="glass-card rounded-2xl p-5 border border-amber-500/20 space-y-3">
+          <div>
+            <h2 className="text-sm font-semibold text-amber-400">Cadastros manuais antigos</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Registros sem grupo real vinculado. Defina a região nos grupos ao vivo acima e exclua estes — o link antigo deixa de ser usado.
+            </p>
+          </div>
           <div className="rounded-xl border border-white/[0.08] divide-y divide-white/[0.05] overflow-hidden">
-            {zapiGroups.map((g) => (
-              <div key={g.id} className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-white/[0.03] transition-colors">
+            {orphans.map((o) => (
+              <div key={o.id} className="flex items-center justify-between gap-3 px-4 py-2.5">
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-foreground truncate">{g.name}</p>
-                  {g.linkedTo ? (
-                    <p className="text-xs text-green-400 flex items-center gap-1 mt-0.5">
-                      <Link2 className="w-3 h-3" /> Vinculado a “{g.linkedTo.name}”
-                    </p>
-                  ) : (
-                    <p className="text-xs text-muted-foreground mt-0.5">Não vinculado ao roteamento</p>
-                  )}
+                  <p className="text-sm text-foreground truncate">{o.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {o.region ? PR_REGION_LABEL[o.region] : "sem região"}{o.isFallback ? " · fallback" : ""}
+                  </p>
                 </div>
-                <Button variant="outline" size="sm" className="shrink-0 gap-1.5" onClick={() => openDetails(g)}>
-                  <Users className="w-3.5 h-3.5" /> Gerenciar
-                </Button>
+                <button
+                  onClick={() => deleteOrphan(o)}
+                  disabled={acting === o.id}
+                  aria-label={`Excluir cadastro manual ${o.name}`}
+                  className="p-2 rounded-lg hover:bg-red-500/10 text-muted-foreground hover:text-red-400 transition-colors disabled:opacity-50 shrink-0"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
               </div>
             ))}
           </div>
-        )
+        </div>
       )}
 
-      {/* Sheet de detalhes do grupo real */}
+      {/* Sheet de participantes do grupo real */}
       <Sheet open={!!active} onOpenChange={(v) => { if (!v) setActive(null); }}>
         <SheetContent className="w-full sm:max-w-md flex flex-col gap-0 p-0">
           <SheetHeader className="px-5 pt-5 pb-4 border-b border-white/[0.07]">
@@ -246,7 +325,6 @@ export function ZapiGroupsPanel({
               </div>
             ) : meta && (
               <>
-                {/* Link de convite real */}
                 {meta.invitationLink && (
                   <div className="space-y-2">
                     <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Link de convite (real)</p>
@@ -266,43 +344,6 @@ export function ZapiGroupsPanel({
                   </div>
                 )}
 
-                {/* Vincular ao roteamento */}
-                <div className="space-y-2">
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Roteamento regional</p>
-                  {active?.linkedTo ? (
-                    <p className="text-xs text-green-400 flex items-center gap-1">
-                      <Link2 className="w-3 h-3" /> Vinculado a “{active.linkedTo.name}” — o welcome do WF2 usa o link deste grupo
-                    </p>
-                  ) : (
-                    <div className="space-y-2">
-                      {registeredGroups.length > 0 && (
-                        <div className="flex items-center gap-2">
-                          <Select value={linkTarget} onValueChange={setLinkTarget}>
-                            <SelectTrigger className="h-9 text-xs flex-1">
-                              <SelectValue placeholder="Vincular a um grupo cadastrado..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {registeredGroups.map((r) => (
-                                <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <Button size="sm" disabled={!linkTarget || acting === "link"}
-                            onClick={() => active && importGroup(active, linkTarget)} className="gap-1.5 shrink-0">
-                            <Link2 className="w-3.5 h-3.5" /> {acting === "link" ? "..." : "Vincular"}
-                          </Button>
-                        </div>
-                      )}
-                      <Button variant="outline" size="sm" disabled={acting === "import"}
-                        onClick={() => active && importGroup(active)} className="gap-1.5 w-full">
-                        <Download className="w-3.5 h-3.5" />
-                        {acting === "import" ? "Importando..." : "Importar como novo grupo cadastrado"}
-                      </Button>
-                    </div>
-                  )}
-                </div>
-
-                {/* Adicionar participante */}
                 <div className="space-y-2">
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Adicionar participante</p>
                   <div className="flex items-center gap-2">
@@ -319,7 +360,6 @@ export function ZapiGroupsPanel({
                   </div>
                 </div>
 
-                {/* Participantes reais */}
                 <div className="space-y-2">
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Participantes</p>
                   <div className="rounded-xl border border-white/[0.08] divide-y divide-white/[0.05] overflow-hidden">

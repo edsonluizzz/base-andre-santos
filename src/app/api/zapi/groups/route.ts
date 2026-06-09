@@ -6,8 +6,9 @@ import { zapiListGroups, ZapiNotConfiguredError } from "@/lib/zapi";
 export const dynamic = "force-dynamic";
 
 /**
- * Lista os grupos REAIS do WhatsApp da campanha (via Z-API) e indica quais
- * já estão vinculados a um registro WhatsAppGroup do roteamento regional.
+ * Lista os grupos REAIS do WhatsApp da campanha (via Z-API) com a config de
+ * roteamento regional de cada um (registro WhatsAppGroup espelhado), além dos
+ * registros órfãos (cadastros manuais antigos sem grupo real vinculado).
  */
 export async function GET() {
   try {
@@ -19,21 +20,32 @@ export async function GET() {
     const { db, cid } = getCampaignContext(session);
     const CID = cid;
 
-    const [zapiGroups, linkedRecords] = await Promise.all([
+    const [zapiGroups, records] = await Promise.all([
       zapiListGroups(CID),
       db.whatsAppGroup.findMany({
-        where: { campaignId: CID, zapiGroupId: { not: null } },
-        select: { id: true, name: true, zapiGroupId: true },
+        where: { campaignId: CID },
+        select: { id: true, name: true, region: true, isFallback: true, inviteLink: true, zapiGroupId: true },
+        orderBy: { name: "asc" },
       }),
     ]);
 
-    const linkedBy = new Map(linkedRecords.map((r) => [r.zapiGroupId!, { id: r.id, name: r.name }]));
+    const byZapiId = new Map(records.filter((r) => r.zapiGroupId).map((r) => [r.zapiGroupId!, r]));
 
     return NextResponse.json({
-      groups: zapiGroups.map((g) => ({
-        ...g,
-        linkedTo: linkedBy.get(g.id) ?? null,
-      })),
+      groups: zapiGroups.map((g) => {
+        const rec = byZapiId.get(g.id);
+        return {
+          id: g.id,
+          name: g.name,
+          record: rec
+            ? { id: rec.id, region: rec.region, isFallback: rec.isFallback, inviteLink: rec.inviteLink }
+            : null,
+        };
+      }),
+      // Cadastros manuais antigos — sem vínculo com grupo real (candidatos a exclusão)
+      orphans: records
+        .filter((r) => !r.zapiGroupId)
+        .map((r) => ({ id: r.id, name: r.name, region: r.region, isFallback: r.isFallback })),
     });
   } catch (err) {
     if (err instanceof ZapiNotConfiguredError) {
