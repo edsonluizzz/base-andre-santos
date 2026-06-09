@@ -23,7 +23,7 @@ function pickAudioMime(): { mime: string; ext: string } {
  * Composer de WhatsApp — envia texto/foto/vídeo/áudio para `to`
  * (groupId Z-API ou telefone) pelo número da campanha.
  */
-export function WhatsappComposer({ to }: { to: string }) {
+export function WhatsappComposer({ to, onSent }: { to: string; onSent?: () => void }) {
   const [text, setText] = useState("");
   const [attachment, setAttachment] = useState<Attachment | null>(null);
   const [sending, setSending] = useState(false);
@@ -123,6 +123,7 @@ export function WhatsappComposer({ to }: { to: string }) {
       toast.success("Enviado pelo WhatsApp da campanha");
       setText("");
       discardAttachment();
+      onSent?.();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Erro ao enviar");
     } finally {

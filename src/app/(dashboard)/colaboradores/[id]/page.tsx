@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowLeft, Phone, MapPin, Mail, Calendar, Star, UserCheck, ShieldCheck, ShieldAlert, Monitor, Zap, Radio, PhoneCall } from "lucide-react";
 import { InviteToSystem } from "@/components/collaborators/invite-to-system";
 import { EditCollaboratorButton } from "@/components/collaborators/edit-collaborator-button";
+import { WhatsappSendButton } from "@/components/collaborators/whatsapp-send-button";
 import { ContactTimeline } from "@/components/collaborators/contact-timeline";
 import { ScoreBar } from "@/components/ui/score-bar";
 import { CONTRIBUTION_OPTIONS, TIER_LABEL } from "@/lib/contribution";
@@ -72,6 +73,13 @@ export default async function CollaboratorProfilePage({ params }: { params: { id
           <p className="text-xs text-muted-foreground">{PROFILE_LABEL[collaborator.profile]} · {ROLE_LABEL[collaborator.campaignRole]}</p>
         </div>
         <div className="ml-auto flex items-center gap-2">
+          {session.user.role === "ADMIN" && collaborator.phone && (
+            <WhatsappSendButton
+              collaboratorId={collaborator.id}
+              phone={collaborator.phone}
+              name={collaborator.name}
+            />
+          )}
           <span className={`text-xs px-2.5 py-1 rounded-full border ${STATUS_COLOR[collaborator.status]}`}>
             {STATUS_LABEL[collaborator.status]}
           </span>
