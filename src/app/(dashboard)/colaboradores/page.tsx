@@ -88,12 +88,12 @@ export default function ColaboradoresPage() {
   useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
-    fetch("/api/leaders").then((r) => r.ok ? r.json() : []).then(setLeaders).catch(() => {});
-    fetch("/api/cities").then((r) => r.ok ? r.json() : []).then(setCities).catch(() => {});
-    fetch("/api/collaborators/sources").then((r) => r.ok ? r.json() : []).then(setSources).catch(() => {});
+    fetch("/api/leaders").then((r) => r.ok ? r.json() : []).then(setLeaders).catch((e) => console.error("[colaboradores] leaders", e));
+    fetch("/api/cities").then((r) => r.ok ? r.json() : []).then(setCities).catch((e) => console.error("[colaboradores] cities", e));
+    fetch("/api/collaborators/sources").then((r) => r.ok ? r.json() : []).then(setSources).catch((e) => console.error("[colaboradores] sources", e));
     fetch("/api/settings").then((r) => r.ok ? r.json() : {}).then((s: { whatsappGroupLink?: string | null }) => {
       if (s.whatsappGroupLink) setWaGroupLink(s.whatsappGroupLink);
-    }).catch(() => {});
+    }).catch(() => toast.error("Falha ao carregar dados da página"));
   }, []);
 
   const buildParams = useCallback((off: number) => {
@@ -282,7 +282,7 @@ export default function ColaboradoresPage() {
     navigator.clipboard.writeText(url).then(() => {
       setCopiedId(collaboratorId);
       setTimeout(() => setCopiedId(null), 2000);
-    }).catch(() => {});
+    }).catch(() => toast.error("Não foi possível copiar o link"));
   }
 
   const waInviteHref = (phone: string, name: string) => {

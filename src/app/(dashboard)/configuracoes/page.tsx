@@ -49,17 +49,17 @@ function ConfiguracoesContent() {
         if (s.googleCalendarConnected) setGcalConnected(true);
         if (s.whatsappGroupLink) setWhatsappGroupLink(s.whatsappGroupLink);
       })
-      .catch(() => {});
+      .catch(() => toast.error("Falha ao carregar configurações"));
 
     fetch("/api/campaign")
       .then((r) => r.json())
       .then((c) => { if (c.joinCode) setJoinCode(c.joinCode); })
-      .catch(() => {});
+      .catch((e) => console.error("[configuracoes] campaign", e));
 
     fetch("/api/admin/n8n-status")
       .then((r) => r.json())
       .then((d) => setN8nStatus(d))
-      .catch(() => {});
+      .catch((e) => console.error("[configuracoes] n8n-status", e));
   }, [searchParams]);
 
   function handleFile(e: React.ChangeEvent<HTMLInputElement>) {

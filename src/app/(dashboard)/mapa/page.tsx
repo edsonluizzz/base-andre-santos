@@ -70,7 +70,7 @@ export default function MapaPage() {
         }
         setChoroplethStats(map);
       })
-      .catch(() => {});
+      .catch(() => toast.error("Falha ao carregar dados do mapa"));
   }, []);
 
   const fetchData = useCallback(async () => {

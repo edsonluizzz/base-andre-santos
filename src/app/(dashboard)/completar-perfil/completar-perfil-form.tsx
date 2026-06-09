@@ -41,7 +41,7 @@ export function CompletarPerfilForm({ defaultName, defaultEmail }: Props) {
     fetch("/api/cities")
       .then((r) => r.json())
       .then((data: string[]) => setCitySuggestions(data))
-      .catch(() => {});
+      .catch((e) => console.error("[completar-perfil] cities", e));
   }, []);
 
   function formatPhone(val: string) {

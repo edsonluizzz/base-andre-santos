@@ -617,7 +617,7 @@ function AttendanceDialog({
             .map((a) => ({ collaboratorId: a.collaboratorId, status: a.status, collaborator: a.collaborator })),
         );
       })
-      .catch(() => {})
+      .catch((e) => console.error("[agenda] attendance", e))
       .finally(() => setLoadingData(false));
   }, [open, event.id]);
 

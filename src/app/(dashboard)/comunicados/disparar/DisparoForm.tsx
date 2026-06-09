@@ -59,7 +59,7 @@ export function DisparoForm() {
     fetch("/api/admin/whatsapp/sources")
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => { if (d?.ok) setSources(d.sources); })
-      .catch(() => {});
+      .catch((e) => console.error("[disparar] sources", e));
   }, []);
 
   // Calcula filters object a partir do form
