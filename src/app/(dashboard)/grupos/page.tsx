@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ROLE_LABEL } from "@/lib/labels";
+import { ZapiGroupsPanel } from "@/components/grupos/zapi-groups-panel";
 
 type Group = {
   id: string; name: string; inviteLink?: string; description?: string;
@@ -299,6 +300,12 @@ export default function GruposPage() {
           ))}
         </div>
       )}
+
+      {/* Administração real dos grupos do número da campanha (Z-API) */}
+      <ZapiGroupsPanel
+        registeredGroups={groups.map((g) => ({ id: g.id, name: g.name }))}
+        onChanged={fetchGroups}
+      />
 
       {/* Sheet de gerenciamento de membros */}
       <Sheet open={!!activeGroup} onOpenChange={(v) => { if (!v) setActiveGroup(null); }}>
