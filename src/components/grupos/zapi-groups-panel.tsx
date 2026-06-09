@@ -11,6 +11,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PR_REGION_LABEL, type PRRegion } from "@/lib/pr-regions";
+import { WhatsappComposer } from "./whatsapp-composer";
 
 type RouteRecord = { id: string; region: PRRegion | null; isFallback: boolean; inviteLink: string | null };
 type ZapiGroup = { id: string; name: string; record: RouteRecord | null };
@@ -343,6 +344,8 @@ export function ZapiGroupsLive() {
                     </div>
                   </div>
                 )}
+
+                {active && <WhatsappComposer to={active.id} />}
 
                 <div className="space-y-2">
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Adicionar participante</p>

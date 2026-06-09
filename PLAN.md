@@ -47,7 +47,22 @@ middleware edge + stats + CEP por pessoa). Estratégia = dieta de invocações:
 6. ❌ Pool tuning (connection_limit): NÃO mexido — DATABASE_URL já usa endpoint
    `-pooler` (pgbouncer da Neon); reduzir o pool do client só criaria fila artificial.
 
-## Step 3 — Limpeza (backlog)
+## Step 3 — WhatsApp Web Fase 1: enviar mídia do painel (EM EXECUÇÃO 2026-06-09)
+
+1. `lib/zapi.ts`: zapiSendText/Image/Video/Audio (base `send-*` da Z-API)
+2. `POST /api/zapi/send` { to, type, message?, mediaUrl?, caption? } — ADMIN;
+   `to` = groupId Z-API ou telefone (serve grupos AGORA e leads depois)
+3. `POST /api/zapi/upload` — client upload do Vercel Blob (handleUpload):
+   foge do limite de 4,5MB do function body; máx 16MB (limite WhatsApp);
+   só image/video/audio; token gerado só p/ ADMIN
+4. `group-composer.tsx`: textarea + foto/vídeo (file→Blob→URL) + áudio
+   gravado no navegador (MediaRecorder) com preview antes de enviar
+5. Integrar no sheet "Gerenciar" do grupo em /grupos
+6. Validar lint+build no clone C:\ovile-ci · commit · push · CI verde
+
+Fases 2 (inbox/histórico) e 3 (relay webhook + tempo real) — próximas sessões.
+
+## Step 4 — Limpeza (backlog)
 
 - Limpar 10 UserCampaigns duplicadas do André
 - Remover `/api/n8n/seed-tenants`

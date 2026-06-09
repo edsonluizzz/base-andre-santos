@@ -154,3 +154,22 @@ export function toZapiPhone(raw: string): string | null {
   if (d.length < 10) return null;
   return d.startsWith("55") ? d : `55${d}`;
 }
+
+// ─── Envio de mensagens (Fase 1 — WhatsApp pelo painel) ─────────────────────
+// `to` aceita groupId Z-API ("1203...-group") ou telefone com DDI.
+
+export async function zapiSendText(cid: string, to: string, message: string): Promise<void> {
+  await zapiFetch(cid, "send-text", { method: "POST", body: { phone: to, message } });
+}
+
+export async function zapiSendImage(cid: string, to: string, url: string, caption?: string): Promise<void> {
+  await zapiFetch(cid, "send-image", { method: "POST", body: { phone: to, image: url, ...(caption ? { caption } : {}) } });
+}
+
+export async function zapiSendVideo(cid: string, to: string, url: string, caption?: string): Promise<void> {
+  await zapiFetch(cid, "send-video", { method: "POST", body: { phone: to, video: url, ...(caption ? { caption } : {}) } });
+}
+
+export async function zapiSendAudio(cid: string, to: string, url: string): Promise<void> {
+  await zapiFetch(cid, "send-audio", { method: "POST", body: { phone: to, audio: url } });
+}
