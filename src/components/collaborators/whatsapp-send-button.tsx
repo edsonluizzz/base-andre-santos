@@ -30,7 +30,21 @@ export function WhatsappSendButton({
   const { data: session } = useSession();
   const [open, setOpen] = useState(false);
 
-  if (session?.user && (session.user as { role?: string }).role !== "ADMIN") return null;
+  // Não-ADMIN não envia pelo número da campanha (backend exige) —
+  // mantém o atalho wa.me pelo WhatsApp pessoal como fallback.
+  if (session?.user && (session.user as { role?: string }).role !== "ADMIN") {
+    const d = phone.replace(/\D/g, "");
+    return (
+      <a
+        href={`https://wa.me/${d.startsWith("55") ? d : `55${d}`}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md text-xs font-medium border border-green-600/40 text-green-400 bg-green-600/[0.08] hover:bg-green-600/20 transition-colors"
+      >
+        <MessageCircle className="w-3.5 h-3.5" /> WhatsApp
+      </a>
+    );
+  }
 
   function handleSent() {
     if (onSent) {
@@ -51,7 +65,7 @@ export function WhatsappSendButton({
             : "flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-green-500/10 text-green-400 border border-green-500/20 hover:bg-green-500/20 transition-colors"
         }
       >
-        <MessageCircle className="w-3.5 h-3.5" /> {compact ? "Enviar mensagem" : "Enviar WhatsApp"}
+        <MessageCircle className="w-3.5 h-3.5" /> {compact ? "WhatsApp" : "Enviar WhatsApp"}
       </button>
 
       <Sheet open={open} onOpenChange={setOpen}>

@@ -157,19 +157,23 @@ export function toZapiPhone(raw: string): string | null {
 
 // ─── Envio de mensagens (Fase 1 — WhatsApp pelo painel) ─────────────────────
 // `to` aceita groupId Z-API ("1203...-group") ou telefone com DDI.
+// Retornam a resposta da Z-API ({ zaapId, messageId } no sucesso) — um 200
+// sem messageId indica que a Z-API aceitou mas não enfileirou de verdade.
 
-export async function zapiSendText(cid: string, to: string, message: string): Promise<void> {
-  await zapiFetch(cid, "send-text", { method: "POST", body: { phone: to, message } });
+export type ZapiSendResult = { zaapId?: string; messageId?: string; [k: string]: unknown };
+
+export async function zapiSendText(cid: string, to: string, message: string): Promise<ZapiSendResult> {
+  return zapiFetch<ZapiSendResult>(cid, "send-text", { method: "POST", body: { phone: to, message } });
 }
 
-export async function zapiSendImage(cid: string, to: string, url: string, caption?: string): Promise<void> {
-  await zapiFetch(cid, "send-image", { method: "POST", body: { phone: to, image: url, ...(caption ? { caption } : {}) } });
+export async function zapiSendImage(cid: string, to: string, url: string, caption?: string): Promise<ZapiSendResult> {
+  return zapiFetch<ZapiSendResult>(cid, "send-image", { method: "POST", body: { phone: to, image: url, ...(caption ? { caption } : {}) } });
 }
 
-export async function zapiSendVideo(cid: string, to: string, url: string, caption?: string): Promise<void> {
-  await zapiFetch(cid, "send-video", { method: "POST", body: { phone: to, video: url, ...(caption ? { caption } : {}) } });
+export async function zapiSendVideo(cid: string, to: string, url: string, caption?: string): Promise<ZapiSendResult> {
+  return zapiFetch<ZapiSendResult>(cid, "send-video", { method: "POST", body: { phone: to, video: url, ...(caption ? { caption } : {}) } });
 }
 
-export async function zapiSendAudio(cid: string, to: string, url: string): Promise<void> {
-  await zapiFetch(cid, "send-audio", { method: "POST", body: { phone: to, audio: url } });
+export async function zapiSendAudio(cid: string, to: string, url: string): Promise<ZapiSendResult> {
+  return zapiFetch<ZapiSendResult>(cid, "send-audio", { method: "POST", body: { phone: to, audio: url } });
 }
