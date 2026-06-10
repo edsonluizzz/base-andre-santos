@@ -11,6 +11,18 @@ export const dynamic = "force-dynamic";
  * restrito a ADMIN e a tipos/tamanho compatíveis com o WhatsApp (16MB).
  */
 export async function POST(request: Request): Promise<NextResponse> {
+  // Sem o token do Blob, handleUpload lança um BlobError opaco que o client
+  // mascara como "Failed to retrieve the client token". Falhar explícito aqui
+  // dá uma mensagem acionável (config do Vercel) em vez de erro sem rastro.
+  // (Incidente 2026-06-09/10: imagem e voz não enviavam — store não conectado ao projeto.)
+  if (!process.env.BLOB_READ_WRITE_TOKEN) {
+    console.error("[zapi/upload] BLOB_READ_WRITE_TOKEN ausente no runtime de produção");
+    return NextResponse.json(
+      { error: "Armazenamento de mídia indisponível: conecte um Blob store ao projeto (BLOB_READ_WRITE_TOKEN) e refaça o deploy." },
+      { status: 503 }
+    );
+  }
+
   const body = (await request.json()) as HandleUploadBody;
 
   try {
@@ -23,11 +35,9 @@ export async function POST(request: Request): Promise<NextResponse> {
           throw new Error("Apenas administradores podem enviar mídia");
         }
         return {
-          allowedContentTypes: [
-            "image/jpeg", "image/png", "image/webp", "image/gif",
-            "video/mp4", "video/quicktime", "video/webm",
-            "audio/webm", "audio/ogg", "audio/mpeg", "audio/mp4", "audio/aac", "audio/wav",
-          ],
+          // Wildcards: o áudio gravado no navegador é `audio/webm;codecs=opus`
+          // (com parâmetro) e o match exato `audio/webm` o rejeitava.
+          allowedContentTypes: ["image/*", "video/*", "audio/*"],
           maximumSizeInBytes: 16 * 1024 * 1024, // limite de mídia do WhatsApp
           addRandomSuffix: true,
           tokenPayload: JSON.stringify({ purpose: "whatsapp-media" }),
@@ -40,10 +50,8 @@ export async function POST(request: Request): Promise<NextResponse> {
 
     return NextResponse.json(jsonResponse);
   } catch (err) {
-    console.error("[zapi/upload POST]", err);
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Falha no upload" },
-      { status: 400 }
-    );
+    const message = err instanceof Error ? err.message : "Falha no upload";
+    console.error("[zapi/upload] %s", message);
+    return NextResponse.json({ error: message }, { status: 400 });
   }
 }
