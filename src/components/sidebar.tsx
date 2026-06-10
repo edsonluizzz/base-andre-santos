@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import {
-  LayoutDashboard, Users, MessageCircle, Calendar,
+  LayoutDashboard, Users, Calendar,
   Megaphone, Settings, LogOut, Menu, X, Shield, Star, Map, BarChart2, Network, Target, ClipboardList, Camera, Award, Building2, Plus,
   ChevronLeft, ChevronRight, Sun, Moon, GraduationCap, Send,
 } from "lucide-react";
@@ -24,7 +24,6 @@ const navItems = [
   { href: "/colaboradores",  icon: Users,            label: "Colaboradores",   minRole: "MEMBER", superAdminOnly: false },
   { href: "/celulas",        icon: Network,          label: "Células",         minRole: "MEMBER", superAdminOnly: false },
   { href: "/mapa",           icon: Map,              label: "Mapa de Apoio",   minRole: "LEADER", superAdminOnly: false },
-  { href: "/grupos",         icon: MessageCircle,    label: "Grupos WhatsApp", minRole: "LEADER", superAdminOnly: false },
   { href: "/agenda",         icon: Calendar,         label: "Agenda",          minRole: "LEADER", superAdminOnly: false },
   { href: "/relatorio",      icon: BarChart2,        label: "Relatório",       minRole: "LEADER", superAdminOnly: false },
   { href: "/metas",          icon: Target,           label: "Metas",           minRole: "LEADER", superAdminOnly: false },
