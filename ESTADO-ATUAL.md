@@ -1,10 +1,60 @@
 # Estado Atual da Produção — 2026-06-10
 
-**Última atualização:** 2026-06-10 BRT
+**Última atualização:** 2026-06-10 noite BRT
 
 ---
 
-## 📌 Sessão 2026-06-10 (WhatsApp: bug de mídia + F2 inbox) — RETOMAR AQUI
+## 📌 Sessão 2026-06-10 (NOITE) — Envio de mídia RESOLVIDO + menu /whatsapp — RETOMAR AQUI
+
+**Contexto:** retomada após o teste do Edson. Envio de imagem/áudio ainda travava
+em "Enviando..." **sem erro**; histórico não carregava; botão duplicado no card.
+
+### ✅ Envio de mídia — CAUSA RAIZ REAL e correção (commits ccbd…→`b4ff28b`)
+O envio de imagem/áudio ficava preso em "Enviando..." sem erro. Investigação em camadas:
+1. `next.config.mjs` — **CSP `connect-src` não liberava o host do Blob** (commit `4092d24`).
+   O client upload do `@vercel/blob` faz **PUT do navegador direto pro Blob**, e o CSP
+   bloqueava. Adicionado `blob.vercel-storage.com` + `*.public.blob.vercel-storage.com`.
+2. **Mesmo assim travava** → trocada a arquitetura: **upload VIA SERVIDOR** (commit `b4ff28b`).
+   `/api/zapi/upload` agora recebe o arquivo em **multipart** e grava com `put()` (token
+   explícito = store público `wpp-publico`). O composer manda `FormData` e usa a URL no send.
+   Sem PUT cross-origin do navegador = sem CSP/CORS/retry silencioso. **TESTADO OK pelo Edson:
+   imagem e áudio enviam.** Limite ~4,5MB do body cobre imagem/voz; vídeo grande = caso futuro.
+3. Rede de segurança: timeout no composer (upload 60s / send 35s) → erro claro em vez de spinner.
+
+### ⚠️ Histórico/inbox — LIMITAÇÃO DA Z-API (multi-dispositivo)
+Diagnóstico em tela: **`Z-API 400: "Does not work in multi device version"`**. O endpoint
+`chat-messages` **não funciona no WhatsApp multi-dispositivo** (padrão atual) — limitação da
+Z-API, não do código. **Não há como "puxar" histórico/recebimento pela Z-API.**
+- `messages` route (commit `9b93c60`): detecta `multi device` → retorna `{messages:[],
+  unsupported, reason}` (200, não erro). `whatsapp-history` mostra aviso limpo e **para o polling**.
+- **Inbox real (receber/conversas/não-lidas) só com persistência própria via webhook = F3.**
+  F3 toca no webhook que alimenta o **WF2 (presença, ATIVO)** → exige repasse fail-safe + tabela
+  nova (`prisma db push`). **Decisão do Edson 2026-06-10: adiar o F3** (fazer só envio agora).
+
+### ✅ Menu "Central de WhatsApp" (commit `43a82eb`) — NO AR
+Nova página **`/whatsapp`** (ADMIN), estilo WhatsApp Web mas **só ENVIO**:
+- Abas **Grupos** (lista real Z-API, busca, região/fallback) | **Contato** (telefone avulso, DDI 55 auto).
+- Composer reusado (texto/foto/vídeo/áudio gravado) enviando pelo número da campanha.
+- Aviso de que histórico/recebimento dependem do tempo real (F3, futuro).
+- Item "WhatsApp" na sidebar (minRole ADMIN, ícone Send). Responsivo (lista→tela cheia no mobile).
+
+### ✅ Botão duplicado resolvido (commit `57ea151`)
+Card do colaborador tinha 2× "WhatsApp" + "Convidar p/ grupo WA". Sobrou **1 botão verde com
+logo do WhatsApp "Enviar mensagem"**. Removido `waInviteHref`/`waGroupLink` mortos.
+
+### 🔭 Próximos passos
+- **F3 (quando o Edson autorizar):** webhook Z-API → grava `WhatsappMessage` → repassa WF2 fail-safe
+  → inbox real (receber, conversas, não-lidas, tempo real) no /whatsapp.
+- **Vídeo grande (>4,5MB):** voltar ao client upload **com CSP já liberado** (agora que o connect-src
+  permite o Blob, o PUT do navegador pode funcionar) OU upload em partes. Hoje cobre imagem/voz.
+- 🧹 Limpeza pendente (precisa OK — env de prod): remover store privado órfão `banco-wpp` +
+  envs `BLOB_STORE_ID`/`BLOB_WEBHOOK_PUBLIC_KEY` (inofensivas hoje, código usa token explícito).
+- 🧪 Diagnóstico temporário: o `messages` route ainda expõe `Z-API <status>: <corpo>` em tela
+  (rota ADMIN-only) para erros != multi-device — remover quando não precisar mais.
+
+---
+
+## 📌 Sessão 2026-06-10 (manhã: WhatsApp bug de mídia + F2 inbox) — histórico
 
 **Bug reportado pelo Edson:** envio de **imagem e voz** falhava com
 `Vercel Blob: Failed to retrieve the client token`.
