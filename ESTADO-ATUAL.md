@@ -1,10 +1,50 @@
-# Estado Atual da Produção — 2026-06-09
+# Estado Atual da Produção — 2026-06-10
 
-**Última atualização:** 2026-06-09 (noite) BRT
+**Última atualização:** 2026-06-10 BRT
 
 ---
 
-## 📌 Sessão 2026-06-09 (auditoria com skills ECC) — RETOMAR AQUI
+## 📌 Sessão 2026-06-10 (WhatsApp: bug de mídia + F2 inbox) — RETOMAR AQUI
+
+**Bug reportado pelo Edson:** envio de **imagem e voz** falhava com
+`Vercel Blob: Failed to retrieve the client token`.
+
+**Diagnóstico (via runtime logs Vercel):** `POST /api/zapi/upload` → **400** com `BlobError`.
+Imagem e voz falham idênticas → falha na **geração do client token**, antes de validar
+formato. Causa: `BLOB_READ_WRITE_TOKEN` ausente/inválido no runtime de produção (o redeploy
+de 09/06 21:05 "ativar BLOB_READ_WRITE_TOKEN" não resolveu — store provavelmente não ficou
+conectado ao projeto). Em prod as env vars vêm do painel Vercel, não do `.env` (build mostra
+`injecting env (0)`).
+
+**Feito nesta sessão:**
+- ✅ **Step A — fix upload** (commit `ccbd3da`, READY): check explícito de
+  `BLOB_READ_WRITE_TOKEN` → 503 com mensagem acionável (em vez de BlobError opaco);
+  `allowedContentTypes` por wildcard (`image/*`,`video/*`,`audio/*`) — cobre o
+  `audio/webm;codecs=opus` do áudio gravado no navegador; log do servidor legível.
+- ✅ **Step B — F2 inbox** (commits `e7d3d9f`→`0216afc`, READY): histórico real da conversa
+  (Z-API `/chat-messages`) acima do composer no perfil do lead; polling 15s só com aba visível;
+  recarrega ao enviar. `zapiChatMessages()` + `GET /api/zapi/messages` + `whatsapp-history.tsx`.
+  ⚠️ `e7d3d9f` quebrou o build (`no-explicit-any` é ERROR no `next build`); corrigido em
+  `0216afc` (tipo `RawZapiMessage`). **Lição:** validar lint no clone `ovile-ci` antes do push.
+
+**⚠️ AÇÃO PENDENTE DO EDSON (destrava imagem+voz):** configurar `BLOB_READ_WRITE_TOKEN` em
+Production no Vercel → painel → projeto base-andre-santos → **Storage → conectar um Blob store
+ao projeto** (injeta a env automaticamente) → Redeploy. Sem isso o upload responde 503 com a
+mensagem clara. Depois testar imagem e voz no painel.
+
+**Próximo (Step C / F3 — AGUARDA OK):** relay do webhook p/ tempo real + não-lidas. Risco:
+reconfigurar o webhook RECEBIDO da Z-API é outward-facing e hoje alimenta o **WF2 (SIM/NÃO de
+presença, ATIVO)** — relay vira ponto único de falha; e exige schema novo (`prisma db push` em
+prod). Decidir: (a) webhook fail-safe que sempre repassa ao WF2 + tabela `WhatsappMessage`,
+(b) só persistir sem tocar o webhook do WF2, ou (c) adiar. Detalhe no `PLAN.md`.
+
+**Sobre a voz (quando o token for resolvido):** o áudio sobe como `audio/webm;codecs=opus`.
+Se a Z-API rejeitar/descartar o WebM (WhatsApp PTT espera ogg/opus), será preciso converter
+antes de enviar (sprint próprio — serverless sem ffmpeg exige solução à parte).
+
+---
+
+## 📌 Sessão 2026-06-09 (auditoria com skills ECC)
 
 Auditoria do código (em sync com git `edsonluizzz/base-andre-santos`) via skills novas (silent-failure-hunter / postgres-patterns / e2e-testing).
 
