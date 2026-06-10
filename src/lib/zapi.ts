@@ -50,6 +50,18 @@ export class ZapiNotConfiguredError extends Error {
   }
 }
 
+/** Erro HTTP da Z-API com o status e o corpo preservados (para decisões finas: 404 = sem conversa). */
+export class ZapiHttpError extends Error {
+  status: number;
+  body: string;
+  constructor(path: string, status: number, body: string) {
+    super(`Z-API ${path} falhou: HTTP ${status} ${body.slice(0, 300)}`);
+    this.name = "ZapiHttpError";
+    this.status = status;
+    this.body = body;
+  }
+}
+
 async function getCreds(cid: string): Promise<ZapiCreds> {
   const integrations = await getCampaignIntegrations(cid);
   const instance = integrations.zApiInstance ?? process.env.ZAPI_INSTANCE ?? null;
@@ -80,7 +92,7 @@ async function zapiFetch<T>(
 
   if (!res.ok) {
     const body = await res.text().catch(() => "");
-    throw new Error(`Z-API ${path} falhou: HTTP ${res.status} ${body.slice(0, 300)}`);
+    throw new ZapiHttpError(path, res.status, body);
   }
   return (await res.json()) as T;
 }

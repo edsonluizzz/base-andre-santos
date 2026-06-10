@@ -62,7 +62,6 @@ export default function ColaboradoresPage() {
   const [leaders, setLeaders] = useState<{ id: string; name: string; count: number }[]>([]);
   const [cities, setCities] = useState<string[]>([]);
   const [sources, setSources] = useState<string[]>([]);
-  const [waGroupLink, setWaGroupLink] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [editing, setEditing] = useState<Collaborator | null>(null);
@@ -92,9 +91,6 @@ export default function ColaboradoresPage() {
     fetch("/api/leaders").then((r) => r.ok ? r.json() : []).then(setLeaders).catch((e) => console.error("[colaboradores] leaders", e));
     fetch("/api/cities").then((r) => r.ok ? r.json() : []).then(setCities).catch((e) => console.error("[colaboradores] cities", e));
     fetch("/api/collaborators/sources").then((r) => r.ok ? r.json() : []).then(setSources).catch((e) => console.error("[colaboradores] sources", e));
-    fetch("/api/settings").then((r) => r.ok ? r.json() : {}).then((s: { whatsappGroupLink?: string | null }) => {
-      if (s.whatsappGroupLink) setWaGroupLink(s.whatsappGroupLink);
-    }).catch(() => toast.error("Falha ao carregar dados da página"));
   }, []);
 
   const buildParams = useCallback((off: number) => {
@@ -285,14 +281,6 @@ export default function ColaboradoresPage() {
       setTimeout(() => setCopiedId(null), 2000);
     }).catch(() => toast.error("Não foi possível copiar o link"));
   }
-
-  const waInviteHref = (phone: string, name: string) => {
-    const digits = phone.replace(/\D/g, "");
-    const number = digits.startsWith("55") ? digits : `55${digits}`;
-    const firstName = name.split(" ")[0];
-    const text = `Olá ${firstName}! Aqui é a equipe do André Santos 👋\n\nConvidamos você para fazer parte do nosso grupo exclusivo de apoiadores no WhatsApp!\n\n👉 ${waGroupLink}`;
-    return `https://wa.me/${number}?text=${encodeURIComponent(text)}`;
-  };
 
   async function handleDelete() {
     if (!deleting) return;
@@ -788,26 +776,6 @@ export default function ColaboradoresPage() {
                       {c.notes && <div className="sm:col-span-2"><span className="text-foreground/60">Obs:</span> {c.notes}</div>}
                     </div>
                     <div className="flex gap-2 flex-wrap">
-                      {c.phone && (
-                        <WhatsappSendButton
-                          compact
-                          collaboratorId={c.id}
-                          phone={c.phone}
-                          name={c.name}
-                          onSent={() => markContact(c.id)}
-                        />
-                      )}
-                      {c.phone && waGroupLink && (
-                        <a
-                          href={waInviteHref(c.phone, c.name)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md text-xs font-medium border border-green-500/50 text-green-300 bg-green-500/[0.12] hover:bg-green-500/25 transition-colors"
-                        >
-                          <svg className="w-3 h-3 fill-current" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.117.549 4.107 1.514 5.832L.057 23.986l6.305-1.654A11.954 11.954 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.007-1.371l-.36-.214-3.732.979 1-3.642-.235-.374A9.818 9.818 0 1112 21.818z"/></svg>
-                          Convidar p/ grupo WA
-                        </a>
-                      )}
                       {c.phone && (
                         <WhatsappSendButton
                           compact

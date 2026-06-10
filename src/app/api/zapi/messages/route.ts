@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { getCampaignContext } from "@/lib/campaign-context";
-import { zapiChatMessages, toZapiPhone, ZapiNotConfiguredError } from "@/lib/zapi";
+import { zapiChatMessages, toZapiPhone, ZapiNotConfiguredError, ZapiHttpError } from "@/lib/zapi";
 
 export const dynamic = "force-dynamic";
 
@@ -30,6 +30,15 @@ export async function GET(req: NextRequest) {
   } catch (err) {
     if (err instanceof ZapiNotConfiguredError) {
       return NextResponse.json({ error: err.message }, { status: 422 });
+    }
+    // Z-API devolve 404 (ou "chat not found") quando ainda não há conversa com
+    // o contato — não é falha, é histórico vazio. Não assustar o usuário.
+    if (err instanceof ZapiHttpError) {
+      console.error("[zapi/messages GET] Z-API HTTP %d %s", err.status, err.body.slice(0, 200));
+      if (err.status === 404 || /not.?found|n[aã]o encontrad/i.test(err.body)) {
+        return NextResponse.json({ messages: [] });
+      }
+      return NextResponse.json({ error: "Falha ao buscar histórico (Z-API)" }, { status: 502 });
     }
     const message = err instanceof Error ? err.message : "Falha ao buscar histórico";
     console.error("[zapi/messages GET] %s", message);

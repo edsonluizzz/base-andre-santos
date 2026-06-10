@@ -96,9 +96,12 @@ export function WhatsappComposer({ to, onSent }: { to: string; onSent?: () => vo
     try {
       let payload: Record<string, string>;
       if (attachment) {
+        // Timeout no upload: o client do Blob pode ficar pendurado se o PUT
+        // travar — sem isto o botão fica "Enviando..." para sempre.
         const blob = await upload(`whatsapp/${attachment.file.name}`, attachment.file, {
           access: "public",
           handleUploadUrl: "/api/zapi/upload",
+          abortSignal: AbortSignal.timeout(60_000),
         });
         payload = {
           to,
@@ -110,10 +113,12 @@ export function WhatsappComposer({ to, onSent }: { to: string; onSent?: () => vo
         payload = { to, type: "text", message };
       }
 
+      // Timeout no envio: a Z-API pode demorar; sem limite o fetch nunca resolve.
       const res = await fetch("/api/zapi/send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(35_000),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -125,7 +130,13 @@ export function WhatsappComposer({ to, onSent }: { to: string; onSent?: () => vo
       discardAttachment();
       onSent?.();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Erro ao enviar");
+      const msg =
+        err instanceof DOMException && err.name === "TimeoutError"
+          ? "Tempo esgotado ao enviar — verifique a conexão da Z-API e tente de novo."
+          : err instanceof Error
+            ? err.message
+            : "Erro ao enviar";
+      toast.error(msg);
     } finally {
       setSending(false);
     }
