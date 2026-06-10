@@ -27,10 +27,21 @@ conectado ao projeto). Em prod as env vars vêm do painel Vercel, não do `.env`
   ⚠️ `e7d3d9f` quebrou o build (`no-explicit-any` é ERROR no `next build`); corrigido em
   `0216afc` (tipo `RawZapiMessage`). **Lição:** validar lint no clone `ovile-ci` antes do push.
 
-**⚠️ AÇÃO PENDENTE DO EDSON (destrava imagem+voz):** configurar `BLOB_READ_WRITE_TOKEN` em
-Production no Vercel → painel → projeto base-andre-santos → **Storage → conectar um Blob store
-ao projeto** (injeta a env automaticamente) → Redeploy. Sem isso o upload responde 503 com a
-mensagem clara. Depois testar imagem e voz no painel.
+**✅ RESOLVIDO 2026-06-10 (via Vercel CLI) — causa raiz dupla:**
+1. **`BLOB_READ_WRITE_TOKEN` não existia em prod.** O store `banco-wpp` que o Edson criou em
+   09/06 era **PRIVATE** (`Access: Private`, base `*.private.blob...`) — incompatível: a Z-API
+   baixa a mídia por URL pública. Criado store **público** `wpp-publico` (`store_LDgzHybUvrPCZL7V`,
+   gru1) via `vercel blob create-store --access public` → injetou `BLOB_READ_WRITE_TOKEN` em prod.
+2. **`BLOB_STORE_ID` órfão (store privado) + `VERCEL_OIDC_TOKEN`** fariam o `@vercel/blob` entrar
+   em modo OIDC e gravar no store PRIVADO. Fix de código (`89b3b86`): passar `token` explícito ao
+   `handleUpload` → força o read-write token = store público. Deploy READY.
+- **Smoke test OK:** `vercel blob put --access public` gerou
+  `https://ldgzhybuvrpczl7v.public.blob.vercel-storage.com/...` → `curl` sem auth = **HTTP 200**.
+- **Edson: testar imagem e voz no painel agora.** Para a VOZ: se chegar mas não tocar como nota
+  de voz, é o formato `webm/opus` (WhatsApp PTT espera ogg/opus) — aí entra a conversão.
+- 🧹 **Limpeza pendente (precisa do seu OK — mexe em env de prod):** remover o store privado
+  órfão `banco-wpp` e as env vars `BLOB_STORE_ID`/`BLOB_WEBHOOK_PUBLIC_KEY`. Hoje inofensivas
+  (o código ignora via token explícito), mas convém limpar.
 
 **Próximo (Step C / F3 — AGUARDA OK):** relay do webhook p/ tempo real + não-lidas. Risco:
 reconfigurar o webhook RECEBIDO da Z-API é outward-facing e hoje alimenta o **WF2 (SIM/NÃO de
