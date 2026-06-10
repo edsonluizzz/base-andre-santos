@@ -42,6 +42,10 @@ Nova página **`/whatsapp`** (ADMIN), estilo WhatsApp Web mas **só ENVIO**:
 Card do colaborador tinha 2× "WhatsApp" + "Convidar p/ grupo WA". Sobrou **1 botão verde com
 logo do WhatsApp "Enviar mensagem"**. Removido `waInviteHref`/`waGroupLink` mortos.
 
+### 📌 TODO anotado (Edson 2026-06-10)
+- **Ocultar o menu "Campanhas"** (item superAdminOnly na sidebar) — não será usado por
+  agora. Provavelmente ocultar também "Nova Campanha" junto (confirmar). Não é urgente.
+
 ### 🔭 Próximos passos
 - **F3 (quando o Edson autorizar):** webhook Z-API → grava `WhatsappMessage` → repassa WF2 fail-safe
   → inbox real (receber, conversas, não-lidas, tempo real) no /whatsapp.
