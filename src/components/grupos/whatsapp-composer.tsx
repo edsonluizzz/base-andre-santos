@@ -2,7 +2,6 @@
 
 import { useRef, useState, useEffect } from "react";
 import { toast } from "sonner";
-import { upload } from "@vercel/blob/client";
 import { Send, Image as ImageIcon, Video, Mic, Square, Trash2, Paperclip } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -96,17 +95,24 @@ export function WhatsappComposer({ to, onSent }: { to: string; onSent?: () => vo
     try {
       let payload: Record<string, string>;
       if (attachment) {
-        // Timeout no upload: o client do Blob pode ficar pendurado se o PUT
-        // travar — sem isto o botão fica "Enviando..." para sempre.
-        const blob = await upload(`whatsapp/${attachment.file.name}`, attachment.file, {
-          access: "public",
-          handleUploadUrl: "/api/zapi/upload",
-          abortSignal: AbortSignal.timeout(60_000),
+        // Sobe a mídia PELO SERVIDOR (multipart) — o servidor grava no Blob.
+        // (Antes era PUT do navegador direto pro Blob, que travava em silêncio.)
+        const fd = new FormData();
+        fd.append("file", attachment.file);
+        const upRes = await fetch("/api/zapi/upload", {
+          method: "POST",
+          body: fd,
+          signal: AbortSignal.timeout(60_000),
         });
+        const upData = await upRes.json().catch(() => ({}));
+        if (!upRes.ok) {
+          toast.error(upData.error ?? "Falha ao subir a mídia");
+          return;
+        }
         payload = {
           to,
           type: attachment.kind,
-          mediaUrl: blob.url,
+          mediaUrl: upData.url,
           ...(message && attachment.kind !== "audio" ? { caption: message } : {}),
         };
       } else {

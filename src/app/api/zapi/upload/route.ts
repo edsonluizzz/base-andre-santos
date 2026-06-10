@@ -1,20 +1,25 @@
 import { NextResponse } from "next/server";
-import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
+import { put } from "@vercel/blob";
 import { auth } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
+
+const MAX_BYTES = 16 * 1024 * 1024; // limite de mídia do WhatsApp
+const ALLOWED = /^(image|video|audio)\//;
 
 /**
- * Client upload do Vercel Blob para mídia de WhatsApp (foto/vídeo/áudio).
- * O arquivo sobe direto do navegador pro Blob (não passa pela function —
- * o body de 4,5MB do Vercel não limita). Esta rota só emite o token,
- * restrito a ADMIN e a tipos/tamanho compatíveis com o WhatsApp (16MB).
+ * Upload de mídia de WhatsApp (foto/vídeo/áudio) VIA SERVIDOR.
+ *
+ * O arquivo sobe no body deste POST (multipart) e o servidor o grava no Vercel
+ * Blob público com `put()`. Antes era client upload (PUT do navegador direto pro
+ * Blob), mas o PUT cross-origin do navegador travava em silêncio (CSP/retry do
+ * SDK) → botão "Enviando..." eterno sem erro. Subir pelo servidor elimina isso.
+ *
+ * Restrito a ADMIN. Limite prático do body de function (~4,5MB no Hobby) cobre
+ * imagem e áudio de voz; vídeo grande é caso à parte (futuro).
  */
 export async function POST(request: Request): Promise<NextResponse> {
-  // Sem o token do Blob, handleUpload lança um BlobError opaco que o client
-  // mascara como "Failed to retrieve the client token". Falhar explícito aqui
-  // dá uma mensagem acionável (config do Vercel) em vez de erro sem rastro.
-  // (Incidente 2026-06-09/10: imagem e voz não enviavam — store não conectado ao projeto.)
   if (!process.env.BLOB_READ_WRITE_TOKEN) {
     console.error("[zapi/upload] BLOB_READ_WRITE_TOKEN ausente no runtime de produção");
     return NextResponse.json(
@@ -23,39 +28,41 @@ export async function POST(request: Request): Promise<NextResponse> {
     );
   }
 
-  const body = (await request.json()) as HandleUploadBody;
+  const session = await auth();
+  if (!session?.user?.id || session.user.role !== "ADMIN") {
+    return NextResponse.json({ error: "Apenas administradores podem enviar mídia" }, { status: 403 });
+  }
+
+  let form: FormData;
+  try {
+    form = await request.formData();
+  } catch {
+    return NextResponse.json({ error: "Requisição inválida (esperado multipart/form-data)" }, { status: 400 });
+  }
+
+  const file = form.get("file");
+  if (!(file instanceof File)) {
+    return NextResponse.json({ error: "Arquivo ausente" }, { status: 400 });
+  }
+  if (!ALLOWED.test(file.type)) {
+    return NextResponse.json({ error: `Tipo não suportado: ${file.type || "desconhecido"}` }, { status: 400 });
+  }
+  if (file.size > MAX_BYTES) {
+    return NextResponse.json({ error: "Arquivo acima de 16MB (limite do WhatsApp)" }, { status: 400 });
+  }
 
   try {
-    const jsonResponse = await handleUpload({
-      // Token explícito força o modo read-write token (store PÚBLICO wpp-publico).
-      // Sem isso, com BLOB_STORE_ID + VERCEL_OIDC_TOKEN no ambiente o SDK entraria
-      // em modo OIDC e gravaria no store PRIVADO órfão (URL inacessível p/ a Z-API).
-      token: process.env.BLOB_READ_WRITE_TOKEN,
-      body,
-      request,
-      onBeforeGenerateToken: async () => {
-        const session = await auth();
-        if (!session?.user?.id || session.user.role !== "ADMIN") {
-          throw new Error("Apenas administradores podem enviar mídia");
-        }
-        return {
-          // Wildcards: o áudio gravado no navegador é `audio/webm;codecs=opus`
-          // (com parâmetro) e o match exato `audio/webm` o rejeitava.
-          allowedContentTypes: ["image/*", "video/*", "audio/*"],
-          maximumSizeInBytes: 16 * 1024 * 1024, // limite de mídia do WhatsApp
-          addRandomSuffix: true,
-          tokenPayload: JSON.stringify({ purpose: "whatsapp-media" }),
-        };
-      },
-      onUploadCompleted: async () => {
-        // Sem pós-processamento — a URL volta pro client, que chama /api/zapi/send
-      },
+    const safeName = (file.name || "midia").replace(/[^a-zA-Z0-9._-]/g, "_");
+    const blob = await put(`whatsapp/${safeName}`, file, {
+      access: "public",
+      token: process.env.BLOB_READ_WRITE_TOKEN, // força o store PÚBLICO wpp-publico
+      addRandomSuffix: true,
+      contentType: file.type || undefined,
     });
-
-    return NextResponse.json(jsonResponse);
+    return NextResponse.json({ url: blob.url });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Falha no upload";
     console.error("[zapi/upload] %s", message);
-    return NextResponse.json({ error: message }, { status: 400 });
+    return NextResponse.json({ error: message }, { status: 502 });
   }
 }
