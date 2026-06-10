@@ -27,6 +27,10 @@ export async function POST(request: Request): Promise<NextResponse> {
 
   try {
     const jsonResponse = await handleUpload({
+      // Token explícito força o modo read-write token (store PÚBLICO wpp-publico).
+      // Sem isso, com BLOB_STORE_ID + VERCEL_OIDC_TOKEN no ambiente o SDK entraria
+      // em modo OIDC e gravaria no store PRIVADO órfão (URL inacessível p/ a Z-API).
+      token: process.env.BLOB_READ_WRITE_TOKEN,
       body,
       request,
       onBeforeGenerateToken: async () => {
