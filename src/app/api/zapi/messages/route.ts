@@ -38,7 +38,11 @@ export async function GET(req: NextRequest) {
       if (err.status === 404 || /not.?found|n[aã]o encontrad/i.test(err.body)) {
         return NextResponse.json({ messages: [] });
       }
-      return NextResponse.json({ error: "Falha ao buscar histórico (Z-API)" }, { status: 502 });
+      // Rota ADMIN-only: expõe o status/corpo da Z-API pra diagnóstico em tela.
+      return NextResponse.json(
+        { error: `Z-API ${err.status}: ${err.body.slice(0, 160) || "(sem corpo)"}` },
+        { status: 502 }
+      );
     }
     const message = err instanceof Error ? err.message : "Falha ao buscar histórico";
     console.error("[zapi/messages GET] %s", message);
