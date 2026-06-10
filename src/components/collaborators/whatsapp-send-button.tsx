@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { MessageCircle } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { WhatsappComposer } from "@/components/grupos/whatsapp-composer";
+import { WhatsappHistory } from "@/components/grupos/whatsapp-history";
 
 /**
  * Envia WhatsApp (texto/foto/vídeo/áudio) para UM colaborador específico,
@@ -29,6 +30,7 @@ export function WhatsappSendButton({
 }) {
   const { data: session } = useSession();
   const [open, setOpen] = useState(false);
+  const [sentCount, setSentCount] = useState(0);
 
   // Não-ADMIN não envia pelo número da campanha (backend exige) —
   // mantém o atalho wa.me pelo WhatsApp pessoal como fallback.
@@ -47,6 +49,7 @@ export function WhatsappSendButton({
   }
 
   function handleSent() {
+    setSentCount((n) => n + 1); // recarrega o histórico na hora
     if (onSent) {
       onSent();
       return;
@@ -78,7 +81,8 @@ export function WhatsappSendButton({
               {phone} · enviado pelo número da campanha
             </p>
           </SheetHeader>
-          <div className="flex-1 overflow-y-auto px-5 py-4">
+          <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+            <WhatsappHistory to={phone} reloadKey={sentCount} />
             <WhatsappComposer to={phone} onSent={handleSent} />
           </div>
         </SheetContent>

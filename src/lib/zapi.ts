@@ -187,3 +187,64 @@ export async function zapiSendVideo(cid: string, to: string, url: string, captio
 export async function zapiSendAudio(cid: string, to: string, url: string): Promise<ZapiSendResult> {
   return zapiFetch<ZapiSendResult>(cid, "send-audio", { method: "POST", body: { phone: to, audio: url } });
 }
+
+// ─── Histórico de conversa (Fase 2 — inbox no painel) ───────────────────────
+
+export type ZapiMessageKind = "text" | "image" | "video" | "audio" | "document" | "other";
+
+export interface ZapiChatMessage {
+  id: string;
+  fromMe: boolean;
+  /** epoch em milissegundos */
+  timestamp: number;
+  senderName?: string;
+  kind: ZapiMessageKind;
+  /** texto da mensagem ou legenda da mídia */
+  text?: string;
+  /** URL da mídia (quando kind != text) */
+  mediaUrl?: string;
+}
+
+/** Z-API usa o campo `momment` (sic) — às vezes em segundos, às vezes em ms. */
+function toMillis(m: unknown): number {
+  const n = typeof m === "number" ? m : Number(m);
+  if (!Number.isFinite(n) || n <= 0) return Date.now();
+  return n < 1e12 ? n * 1000 : n; // < ~2001 em ms ⇒ veio em segundos
+}
+
+/**
+ * Últimas mensagens trocadas com um telefone (mais recentes primeiro na Z-API;
+ * devolvemos em ordem cronológica). Parsing defensivo: a Z-API varia o shape
+ * por tipo de mensagem (text.message, image.imageUrl, audio.audioUrl, ...).
+ */
+export async function zapiChatMessages(cid: string, phone: string, amount = 30): Promise<ZapiChatMessage[]> {
+  const to = toZapiPhone(phone) ?? phone.replace(/\D/g, "");
+  const raw = await zapiFetch<unknown>(cid, `chat-messages/${encodeURIComponent(to)}?amount=${amount}`);
+  const list = Array.isArray(raw) ? raw : [];
+
+  const messages = list.map((item): ZapiChatMessage => {
+    const m = (item ?? {}) as Record<string, any>;
+    let kind: ZapiMessageKind = "other";
+    let text: string | undefined;
+    let mediaUrl: string | undefined;
+
+    if (m.image?.imageUrl) { kind = "image"; mediaUrl = m.image.imageUrl; text = m.image.caption; }
+    else if (m.video?.videoUrl) { kind = "video"; mediaUrl = m.video.videoUrl; text = m.video.caption; }
+    else if (m.audio?.audioUrl) { kind = "audio"; mediaUrl = m.audio.audioUrl; }
+    else if (m.document?.documentUrl) { kind = "document"; mediaUrl = m.document.documentUrl; text = m.document.fileName; }
+    else if (typeof m.text?.message === "string") { kind = "text"; text = m.text.message; }
+    else if (typeof m.message === "string") { kind = "text"; text = m.message; }
+
+    return {
+      id: String(m.messageId ?? m.id ?? `${m.momment ?? ""}-${Math.random().toString(36).slice(2, 8)}`),
+      fromMe: m.fromMe === true || m.fromMe === "true",
+      timestamp: toMillis(m.momment ?? m.moment ?? m.timestamp),
+      senderName: m.senderName ?? m.chatName,
+      kind,
+      text: text?.trim() || undefined,
+      mediaUrl,
+    };
+  });
+
+  return messages.sort((a, b) => a.timestamp - b.timestamp);
+}
