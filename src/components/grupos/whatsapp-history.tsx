@@ -24,6 +24,7 @@ const POLL_MS = 15_000;
 export function WhatsappHistory({ to, reloadKey = 0 }: { to: string; reloadKey?: number }) {
   const [messages, setMessages] = useState<ChatMessage[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [unsupported, setUnsupported] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -37,6 +38,12 @@ export function WhatsappHistory({ to, reloadKey = 0 }: { to: string; reloadKey?:
         return;
       }
       setError(null);
+      if (data.unsupported) {
+        setUnsupported(data.reason ?? "Histórico indisponível pela Z-API.");
+        setMessages([]);
+        return;
+      }
+      setUnsupported(null);
       setMessages(data.messages ?? []);
     } catch {
       setError("Falha de rede ao carregar o histórico");
@@ -48,8 +55,11 @@ export function WhatsappHistory({ to, reloadKey = 0 }: { to: string; reloadKey?:
   // Carrega ao abrir e quando uma mensagem é enviada
   useEffect(() => { load(); }, [load, reloadKey]);
 
-  // Polling só com a aba visível
+  // Polling só com a aba visível — e nunca quando o histórico é indisponível
+  // (Z-API multi-dispositivo): evita gastar invocações batendo num endpoint
+  // que sempre falha.
   useEffect(() => {
+    if (unsupported) return;
     let timer: ReturnType<typeof setInterval> | null = null;
     const start = () => {
       if (timer) return;
@@ -61,7 +71,7 @@ export function WhatsappHistory({ to, reloadKey = 0 }: { to: string; reloadKey?:
     if (document.visibilityState === "visible") start();
     document.addEventListener("visibilitychange", onVisibility);
     return () => { stop(); document.removeEventListener("visibilitychange", onVisibility); };
-  }, [load]);
+  }, [load, unsupported]);
 
   // Auto-scroll pro fim quando chegam mensagens
   useEffect(() => {
@@ -75,20 +85,31 @@ export function WhatsappHistory({ to, reloadKey = 0 }: { to: string; reloadKey?:
     <div className="space-y-2">
       <div className="flex items-center justify-between">
         <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Conversa</p>
-        <button onClick={load} disabled={loading} aria-label="Atualizar histórico"
+        <button onClick={load} disabled={loading || !!unsupported} aria-label="Atualizar histórico"
           className="p-1.5 rounded-lg text-muted-foreground hover:text-primary transition-colors disabled:opacity-50">
           <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
         </button>
       </div>
 
       <div ref={scrollRef} className="max-h-72 overflow-y-auto rounded-xl border border-white/[0.08] bg-white/[0.02] p-3 space-y-2">
-        {error && <p className="text-xs text-red-400 py-4 text-center">{error}</p>}
+        {unsupported && (
+          <div className="flex flex-col items-center gap-1.5 py-6 text-center">
+            <MessageSquareDashed className="w-6 h-6 text-muted-foreground/50" />
+            <p className="text-xs text-muted-foreground">{unsupported}</p>
+            <p className="text-[10px] text-muted-foreground/60 max-w-[260px]">
+              Você pode enviar normalmente abaixo. O recebimento e o histórico das conversas
+              dependem de ativarmos o tempo real (webhook).
+            </p>
+          </div>
+        )}
 
-        {!error && messages === null && (
+        {!unsupported && error && <p className="text-xs text-red-400 py-4 text-center">{error}</p>}
+
+        {!unsupported && !error && messages === null && (
           <p className="text-xs text-muted-foreground py-6 text-center">Carregando conversa...</p>
         )}
 
-        {!error && messages?.length === 0 && (
+        {!unsupported && !error && messages?.length === 0 && (
           <div className="flex flex-col items-center gap-1.5 py-8 text-center">
             <MessageSquareDashed className="w-6 h-6 text-muted-foreground/50" />
             <p className="text-xs text-muted-foreground">Nenhuma mensagem ainda</p>

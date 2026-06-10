@@ -38,6 +38,16 @@ export async function GET(req: NextRequest) {
       if (err.status === 404 || /not.?found|n[aã]o encontrad/i.test(err.body)) {
         return NextResponse.json({ messages: [] });
       }
+      // A Z-API NÃO fornece histórico no WhatsApp multi-dispositivo (padrão atual).
+      // Não é erro nosso — sinaliza pro front mostrar aviso e PARAR o polling.
+      // (Inbox real só com persistência própria via webhook — F3.)
+      if (/multi.?device/i.test(err.body)) {
+        return NextResponse.json({
+          messages: [],
+          unsupported: true,
+          reason: "O histórico não fica disponível pela Z-API no WhatsApp multi-dispositivo.",
+        });
+      }
       // Rota ADMIN-only: expõe o status/corpo da Z-API pra diagnóstico em tela.
       return NextResponse.json(
         { error: `Z-API ${err.status}: ${err.body.slice(0, 160) || "(sem corpo)"}` },
