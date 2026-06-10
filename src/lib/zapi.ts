@@ -205,6 +205,24 @@ export interface ZapiChatMessage {
   mediaUrl?: string;
 }
 
+/** Shape parcial e tolerante do item bruto da Z-API (varia por tipo de mensagem). */
+interface RawZapiMessage {
+  messageId?: string;
+  id?: string;
+  fromMe?: boolean | string;
+  momment?: number | string;
+  moment?: number | string;
+  timestamp?: number | string;
+  senderName?: string;
+  chatName?: string;
+  message?: string;
+  text?: { message?: string };
+  image?: { imageUrl?: string; caption?: string };
+  video?: { videoUrl?: string; caption?: string };
+  audio?: { audioUrl?: string };
+  document?: { documentUrl?: string; fileName?: string };
+}
+
 /** Z-API usa o campo `momment` (sic) — às vezes em segundos, às vezes em ms. */
 function toMillis(m: unknown): number {
   const n = typeof m === "number" ? m : Number(m);
@@ -223,7 +241,7 @@ export async function zapiChatMessages(cid: string, phone: string, amount = 30):
   const list = Array.isArray(raw) ? raw : [];
 
   const messages = list.map((item): ZapiChatMessage => {
-    const m = (item ?? {}) as Record<string, any>;
+    const m = (item ?? {}) as RawZapiMessage;
     let kind: ZapiMessageKind = "other";
     let text: string | undefined;
     let mediaUrl: string | undefined;
