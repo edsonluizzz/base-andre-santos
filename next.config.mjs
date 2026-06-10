@@ -36,7 +36,10 @@ const nextConfig = {
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' https://fonts.gstatic.com",
               "img-src 'self' data: blob: https://*.googleusercontent.com https://*.googleapis.com https://img.youtube.com https://*.public.blob.vercel-storage.com",
-              "connect-src 'self' https://*.googleapis.com https://*.google.com https://api.telegram.org https://api.metricool.com",
+              // blob.vercel-storage.com + *.public.blob...: o client upload do @vercel/blob
+              // faz PUT do navegador direto pro Blob (mídia WhatsApp). Sem isto o CSP bloqueia
+              // o PUT e o SDK retenta em silêncio — "Enviando..." eterno sem erro visível.
+              "connect-src 'self' https://*.googleapis.com https://*.google.com https://api.telegram.org https://api.metricool.com https://blob.vercel-storage.com https://*.public.blob.vercel-storage.com",
               "frame-src https://www.youtube.com https://youtube.com",
               "object-src 'none'",
               "base-uri 'self'",
