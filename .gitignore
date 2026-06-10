@@ -56,3 +56,4 @@ temporaria/*.zip
 temporaria/*.xlsx
 temporaria/*.csv
 "Stride - Proposta André Santos.pdf"
+.env*
