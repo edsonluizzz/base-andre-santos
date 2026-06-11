@@ -27,11 +27,7 @@ export function MobileBottomNav({ onOpenMenu }: MobileBottomNavProps) {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-40 lg:hidden border-t border-border pb-safe"
-      style={{
-        // Background sólido (sem blur) — backdrop-blur destrói scroll em iOS
-        backgroundColor: "rgba(10,18,32,0.98)",
-      }}
+      className="app-bottomnav fixed bottom-0 left-0 right-0 z-40 lg:hidden border-t border-border pb-safe"
       aria-label="Navegação principal"
     >
       <div className="flex items-stretch justify-around h-14">
