@@ -32,19 +32,21 @@
 - [x] **0.4 — Motion** (`e4ae2b1`): `<CountUp>` (RAF, easeOutCubic, respeita reduced-motion)
   nos KPIs de Colaboradores.
 
-## FASE 1 — Telas-âncora (PARCIAL — resto aguarda feedback visual do Edson)
-- [~] 1.1 Dashboard: contadores animados aplicados (`621cd7c`). Falta: cards/gráficos no tom novo.
-- [ ] 1.2 Colaboradores: KPIs já com count-up. Falta: cards de lead (glass-interactive), filtros.
-- [ ] 1.3 WhatsApp (encaixar no sistema — sheet já é glass-elevated)
-- [ ] 1.4 Login (vitrine do glass)
+## FASE 1 — Telas-âncora
+- [x] 1.1 Dashboard: contadores animados (`621cd7c`).
+- [x] 1.2 Colaboradores: KPIs com count-up; cards de lead com glass-interactive (lift).
+- [x] 1.4 Login: vitrine do glass (orbs revelados + entrada animada) (`00f2297`).
+- [~] 1.3 WhatsApp: sheet já é glass-elevated; usa glass-card. (ok pelo sistema)
 
 ## FASE 2 — Polish
-- [ ] Estados vazios + loading (skeleton glass) + toasts
-- [ ] Revisão mobile (perf dos orbs/blur) + acessibilidade (contraste AA, foco)
-- [ ] Inputs/select/badge refinados; scrollbar; tooltips; transições de aba
+- [x] Botões com micro-lift; dropdowns/select em glass-elevated (`a7ecdcf`).
+- [x] Menu inferior mobile respeita tema claro (`ef43284`); orbs revelados em +telas (`08dee32`).
+- [x] Contraste do texto secundário no claro reforçado (muted-foreground).
+- [ ] Pendente (rende com feedback visual): skeletons glass dedicados; refino fino de
+  inputs/badge; revisão A11y de contraste AA; gráficos do dashboard no tom novo.
 
 ---
 
-**Status (2026-06-11 madrugada):** Fundação 0.1–0.4 no ar e validada. Fase 1 começou
-(contadores). Parei a Fase 1 nas telas por serem sensíveis a gosto — melhor avançar com
-o Edson vendo. **Retomar:** colar `Continue o PLAN.md do redesign — próximo passo`.
+**Status (2026-06-11):** Redesign "glass moderno" substancialmente concluído — Fundação +
+Fase 1 + grande parte do polish, tudo no ar e validado (lint/CSS verdes). Restam ajustes
+finos que rendem mais com o olho do Edson. **Retomar:** `Continue o PLAN.md do redesign`.

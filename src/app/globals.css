@@ -137,7 +137,8 @@
     --secondary: #e2e8f0;
     --secondary-foreground: #0f172a;
     --muted: #e2e8f0;
-    --muted-foreground: #475569;
+    /* Texto secundário um tom mais escuro p/ contraste melhor no claro (era #475569). */
+    --muted-foreground: #3f4c5e;
     --primary: #9a7a00;
     --primary-foreground: #ffffff;
     --accent: rgba(154,122,0,0.10);
