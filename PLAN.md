@@ -1,43 +1,46 @@
-# PLAN — WhatsApp pelo painel (continuação 2026-06-10)
+# PLAN — Redesign "Glass Moderno" (2026-06-11)
 
-> Retomada da sessão 2026-06-09. Fase 1 entregue, mas **envio de imagem e voz falha**
-> em produção com `Vercel Blob: Failed to retrieve the client token`.
-> Validação SEMPRE no Vercel — nunca rodar `npm run build` local (executa `prisma db push` contra prod).
+> Direção escolhida pelo Edson: **1A Glass moderno** (fundo com orbs/profundidade,
+> vidro fosco, glow dourado) · **2A os dois temas impecáveis** (dark + claro) ·
+> **3A animações sutis e profissionais** (microinterações, sem exagero).
+> Mantém a identidade: **navy + dourado**, estrela, tom institucional eleitoral.
+>
+> **Regras:** validar SEMPRE no Vercel (nunca `npm run build` local — roda `prisma db push`).
+> Lint no clone `C:\Users\usuario\ovile-ci` antes de cada push. Commit por passo.
 
-## Diagnóstico (confirmado via runtime logs Vercel 2026-06-10)
-- `POST /api/zapi/upload` → **400** com `BlobError` (classe `u [Error]` minificada do `@vercel/blob`).
-- Imagem **e** voz falham idênticas → falha na **geração do client token** (antes de validar
-  formato/tamanho). Sintoma clássico de `BLOB_READ_WRITE_TOKEN` ausente/inválido no runtime.
-  O redeploy de 09/06 21:05 ("ativar BLOB_READ_WRITE_TOKEN") não resolveu — store `banco-wpp`
-  provavelmente não ficou conectado ao projeto base-andre-santos.
-
-## Step A — Fix do upload de mídia (imagem + voz) [CRÍTICO] ✅ (commit `ccbd3da`)
-1. ✅ `upload/route.ts`: check explícito de `BLOB_READ_WRITE_TOKEN` → 503 com mensagem clara.
-2. ✅ `allowedContentTypes` por wildcard — cobre `audio/webm;codecs=opus`.
-3. ✅ Log do servidor legível.
-4. ⚠️ **Edson (config Vercel) — PENDENTE:** garantir `BLOB_READ_WRITE_TOKEN` em Production.
-   Painel Vercel → projeto base-andre-santos → Storage → conectar um Blob store ao projeto
-   (injeta a env automaticamente) → Redeploy. Sem isso o upload responde 503 (mensagem clara).
-
-## Step B — F2: Inbox com histórico ✅ (commits `e7d3d9f` → `0216afc`, READY)
-1. ✅ `lib/zapi.ts`: `zapiChatMessages(cid, phone)` (Z-API `/chat-messages/{phone}`).
-2. ✅ `GET /api/zapi/messages?to=` (ADMIN).
-3. ✅ UI no perfil do lead; polling 15s só com aba visível; recarrega ao enviar.
-4. ⚠️ `e7d3d9f` quebrou o build: `@typescript-eslint/no-explicit-any` é ERROR no `next build`.
-   Corrigido em `0216afc` (tipo `RawZapiMessage`). Lint validado no clone `ovile-ci` antes do push.
-
-## Step C — F3: Relay do webhook (tempo real) — ⏸️ AGUARDA OK DO EDSON
-**Risco que exige decisão antes de implementar/deploy:**
-- Reconfigurar o webhook RECEBIDO da Z-API (`PUT /update-webhook-received`) é outward-facing:
-  hoje ele alimenta o **WF2 (SIM/NÃO de presença, ATIVO)** direto. Se apontar para a nossa API,
-  o relay vira ponto único de falha do WF2 — se cair, quebra a confirmação de presença.
-- "Não-lidas" + histórico persistido exigem **schema novo** (modelo de mensagem) e o build roda
-  `prisma db push` contra produção.
-
-**Proposta (a validar):** webhook na nossa API com try/catch que SEMPRE repassa ao WF2 (fail-safe),
-+ tabela `WhatsappMessage` (campaignId, phone, fromMe, kind, text, mediaUrl, momment, read) para
-não-lidas e tempo real sem polling. Decidir: (a) seguir assim, (b) só persistir sem mexer no
-webhook do WF2, ou (c) adiar F3.
+## Princípios do novo visual
+- **Profundidade por camadas:** fundo com orbs suaves → vidro translúcido → conteúdo.
+- **Glass que funciona nos 2 temas:** dark = vidro escuro translúcido + brilho de borda;
+  claro = vidro branco translúcido + borda definida + sombra suave (resolve o "lavado").
+- **Dourado com intenção:** destaques, foco, CTA — não em tudo.
+- **Motion sutil:** transições 150–250ms, easing suave; entradas leves; hover lift discreto;
+  contadores animados nos KPIs. Respeita `prefers-reduced-motion`. anime.js só onde agrega.
 
 ---
-**Retomar:** colar `Continue o PLAN.md do BASE ANDRE SANTOS — step em andamento`.
+
+## FASE 0 — Fundação (propaga para todo o app)
+- [ ] **0.1 — Sistema de fundo + tokens de cor/contraste** ← EM ANDAMENTO
+  - `.app-bg` com orbs (navy/dourado no dark; off-white/dourado sutil no claro), drift
+    lento (sutil), estático no mobile e em reduced-motion. `<div class="app-bg">` no layout.
+  - Refino de tokens (dark + claro) para dar base ao glass e melhorar contraste do claro.
+- [ ] **0.2 — Sistema de glass** (`.glass-card` + `.glass-panel` + `.glass-elevated`):
+  vidro fosco, borda com brilho, sombras/elevação por tema. Skeletons glass.
+- [ ] **0.3 — Componentes base** (button, card, input, badge, select): microinterações
+  (hover lift, focus ring dourado), bordas de vidro, estados nos 2 temas.
+- [ ] **0.4 — Motion foundation:** durations/easing padrão, page-transition, hover utils,
+  contador animado de números (anime.js) p/ KPIs.
+
+## FASE 1 — Telas-âncora
+- [ ] 1.1 Dashboard (KPIs com glass + contadores; gráficos no novo tom)
+- [ ] 1.2 Colaboradores (lista, filtros, cards de lead)
+- [ ] 1.3 WhatsApp (já novo — encaixar no sistema)
+- [ ] 1.4 Login (vitrine do glass)
+
+## FASE 2 — Polish
+- [ ] Estados vazios + loading (skeleton glass) + toasts
+- [ ] Revisão mobile (perf dos orbs/blur) + acessibilidade (contraste AA, foco)
+- [ ] Detalhes: scrollbar, tooltips, transições de aba
+
+---
+
+**Retomar:** colar `Continue o PLAN.md do redesign — próximo passo`.

@@ -63,6 +63,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="pt-BR" className={`${inter.variable} ${bebasNeue.variable}`} suppressHydrationWarning>
       <body>
+        {/* Fundo do app — orbs suaves (profundidade pro vidro). aria-hidden: decorativo. */}
+        <div className="app-bg" aria-hidden="true">
+          <span className="orb orb-1" />
+          <span className="orb orb-2" />
+          <span className="orb orb-3" />
+        </div>
         <ThemeProvider attribute="class" defaultTheme="dark" disableTransitionOnChange>
           <SessionProvider>
             {children}

@@ -166,24 +166,58 @@
 
   body {
     @apply text-foreground;
-    background: #0a1220 radial-gradient(
-      ellipse 100% 60% at 50% -5%,
-      rgba(26,47,78,0.9) 0%,
-      rgba(15,28,50,0.5) 40%,
-      #0a1220 70%
-    ) no-repeat;
+    /* Fundo base sólido — a profundidade vem dos orbs em .app-bg (glass moderno). */
+    background: #0a1220;
     font-family: "Inter", "DM Sans", sans-serif;
     -webkit-font-smoothing: antialiased;
   }
 
   html.light body {
-    /* Clareamento branco neutro no topo (antes era azul #dbeafe, que destoava
-       do dourado da marca). Mais limpo e combina com a sidebar branca. */
-    background: #eef1f6 radial-gradient(
-      ellipse 90% 55% at 50% -10%,
-      #ffffff 0%,
-      #eef1f6 60%
-    ) no-repeat;
+    background: #eef1f6;
+  }
+
+  /* ── Fundo do app: orbs suaves dão profundidade pro vidro ──────────── */
+  .app-bg {
+    position: fixed;
+    inset: 0;
+    z-index: -10;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .app-bg .orb {
+    position: absolute;
+    border-radius: 9999px;
+    filter: blur(72px);
+    will-change: transform;
+  }
+  .app-bg .orb-1 {
+    width: 44vw; height: 44vw; left: -10vw; top: -8vh;
+    background: radial-gradient(circle at 50% 50%, rgba(212,175,55,0.22), transparent 68%);
+    animation: orb-drift-a 28s ease-in-out infinite;
+  }
+  .app-bg .orb-2 {
+    width: 40vw; height: 40vw; right: -8vw; top: 16vh;
+    background: radial-gradient(circle at 50% 50%, rgba(46,86,160,0.26), transparent 68%);
+    animation: orb-drift-b 34s ease-in-out infinite;
+  }
+  .app-bg .orb-3 {
+    width: 34vw; height: 34vw; left: 26vw; bottom: -14vh;
+    background: radial-gradient(circle at 50% 50%, rgba(122,95,0,0.18), transparent 70%);
+    animation: orb-drift-a 40s ease-in-out infinite reverse;
+  }
+  html.light .app-bg .orb-1 { background: radial-gradient(circle at 50% 50%, rgba(212,175,55,0.16), transparent 68%); }
+  html.light .app-bg .orb-2 { background: radial-gradient(circle at 50% 50%, rgba(99,102,241,0.11), transparent 70%); }
+  html.light .app-bg .orb-3 { background: radial-gradient(circle at 50% 50%, rgba(212,175,55,0.11), transparent 72%); }
+
+  @keyframes orb-drift-a { 0%,100% { transform: translate3d(0,0,0); } 50% { transform: translate3d(4vw,3vh,0); } }
+  @keyframes orb-drift-b { 0%,100% { transform: translate3d(0,0,0); } 50% { transform: translate3d(-3vw,-2vh,0); } }
+
+  /* Mobile: orbs estáticos e menos pesados (perf de scroll) */
+  @media (max-width: 1023px) {
+    .app-bg .orb { animation: none !important; filter: blur(48px); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .app-bg .orb { animation: none !important; }
   }
 
   /* IMPORTANTE: nada de overflow-x / overflow no html ou body — qualquer
