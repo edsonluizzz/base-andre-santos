@@ -177,10 +177,12 @@
   }
 
   html.light body {
-    background: #f1f5f9 radial-gradient(
-      ellipse 80% 50% at 50% -10%,
-      #dbeafe 0%,
-      #f1f5f9 65%
+    /* Clareamento branco neutro no topo (antes era azul #dbeafe, que destoava
+       do dourado da marca). Mais limpo e combina com a sidebar branca. */
+    background: #eef1f6 radial-gradient(
+      ellipse 90% 55% at 50% -10%,
+      #ffffff 0%,
+      #eef1f6 60%
     ) no-repeat;
   }
 
@@ -189,6 +191,17 @@
      em mobile (Safari iOS especialmente). O containment de overflow
      horizontal fica a cargo do <main> em SidebarMainWrapper. */
   html { @apply font-sans; }
+}
+
+/* ── Sidebar (fundo sólido por tema) ─────────────────── */
+@layer components {
+  /* Sólido de propósito (sem alpha/blur — alpha+blur quebra o momentum-scroll
+     do iOS). Antes a cor era cravada no JSX e ignorava o tema claro. */
+  .app-sidebar { background-color: #0a1220; }
+  html.light .app-sidebar {
+    background-color: #ffffff;
+    box-shadow: inset -1px 0 0 rgba(15,23,42,0.06), 2px 0 16px rgba(15,23,42,0.04);
+  }
 }
 
 /* ── Glass card ──────────────────────────────────────── */
@@ -336,6 +349,32 @@
     background-size: 200% 100%;
   }
 }
+
+/* ── Tema claro: superfícies translúcidas (dark-first → claro) ─────────
+   O app é dark-first e usa muito bg/border-white/[alpha], que somem sobre
+   fundo claro (daí o "lavado"). Aqui traduzimos os padrões mais usados para
+   tons escuros sutis, dando definição a bordas e superfícies no tema claro.
+   Fora de @layer (e com especificidade html.light .x) p/ vencer os utilitários. */
+html.light .border-white\/\[0\.04\] { border-color: rgba(15,23,42,0.06); }
+html.light .border-white\/\[0\.05\] { border-color: rgba(15,23,42,0.07); }
+html.light .border-white\/\[0\.06\] { border-color: rgba(15,23,42,0.08); }
+html.light .border-white\/\[0\.07\] { border-color: rgba(15,23,42,0.10); }
+html.light .border-white\/\[0\.08\] { border-color: rgba(15,23,42,0.11); }
+html.light .border-white\/\[0\.1\],
+html.light .border-white\/\[0\.10\] { border-color: rgba(15,23,42,0.12); }
+html.light .border-white\/\[0\.12\] { border-color: rgba(15,23,42,0.14); }
+html.light .border-white\/\[0\.15\] { border-color: rgba(15,23,42,0.16); }
+html.light .border-white\/\[0\.2\]  { border-color: rgba(15,23,42,0.20); }
+html.light .border-white\/\[0\.25\] { border-color: rgba(15,23,42,0.24); }
+
+html.light .bg-white\/\[0\.01\] { background-color: rgba(15,23,42,0.015); }
+html.light .bg-white\/\[0\.02\] { background-color: rgba(15,23,42,0.03); }
+html.light .bg-white\/\[0\.03\] { background-color: rgba(15,23,42,0.04); }
+html.light .bg-white\/\[0\.04\] { background-color: rgba(15,23,42,0.045); }
+html.light .bg-white\/\[0\.05\] { background-color: rgba(15,23,42,0.05); }
+html.light .bg-white\/\[0\.06\] { background-color: rgba(15,23,42,0.055); }
+html.light .bg-white\/\[0\.07\] { background-color: rgba(15,23,42,0.06); }
+html.light .bg-white\/\[0\.08\] { background-color: rgba(15,23,42,0.065); }
 
 /* ── Scrollbar ───────────────────────────────────────── */
 ::-webkit-scrollbar { width: 4px; height: 4px; }
