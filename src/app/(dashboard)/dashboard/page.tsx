@@ -12,6 +12,7 @@ import { InstagramPanel } from "@/components/dashboard/instagram-panel";
 import { VelocityPanel } from "@/components/dashboard/velocity-panel";
 import { ElectionCountdown } from "@/components/dashboard/election-countdown";
 import { KpiCard } from "@/components/dashboard/kpi-card";
+import { CountUp } from "@/components/ui/count-up";
 import { Suspense } from "react";
 
 // Sempre dinâmico — evita qualquer interação com cache em edge/build
@@ -169,11 +170,11 @@ export default async function DashboardPage() {
             {/* Contadores */}
             <div className="grid grid-cols-2 gap-3">
               <div className="rounded-xl p-3 text-center bg-foreground/[0.03] border border-primary/[0.20]">
-                <p className="text-2xl font-bold text-primary">{myTotal}</p>
+                <p className="text-2xl font-bold text-primary"><CountUp value={myTotal} /></p>
                 <p className="text-[10px] text-muted-foreground mt-0.5">Cadastrados</p>
               </div>
               <div className="rounded-xl p-3 text-center bg-foreground/[0.03] border border-green-500/20">
-                <p className="text-2xl font-bold text-green-400">{myActive}</p>
+                <p className="text-2xl font-bold text-green-400"><CountUp value={myActive} /></p>
                 <p className="text-[10px] text-muted-foreground mt-0.5">Ativos</p>
               </div>
             </div>
