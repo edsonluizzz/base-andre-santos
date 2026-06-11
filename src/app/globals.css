@@ -192,22 +192,22 @@
   }
   .app-bg .orb-1 {
     width: 46vw; height: 46vw; left: 12vw; top: -12vh;
-    background: radial-gradient(circle at 50% 50%, rgba(212,175,55,0.40), transparent 70%);
+    background: radial-gradient(circle at 50% 50%, rgba(212,175,55,0.24), transparent 70%);
     animation: orb-drift-a 28s ease-in-out infinite;
   }
   .app-bg .orb-2 {
     width: 44vw; height: 44vw; right: -8vw; top: 28vh;
-    background: radial-gradient(circle at 50% 50%, rgba(52,98,184,0.46), transparent 70%);
+    background: radial-gradient(circle at 50% 50%, rgba(52,98,184,0.28), transparent 70%);
     animation: orb-drift-b 34s ease-in-out infinite;
   }
   .app-bg .orb-3 {
     width: 40vw; height: 40vw; left: 38vw; bottom: -18vh;
-    background: radial-gradient(circle at 50% 50%, rgba(150,116,0,0.34), transparent 72%);
+    background: radial-gradient(circle at 50% 50%, rgba(150,116,0,0.20), transparent 72%);
     animation: orb-drift-a 40s ease-in-out infinite reverse;
   }
-  html.light .app-bg .orb-1 { background: radial-gradient(circle at 50% 50%, rgba(212,175,55,0.30), transparent 70%); }
-  html.light .app-bg .orb-2 { background: radial-gradient(circle at 50% 50%, rgba(99,102,241,0.22), transparent 72%); }
-  html.light .app-bg .orb-3 { background: radial-gradient(circle at 50% 50%, rgba(212,175,55,0.22), transparent 74%); }
+  html.light .app-bg .orb-1 { background: radial-gradient(circle at 50% 50%, rgba(212,175,55,0.18), transparent 70%); }
+  html.light .app-bg .orb-2 { background: radial-gradient(circle at 50% 50%, rgba(99,102,241,0.13), transparent 72%); }
+  html.light .app-bg .orb-3 { background: radial-gradient(circle at 50% 50%, rgba(212,175,55,0.13), transparent 74%); }
 
   @keyframes orb-drift-a { 0%,100% { transform: translate3d(0,0,0); } 50% { transform: translate3d(4vw,3vh,0); } }
   @keyframes orb-drift-b { 0%,100% { transform: translate3d(0,0,0); } 50% { transform: translate3d(-3vw,-2vh,0); } }
