@@ -8,8 +8,9 @@ export default async function LoginPage() {
   if (session?.user) redirect("/dashboard");
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <div className="glass-card rounded-2xl p-8 w-full max-w-sm text-center space-y-6 border border-white/[0.08]">
+    // Sem bg-background: o fundo é o body + orbs (.app-bg) — vitrine do vidro.
+    <div className="min-h-screen flex items-center justify-center p-4">
+      <div className="glass-card animate-fade-in-up rounded-2xl p-8 w-full max-w-sm text-center space-y-6 border border-white/[0.08]">
         <div className="flex items-center justify-center">
           <div className="w-14 h-14 rounded-2xl bg-primary/10 border border-primary/25 flex items-center justify-center animate-glow-pulse">
             <Star className="w-7 h-7 text-primary fill-primary/30" />

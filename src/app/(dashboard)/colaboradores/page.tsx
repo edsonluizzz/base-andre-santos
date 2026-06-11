@@ -653,7 +653,7 @@ export default function ColaboradoresPage() {
             const isSelected = selected.has(c.id);
             return (
               <div key={c.id}
-                className={`glass-card rounded-xl border transition-colors ${
+                className={`glass-card glass-interactive rounded-xl border transition-all ${
                   isSelected
                     ? "border-primary/40 bg-primary/[0.04]"
                     : "border-white/[0.08] hover:border-primary/20"
