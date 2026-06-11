@@ -84,7 +84,7 @@ export function CompletarPerfilForm({ defaultName, defaultEmail }: Props) {
   }
 
   return (
-    <div className="min-h-screen p-4 pb-10 bg-background">
+    <div className="min-h-screen p-4 pb-10">
       <div className="max-w-md mx-auto pt-8 space-y-6">
 
         <div className="text-center space-y-3">
