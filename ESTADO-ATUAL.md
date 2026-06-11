@@ -1,6 +1,31 @@
-# Estado Atual da Produção — 2026-06-10
+# Estado Atual da Produção — 2026-06-11
 
-**Última atualização:** 2026-06-10 noite BRT
+**Última atualização:** 2026-06-11 madrugada BRT
+
+---
+
+## 🎨 Redesign "Glass Moderno" (2026-06-11 madrugada) — EM ANDAMENTO
+
+Direção escolhida pelo Edson: **glass moderno** (orbs + vidro fosco + glow dourado) ·
+**dois temas impecáveis** · **motion sutil**. Mantém navy+dourado. Plano completo em `PLAN.md`.
+
+**Fundação (Fase 0) CONCLUÍDA e no ar:**
+- **Fundo com orbs** (`.app-bg`): 3 manchas de luz (dourado/navy) com drift lento, atrás do
+  conteúdo. Intensidade calibrada com o Edson (forte→suave). Estático no mobile/reduced-motion.
+- **Vidro** (`.glass-card` refinado + `.glass-interactive` lift + `.glass-elevated` modais):
+  translúcido (vê os orbs), borda com brilho, profundidade. Dark e claro.
+- **Popups** (Dialog/Sheet) usam `.glass-elevated`.
+- **Contadores animados** (`<CountUp>`, RAF, reduced-motion) nos KPIs de Colaboradores e Dashboard.
+- ⚠️ **Causa do "não vejo diferença":** o wrapper do dashboard tinha `bg-background` opaco
+  tapando os orbs — removido (`f1da6f8`). Tema claro também já tinha sido melhorado antes
+  (sidebar branca, superfícies translúcidas traduzidas, fundo neutro).
+
+**Falta (aguardando feedback visual do Edson — telas são sensíveis a gosto):**
+- Fase 1: caprichar Dashboard (cards/gráficos), Colaboradores (cards de lead c/ glass-interactive),
+  WhatsApp, Login. Fase 2: skeletons glass, inputs/select/badge refinados, revisão mobile/A11y.
+- **Retomar:** `Continue o PLAN.md do redesign — próximo passo`.
+
+Commits: `9dd27d8` `b401fce` `f1da6f8` `dc60b72` `8571483` `e4ae2b1` `621cd7c`.
 
 ---
 
