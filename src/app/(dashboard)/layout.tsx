@@ -15,7 +15,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen bg-background">
+      {/* Sem bg-background aqui: o fundo é o body + os orbs (.app-bg). Um fundo
+          sólido neste wrapper tapava os orbs e matava o efeito de vidro. */}
+      <div className="flex min-h-screen">
         <div className="hidden-print">
           <Sidebar serverRole={role} serverIsSuperAdmin={isSuperAdmin} serverName={serverName} serverImage={serverImage} />
         </div>

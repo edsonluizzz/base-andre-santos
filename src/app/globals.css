@@ -191,17 +191,17 @@
     will-change: transform;
   }
   .app-bg .orb-1 {
-    width: 48vw; height: 48vw; left: -10vw; top: -10vh;
+    width: 46vw; height: 46vw; left: 12vw; top: -12vh;
     background: radial-gradient(circle at 50% 50%, rgba(212,175,55,0.40), transparent 70%);
     animation: orb-drift-a 28s ease-in-out infinite;
   }
   .app-bg .orb-2 {
-    width: 44vw; height: 44vw; right: -8vw; top: 14vh;
+    width: 44vw; height: 44vw; right: -8vw; top: 28vh;
     background: radial-gradient(circle at 50% 50%, rgba(52,98,184,0.46), transparent 70%);
     animation: orb-drift-b 34s ease-in-out infinite;
   }
   .app-bg .orb-3 {
-    width: 38vw; height: 38vw; left: 24vw; bottom: -16vh;
+    width: 40vw; height: 40vw; left: 38vw; bottom: -18vh;
     background: radial-gradient(circle at 50% 50%, rgba(150,116,0,0.34), transparent 72%);
     animation: orb-drift-a 40s ease-in-out infinite reverse;
   }
