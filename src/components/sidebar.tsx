@@ -38,6 +38,10 @@ const navItems = [
   { href: "/nova-campanha",  icon: Plus,             label: "Nova Campanha",   minRole: "ADMIN",  superAdminOnly: true  },
 ];
 
+// Menus ocultos temporariamente (a pedido do Edson 2026-06-10 — não usaremos
+// campanhas por agora). Reativar = remover o href daqui; o item segue definido.
+const HIDDEN_HREFS = new Set<string>(["/campanhas", "/nova-campanha"]);
+
 const ROLE_LABEL: Record<string, string> = {
   ADMIN: "Administrador",
   LEADER: "Coordenador",
@@ -78,7 +82,7 @@ export function Sidebar({
   const userRank = ROLE_RANK[role] ?? 0;
   const visibleItems = navItems.filter((item) => (ROLE_RANK[item.minRole] ?? 0) <= userRank);
   const finalItems = visibleItems.filter((item) =>
-    item.superAdminOnly ? isSuperAdmin : true
+    (item.superAdminOnly ? isSuperAdmin : true) && !HIDDEN_HREFS.has(item.href)
   );
   const initials = displayName
     .split(" ").slice(0, 2).map((n: string) => n[0]).join("").toUpperCase() || "U";
