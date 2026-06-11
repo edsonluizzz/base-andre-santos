@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Users, Heart, Scale, ShieldOff, Gauge, Phone, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { CountUp } from "@/components/ui/count-up";
 
 interface Stats {
   total: number;
@@ -122,7 +123,7 @@ export function KpiCards() {
             </p>
             <div className="flex items-baseline gap-0.5">
               <span className={cn("text-xl lg:text-2xl font-bold leading-none", c.color)}>
-                {typeof c.value === "number" ? c.value.toLocaleString("pt-BR") : c.value}
+                {typeof c.value === "number" ? <CountUp value={c.value} /> : c.value}
               </span>
               {c.suffix && <span className="text-[10px] text-muted-foreground">{c.suffix}</span>}
             </div>
