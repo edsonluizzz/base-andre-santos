@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import {
   LayoutDashboard, Users, Calendar,
-  Megaphone, Settings, LogOut, Shield, Star, Map, BarChart2, Network, Target, ClipboardList, Camera, Award, Building2, Plus,
+  Megaphone, Settings, LogOut, Shield, Star, Map, BarChart2, Network, Target, ClipboardList, Camera, Award, Building2, Plus, UserPlus,
   ChevronLeft, ChevronRight, Sun, Moon, GraduationCap, Send,
 } from "lucide-react";
 import { NotificationBell } from "@/components/notifications/notification-bell";
@@ -21,6 +21,7 @@ const navItems = [
   { href: "/dashboard",      icon: LayoutDashboard, label: "Dashboard",       minRole: "MEMBER", superAdminOnly: false },
   { href: "/treinamento",    icon: GraduationCap,    label: "Treinamento",     minRole: "MEMBER", superAdminOnly: false },
   { href: "/colaboradores",  icon: Users,            label: "Colaboradores",   minRole: "MEMBER", superAdminOnly: false },
+  { href: "/rua",            icon: UserPlus,         label: "Cadastro na Rua", minRole: "MEMBER", superAdminOnly: false },
   { href: "/celulas",        icon: Network,          label: "Células",         minRole: "MEMBER", superAdminOnly: false },
   { href: "/mapa",           icon: Map,              label: "Mapa de Apoio",   minRole: "LEADER", superAdminOnly: false },
   { href: "/agenda",         icon: Calendar,         label: "Agenda",          minRole: "LEADER", superAdminOnly: false },
