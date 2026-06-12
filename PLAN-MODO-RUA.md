@@ -65,8 +65,10 @@ ver o painel completo (MEMBER) para receber metas etc.
   → o jwt callback ativa o convite pendente e cria o `Collaborator` MEMBER (painel completo).
 - Link nunca expira (expiresAt null) e é reutilizável (useCount incrementa). Revogável.
 - Decisão: cabo entra como MEMBER normal (vê o painel, pode receber metas).
-- Possível melhoria futura (não feita): expor a geração do link da equipe para ADMIN de
-  campanha (hoje fica no Super Admin) e/ou CTA "Cadastrar na rua" pós-login.
+- ✅ Liberado para ADMIN de campanha: nova página `/convites` (sidebar → Administração)
+  reusa `/api/invite-links` (que já permitia ADMIN). Antes só existia no Super Admin.
+- Gmail é condicionante: sem Gmail/login a pessoa não trabalha (decisão do Edson).
+- Não feito (opcional): CTA "Cadastrar na rua" logo após o primeiro login.
 
 ---
 
