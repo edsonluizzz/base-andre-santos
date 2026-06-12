@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { getCampaignContext } from "@/lib/campaign-context";
 import { sendTelegram, buildEventNotification } from "@/lib/telegram";
+import { sendToAgendaGroup, buildEventNotificationWhatsApp } from "@/lib/agenda-whatsapp";
 
 
 export async function GET(req: NextRequest) {
@@ -62,7 +63,9 @@ export async function POST(req: NextRequest) {
     const evDate = new Date(date);
     const isToday = evDate.toDateString() === today.toDateString();
     if (isToday) {
-      sendTelegram(CID, buildEventNotification("criado", { ...event, date: event.date.toISOString() })).catch(() => {});
+      const payload = { ...event, date: event.date.toISOString() };
+      sendTelegram(CID, buildEventNotification("criado", payload)).catch(() => {});
+      sendToAgendaGroup(db, CID, buildEventNotificationWhatsApp("criado", payload)).catch(() => {});
     }
 
     return NextResponse.json(event, { status: 201 });

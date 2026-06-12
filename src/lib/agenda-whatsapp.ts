@@ -1,9 +1,36 @@
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import type { PrismaClient } from "@prisma/client";
+import { zapiSendText } from "./zapi";
 
 // Agenda diária formatada para WhatsApp (negrito com *asteriscos*, itálico com _).
 // Espelha o digest do Telegram (buildDailyDigestMessage), mas sem HTML.
 // Só agenda — nunca leads.
+
+// Nome do grupo de WhatsApp que recebe a agenda (já sincronizado no painel).
+// Match por "contém" insensível a maiúsculas → pega "Agenda", "Agendas".
+const AGENDA_GROUP_NAME = "Agenda";
+
+// Envia uma mensagem ao grupo "Agendas" via Z-API. Best-effort: nunca lança
+// (retorna false em qualquer falha — Z-API não configurada, grupo inexistente etc).
+export async function sendToAgendaGroup(db: PrismaClient, cid: string, message: string): Promise<boolean> {
+  try {
+    const group = await db.whatsAppGroup.findFirst({
+      where: {
+        campaignId: cid,
+        name: { contains: AGENDA_GROUP_NAME, mode: "insensitive" },
+        zapiGroupId: { not: null },
+      },
+      select: { zapiGroupId: true },
+    });
+    if (!group?.zapiGroupId) return false;
+    await zapiSendText(cid, group.zapiGroupId, message);
+    return true;
+  } catch (err) {
+    console.error(`[agenda-whatsapp] envio ao grupo falhou (${cid}):`, err);
+    return false;
+  }
+}
 
 const TYPE_EMOJI: Record<string, string> = {
   REUNIAO: "🤝", CULTO: "⛪", PANFLETAGEM: "📋",
@@ -66,4 +93,22 @@ export function buildAgendaWhatsApp(
 
   msg += `\n\n_Enviado às ${timeStr} (BRT)_`;
   return msg;
+}
+
+// Notificação em tempo real quando um evento é criado/editado/removido.
+export function buildEventNotificationWhatsApp(
+  action: "criado" | "atualizado" | "removido",
+  event: EventLike,
+): string {
+  const emoji   = action === "criado" ? "✅" : action === "atualizado" ? "✏️" : "❌";
+  const brtDate = toBRT(event.date);
+  const time    = format(brtDate, "HH:mm");
+  const dateStr = format(brtDate, "dd/MM", { locale: ptBR });
+  const typeEmoji = TYPE_EMOJI[event.type] ?? "📌";
+
+  let text = `${emoji} *Evento ${action}:* ${typeEmoji} ${event.title}`;
+  text += `\n🗓️ ${dateStr} às ${time}`;
+  if (event.location) text += `\n📍 ${event.location}`;
+  if (event.zone?.name) text += `\n🗺️ ${event.zone.name}`;
+  return text;
 }

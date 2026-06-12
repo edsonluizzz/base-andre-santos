@@ -2,37 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db as globalDb } from "@/lib/db";
 import { sendTelegram, buildAgendaMessage, buildDailyDigestMessage, isTelegramConfigured } from "@/lib/telegram";
 import { getCampaignContext } from "@/lib/campaign-context";
-import { buildAgendaWhatsApp } from "@/lib/agenda-whatsapp";
-import { zapiSendText } from "@/lib/zapi";
-
-// Nome do grupo de WhatsApp que recebe a agenda diária (já sincronizado no painel).
-const AGENDA_GROUP_NAME = "Agenda";
-
-// Envia a agenda diária para o grupo de WhatsApp "Agendas", se existir e a Z-API
-// estiver configurada. Best-effort: nunca derruba o envio do Telegram. Só agenda.
-async function sendAgendaToWhatsApp(
-  db: ReturnType<typeof getCampaignContext>["db"],
-  cid: string,
-  today: Parameters<typeof buildAgendaWhatsApp>[0],
-  nextDays: Parameters<typeof buildAgendaWhatsApp>[1],
-): Promise<boolean> {
-  try {
-    const group = await db.whatsAppGroup.findFirst({
-      where: {
-        campaignId: cid,
-        name: { contains: AGENDA_GROUP_NAME, mode: "insensitive" },
-        zapiGroupId: { not: null },
-      },
-      select: { zapiGroupId: true },
-    });
-    if (!group?.zapiGroupId) return false;
-    await zapiSendText(cid, group.zapiGroupId, buildAgendaWhatsApp(today, nextDays));
-    return true;
-  } catch (err) {
-    console.error(`[agenda-telegram] WhatsApp falhou (${cid}):`, err);
-    return false;
-  }
-}
+import { buildAgendaWhatsApp, sendToAgendaGroup } from "@/lib/agenda-whatsapp";
 
 function startOfDay(d: Date) {
   const x = new Date(d); x.setHours(0, 0, 0, 0); return x;
@@ -107,7 +77,7 @@ export async function GET(req: NextRequest) {
 
       // WhatsApp — grupo "Agendas", independente do Telegram. Só no digest da manhã.
       const waSent = isFirst
-        ? await sendAgendaToWhatsApp(db, camp.id, todayEvents, nextDaysEvents)
+        ? await sendToAgendaGroup(db, camp.id, buildAgendaWhatsApp(todayEvents, nextDaysEvents))
         : false;
 
       summary.push({

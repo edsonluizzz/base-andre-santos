@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { getCampaignContext } from "@/lib/campaign-context";
 import { sendTelegram, buildEventNotification } from "@/lib/telegram";
+import { sendToAgendaGroup, buildEventNotificationWhatsApp } from "@/lib/agenda-whatsapp";
 
 
 export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
@@ -33,7 +34,9 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     const today = new Date();
     const evDate = new Date(updated.date);
     if (evDate.toDateString() === today.toDateString()) {
-      sendTelegram(CID, buildEventNotification("atualizado", { ...updated, date: updated.date.toISOString() })).catch(() => {});
+      const payload = { ...updated, date: updated.date.toISOString() };
+      sendTelegram(CID, buildEventNotification("atualizado", payload)).catch(() => {});
+      sendToAgendaGroup(db, CID, buildEventNotificationWhatsApp("atualizado", payload)).catch(() => {});
     }
 
     return NextResponse.json(updated);
@@ -57,7 +60,9 @@ export async function DELETE(_req: NextRequest, { params }: { params: { id: stri
     // Notifica Telegram se o evento for hoje (antes de deletar)
     const today = new Date();
     if (existing.date.toDateString() === today.toDateString()) {
-      sendTelegram(CID, buildEventNotification("removido", { ...existing, date: existing.date.toISOString() })).catch(() => {});
+      const payload = { ...existing, date: existing.date.toISOString() };
+      sendTelegram(CID, buildEventNotification("removido", payload)).catch(() => {});
+      sendToAgendaGroup(db, CID, buildEventNotificationWhatsApp("removido", payload)).catch(() => {});
     }
 
     await db.event.delete({ where: { id: params.id } });
