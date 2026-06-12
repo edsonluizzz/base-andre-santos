@@ -13,8 +13,77 @@ import {
   Heart,
   ChevronUp,
   ChevronDown,
+  LayoutDashboard,
+  GraduationCap,
+  Network,
+  Map,
+  Calendar,
+  BarChart2,
+  Target,
+  Camera,
+  Award,
+  ClipboardList,
+  Send,
+  Megaphone,
+  Settings,
+  Compass,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+// Tour dos menus — espelha a navegação real do sistema (ver navItems em sidebar.tsx),
+// agrupado por papel. Cada apoiador vê só os grupos que tem acesso.
+const ROLE_RANK_DECK: Record<string, number> = { MEMBER: 0, LEADER: 1, ADMIN: 2 };
+
+const MENU_TOUR: {
+  group: string;
+  badge: string;
+  minRank: number;
+  accent: string;
+  groupIcon: typeof Sparkles;
+  items: { icon: typeof Sparkles; label: string; what: string }[];
+}[] = [
+  {
+    group: "Seu menu principal",
+    badge: "Menu · Base",
+    minRank: 0,
+    accent: "from-blue-500/20 to-blue-500/5",
+    groupIcon: Compass,
+    items: [
+      { icon: LayoutDashboard, label: "Dashboard", what: "Sua visão geral: total de apoiadores, próximos eventos e o andamento da base num relance." },
+      { icon: GraduationCap, label: "Treinamento", what: "Este tutorial. Volte aqui sempre que tiver dúvida de como usar o sistema." },
+      { icon: Users, label: "Colaboradores", what: "O coração do sistema. Cadastre e acompanhe seus apoiadores — nome, telefone, cidade e status." },
+      { icon: Network, label: "Células", what: "Sua rede. Veja quem você indicou e como o seu time está crescendo." },
+    ],
+  },
+  {
+    group: "Ferramentas de coordenação",
+    badge: "Menu · Coordenação",
+    minRank: 1,
+    accent: "from-emerald-500/20 to-emerald-500/5",
+    groupIcon: Map,
+    items: [
+      { icon: Map, label: "Mapa de Apoio", what: "Onde está a sua força: cobertura por município, bairro e zona eleitoral no mapa." },
+      { icon: Calendar, label: "Agenda", what: "Eventos da campanha — reuniões, gravações, podcasts. Crie, edite e registre presença." },
+      { icon: BarChart2, label: "Relatório", what: "Os números da base: crescimento, conversão e desempenho por região." },
+      { icon: Target, label: "Metas", what: "Quanto falta: metas de votos e de lideranças por cidade." },
+      { icon: Camera, label: "Instagram", what: "Desempenho nas redes: alcance e engajamento do Instagram." },
+      { icon: Award, label: "Eleitos 2022", what: "Referência eleitoral: quem se elegeu em 2022 e onde foram os votos." },
+    ],
+  },
+  {
+    group: "Administração",
+    badge: "Menu · Administração",
+    minRank: 2,
+    accent: "from-yellow-500/20 to-yellow-500/5",
+    groupIcon: Settings,
+    items: [
+      { icon: ClipboardList, label: "Tarefas", what: "Organização do time: pendências e responsáveis." },
+      { icon: Send, label: "WhatsApp", what: "Central de mensagens: disparos, grupos e atendimento da base." },
+      { icon: Megaphone, label: "Comunicados", what: "Avisos oficiais para toda a base de apoio." },
+      { icon: Settings, label: "Configurações", what: "Ajustes da campanha: equipe, integrações e preferências." },
+    ],
+  },
+];
 
 interface DeckProps {
   candidateName: string;
@@ -38,6 +107,35 @@ export function TreinamentoDeck({ candidateName, userName, userRole }: DeckProps
     userRole === "ADMIN" ? "Administrador"
     : userRole === "LEADER" ? "Coordenador"
     : "Colaborador";
+
+  // Tour dos menus filtrado pelo papel do usuário — cada grupo vira um slide.
+  const userRank = ROLE_RANK_DECK[userRole] ?? 0;
+  const menuSlides: Slide[] = MENU_TOUR.filter((g) => userRank >= g.minRank).map((g) => ({
+    icon: g.groupIcon,
+    badge: g.badge,
+    title: g.group,
+    accent: g.accent,
+    body: (
+      <>
+        <p className="text-sm lg:text-base text-muted-foreground mb-4">
+          O que você encontra em cada item do menu:
+        </p>
+        <ul className="space-y-2.5">
+          {g.items.map((it) => (
+            <li key={it.label} className="flex items-start gap-3 glass-card rounded-xl p-3 border border-white/[0.06]">
+              <div className="w-9 h-9 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
+                <it.icon className="w-4 h-4 text-primary" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-foreground">{it.label}</p>
+                <p className="text-xs lg:text-sm text-muted-foreground mt-0.5 leading-relaxed">{it.what}</p>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </>
+    ),
+  }));
 
   const slides: Slide[] = [
     {
@@ -64,32 +162,25 @@ export function TreinamentoDeck({ candidateName, userName, userRole }: DeckProps
       ),
     },
     {
-      icon: Users,
-      badge: "Como funciona",
-      title: "O sistema em uma frase.",
+      icon: Compass,
+      badge: "Visão geral",
+      title: "Vamos passar por cada menu.",
       accent: "from-blue-500/20 to-blue-500/5",
       body: (
         <>
           <p className="text-base lg:text-xl text-muted-foreground leading-relaxed">
-            Cada apoiador é cadastrado no banco central, classificado por zona e nível de
-            engajamento, e contatado automaticamente pelo WhatsApp.
+            O sistema é dividido em menus, e cada um tem uma função clara. Nos próximos
+            passos você vai ver <strong className="text-foreground">exatamente o que fazer em cada um</strong> —
+            só aparecem os que fazem parte do seu acesso de <strong className="text-primary">{roleLabel}</strong>.
           </p>
-          <ul className="mt-5 space-y-2.5">
-            {[
-              "Cadastro inteligente — telefone, cidade, zona e perfil",
-              "WhatsApp automático — convite e boas-vindas sem você levantar um dedo",
-              "Ranking ao vivo — o sistema mostra quem está mobilizando mais",
-              "Mapa de apoio — cobertura por município, bairro e zona eleitoral",
-            ].map((t) => (
-              <li key={t} className="flex items-start gap-3">
-                <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 shrink-0" />
-                <span className="text-sm lg:text-base text-foreground/80">{t}</span>
-              </li>
-            ))}
-          </ul>
+          <p className="text-sm lg:text-base text-muted-foreground/80 mt-3">
+            No celular, os principais ficam na barra de baixo; o restante fica no botão
+            <strong className="text-foreground"> Menu</strong>.
+          </p>
         </>
       ),
     },
+    ...menuSlides,
     {
       icon: UserPlus,
       badge: "Passo a passo",
