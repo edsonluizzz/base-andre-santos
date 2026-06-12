@@ -785,6 +785,7 @@ function EventListCard({ ev, onClick }: { ev: Event; onClick: () => void }) {
       className="w-full text-left glass-card rounded-xl p-4 border border-white/[0.08] hover:border-primary/20 hover:bg-white/[0.02] transition-all flex items-start gap-4"
     >
       <div className="text-center min-w-[44px]">
+        <p className="text-[10px] uppercase text-muted-foreground">{format(d, "EEE", { locale: ptBR })}</p>
         <p className="text-2xl font-bold text-primary leading-none">{d.getDate()}</p>
         <p className="text-[10px] uppercase text-muted-foreground">{format(d, "MMM", { locale: ptBR })}</p>
         <p className="text-[10px] text-muted-foreground">{format(d, "yyyy")}</p>

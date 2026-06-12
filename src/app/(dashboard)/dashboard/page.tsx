@@ -222,18 +222,26 @@ export default async function DashboardPage() {
             </div>
           ) : (
             <div className="space-y-3">
-              {upcomingEvents.map((ev) => (
+              {upcomingEvents.map((ev) => {
+                // Formata sempre no fuso de Brasília — este é um Server Component
+                // (roda em UTC na Vercel); sem timeZone o dia ficava 1 à frente da
+                // Agenda (client, horário local), causando a "dessincronização".
+                const fmt = (opts: Intl.DateTimeFormatOptions) =>
+                  new Date(ev.date).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo", ...opts });
+                return (
                 <div key={ev.id} className="flex items-start gap-3">
                   <div className="text-center min-w-[36px]">
-                    <p className="text-lg font-bold text-primary leading-none">{new Date(ev.date).getDate()}</p>
-                    <p className="text-[9px] uppercase text-muted-foreground">{new Date(ev.date).toLocaleDateString("pt-BR", { month: "short" })}</p>
+                    <p className="text-[9px] uppercase text-muted-foreground">{fmt({ weekday: "short" }).replace(".", "")}</p>
+                    <p className="text-lg font-bold text-primary leading-none">{fmt({ day: "numeric" })}</p>
+                    <p className="text-[9px] uppercase text-muted-foreground">{fmt({ month: "short" }).replace(".", "")}</p>
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-foreground line-clamp-2">{ev.title}</p>
                     <p className="text-xs text-muted-foreground">{EVENT_TYPE_LABEL[ev.type]}{ev.zone ? ` · ${ev.zone.name}` : ""}</p>
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
