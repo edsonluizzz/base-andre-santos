@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import {
   LayoutDashboard, Users, Calendar,
-  Megaphone, Settings, LogOut, Shield, Star, Map, BarChart2, Network, Target, ClipboardList, Camera, Award, Building2, Plus, UserPlus,
+  Megaphone, Settings, LogOut, Shield, Star, Map, BarChart2, Network, Target, ClipboardList, Camera, Award, Building2, Plus, UserPlus, Link2,
   ChevronLeft, ChevronRight, Sun, Moon, GraduationCap, Send,
 } from "lucide-react";
 import { NotificationBell } from "@/components/notifications/notification-bell";
@@ -29,6 +29,7 @@ const navItems = [
   { href: "/metas",          icon: Target,           label: "Metas",           minRole: "LEADER", superAdminOnly: false },
   { href: "/instagram",      icon: Camera,           label: "Instagram",       minRole: "LEADER", superAdminOnly: false },
   { href: "/eleitos-2022",   icon: Award,            label: "Eleitos 2022",    minRole: "LEADER", superAdminOnly: false },
+  { href: "/convites",       icon: Link2,            label: "Convites",        minRole: "ADMIN",  superAdminOnly: false },
   { href: "/tarefas",        icon: ClipboardList,    label: "Tarefas",         minRole: "ADMIN",  superAdminOnly: false },
   { href: "/whatsapp",       icon: Send,             label: "WhatsApp",        minRole: "ADMIN",  superAdminOnly: false },
   { href: "/comunicados",    icon: Megaphone,        label: "Comunicados",     minRole: "ADMIN",  superAdminOnly: false },
