@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useRef, useCallback, useMemo } from "react";
-import { UserPlus, MapPin, Check, Loader2, X, CheckCircle2 } from "lucide-react";
+import { useState, useRef, useCallback, useMemo, useEffect } from "react";
+import { UserPlus, MapPin, Check, Loader2, X, CheckCircle2, CloudOff, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { canonicalPRCity, findPRCities, isPRCep } from "@/lib/pr-cities";
+import { enqueue, countPending, syncPending } from "@/lib/rua-queue";
 import { cn } from "@/lib/utils";
 
 function formatPhone(val: string) {
@@ -34,6 +35,29 @@ export default function RuaPage() {
   const [error, setError] = useState("");
   const [count, setCount] = useState(0);
   const [lastSaved, setLastSaved] = useState("");
+  const [pending, setPending] = useState(0);
+  const [syncing, setSyncing] = useState(false);
+
+  const runSync = useCallback(async () => {
+    if (countPending() === 0) return;
+    setSyncing(true);
+    try {
+      const { synced } = await syncPending();
+      setPending(countPending());
+      if (synced > 0) toast.success(`${synced} cadastro(s) offline sincronizado(s).`);
+    } finally {
+      setSyncing(false);
+    }
+  }, []);
+
+  // Ao abrir: carrega pendentes e tenta sincronizar. Reage ao voltar a conexão.
+  useEffect(() => {
+    setPending(countPending());
+    runSync();
+    const onOnline = () => runSync();
+    window.addEventListener("online", onOnline);
+    return () => window.removeEventListener("online", onOnline);
+  }, [runSync]);
 
   const suggestions = useMemo(
     () => (showSug ? findPRCities(cityQuery, 6) : []),
@@ -93,18 +117,31 @@ export default function RuaPage() {
     if (!prCity) { setError("Escolha uma cidade do Paraná na lista."); return; }
     if (!lgpd) { setError("Confirme que a pessoa autorizou o contato."); return; }
 
+    const savedName = name.trim();
+    const payload = {
+      name: savedName,
+      phone,
+      city: prCity,
+      neighborhood: neighborhood.trim() || undefined,
+    };
+
+    // Offline: enfileira na hora, sem travar o cadastro de rua.
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      enqueue(payload);
+      setPending(countPending());
+      setCount((c) => c + 1);
+      setLastSaved(savedName);
+      toast.success(`${savedName} salvo offline. Sincroniza quando voltar o sinal.`);
+      resetForNext(true);
+      return;
+    }
+
     setSaving(true);
     try {
       const res = await fetch("/api/rua", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: name.trim(),
-          phone,
-          city: prCity,
-          neighborhood: neighborhood.trim() || undefined,
-          lgpdConsent: true,
-        }),
+        body: JSON.stringify({ ...payload, lgpdConsent: true }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -112,13 +149,19 @@ export default function RuaPage() {
         return;
       }
       setCount((c) => c + 1);
-      setLastSaved(name.trim());
+      setLastSaved(savedName);
       toast.success(
-        data.duplicate ? `${name.trim()} já estava cadastrado(a).` : `${name.trim()} cadastrado(a)!`,
+        data.duplicate ? `${savedName} já estava cadastrado(a).` : `${savedName} cadastrado(a)!`,
       );
       resetForNext(true); // mantém a cidade — o cabo costuma ficar numa região
     } catch {
-      setError("Sem conexão. (A fila offline chega no próximo passo.)");
+      // Falha de rede no meio do envio: enfileira para não perder o cadastro.
+      enqueue(payload);
+      setPending(countPending());
+      setCount((c) => c + 1);
+      setLastSaved(savedName);
+      toast.success(`${savedName} salvo offline. Sincroniza quando voltar o sinal.`);
+      resetForNext(true);
     } finally {
       setSaving(false);
     }
@@ -143,6 +186,24 @@ export default function RuaPage() {
       <p className="text-sm text-muted-foreground -mt-2">
         Cadastre a pessoa em segundos. Ela entra vinculada a você.
       </p>
+
+      {pending > 0 && (
+        <button
+          type="button"
+          onClick={runSync}
+          disabled={syncing}
+          className="w-full flex items-center justify-between gap-2 rounded-xl px-4 py-2.5 bg-amber-500/10 border border-amber-500/30 text-amber-400 transition-colors hover:bg-amber-500/15 disabled:opacity-60"
+        >
+          <span className="flex items-center gap-2 text-sm font-medium">
+            <CloudOff className="w-4 h-4 shrink-0" />
+            {pending} cadastro(s) aguardando conexão
+          </span>
+          <span className="flex items-center gap-1.5 text-xs font-semibold">
+            <RefreshCw className={cn("w-3.5 h-3.5", syncing && "animate-spin")} />
+            {syncing ? "Sincronizando..." : "Sincronizar"}
+          </span>
+        </button>
+      )}
 
       {lastSaved && count > 0 && (
         <div className="flex items-center gap-2 rounded-xl px-3 py-2 bg-green-500/10 border border-green-500/25 text-green-400 text-sm">
