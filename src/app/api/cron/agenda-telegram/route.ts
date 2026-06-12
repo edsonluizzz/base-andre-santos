@@ -2,6 +2,37 @@ import { NextRequest, NextResponse } from "next/server";
 import { db as globalDb } from "@/lib/db";
 import { sendTelegram, buildAgendaMessage, buildDailyDigestMessage, isTelegramConfigured } from "@/lib/telegram";
 import { getCampaignContext } from "@/lib/campaign-context";
+import { buildAgendaWhatsApp } from "@/lib/agenda-whatsapp";
+import { zapiSendText } from "@/lib/zapi";
+
+// Nome do grupo de WhatsApp que recebe a agenda diária (já sincronizado no painel).
+const AGENDA_GROUP_NAME = "Agenda";
+
+// Envia a agenda diária para o grupo de WhatsApp "Agendas", se existir e a Z-API
+// estiver configurada. Best-effort: nunca derruba o envio do Telegram. Só agenda.
+async function sendAgendaToWhatsApp(
+  db: ReturnType<typeof getCampaignContext>["db"],
+  cid: string,
+  today: Parameters<typeof buildAgendaWhatsApp>[0],
+  nextDays: Parameters<typeof buildAgendaWhatsApp>[1],
+): Promise<boolean> {
+  try {
+    const group = await db.whatsAppGroup.findFirst({
+      where: {
+        campaignId: cid,
+        name: { contains: AGENDA_GROUP_NAME, mode: "insensitive" },
+        zapiGroupId: { not: null },
+      },
+      select: { zapiGroupId: true },
+    });
+    if (!group?.zapiGroupId) return false;
+    await zapiSendText(cid, group.zapiGroupId, buildAgendaWhatsApp(today, nextDays));
+    return true;
+  } catch (err) {
+    console.error(`[agenda-telegram] WhatsApp falhou (${cid}):`, err);
+    return false;
+  }
+}
 
 function startOfDay(d: Date) {
   const x = new Date(d); x.setHours(0, 0, 0, 0); return x;
@@ -42,11 +73,6 @@ export async function GET(req: NextRequest) {
 
   for (const camp of campaigns) {
     try {
-      if (!(await isTelegramConfigured(camp.id))) {
-        summary.push({ campaignId: camp.id, sent: false, events: 0, reason: "telegram-not-configured" });
-        continue;
-      }
-
       const { db } = getCampaignContext({ user: { campaignId: camp.id, dbUrl: camp.dbUrl ?? undefined } });
 
       const todayEvents = await db.event.findMany({
@@ -55,17 +81,7 @@ export async function GET(req: NextRequest) {
         orderBy: { date: "asc" },
       });
 
-      if (!isFirst) {
-        if (todayEvents.length === 0) {
-          summary.push({ campaignId: camp.id, sent: false, events: 0, reason: "no-events" });
-          continue;
-        }
-        await sendTelegram(camp.id, buildAgendaMessage(todayEvents, true));
-        summary.push({ campaignId: camp.id, sent: true, events: todayEvents.length });
-        continue;
-      }
-
-      // 7h BRT — digest com próximos 3 dias
+      // Próximos 3 dias (para o digest da manhã, Telegram e WhatsApp).
       const nextDaysEvents: { date: Date; events: typeof todayEvents }[] = [];
       for (let i = 1; i <= 3; i++) {
         const d    = addDaysTo(brt, i);
@@ -79,8 +95,27 @@ export async function GET(req: NextRequest) {
         nextDaysEvents.push({ date: d, events: evs });
       }
 
-      await sendTelegram(camp.id, buildDailyDigestMessage(todayEvents, nextDaysEvents));
-      summary.push({ campaignId: camp.id, sent: true, events: todayEvents.length });
+      // Telegram — só se configurado.
+      const telegramOn = await isTelegramConfigured(camp.id);
+      if (telegramOn) {
+        if (isFirst) {
+          await sendTelegram(camp.id, buildDailyDigestMessage(todayEvents, nextDaysEvents));
+        } else if (todayEvents.length > 0) {
+          await sendTelegram(camp.id, buildAgendaMessage(todayEvents, true));
+        }
+      }
+
+      // WhatsApp — grupo "Agendas", independente do Telegram. Só no digest da manhã.
+      const waSent = isFirst
+        ? await sendAgendaToWhatsApp(db, camp.id, todayEvents, nextDaysEvents)
+        : false;
+
+      summary.push({
+        campaignId: camp.id,
+        sent: telegramOn || waSent,
+        events: todayEvents.length,
+        reason: !telegramOn && !waSent ? "no-channel" : undefined,
+      });
     } catch (err) {
       console.error(`[agenda-telegram] erro na campanha ${camp.id}:`, err);
       summary.push({ campaignId: camp.id, sent: false, events: 0, reason: "error" });
