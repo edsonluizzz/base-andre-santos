@@ -90,6 +90,7 @@ export const authConfig: NextAuthConfig = {
         pathname.startsWith("/r") ||
         pathname.startsWith("/entrar") ||
         pathname.startsWith("/api/public/") ||
+        pathname.startsWith("/api/zapi/webhook") ||
         pathname.startsWith("/api/auth") ||
         pathname.startsWith("/api/invite/") ||
         pathname.startsWith("/api/cron/") ||

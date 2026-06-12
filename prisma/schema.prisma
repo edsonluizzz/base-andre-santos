@@ -141,6 +141,27 @@ model ContactLog {
   @@index([campaignId, kind])
 }
 
+// Mensagens de WhatsApp recebidas/enviadas, capturadas pelo webhook da Z-API (F3).
+// Inbox é construído do "agora pra frente" — Z-API multi-device não dá histórico.
+model WhatsappMessage {
+  id              String   @id @default(cuid())
+  campaignId      String
+  phone           String   // telefone do contato (DDI+DDD+número, sem sufixo de grupo)
+  phoneNormalized String?  // últimos 8 dígitos — agrupa a conversa / casa com Collaborator
+  fromMe          Boolean  @default(false)
+  senderName      String?
+  type            String   @default("text") // text|image|audio|video|document|other
+  body            String?  @db.Text         // texto ou legenda da mídia
+  mediaUrl        String?  @db.Text
+  zapiMessageId   String?  @unique          // dedup de reentrega do webhook
+  isGroup         Boolean  @default(false)
+  read            Boolean  @default(false)
+  timestamp       DateTime @default(now())  // horário real da mensagem (Z-API momment)
+  createdAt       DateTime @default(now())
+  @@index([campaignId, phoneNormalized, timestamp])
+  @@index([campaignId, read])
+}
+
 model Collaborator {
   id           String             @id @default(cuid())
   campaignId   String
