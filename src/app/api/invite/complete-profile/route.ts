@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { getCampaignContext } from "@/lib/campaign-context";
-import { normalizeCity } from "@/lib/utils";
+import { normalizeCity, normalizePhone } from "@/lib/utils";
 
 
 export async function POST(req: NextRequest) {
@@ -18,15 +18,64 @@ export async function POST(req: NextRequest) {
     }
 
     const userId = session.user.id;
+    const cleanPhone = phone.replace(/\D/g, "");
+    const pNorm = normalizePhone(cleanPhone);
 
+    // Colaborador recém-criado no login (vinculado ao userId), se houver.
     const existing = await db.collaborator.findUnique({ where: { userId } });
 
-    if (existing) {
+    // Cadastro PRÉVIO com o mesmo telefone, ainda não vinculado a ninguém
+    // (ex.: cadastrado na rua, sem e-mail). Se existir, mesclamos nele em vez de
+    // manter um duplicado — o login passa a apontar para o cadastro original.
+    const prior = pNorm
+      ? await db.collaborator.findFirst({
+          where: {
+            campaignId: cid,
+            phoneNormalized: pNorm,
+            userId: null,
+            ...(existing ? { id: { not: existing.id } } : {}),
+          },
+          orderBy: { createdAt: "asc" },
+        })
+      : null;
+
+    const user = await db.user.findUnique({ where: { id: userId }, select: { email: true } });
+
+    // Só mescla automaticamente se o colaborador do login ainda é o registro vazio
+    // criado na autenticação (sem telefone). Se ele já tem telefone, é um cadastro
+    // real — não apagamos por engano; eventual duplicata fica para o merge manual.
+    const canMerge = !!prior && (!existing || !existing.phoneNormalized);
+
+    if (prior && canMerge) {
+      // Libera o userId do colaborador recém-criado (B, sem histórico) para poder
+      // vinculá-lo ao cadastro prévio (A) — userId é único por colaborador.
+      if (existing) {
+        await db.collaborator.delete({ where: { id: existing.id } }).catch(() => {});
+      }
+      await db.collaborator.update({
+        where: { id: prior.id },
+        data: {
+          userId,
+          name: name.trim(),
+          phone: cleanPhone,
+          phoneNormalized: pNorm,
+          city: normalizeCity(city) || prior.city,
+          neighborhood: neighborhood?.trim() || prior.neighborhood,
+          email: user?.email ?? prior.email,
+          profile: profile ?? prior.profile,
+          contributionTypes: (Array.isArray(contributionTypes) && contributionTypes.length)
+            ? contributionTypes
+            : prior.contributionTypes,
+          status: "ACTIVE",
+        },
+      });
+    } else if (existing) {
       await db.collaborator.update({
         where: { id: existing.id },
         data: {
           name: name.trim(),
-          phone,
+          phone: cleanPhone,
+          phoneNormalized: pNorm,
           city: normalizeCity(city),
           neighborhood: neighborhood?.trim() || null,
           profile: profile ?? existing.profile,
@@ -35,13 +84,13 @@ export async function POST(req: NextRequest) {
         },
       });
     } else {
-      const user = await db.user.findUnique({ where: { id: userId }, select: { email: true } });
       await db.collaborator.create({
         data: {
           campaignId: cid,
           userId,
           name: name.trim(),
-          phone,
+          phone: cleanPhone,
+          phoneNormalized: pNorm,
           city: normalizeCity(city),
           neighborhood: neighborhood?.trim() || null,
           email: user?.email ?? null,
