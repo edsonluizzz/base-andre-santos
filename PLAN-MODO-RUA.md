@@ -55,6 +55,19 @@ Decisões fechadas com o Edson:
 - Testar PR válido/inválido, CEP fora do PR, offline→online, atribuição correta.
 - Conferir Mapa exibindo os novos cadastros. Atualizar `ESTADO-ATUAL.md`.
 
+## Passo 7 — Login dos cabos de rua ✅ (já existe, sem código novo)
+Requisito: o cabo precisa logar para os cadastros ficarem vinculados a ele, e deve
+ver o painel completo (MEMBER) para receber metas etc.
+- `/rua` já exige login (não é rota pública) → atribuição garantida via `session.user.id`.
+- Onboarding em massa = **InviteLink reutilizável** (já implementado): Super Admin →
+  Links de convite → gerar link com papel **Colaborador (MEMBER)** → copiar e compartilhar
+  no grupo da equipe. Cada cabo abre `/entrar?token=...`, informa o Gmail, entra com Google
+  → o jwt callback ativa o convite pendente e cria o `Collaborator` MEMBER (painel completo).
+- Link nunca expira (expiresAt null) e é reutilizável (useCount incrementa). Revogável.
+- Decisão: cabo entra como MEMBER normal (vê o painel, pode receber metas).
+- Possível melhoria futura (não feita): expor a geração do link da equipe para ADMIN de
+  campanha (hoje fica no Super Admin) e/ou CTA "Cadastrar na rua" pós-login.
+
 ---
 
 ### Retomar no Passo 2
