@@ -1,6 +1,39 @@
-# Estado Atual da Produção — 2026-06-11
+# Estado Atual da Produção — 2026-06-12
 
-**Última atualização:** 2026-06-11 madrugada BRT
+**Última atualização:** 2026-06-12 BRT
+
+---
+
+## 🛠️ Sessão 2026-06-12 — correções + feature Modo Rua
+
+**Correções no ar:**
+- Removido hambúrguer flutuante que cobria o título no mobile (menu abre pela barra inferior).
+- Cadastro público: removido bloco "Como quer contribuir?" (risco de campanha antecipada).
+- **Logout corrigido:** `public/sw.js` era um service worker antigo do app *Ovile Igreja*
+  que ficava preso (em produção `/sw.js` dava 404 e o navegador mantinha o SW velho),
+  cacheando páginas autenticadas. Substituído por um **kill-switch** (limpa caches + se
+  desregistra); `sw.js` saiu do `.gitignore` para ir ao deploy. next-pwa segue desativado.
+- Removido switcher de campanha (base da Miriam desativada) e código órfão.
+- Card "Próximos Eventos" do Dashboard estava 1 dia à frente (Server Component em UTC vs
+  Agenda em horário local) → formatado em `America/Sao_Paulo`. Dia da semana exibido no card
+  do dashboard e no modo lista da Agenda.
+- Tipos de evento **Podcast** e **Gravação** adicionados (enum Prisma + agenda/dashboard/telegram).
+- Treinamento: slide genérico virou **tour guiado dos menus**, filtrado pelo papel do usuário.
+- ⛔ Exclusão de cadastros fora do PR: **abortada** pelo Edson.
+
+**Feature Modo Rua (cadastro rápido por colaborador) — `PLAN-MODO-RUA.md`, passos 1–5 no ar:**
+- `src/lib/pr-cities.ts`: 399 municípios do PR (IBGE) + validação/CEP/autocomplete (offline).
+- `POST /api/rua`: colaborador logado cadastra terceiros, atribuído a ele; cidade do PR
+  obrigatória (senão não aparece no Mapa); dedup por telefone; `source="RUA"`.
+- Tela `/rua`: Nome + WhatsApp + Cidade (autocomplete PR) + CEP + consentimento verbal;
+  "Salvar e próximo", contador da sessão, cidade fixa entre cadastros.
+- **Fila offline** (`src/lib/rua-queue.ts`, localStorage): salva sem sinal e sincroniza ao
+  voltar a conexão (server dedup evita duplicar). Badge de pendentes.
+- Item "Cadastro na Rua" no sidebar (grupo Base).
+- Falta (passo 6): teste end-to-end em produção (PR válido/inválido, offline→online,
+  conferir aparição no Mapa).
+
+> Lint rodado no clone `C:\Users\usuario\ovile-ci` (next da pasta do Drive é quebrado).
 
 ---
 

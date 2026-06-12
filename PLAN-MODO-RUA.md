@@ -21,7 +21,7 @@ Decisões fechadas com o Edson:
 `canonicalPRCity`, `isPRCity`, `isPRCep`, `findPRCities` (autocomplete). Estático
 (funciona offline).
 
-## Passo 2 — Endpoint autenticado de cadastro de rua
+## Passo 2 — Endpoint autenticado de cadastro de rua ✅ (feito)
 `src/app/api/rua/route.ts` (POST):
 - Exige sessão; resolve o `Collaborator` do usuário logado (vira `registeredById`).
 - Valida: nome, telefone (>=10 dígitos), e **cidade canônica do PR** obrigatória
@@ -33,7 +33,7 @@ Decisões fechadas com o Edson:
   `tenant-init-sql.ts` (db push aplica no deploy). Se for string, nada a migrar.
 - Rate-limit mais folgado que o público (operador faz muitos seguidos).
 
-## Passo 3 — Tela `/rua` (entrada rápida)
+## Passo 3 — Tela `/rua` (entrada rápida) ✅ (feito)
 `src/app/(dashboard)/rua/page.tsx` (client):
 - Campos: Nome*, WhatsApp* (teclado numérico, foco automático), Cidade* (autocomplete
   PR via `findPRCities`), CEP (opcional, preenche cidade via `/api/cep` e valida PR),
@@ -42,15 +42,14 @@ Decisões fechadas com o Edson:
 - Contador da sessão ("X cadastrados hoje").
 - Bloqueia salvar se a cidade não for do PR (mensagem clara).
 
-## Passo 4 — Fila offline + sincronização
-- Store local (IndexedDB; fallback localStorage) com cadastros pendentes.
+## Passo 4 — Fila offline + sincronização ✅ (feito)
+- Store local (localStorage) com cadastros pendentes.
 - Submit: online → POST `/api/rua`; offline/erro → enfileira ("salvo offline").
 - Sincroniza no evento `online` + botão manual "Sincronizar (N)"; badge de pendentes.
 - Dedup ao sincronizar (não duplicar se o POST já tinha ido).
 
-## Passo 5 — Acesso no menu
-- Item "Cadastro na Rua" no sidebar (minRole MEMBER) e/ou botão destacado em
-  Colaboradores. Ícone dedicado.
+## Passo 5 — Acesso no menu ✅ (feito)
+- Item "Cadastro na Rua" no sidebar (grupo Base, minRole MEMBER), após Colaboradores.
 
 ## Passo 6 — Polimento e verificação
 - Testar PR válido/inválido, CEP fora do PR, offline→online, atribuição correta.
