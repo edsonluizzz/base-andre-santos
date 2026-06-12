@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { Star, CheckCircle2, ChevronRight, Users, MapPin, Smartphone, Copy, Check, Share2, UserPlus } from "lucide-react";
-import { CONTRIBUTION_OPTIONS } from "@/lib/contribution";
 
 // Short do André no YouTube (@AndreSantos777) — lançamento da pré-candidatura.
 // Toca em autoplay mutado (mute=1) para não ser bloqueado pelos navegadores.
@@ -80,7 +79,6 @@ export function CadastroForm() {
   const [city, setCity] = useState("");
   const [neighborhood, setNeighborhood] = useState("");
   const [email, setEmail] = useState("");
-  const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [lgpdConsent, setLgpdConsent] = useState(false);
 
   function formatCep(val: string) {
@@ -114,12 +112,6 @@ export function CadastroForm() {
     return val;
   }
 
-  function toggleType(value: string) {
-    setSelectedTypes((prev) =>
-      prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]
-    );
-  }
-
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
@@ -132,7 +124,7 @@ export function CadastroForm() {
       const res = await fetch("/api/public/cadastro", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, phone, city, neighborhood, email, contributionTypes: selectedTypes, refUserId, refc, lgpdConsent, source: sourceParam || undefined, eventId: eventId || undefined, channel: channelParam || undefined }),
+        body: JSON.stringify({ name, phone, city, neighborhood, email, refUserId, refc, lgpdConsent, source: sourceParam || undefined, eventId: eventId || undefined, channel: channelParam || undefined }),
       });
       const data = await res.json();
       if (!res.ok && res.status !== 200) {
@@ -150,7 +142,7 @@ export function CadastroForm() {
 
   function resetForm() {
     setStep("form");
-    setName(""); setPhone(""); setCep(""); setCity(""); setNeighborhood(""); setEmail(""); setSelectedTypes([]); setLgpdConsent(false); setCepError(""); setCollaboratorId(""); setCopied(false); setCountdown(30); setRedirectCancelled(false);
+    setName(""); setPhone(""); setCep(""); setCity(""); setNeighborhood(""); setEmail(""); setLgpdConsent(false); setCepError(""); setCollaboratorId(""); setCopied(false); setCountdown(30); setRedirectCancelled(false);
   }
 
   async function copyLink() {
@@ -408,28 +400,6 @@ export function CadastroForm() {
                   onFocus={(e) => e.target.style.borderColor = "rgba(212,175,55,0.5)"}
                   onBlur={(e) => e.target.style.borderColor = "rgba(255,255,255,0.07)"}
                 />
-              </div>
-            </div>
-
-            {/* Formas de contribuição — multi-select */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-slate-300">Como quer contribuir? <span className="text-slate-500">(escolha quantas quiser)</span></label>
-              <div className="grid grid-cols-2 gap-2">
-                {CONTRIBUTION_OPTIONS.map((opt) => {
-                  const active = selectedTypes.includes(opt.value);
-                  return (
-                    <button key={opt.value} type="button" onClick={() => toggleType(opt.value)}
-                      className="rounded-xl px-3 py-2 text-xs text-left transition-all"
-                      style={{
-                        background: active ? "rgba(212,175,55,0.15)" : "rgba(26,47,78,0.6)",
-                        border: active ? "1px solid rgba(212,175,55,0.4)" : "1px solid rgba(255,255,255,0.07)",
-                        color: active ? "#d4af37" : "#94a3b8",
-                      }}
-                    >
-                      {opt.label}
-                    </button>
-                  );
-                })}
               </div>
             </div>
 

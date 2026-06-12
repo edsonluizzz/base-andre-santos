@@ -5,11 +5,11 @@ import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import {
   LayoutDashboard, Users, Calendar,
-  Megaphone, Settings, LogOut, Menu, X, Shield, Star, Map, BarChart2, Network, Target, ClipboardList, Camera, Award, Building2, Plus,
+  Megaphone, Settings, LogOut, Shield, Star, Map, BarChart2, Network, Target, ClipboardList, Camera, Award, Building2, Plus,
   ChevronLeft, ChevronRight, Sun, Moon, GraduationCap, Send,
 } from "lucide-react";
 import { NotificationBell } from "@/components/notifications/notification-bell";
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -68,7 +68,6 @@ export function Sidebar({
   const pathname = usePathname();
   const { data: session, update } = useSession();
   const { isCollapsed, toggle, mobileOpen, setMobileOpen } = useSidebar();
-  const menuButtonRef = useRef<HTMLButtonElement>(null);
   const { theme, setTheme } = useTheme();
   const [campaigns, setCampaigns] = useState<{ id: string; name: string }[]>([]);
   const [switcherOpen, setSwitcherOpen] = useState(false);
@@ -103,10 +102,6 @@ export function Sidebar({
     if (isSuperAdmin) fetchCampaigns();
   }, [isSuperAdmin, fetchCampaigns]);
 
-  useEffect(() => {
-    if (!mobileOpen) menuButtonRef.current?.focus();
-  }, [mobileOpen]);
-
   async function switchCampaign(campaignId: string) {
     setSwitcherOpen(false);
     await update({ selectedCampaignId: campaignId });
@@ -116,16 +111,7 @@ export function Sidebar({
   return (
     <TooltipProvider delayDuration={300}>
     <>
-      {/* Mobile hamburger */}
-      <button
-        ref={menuButtonRef}
-        className="fixed top-4 left-4 z-50 lg:hidden glass-card border border-border p-2 rounded-lg cursor-pointer"
-        onClick={() => setMobileOpen((o) => !o)}
-        aria-label={mobileOpen ? "Fechar menu" : "Abrir menu"}
-      >
-        {mobileOpen ? <X className="w-5 h-5 text-primary" /> : <Menu className="w-5 h-5 text-primary" />}
-      </button>
-
+      {/* Menu mobile é aberto pela barra inferior (item "Menu"); fecha no backdrop. */}
       {mobileOpen && (
         <div className="fixed inset-0 bg-black/60 z-40 lg:hidden" onClick={() => setMobileOpen(false)} />
       )}

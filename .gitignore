@@ -43,8 +43,8 @@ api resend.txt
 *.tsbuildinfo
 next-env.d.ts
 
-# PWA gerados automaticamente
-/public/sw.js
+# PWA gerados automaticamente (next-pwa desativado).
+# /public/sw.js é versionado: kill-switch que desregistra o SW antigo.
 /public/swe-worker-*.js
 /public/workbox-*.js
 
