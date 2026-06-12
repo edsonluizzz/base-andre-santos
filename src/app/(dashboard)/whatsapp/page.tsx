@@ -3,9 +3,10 @@
 import { useState, useCallback, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
-import { Users, User, Search, RefreshCw, ArrowLeft, Info, Star, Send, Settings2, Phone } from "lucide-react";
+import { Users, User, Search, RefreshCw, ArrowLeft, Info, Star, Send, Settings2, Phone, MessageCircle } from "lucide-react";
 import { WhatsappComposer } from "@/components/grupos/whatsapp-composer";
 import { ZapiGroupsLive } from "@/components/grupos/zapi-groups-panel";
+import { InboxPanel } from "@/components/whatsapp/inbox-panel";
 
 type GroupItem = {
   id: string;
@@ -29,7 +30,7 @@ export default function WhatsappPage() {
   const { data: session } = useSession();
   const role = (session?.user as { role?: string } | undefined)?.role;
 
-  const [view, setView] = useState<"send" | "groups">("send");
+  const [view, setView] = useState<"send" | "groups" | "inbox">("send");
   const [tab, setTab] = useState<"groups" | "contact">("groups");
   const [groups, setGroups] = useState<GroupItem[] | null>(null);
   const [loadingGroups, setLoadingGroups] = useState(false);
@@ -136,6 +137,14 @@ export default function WhatsappPage() {
             <Send className="w-4 h-4" /> Enviar
           </button>
           <button
+            onClick={() => setView("inbox")}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
+              view === "inbox" ? "bg-primary/10 text-primary border border-primary/20" : "text-muted-foreground hover:text-foreground border border-transparent"
+            }`}
+          >
+            <MessageCircle className="w-4 h-4" /> Conversas
+          </button>
+          <button
             onClick={() => setView("groups")}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
               view === "groups" ? "bg-primary/10 text-primary border border-primary/20" : "text-muted-foreground hover:text-foreground border border-transparent"
@@ -148,6 +157,8 @@ export default function WhatsappPage() {
 
       {view === "groups" ? (
         <ZapiGroupsLive />
+      ) : view === "inbox" ? (
+        <InboxPanel />
       ) : (
         <div className="h-[calc(100dvh-12rem)] min-h-[24rem] grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-4">
           {/* ── Coluna esquerda: lista ───────────────────────────── */}
