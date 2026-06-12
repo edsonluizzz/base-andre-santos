@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { MessageCircle, Send, ArrowLeft, RefreshCw, User, Power } from "lucide-react";
+import Link from "next/link";
+import { MessageCircle, Send, ArrowLeft, RefreshCw, User, Power, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -209,10 +210,19 @@ export function InboxPanel() {
               <div className="w-8 h-8 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
                 <User className="w-4 h-4 text-primary" />
               </div>
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold truncate">{selected.name ?? selected.phone}</p>
                 <p className="text-[11px] text-muted-foreground">{selected.phone}</p>
               </div>
+              {selected.collaboratorId && (
+                <Link
+                  href={`/colaboradores/${selected.collaboratorId}`}
+                  className="flex items-center gap-1 text-[11px] text-primary hover:text-primary/80 transition-colors shrink-0"
+                  title="Abrir perfil do colaborador"
+                >
+                  Ver perfil <ExternalLink className="w-3 h-3" />
+                </Link>
+              )}
             </div>
 
             <div className="flex-1 overflow-y-auto p-4 space-y-2">

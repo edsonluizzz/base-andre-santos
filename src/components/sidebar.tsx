@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
@@ -85,6 +86,23 @@ export function Sidebar({
     .split(" ").slice(0, 2).map((n: string) => n[0]).join("").toUpperCase() || "U";
   const isLight = theme === "light";
 
+  // Badge global de não-lidas do WhatsApp (só ADMIN). Poll 30s com aba visível.
+  const [waUnread, setWaUnread] = useState(0);
+  useEffect(() => {
+    if (userRank < ROLE_RANK.ADMIN) return;
+    let active = true;
+    const load = () => {
+      if (document.visibilityState !== "visible") return;
+      fetch("/api/zapi/inbox/unread-count")
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => { if (active && d) setWaUnread(d.count ?? 0); })
+        .catch(() => {});
+    };
+    load();
+    const id = setInterval(load, 30000);
+    return () => { active = false; clearInterval(id); };
+  }, [userRank, pathname]);
+
   return (
     <TooltipProvider delayDuration={300}>
     <>
@@ -149,6 +167,11 @@ export function Sidebar({
                         >
                           <item.icon className="w-4 h-4 flex-shrink-0" />
                           {item.label}
+                          {item.href === "/whatsapp" && waUnread > 0 && (
+                            <span className="ml-auto min-w-[18px] h-[18px] px-1 rounded-full bg-green-500 text-white text-[10px] font-bold flex items-center justify-center">
+                              {waUnread > 99 ? "99+" : waUnread}
+                            </span>
+                          )}
                         </Link>
                       );
                     })}
@@ -165,7 +188,7 @@ export function Sidebar({
                   href={item.href}
                   onClick={() => setMobileOpen(false)}
                   className={cn(
-                    "flex items-center gap-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 px-0 justify-center",
+                    "relative flex items-center gap-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 px-0 justify-center",
                     active
                       ? "bg-primary/10 text-primary border border-primary/20"
                       : "text-muted-foreground hover:text-sidebar-foreground hover:bg-foreground/[0.05]"
@@ -173,6 +196,9 @@ export function Sidebar({
                   style={active ? { boxShadow: "inset 3px 0 0 var(--primary)" } : undefined}
                 >
                   <item.icon className="w-4 h-4 flex-shrink-0" />
+                  {item.href === "/whatsapp" && waUnread > 0 && (
+                    <span className="absolute top-1 right-1.5 w-2 h-2 rounded-full bg-green-500" />
+                  )}
                 </Link>
               );
               return (
