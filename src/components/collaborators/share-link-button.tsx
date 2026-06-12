@@ -1,12 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { useSession } from "next-auth/react";
 import { Send, Check } from "lucide-react";
 import { toast } from "sonner";
 
-// Mensagem motivacional + link de indicação. Usada tanto no envio pela campanha
-// (ADMIN, via Z-API) quanto no fallback wa.me (não-admin, WhatsApp pessoal).
+// Mensagem motivacional + link de indicação (usada no fallback wa.me).
 function buildMessage(firstName: string, url: string) {
   return (
     `Olá, ${firstName}! 🎉\n\n` +
@@ -20,47 +18,44 @@ const BTN =
 
 /**
  * Envia o link de indicação do colaborador para o WhatsApp DELE.
- * ADMIN → pelo número da campanha (Z-API). Não-admin → wa.me (WhatsApp pessoal).
+ * Sempre tenta pelo número da campanha (Z-API). Se o backend recusar por não ser
+ * ADMIN (403), cai no wa.me (WhatsApp pessoal) — sem depender de checar a role no
+ * client (evita a corrida de a sessão ainda não ter carregado).
  */
 export function ShareLinkButton({ collaboratorId, phone, name }: { collaboratorId: string; phone: string | null; name: string }) {
-  const { data: session } = useSession();
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
 
   if (!phone) return null;
 
   const firstName = name.split(" ")[0] || "";
-  const isAdmin = (session?.user as { role?: string })?.role === "ADMIN";
 
-  if (!isAdmin) {
-    const d = phone.replace(/\D/g, "");
+  function openWaMe() {
+    const d = phone!.replace(/\D/g, "");
     const to = d.startsWith("55") ? d : `55${d}`;
     const url = `${typeof window !== "undefined" ? window.location.origin : ""}/cadastro?refc=${collaboratorId}`;
-    return (
-      <a
-        href={`https://wa.me/${to}?text=${encodeURIComponent(buildMessage(firstName, url))}`}
-        target="_blank"
-        rel="noopener noreferrer"
-        className={BTN}
-        title="Enviar o link de indicação para o WhatsApp deste apoiador"
-      >
-        <Send className="w-3 h-3" /> Enviar link
-      </a>
-    );
+    window.open(`https://wa.me/${to}?text=${encodeURIComponent(buildMessage(firstName, url))}`, "_blank", "noopener,noreferrer");
   }
 
   async function send() {
     setSending(true);
     try {
       const res = await fetch(`/api/collaborators/${collaboratorId}/share-link`, { method: "POST" });
-      const d = await res.json().catch(() => ({}));
       if (res.ok) {
         setSent(true);
         setTimeout(() => setSent(false), 2500);
         toast.success(`Link enviado para ${firstName} no WhatsApp`);
-      } else {
-        toast.error(d.error ?? "Erro ao enviar o link");
+        return;
       }
+      if (res.status === 403) {
+        // Não é admin → não envia pelo número da campanha; abre o WhatsApp pessoal.
+        openWaMe();
+        return;
+      }
+      const d = await res.json().catch(() => ({}));
+      toast.error(d.error ?? "Erro ao enviar o link");
+    } catch {
+      toast.error("Sem conexão. Tente novamente.");
     } finally {
       setSending(false);
     }
