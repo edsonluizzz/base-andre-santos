@@ -33,6 +33,22 @@
 - Falta (passo 6): teste end-to-end em produção (PR válido/inválido, offline→online,
   conferir aparição no Mapa).
 
+**Onboarding da equipe de rua:**
+- Nova página `/convites` (sidebar → Administração, minRole ADMIN) reusa `/api/invite-links`:
+  gera/copia/compartilha/revoga o link reutilizável da equipe. Cada cabo entra com o próprio
+  Google → colaborador MEMBER com painel completo, cadastros vinculados a ele. Gmail é
+  condicionante (sem login não trabalha).
+- **Merge no login (fix):** quem foi cadastrado na rua (telefone, sem e-mail) e depois loga
+  com Gmail agora mescla pelo telefone no "completar perfil" (não duplica). Grava
+  phoneNormalized. Trava: só mescla se o registro do login ainda não tem telefone.
+
+**Agenda no grupo de WhatsApp "Agendas" (✅ testado e funcionando):**
+- Digest diário 7h BRT (hoje + próximos 3 dias) agora vai também pro grupo de WhatsApp
+  (busca grupo cujo nome contém "Agenda" com zapiGroupId, via Z-API). Só agenda, nunca leads.
+- Notificações em tempo real ao criar/editar/remover evento DE HOJE (mesma regra isToday do
+  Telegram). `src/lib/agenda-whatsapp.ts` (formatadores + `sendToAgendaGroup`); cron
+  `agenda-telegram` e rotas de eventos usam o mesmo helper.
+
 > Lint rodado no clone `C:\Users\usuario\ovile-ci` (next da pasta do Drive é quebrado).
 
 ---
