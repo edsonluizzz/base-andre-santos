@@ -17,7 +17,7 @@ Decisões fechadas:
 
 ---
 
-## Passo 1 — Schema + endpoint receptor do webhook
+## Passo 1 — Schema + endpoint receptor do webhook ✅ (feito)
 - `model WhatsappMessage` (phone, phoneNormalized, fromMe, senderName, type, body, mediaUrl,
   zapiMessageId @unique p/ dedup, isGroup, read, timestamp). Índices p/ conversa e não-lidas.
 - `POST /api/zapi/webhook` (público, em `isPublic`): parseia o payload Z-API (defensivo,
@@ -31,17 +31,18 @@ Decisões fechadas:
   (helper admin ou Edson no painel Z-API).
 - Verificar: SIM/NÃO continua funcionando (relay) + mensagens aparecendo no banco.
 
-## Passo 3 — Inbox na UI (/whatsapp → aba "Conversas")
+## Passo 3 — Inbox na UI (/whatsapp → aba "Conversas") ✅ (feito)
 - Lista de conversas (agrupadas por telefone: última mensagem, horário, nome do contato/
   colaborador, badge de não-lidas). Abrir conversa → mensagens (recebidas + enviadas)
   em ordem cronológica; responder reusa `POST /api/zapi/send`. Marca como lida ao abrir.
 
-## Passo 4 — Não-lidas + tempo real (polling)
-- Contador de não-lidas (badge no menu/aba); polling ~15s só com aba visível; mark-as-read.
+## Passo 4 — Não-lidas + tempo real (polling) ✅ (parcial, no painel)
+- Polling 15s com aba visível + mark-as-read ao abrir + badge de não-lidas por conversa: FEITO.
+- Falta (opcional): badge global de não-lidas no menu lateral "WhatsApp".
 
-## Passo 5 — Vincular ao colaborador
-- Casar `phone` com `Collaborator` (telefone) → mostra nome/contexto; integra com o
-  histórico do perfil do lead.
+## Passo 5 — Vincular ao colaborador ✅ (parcial)
+- Nome do colaborador já aparece na conversa (casado por phoneNormalized). FEITO.
+- Falta (opcional): link pro perfil do lead + integrar com o histórico do perfil.
 
 ---
 
