@@ -23,7 +23,8 @@ function brtToUTC(d: Date): Date { return new Date(d.getTime() + BRT_OFFSET); }
 
 const TYPE_EMOJI: Record<string, string> = {
   REUNIAO: "🤝", CULTO: "⛪", PANFLETAGEM: "📋",
-  TREINAMENTO: "📚", VISITA: "🚗", OUTRO: "📌",
+  TREINAMENTO: "📚", VISITA: "🚗",
+  PODCAST: "🎙️", GRAVACAO: "🎬", OUTRO: "📌",
 };
 
 export interface TelegramUpdateBody {

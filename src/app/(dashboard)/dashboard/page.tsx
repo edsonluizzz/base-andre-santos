@@ -43,7 +43,8 @@ const ROLE_BAR_COLOR: Record<string, string> = {
 
 const EVENT_TYPE_LABEL: Record<string, string> = {
   REUNIAO: "Reunião", CULTO: "Culto", PANFLETAGEM: "Panfletagem",
-  TREINAMENTO: "Treinamento", VISITA: "Visita", OUTRO: "Outro",
+  TREINAMENTO: "Treinamento", VISITA: "Visita",
+  PODCAST: "Podcast", GRAVACAO: "Gravação", OUTRO: "Outro",
 };
 
 export default async function DashboardPage() {

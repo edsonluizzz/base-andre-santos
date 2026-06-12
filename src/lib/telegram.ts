@@ -77,7 +77,8 @@ export async function sendTelegramLegacy(text: string): Promise<void> {
 
 const TYPE_EMOJI: Record<string, string> = {
   REUNIAO: "🤝", CULTO: "⛪", PANFLETAGEM: "📋",
-  TREINAMENTO: "📚", VISITA: "🚗", OUTRO: "📌",
+  TREINAMENTO: "📚", VISITA: "🚗",
+  PODCAST: "🎙️", GRAVACAO: "🎬", OUTRO: "📌",
 };
 
 interface EventLike {

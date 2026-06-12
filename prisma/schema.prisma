@@ -476,6 +476,8 @@ enum CampaignEventType {
   PANFLETAGEM
   TREINAMENTO
   VISITA
+  PODCAST
+  GRAVACAO
   OUTRO
 }
 
