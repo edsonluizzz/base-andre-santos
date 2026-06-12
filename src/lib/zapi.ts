@@ -170,6 +170,11 @@ export async function zapiRemoveParticipants(cid: string, groupId: string, phone
   });
 }
 
+/** Configura o webhook "ao receber mensagem" da instância (F3 — recebimento). */
+export async function zapiSetReceivedWebhook(cid: string, url: string): Promise<void> {
+  await zapiFetch(cid, "update-webhook-received", { method: "PUT", body: { value: url } });
+}
+
 /** Normaliza telefone BR para o formato da Z-API (55 + DDD + número). */
 export function toZapiPhone(raw: string): string | null {
   const d = raw.replace(/\D/g, "");

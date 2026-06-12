@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { MessageCircle, Send, ArrowLeft, RefreshCw, User } from "lucide-react";
+import { MessageCircle, Send, ArrowLeft, RefreshCw, User, Power } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -49,7 +49,20 @@ export function InboxPanel() {
   const [loadingMsgs, setLoadingMsgs] = useState(false);
   const [reply, setReply] = useState("");
   const [sending, setSending] = useState(false);
+  const [activating, setActivating] = useState(false);
   const threadEndRef = useRef<HTMLDivElement>(null);
+
+  async function activateInbox() {
+    setActivating(true);
+    try {
+      const res = await fetch("/api/zapi/inbox/activate", { method: "POST" });
+      const d = await res.json().catch(() => ({}));
+      if (res.ok) toast.success("Recebimento ativado! As mensagens vão começar a aparecer aqui.");
+      else toast.error(d.error ?? "Erro ao ativar");
+    } finally {
+      setActivating(false);
+    }
+  }
 
   const fetchConversations = useCallback(async () => {
     try {
@@ -137,7 +150,15 @@ export function InboxPanel() {
             <div className="text-center py-10 px-4">
               <MessageCircle className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
               <p className="text-xs text-muted-foreground">Nenhuma conversa ainda.</p>
-              <p className="text-[11px] text-muted-foreground/60 mt-1">As mensagens recebidas aparecem aqui.</p>
+              <p className="text-[11px] text-muted-foreground/60 mt-1 mb-4">As mensagens recebidas aparecem aqui depois que o recebimento for ativado.</p>
+              <button
+                onClick={activateInbox}
+                disabled={activating}
+                className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold bg-primary/10 text-primary border border-primary/25 hover:bg-primary/20 transition-colors disabled:opacity-60"
+              >
+                <Power className={cn("w-3.5 h-3.5", activating && "animate-pulse")} />
+                {activating ? "Ativando..." : "Ativar recebimento"}
+              </button>
             </div>
           ) : (
             conversations.map((c) => (
