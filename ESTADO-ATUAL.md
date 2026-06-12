@@ -42,6 +42,14 @@
   com Gmail agora mescla pelo telefone no "completar perfil" (não duplica). Grava
   phoneNormalized. Trava: só mescla se o registro do login ainda não tem telefone.
 
+**F3 — Inbox de WhatsApp (✅ concluído e testado 2026-06-12):**
+- Webhook receptor `/api/zapi/webhook` grava cada mensagem recebida (tabela `WhatsappMessage`)
+  e repassa ao WF2 (relay via `N8N_RESPOSTA_WEBHOOK_URL`) — SIM/NÃO segue OK.
+- Aba "Conversas" no /whatsapp: lista, thread, responder, não-lidas, polling 15s.
+- Botão "Ativar recebimento" (`/api/zapi/inbox/activate`, ADMIN) configura o webhook da Z-API
+  com 1 clique; trava exige a env do WF2 setada antes. Inbox é "do agora pra frente"
+  (Z-API multi-device não dá histórico). Plano em `PLAN-F3.md`.
+
 **Agenda no grupo de WhatsApp "Agendas" (✅ testado e funcionando):**
 - Digest diário 7h BRT (hoje + próximos 3 dias) agora vai também pro grupo de WhatsApp
   (busca grupo cujo nome contém "Agenda" com zapiGroupId, via Z-API). Só agenda, nunca leads.

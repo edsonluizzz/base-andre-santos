@@ -25,11 +25,11 @@ Decisões fechadas:
   default `andre-santos-2026`); repassa o corpo ao WF2 se `N8N_RESPOSTA_WEBHOOK_URL` setado
   (best-effort, fire-and-forget). Ignora mensagens de grupo por enquanto (só 1:1).
 
-## Passo 2 — Apontar o webhook da Z-API (sem quebrar o WF2)
-- ANTES: setar `N8N_RESPOSTA_WEBHOOK_URL` no Vercel (URL do WF2 `ovile-resposta-wa`).
-- Configurar o `update-webhook-received` da Z-API para `/api/zapi/webhook?cid=andre-santos-2026`
-  (helper admin ou Edson no painel Z-API).
-- Verificar: SIM/NÃO continua funcionando (relay) + mensagens aparecendo no banco.
+## Passo 2 — Apontar o webhook da Z-API (sem quebrar o WF2) ✅ (feito — testado 2026-06-12)
+- `N8N_RESPOSTA_WEBHOOK_URL` setada no Vercel (`https://andresantos.app.n8n.cloud/webhook/ovile-resposta-wa`).
+- Botão "Ativar recebimento" (`POST /api/zapi/inbox/activate`, ADMIN) configura o
+  `update-webhook-received` da Z-API → `/api/zapi/webhook`. Trava: só ativa com a env setada.
+- ✅ Testado pelo Edson: mensagens recebidas aparecem na aba Conversas; SIM/NÃO segue OK.
 
 ## Passo 3 — Inbox na UI (/whatsapp → aba "Conversas") ✅ (feito)
 - Lista de conversas (agrupadas por telefone: última mensagem, horário, nome do contato/
