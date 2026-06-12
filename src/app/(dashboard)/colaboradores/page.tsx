@@ -14,6 +14,7 @@ import { DeleteConfirm } from "@/components/collaborators/delete-confirm";
 import { ImportCsvDialog } from "@/components/collaborators/import-csv-dialog";
 import { KpiCards } from "@/components/collaborators/kpi-cards";
 import { WhatsappSendButton } from "@/components/collaborators/whatsapp-send-button";
+import { ShareLinkButton } from "@/components/collaborators/share-link-button";
 import { ScoreBar } from "@/components/ui/score-bar";
 import { CONTRIBUTION_OPTIONS } from "@/lib/contribution";
 import { ROLE_LABEL, PROFILE_LABEL, CHANNEL_LABEL, SUPPORT_LABEL, PROFILE_ORDER, CHANNEL_ORDER, SUPPORT_ORDER } from "@/lib/labels";
@@ -789,14 +790,15 @@ export default function ColaboradoresPage() {
                         onClick={() => markContact(c.id)}>
                         <PhoneCall className="w-3 h-3" /> Registrar contato
                       </Button>
+                      <ShareLinkButton collaboratorId={c.id} phone={c.phone} name={c.name} />
                       <button
                         onClick={() => copyReferralLink(c.id)}
                         className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md text-xs font-medium border border-violet-500/30 text-violet-400 bg-violet-500/[0.06] hover:bg-violet-500/15 transition-colors"
-                        title="Link de indicação — compartilhe com esse apoiador para ele trazer novos leads"
+                        title="Copiar o link de indicação deste apoiador"
                       >
                         {copiedId === c.id
                           ? <><Check className="w-3 h-3" /> Copiado!</>
-                          : <><Link2 className="w-3 h-3" /> Link indicação</>
+                          : <><Link2 className="w-3 h-3" /> Copiar link</>
                         }
                       </button>
                       <Button size="sm" variant="outline" className="h-7 text-xs sm:hidden" onClick={() => openEdit(c)}>Editar</Button>
