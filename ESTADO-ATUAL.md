@@ -53,10 +53,15 @@
 
 ---
 
-## 🎨 Redesign "Glass Moderno" (2026-06-11 madrugada) — EM ANDAMENTO
+## 🎨 Redesign "Glass Moderno" — ✅ CONCLUÍDO (validado pelo Edson 2026-06-12)
 
 Direção escolhida pelo Edson: **glass moderno** (orbs + vidro fosco + glow dourado) ·
-**dois temas impecáveis** · **motion sutil**. Mantém navy+dourado. Plano completo em `PLAN.md`.
+**dois temas impecáveis** · **motion sutil**. Mantém navy+dourado.
+
+A linguagem visual está **aplicada no app inteiro e no ar** (orbs no layout raiz, glass-cards,
+glow dourado, temas dark/claro). Telas novas já nascem nesse padrão. Edson validou em
+2026-06-12 → redesign considerado concluído. A "Fase 1/2" era polimento fino opcional, não
+bloqueante — fechada. Eventuais ajustes pontuais entram por demanda, não como sprint aberto.
 
 **Fundação (Fase 0) CONCLUÍDA e no ar:**
 - **Fundo com orbs** (`.app-bg`): 3 manchas de luz (dourado/navy) com drift lento, atrás do
@@ -69,10 +74,8 @@ Direção escolhida pelo Edson: **glass moderno** (orbs + vidro fosco + glow dou
   tapando os orbs — removido (`f1da6f8`). Tema claro também já tinha sido melhorado antes
   (sidebar branca, superfícies translúcidas traduzidas, fundo neutro).
 
-**Falta (aguardando feedback visual do Edson — telas são sensíveis a gosto):**
-- Fase 1: caprichar Dashboard (cards/gráficos), Colaboradores (cards de lead c/ glass-interactive),
-  WhatsApp, Login. Fase 2: skeletons glass, inputs/select/badge refinados, revisão mobile/A11y.
-- **Retomar:** `Continue o PLAN.md do redesign — próximo passo`.
+**Polimento opcional (não bloqueante, entra só se pedido):** refinos finos em Dashboard,
+Colaboradores, WhatsApp, Login; skeletons glass; inputs/select/badge.
 
 Commits: `9dd27d8` `b401fce` `f1da6f8` `dc60b72` `8571483` `e4ae2b1` `621cd7c`.
 
