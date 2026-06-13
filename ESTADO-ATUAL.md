@@ -1,6 +1,6 @@
-# Estado Atual da Produção — 2026-06-12
+# Estado Atual da Produção — 2026-06-13
 
-**Última atualização:** 2026-06-12 BRT
+**Última atualização:** 2026-06-13 BRT
 
 ---
 
@@ -285,43 +285,30 @@ F3 tempo real via relay do webhook (Z-API → nossa API → grava → repassa n8
 
 ---
 
-## 🔴 O que está QUEBRADO ou pendente
+## 📌 Pendências reais (revisado 2026-06-13)
 
-### Campanha Miriam Ferreira (`miriam-ferreira`) — ⏸️ FORA DO RADAR (decisão 2026-06-09)
-- **Tudo relacionado à Miriam está PARADO.** Itens abaixo congelados; manter só como registro.
-- ⚠️ **0 UserCampaigns** — ninguém pode logar (aguardando email do admin)
-- ✓ `Campaign.domain = "miriam.ovile.com.br"` (setado em 2026-06-02 15h)
-- ✓ `Campaign.candidateName = "Miriam Ferreira"`
-- ⚠️ Schema desatualizado (banco Miriam não recebeu Broadcast/BroadcastDelivery do dia 02/06)
-- Sem Z-API/Telegram/Metricool configurados
-- Banco isolado: `ep-steep-poetry-acb6x32c.sa-east-1.aws.neon.tech`
+### Validar/testar
+- **Modo Rua**: teste e2e em produção (PR válido/inválido, offline→online, conferir no Mapa).
+- **"Enviar link" de indicação** pelo sistema (corrigido em `b8c9cf6` — confirmar em prod).
 
-### Incidente Gospel Class (2026-06-01 ~21h)
-- 500 cadastros simultâneos via QR Code → travou Vercel (ExceedsBillingLimitError) → **500 pessoas perdidas** (Vercel rejeitou POSTs antes do INSERT)
-- WhatsApp `+55 41 98704-0966` em soft-ban — descanso até ~21h de **2026-06-03**
-- Próximo passo: warmup `50/dia → 100 → 200`
+### Funcionalidade aberta
+- **Vídeo >4,5MB** no WhatsApp (hoje só imagem/voz). Voz/PTT `webm/opus` pode não tocar como nota de voz (conversão à parte).
+- **Import batch via n8n**: `N8N_IMPORT_WEBHOOK_URL` não setado.
 
-### Bugs conhecidos (não bloqueantes)
-- TypeErrors no `/dashboard` e `/treinamento` (provavelmente switcher Miriam acessando schema diff) — pouco frequente
-- ~~`/api/n8n/config?campaign_id=X` não valida X (fallback silencioso)~~ ✅ RESOLVIDO (valida via `validateCampaign`, retorna 404)
-- 10 UserCampaigns duplicadas (ACCEPTED+PENDING) na campanha André
+### Limpeza (mexe em produção)
+- **Blob**: remover store privado órfão `banco-wpp` + envs `BLOB_STORE_ID`/`BLOB_WEBHOOK_PUBLIC_KEY` (código usa token explícito; inofensivas hoje).
+- **~10 UserCampaigns duplicadas** (ACCEPTED+PENDING) na campanha André.
+- Remover `/api/n8n/seed-tenants` (era p/ provisionamento Miriam).
 
----
+### Dívida técnica (sem pressa)
+- TS cleanup (`ignoreBuildErrors: true`); seguranças não-críticas (CSP `unsafe-inline`, cron sem `CRON_SECRET`, webhook Telegram sem secret); "André Santos" hardcoded no super-admin.
 
-## ⚠️ Dependências de você (humano) — revisado 2026-06-09 (noite)
+### Decisões suas (estratégia)
+- WhatsApp warmup (WF1/WF3 n8n) — desativado por decisão.
+- Compliance eleitoral ago/2026 — CNPJ coligação + registro SPCE.
 
-1. ~~Upgrade Vercel Pro~~ → **decisão: permanecer no free e elevar ao limite máximo do plano** (resiliência por software — ver próximos passos #2)
-2. ~~Email admin Miriam~~ → **Miriam fora do radar** (tudo dela parado)
-3. ✅ `METRICOOL_TOKEN` migrado pra UI (2026-06-09)
-4. ✅ DNS `andre.ovile.com.br` adicionado no Vercel (2026-06-09)
-5. ✅ Token Upstash rotacionado (2026-06-09)
-6. **WhatsApp warmup** — ADIADO por decisão; WF1/WF3 seguem desativados
-7. **OK pendente:** E2E `/cadastro` (instalar Playwright devDependency + tocar no `deploy-guardian.yml`)
-
-### 🟢 Baixo (faço sozinho quando autorizar)
-8. Limpar 10 UserCampaigns duplicadas do André
-9. Remover `/api/n8n/seed-tenants` (era p/ provisionamento Miriam — sem uso agora)
-10. Migrar n8n WF1 importação batch (`N8N_IMPORT_WEBHOOK_URL` ainda não setado)
+### Miriam Ferreira (`miriam-ferreira`) — ⏸️ congelado desde 2026-06-09
+Banco isolado `ep-steep-poetry-acb6x32c`, 0 UserCampaigns, sem integrações. Tudo parado.
 
 ---
 
@@ -352,12 +339,6 @@ F3 tempo real via relay do webhook (Z-API → nossa API → grava → repassa n8
 - SSO entre subdomínios via cookie `.ovile.com.br`
 
 ---
-
-## 🎯 Próximas 3 ações recomendadas (revisado 2026-06-09 noite)
-
-1. **E2E `/cadastro`** (Playwright no CI) — pendente OK do Edson
-2. **Resiliência de pico dentro do plano free** — fila QStash + connection_limit + menos invocações por cadastro
-3. **Limpeza:** UserCampaigns duplicadas · `N8N_IMPORT_WEBHOOK_URL` · remover seed-tenants
 
 ## 🔒 Anti-vazamento (NOVO 2026-06-03 madrugada)
 - 7 endpoints `/api/n8n/*` validam Campaign existe → 404 se não existe (era HTTP 200 com dados do André antes)
