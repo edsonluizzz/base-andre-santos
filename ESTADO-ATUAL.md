@@ -298,7 +298,7 @@ F3 tempo real via relay do webhook (Z-API → nossa API → grava → repassa n8
 ### Limpeza (2026-06-13)
 - ✅ **Blob**: store órfão `banco-wpp` apagado + envs `BLOB_STORE_ID`/`BLOB_WEBHOOK_PUBLIC_KEY` removidas (saíram junto). Sobrou `wpp-publico` + `BLOB_READ_WRITE_TOKEN` (em uso).
 - ✅ **`/api/n8n/seed-tenants`** removido (era p/ provisionamento Miriam).
-- ⏳ **UserCampaigns duplicados**: botão **"Convites duplicados"** no Super Admin (verifica + remove). Edson clica pra executar — o harness bloqueia acesso externo ao banco de prod.
+- ✅ **UserCampaigns duplicados**: removidos pelo Edson via botão **"Convites duplicados"** no Super Admin (2026-06-13). Ferramenta fica disponível pra repetir.
 
 ### Dívida técnica (sem pressa)
 - TS cleanup (`ignoreBuildErrors: true`); seguranças não-críticas (CSP `unsafe-inline`, cron sem `CRON_SECRET`, webhook Telegram sem secret); "André Santos" hardcoded no super-admin.
