@@ -295,10 +295,10 @@ F3 tempo real via relay do webhook (Z-API → nossa API → grava → repassa n8
 - **Vídeo >4,5MB** no WhatsApp (hoje só imagem/voz). Voz/PTT `webm/opus` pode não tocar como nota de voz (conversão à parte).
 - **Import batch via n8n**: `N8N_IMPORT_WEBHOOK_URL` não setado.
 
-### Limpeza (mexe em produção)
-- **Blob**: remover store privado órfão `banco-wpp` + envs `BLOB_STORE_ID`/`BLOB_WEBHOOK_PUBLIC_KEY` (código usa token explícito; inofensivas hoje).
-- **~10 UserCampaigns duplicadas** (ACCEPTED+PENDING) na campanha André.
-- Remover `/api/n8n/seed-tenants` (era p/ provisionamento Miriam).
+### Limpeza (2026-06-13)
+- ✅ **Blob**: store órfão `banco-wpp` apagado + envs `BLOB_STORE_ID`/`BLOB_WEBHOOK_PUBLIC_KEY` removidas (saíram junto). Sobrou `wpp-publico` + `BLOB_READ_WRITE_TOKEN` (em uso).
+- ✅ **`/api/n8n/seed-tenants`** removido (era p/ provisionamento Miriam).
+- ⏳ **UserCampaigns duplicados**: botão **"Convites duplicados"** no Super Admin (verifica + remove). Edson clica pra executar — o harness bloqueia acesso externo ao banco de prod.
 
 ### Dívida técnica (sem pressa)
 - TS cleanup (`ignoreBuildErrors: true`); seguranças não-críticas (CSP `unsafe-inline`, cron sem `CRON_SECRET`, webhook Telegram sem secret); "André Santos" hardcoded no super-admin.
