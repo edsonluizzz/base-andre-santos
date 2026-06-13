@@ -122,7 +122,7 @@ export async function GET(req: NextRequest) {
 
   // Prioridade: Campaign.candidateName (canônico, global) > Settings.campaignName
   // (tenant, legado). Sem fallback hardcoded — quem usa o sistema multi-tenant
-  // tem que ter candidateName setado pelo seed-tenants ou pela UI.
+  // tem que ter candidateName setado pela UI (Configurações).
   const candidateName = validated.candidateName ?? settings?.campaignName ?? validated.name;
 
   // Z-API
