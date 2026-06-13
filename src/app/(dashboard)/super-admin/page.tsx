@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { DuplicateInvitesCleanup } from "@/components/super-admin/duplicate-invites-cleanup";
 
 const ROLE_LABEL: Record<string, string> = {
   ADMIN: "Administrador",
@@ -595,6 +596,9 @@ export default function SuperAdminPage() {
           </div>
         )}
       </div>
+
+      {/* Convites (UserCampaign) duplicados */}
+      <DuplicateInvitesCleanup />
 
       {/* Duplicatas */}
       <div className="glass-card rounded-2xl border border-white/[0.08] overflow-hidden">
