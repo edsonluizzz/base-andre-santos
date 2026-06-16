@@ -1,6 +1,25 @@
-# Estado Atual da Produção — 2026-06-13
+# Estado Atual da Produção — 2026-06-16
 
-**Última atualização:** 2026-06-13 BRT
+**Última atualização:** 2026-06-16 BRT
+
+---
+
+## 🛠️ Sessão 2026-06-13/16 — F3 inbox, limpeza e i18n dos filtros
+
+- **F3 (inbox WhatsApp)** concluído e testado: webhook receptor + repasse ao WF2,
+  aba "Conversas" (lista/thread/responder/não-lidas/polling), botão "Ativar
+  recebimento", badge global no menu, link pro perfil, histórico do lead lê da
+  tabela. Ver `PLAN-F3.md`.
+- **Convites da equipe**: página `/convites` (ADMIN) com link reutilizável.
+- **Enviar link de indicação pelo WhatsApp** no card do colaborador (ADMIN via
+  Z-API; não-admin via wa.me). Fix: tenta o sistema primeiro, cai no wa.me só em 403.
+- **Limpeza concluída**: Blob órfão + envs, rota seed-tenants, UserCampaigns
+  duplicados (botão no Super Admin), faxina do ESTADO.
+- **i18n dos filtros de Colaboradores**: o Base UI `Select.Value` mostrava o valor
+  cru (ex.: "ACTIVE") no botão. Corrigido passando `items` (mapa valor→rótulo PT)
+  em todos os filtros/selects (lista, diálogo, Disparo). `SOURCE_LABEL`+`sourceLabel()`
+  novos em `labels.ts`. ⚠️ Padrão: todo `<Select>` do Base UI precisa de `items` pra
+  o botão mostrar o rótulo, não o código.
 
 ---
 
