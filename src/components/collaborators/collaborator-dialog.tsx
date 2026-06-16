@@ -227,14 +227,14 @@ export function CollaboratorDialog({ open, onOpenChange, collaborator, onSuccess
             </div>
             <div>
               <Label>Cargo</Label>
-              <Select value={form.campaignRole} onValueChange={(v) => set("campaignRole", v)}>
+              <Select items={ROLES} value={form.campaignRole} onValueChange={(v) => set("campaignRole", v)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>{ROLES.map((r) => <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div>
               <Label>Status</Label>
-              <Select value={form.status} onValueChange={(v) => set("status", v)}>
+              <Select items={{ ACTIVE: "Ativo", LEAD: "Lead", INACTIVE: "Inativo" }} value={form.status} onValueChange={(v) => set("status", v)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="ACTIVE">Ativo</SelectItem>
@@ -249,21 +249,21 @@ export function CollaboratorDialog({ open, onOpenChange, collaborator, onSuccess
             </div>
             <div>
               <Label>Perfil</Label>
-              <Select value={form.profile} onValueChange={(v) => set("profile", v)}>
+              <Select items={PROFILES} value={form.profile} onValueChange={(v) => set("profile", v)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>{PROFILES.map((p) => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div>
               <Label>Apoio ao André</Label>
-              <Select value={form.supportStatus} onValueChange={(v) => set("supportStatus", v)}>
+              <Select items={SUPPORT_STATUSES} value={form.supportStatus} onValueChange={(v) => set("supportStatus", v)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>{SUPPORT_STATUSES.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div>
               <Label>Canal de origem</Label>
-              <Select value={form.channel} onValueChange={(v) => set("channel", v)}>
+              <Select items={CHANNELS} value={form.channel} onValueChange={(v) => set("channel", v)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>{CHANNELS.map((c) => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}</SelectContent>
               </Select>

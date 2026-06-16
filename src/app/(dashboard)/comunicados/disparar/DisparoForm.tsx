@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import { sourceLabel } from "@/lib/labels";
 
 type SourceRow = { source: string; total: number; lead: number; active: number; inactive: number };
 type PreviewRecipient = { id: string; name: string; phone: string; city: string | null };
@@ -235,13 +236,13 @@ export function DisparoForm() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label>Origem (source)</Label>
-                <Select value={form.source || "_ALL_"} onValueChange={(v) => patch("source", v === "_ALL_" ? "" : v)}>
+                <Select items={{ _ALL_: "Todas as origens", ...Object.fromEntries(sources.map((s) => [s.source, `${sourceLabel(s.source)} (${s.total})`])) }} value={form.source || "_ALL_"} onValueChange={(v) => patch("source", v === "_ALL_" ? "" : v)}>
                   <SelectTrigger><SelectValue placeholder="Todas as origens" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="_ALL_">Todas as origens</SelectItem>
                     {sources.map((s) => (
                       <SelectItem key={s.source} value={s.source}>
-                        {s.source} ({s.total})
+                        {sourceLabel(s.source)} ({s.total})
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -250,13 +251,13 @@ export function DisparoForm() {
 
               <div className="space-y-2">
                 <Label>Status</Label>
-                <Select value={form.status || "_ALL_"} onValueChange={(v) => patch("status", v === "_ALL_" ? "" : v)}>
+                <Select items={{ _ALL_: "Todos", LEAD: "Leads", ACTIVE: "Ativos", INACTIVE: "Inativos" }} value={form.status || "_ALL_"} onValueChange={(v) => patch("status", v === "_ALL_" ? "" : v)}>
                   <SelectTrigger><SelectValue placeholder="Todos os status" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="_ALL_">Todos</SelectItem>
-                    <SelectItem value="LEAD">LEAD</SelectItem>
-                    <SelectItem value="ACTIVE">ACTIVE</SelectItem>
-                    <SelectItem value="INACTIVE">INACTIVE</SelectItem>
+                    <SelectItem value="LEAD">Leads</SelectItem>
+                    <SelectItem value="ACTIVE">Ativos</SelectItem>
+                    <SelectItem value="INACTIVE">Inativos</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

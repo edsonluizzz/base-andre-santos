@@ -9,7 +9,7 @@ import { WhatsappSendButton } from "@/components/collaborators/whatsapp-send-but
 import { ContactTimeline } from "@/components/collaborators/contact-timeline";
 import { ScoreBar } from "@/components/ui/score-bar";
 import { CONTRIBUTION_OPTIONS, TIER_LABEL } from "@/lib/contribution";
-import { ROLE_LABEL, PROFILE_LABEL, STATUS_LABEL } from "@/lib/labels";
+import { ROLE_LABEL, PROFILE_LABEL, STATUS_LABEL, sourceLabel } from "@/lib/labels";
 import { calcMobilizationScore } from "@/lib/mobilization";
 import { differenceInDays, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -135,7 +135,7 @@ export default async function CollaboratorProfilePage({ params }: { params: { id
           {collaborator.source && (
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <Zap className="w-3.5 h-3.5 shrink-0" />
-              <span>Fonte: <span className="text-foreground">{collaborator.source.replace("_", " ")}</span></span>
+              <span>Fonte: <span className="text-foreground">{sourceLabel(collaborator.source)}</span></span>
             </div>
           )}
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">

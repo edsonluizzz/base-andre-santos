@@ -17,7 +17,7 @@ import { WhatsappSendButton } from "@/components/collaborators/whatsapp-send-but
 import { ShareLinkButton } from "@/components/collaborators/share-link-button";
 import { ScoreBar } from "@/components/ui/score-bar";
 import { CONTRIBUTION_OPTIONS } from "@/lib/contribution";
-import { ROLE_LABEL, PROFILE_LABEL, CHANNEL_LABEL, SUPPORT_LABEL, PROFILE_ORDER, CHANNEL_ORDER, SUPPORT_ORDER } from "@/lib/labels";
+import { ROLE_LABEL, PROFILE_LABEL, CHANNEL_LABEL, SUPPORT_LABEL, PROFILE_ORDER, CHANNEL_ORDER, SUPPORT_ORDER, sourceLabel } from "@/lib/labels";
 
 const ROLE_COLOR: Record<string, string> = {
   COORD_GERAL:     "bg-yellow-500/15 text-yellow-400 border-yellow-500/30",
@@ -378,7 +378,7 @@ export default function ColaboradoresPage() {
           <div className="flex flex-wrap gap-x-2 gap-y-1 items-end">
             <div>
               <FilterLabel>Cargo</FilterLabel>
-              <Select value={filterRole} onValueChange={(v) => setFilterRole(v ?? "")}>
+              <Select items={{ "": "Todos os cargos", ...ROLE_LABEL }} value={filterRole} onValueChange={(v) => setFilterRole(v ?? "")}>
                 <SelectTrigger className="w-40">
                   <SelectValue placeholder="Todos os cargos" />
                 </SelectTrigger>
@@ -391,7 +391,7 @@ export default function ColaboradoresPage() {
 
             <div>
               <FilterLabel>Status</FilterLabel>
-              <Select value={filterStatus} onValueChange={(v) => setFilterStatus(v ?? "")}>
+              <Select items={{ "": "Todos", ACTIVE: "Ativos", LEAD: "Leads", INACTIVE: "Inativos" }} value={filterStatus} onValueChange={(v) => setFilterStatus(v ?? "")}>
                 <SelectTrigger className="w-32">
                   <SelectValue placeholder="Todos" />
                 </SelectTrigger>
@@ -452,7 +452,7 @@ export default function ColaboradoresPage() {
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-2 gap-y-3">
                 <div>
                   <FilterLabel>Forma de entrada</FilterLabel>
-                  <Select value={filterSourceType} onValueChange={(v) => { setFilterSourceType(v ?? ""); if (v) setFilterSource(""); }}>
+                  <Select items={{ "": "Qualquer origem", IMPORTADO: "Importado (planilha)", MANUAL: "Cadastro manual", PUBLICO: "Formulário público" }} value={filterSourceType} onValueChange={(v) => { setFilterSourceType(v ?? ""); if (v) setFilterSource(""); }}>
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Qualquer origem" />
                     </SelectTrigger>
@@ -468,14 +468,14 @@ export default function ColaboradoresPage() {
                 {sources.length > 0 && (
                   <div>
                     <FilterLabel>Origem específica</FilterLabel>
-                    <Select value={filterSource} onValueChange={(v) => { setFilterSource(v ?? ""); if (v) setFilterSourceType(""); }}>
+                    <Select items={{ "": "Todas as origens", ...Object.fromEntries(sources.map((s) => [s, sourceLabel(s)])) }} value={filterSource} onValueChange={(v) => { setFilterSource(v ?? ""); if (v) setFilterSourceType(""); }}>
                       <SelectTrigger className="w-full">
                         <SelectValue placeholder="Todas as origens" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="">Todas as origens</SelectItem>
                         {sources.map((s) => (
-                          <SelectItem key={s} value={s}>{s}</SelectItem>
+                          <SelectItem key={s} value={s}>{sourceLabel(s)}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -484,7 +484,7 @@ export default function ColaboradoresPage() {
 
                 <div>
                   <FilterLabel>Perfil</FilterLabel>
-                  <Select value={filterProfile} onValueChange={(v) => setFilterProfile(v ?? "")}>
+                  <Select items={{ "": "Todos os perfis", ...PROFILE_LABEL }} value={filterProfile} onValueChange={(v) => setFilterProfile(v ?? "")}>
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Todos os perfis" />
                     </SelectTrigger>
@@ -499,7 +499,7 @@ export default function ColaboradoresPage() {
 
                 <div>
                   <FilterLabel>Canal</FilterLabel>
-                  <Select value={filterChannel} onValueChange={(v) => setFilterChannel(v ?? "")}>
+                  <Select items={{ "": "Todos os canais", ...CHANNEL_LABEL }} value={filterChannel} onValueChange={(v) => setFilterChannel(v ?? "")}>
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Todos os canais" />
                     </SelectTrigger>
@@ -514,7 +514,7 @@ export default function ColaboradoresPage() {
 
                 <div>
                   <FilterLabel>Apoio</FilterLabel>
-                  <Select value={filterSupportStatus} onValueChange={(v) => setFilterSupportStatus(v ?? "")}>
+                  <Select items={{ "": "Qualquer apoio", ...SUPPORT_LABEL }} value={filterSupportStatus} onValueChange={(v) => setFilterSupportStatus(v ?? "")}>
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Qualquer apoio" />
                     </SelectTrigger>
@@ -530,7 +530,7 @@ export default function ColaboradoresPage() {
                 {leaders.length > 0 && (
                   <div>
                     <FilterLabel>Cadastrado por</FilterLabel>
-                    <Select value={filterLeader} onValueChange={(v) => { setFilterLeader(v); setFilterMine(false); }}>
+                    <Select items={{ "": "Qualquer líder", ...Object.fromEntries(leaders.map((l) => [l.id, `${l.name} (${l.count})`])) }} value={filterLeader} onValueChange={(v) => { setFilterLeader(v); setFilterMine(false); }}>
                       <SelectTrigger className="w-full">
                         <SelectValue placeholder="Qualquer líder" />
                       </SelectTrigger>
