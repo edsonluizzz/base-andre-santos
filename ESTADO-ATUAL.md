@@ -1,6 +1,25 @@
-# Estado Atual da Produção — 2026-06-16
+# Estado Atual da Produção — 2026-06-22
 
-**Última atualização:** 2026-06-16 BRT
+**Última atualização:** 2026-06-22 BRT
+
+---
+
+## 🛠️ Sessão 2026-06-22 — Novo canal de aquisição "Não Vos Conformeis"
+
+- **Novo ebook/canal** (pedido do Pr. André): "NÃO VOS CONFORMEIS" — Romanos 12 ×
+  marxismo cultural ("ameaça silenciosa na formação de adolescentes e jovens").
+  Landing em `/ebook/nao-vos-conformeis`, slug + entrada em `src/lib/ebooks.ts`.
+- **Dois formatos**: ebook completo (14 págs, 7 engodos + Romanos 12 versículo a
+  versículo) e apostila EBA (3 págs, linguagem jovem, com **QR Code** apontando para
+  `leads.prandresantos.com.br/ebook/nao-vos-conformeis`). PDFs em `public/ebooks/`.
+- **Fonte reproduzível** (diferente dos ebooks antigos feitos no Canva): HTML branded
+  + `gen-qr.py` em `tools/ebooks/nao-vos-conformeis/`, renderizado via Chromium headless.
+  `tools/` excluído do deploy (.vercelignore).
+- **Backend é genérico**: rate-limit `EBOOK_*` (100/min), source, rótulos Telegram/CRM,
+  broadcast e a página `/ebook/[slug]` já tratam o novo canal sem alterações.
+- ⚠️ **Pendente**: revisão teológica do conteúdo pelo Edson/Cláudia antes de divulgar;
+  inserir a apostila EBA na diagramação da escola. Lint OK; build validado só no Vercel
+  (clone `ovile-ci` está desatualizado — falhas pré-existentes não relacionadas).
 
 ---
 
