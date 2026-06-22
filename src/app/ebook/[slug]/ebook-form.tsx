@@ -404,7 +404,7 @@ export function EbookForm({ ebook }: { ebook: EbookConfig }) {
 
       <footer className="relative z-10 py-5 text-center">
         <p className="text-xs" style={{ color: "rgba(255,255,255,0.2)" }}>
-          © {new Date().getFullYear()} André Santos · Pré-candidato a Deputado Estadual PR 2026
+          © {new Date().getFullYear()} {ebook.footerNote ?? "André Santos · Pré-candidato a Deputado Estadual PR 2026"}
         </p>
       </footer>
     </div>

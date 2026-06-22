@@ -11,6 +11,8 @@ export interface EbookConfig {
   metaDescription: string;
   whatsappGroupUrl: string;
   postRedirectUrl: string;
+  /** Linha do rodapé da landing. Default: crédito padrão da campanha. */
+  footerNote?: string;
 }
 
 const WHATSAPP_GROUP_URL = "https://chat.whatsapp.com/EsuR5rzuYnM6v6nn6RmbVE";
@@ -36,36 +38,38 @@ export const EBOOKS: Record<string, EbookConfig> = {
   // Canal principal (evento EBA) — edição ADOLESCENTES. É o destino do QR Code da apostila.
   "nao-vos-conformeis": {
     slug: "nao-vos-conformeis",
-    title: "Não Vos Conformeis",
-    titleLines: ["NÃO VOS", "CONFORMEIS"],
-    subtitle: "O que estão tentando plantar na sua cabeça",
+    title: "Inconformáveis",
+    titleLines: ["INCONFORMÁVEIS"],
+    subtitle: "Chamados para transformar",
     description:
       "Existe uma disputa silenciosa pela sua mente — o marxismo cultural, empurrado o tempo todo pelo feed, pela série e pela aula. Nesta edição para adolescentes, André Santos mostra as 7 armadilhas mais comuns, de onde elas vieram e como Romanos 12 te blinda pela renovação da mente: 'E não vos conformeis com este mundo, mas transformai-vos.'",
     pdfPath: "/ebooks/nao-vos-conformeis.pdf",
-    pdfDownloadName: "nao-vos-conformeis.pdf",
-    ctaDownloadLabel: "Baixar Não Vos Conformeis",
-    metaTitle: "Não Vos Conformeis — Ebook Gratuito | André Santos",
+    pdfDownloadName: "inconformaveis.pdf",
+    ctaDownloadLabel: "Baixar Inconformáveis",
+    metaTitle: "Inconformáveis — Ebook Gratuito | André Santos",
     metaDescription:
       "O antídoto de Romanos 12 ao marxismo cultural, em linguagem para adolescentes. Baixe o ebook gratuito de André Santos e não se conforme: transforme-se.",
     whatsappGroupUrl: WHATSAPP_GROUP_URL,
     postRedirectUrl: POST_REDIRECT_URL,
+    footerNote: "Pr. André Santos",
   },
   // Mesmo tema, edição para PAIS e líderes (com a história das raízes ideológicas).
   "nao-vos-conformeis-pais": {
     slug: "nao-vos-conformeis-pais",
-    title: "Não Vos Conformeis",
-    titleLines: ["NÃO VOS", "CONFORMEIS"],
-    subtitle: "Como blindar seus filhos contra o marxismo cultural",
+    title: "Inconformáveis",
+    titleLines: ["INCONFORMÁVEIS"],
+    subtitle: "Chamados para transformar",
     description:
       "Existe uma ameaça silenciosa e sutil na formação de adolescentes e jovens — o marxismo cultural. Nesta edição para pais e líderes, André Santos revela as raízes históricas dessa cosmovisão (de Marx a Gramsci e à Escola de Frankfurt), desmascara os 7 engodos e mostra, versículo a versículo em Romanos 12, como blindar quem você ama pela renovação da mente.",
     pdfPath: "/ebooks/nao-vos-conformeis-pais.pdf",
-    pdfDownloadName: "nao-vos-conformeis-pais.pdf",
-    ctaDownloadLabel: "Baixar Não Vos Conformeis (Pais)",
-    metaTitle: "Não Vos Conformeis (Pais) — Ebook Gratuito | André Santos",
+    pdfDownloadName: "inconformaveis-pais.pdf",
+    ctaDownloadLabel: "Baixar Inconformáveis (Pais)",
+    metaTitle: "Inconformáveis (Pais) — Ebook Gratuito | André Santos",
     metaDescription:
       "Como blindar adolescentes e jovens contra o marxismo cultural, à luz de Romanos 12. Edição para pais e líderes. Baixe o ebook gratuito de André Santos.",
     whatsappGroupUrl: WHATSAPP_GROUP_URL,
     postRedirectUrl: POST_REDIRECT_URL,
+    footerNote: "Pr. André Santos",
   },
   casamento: {
     slug: "casamento",
