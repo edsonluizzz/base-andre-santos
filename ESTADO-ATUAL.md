@@ -4,22 +4,29 @@
 
 ---
 
-## 🛠️ Sessão 2026-06-22 — Novo canal de aquisição "Não Vos Conformeis"
+## 🛠️ Sessão 2026-06-22 — Canal "Não Vos Conformeis" (3 edições)
 
 - **Novo ebook/canal** (pedido do Pr. André): "NÃO VOS CONFORMEIS" — Romanos 12 ×
   marxismo cultural ("ameaça silenciosa na formação de adolescentes e jovens").
-  Landing em `/ebook/nao-vos-conformeis`, slug + entrada em `src/lib/ebooks.ts`.
-- **Dois formatos**: ebook completo (14 págs, 7 engodos + Romanos 12 versículo a
-  versículo) e apostila EBA (3 págs, linguagem jovem, com **QR Code** apontando para
-  `leads.prandresantos.com.br/ebook/nao-vos-conformeis`). PDFs em `public/ebooks/`.
-- **Fonte reproduzível** (diferente dos ebooks antigos feitos no Canva): HTML branded
-  + `gen-qr.py` em `tools/ebooks/nao-vos-conformeis/`, renderizado via Chromium headless.
-  `tools/` excluído do deploy (.vercelignore).
-- **Backend é genérico**: rate-limit `EBOOK_*` (100/min), source, rótulos Telegram/CRM,
-  broadcast e a página `/ebook/[slug]` já tratam o novo canal sem alterações.
-- ⚠️ **Pendente**: revisão teológica do conteúdo pelo Edson/Cláudia antes de divulgar;
-  inserir a apostila EBA na diagramação da escola. Lint OK; build validado só no Vercel
-  (clone `ovile-ci` está desatualizado — falhas pré-existentes não relacionadas).
+- **TRÊS edições do mesmo tema** (Edson pediu separar público; pais ≠ filhos):
+  - **Adolescentes** (15 págs) → canal principal `/ebook/nao-vos-conformeis`
+    (`nao-vos-conformeis.pdf`). É o **destino do QR Code da apostila** (evento EBA).
+  - **Pais/líderes** (15 págs) → `/ebook/nao-vos-conformeis-pais`
+    (`nao-vos-conformeis-pais.pdf`).
+  - **Apostila EBA** (3 págs, com QR) → `nao-vos-conformeis-apostila-eba.pdf` (impressão).
+- **Conteúdo histórico** incorporado (de material enviado pelo Edson): Marx → Gramsci
+  (hegemonia cultural, 3 pilares Jerusalém/Atenas/Roma, família como alvo) → Escola de
+  Frankfurt (Teoria Crítica, Escala F) → Marcuse/Alinsky → engenharia social. Profundidade
+  calibrada por público (pais = seção completa; adolescentes = "isso não nasceu ontem";
+  apostila = caixa "de onde veio").
+- **2 entradas em `src/lib/ebooks.ts`** (`nao-vos-conformeis` = teen, `-pais`). Backend
+  genérico (rate-limit `EBOOK_*`, source, rótulos, broadcast) trata sem mais mudanças.
+- **Fonte reproduzível** (≠ ebooks antigos no Canva): HTML branded + `gen-qr.py` em
+  `tools/ebooks/nao-vos-conformeis/`, render via Chromium headless. `tools/` fora do deploy.
+- ⚠️ **Lock do Google Drive**: `GoogleDriveFS.exe` travou PDFs já versionados; resolvido
+  apagando os antigos (Edson) e regravando. Cuidado ao sobrescrever assets no Drive.
+- ⚠️ **Pendente**: revisão teológica (Edson/Cláudia) antes de divulgar; diagramar a
+  apostila na EBA. Lint OK; build só no Vercel (clone `ovile-ci` desatualizado).
 
 ---
 

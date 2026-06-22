@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Não Vos Conformeis — Edição Adolescentes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Montserrat:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#0d1b2a; --navy2:#1a2f4e; --gold:#d4af37; --gold-soft:#f0d060;
+    --cream:#faf7ef; --ink:#1c2433; --muted:#5b6675;
+    --heading:'Montserrat','Helvetica Neue',Arial,sans-serif;
+    --serif:'Cormorant Garamond',Georgia,'Times New Roman',serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  @page{ size:A4; margin:0; }
+  html,body{ font-family:var(--serif); color:var(--ink); }
+  .page{
+    width:210mm; min-height:297mm; padding:26mm 24mm; position:relative;
+    background:var(--cream); page-break-after:always; overflow:hidden;
+  }
+  .page:last-child{ page-break-after:auto; }
+  h1,h2,h3,.kicker,.foot,.cta,.pagenum{ font-family:var(--heading); }
+  p{ font-size:13.4pt; line-height:1.72; margin-bottom:11pt; color:var(--ink); text-align:left; }
+  .lead{ font-size:15pt; line-height:1.6; color:var(--navy); }
+  .kicker{ font-size:8.5pt; letter-spacing:.28em; text-transform:uppercase; font-weight:800; color:var(--gold); margin-bottom:10pt; }
+  h2{ font-size:23pt; font-weight:900; color:var(--navy); line-height:1.06; margin-bottom:6pt; letter-spacing:-.01em; }
+  h2 .num{ color:var(--gold); }
+  h3{ font-size:14pt; font-weight:800; color:var(--navy); margin:16pt 0 5pt; }
+  .rule{ width:54pt; height:3px; background:var(--gold); margin:0 0 18pt; border-radius:2px; }
+  .verse{ font-style:italic; font-size:14.5pt; line-height:1.55; color:var(--navy); border-left:3px solid var(--gold); padding:4pt 0 4pt 16pt; margin:14pt 0; }
+  .verse cite{ display:block; font-style:normal; font-family:var(--heading); font-size:8.5pt; letter-spacing:.18em; text-transform:uppercase; color:var(--gold); margin-top:7pt; }
+  strong{ color:var(--navy); font-weight:600; }
+  .pagenum{ position:absolute; bottom:14mm; right:24mm; font-size:8pt; letter-spacing:.2em; color:var(--muted); }
+  .brandfoot{ position:absolute; bottom:14mm; left:24mm; font-size:8pt; letter-spacing:.22em; text-transform:uppercase; color:var(--muted); font-family:var(--heading); }
+
+  .cover{ background:var(--navy); color:#fff; display:flex; flex-direction:column; justify-content:space-between; padding:30mm 24mm; }
+  .cover::before{ content:""; position:absolute; top:-120mm; right:-90mm; width:240mm; height:240mm; border-radius:50%; background:radial-gradient(circle, rgba(212,175,55,.16) 0%, transparent 62%); }
+  .cover::after{ content:""; position:absolute; bottom:-140mm; left:-90mm; width:240mm; height:240mm; border-radius:50%; background:radial-gradient(circle, rgba(26,47,78,.9) 0%, transparent 65%); }
+  .cover-top{ position:relative; z-index:2; }
+  .cover-brand{ font-family:var(--heading); font-weight:900; letter-spacing:.28em; font-size:11pt; color:var(--gold); }
+  .cover-brand small{ display:block; font-weight:600; letter-spacing:.22em; font-size:7.5pt; color:rgba(255,255,255,.5); margin-top:4pt; }
+  .cover-mid{ position:relative; z-index:2; }
+  .cover-tag{ display:inline-block; font-family:var(--heading); font-size:8pt; font-weight:700; letter-spacing:.26em; text-transform:uppercase; color:var(--gold); border:1px solid rgba(212,175,55,.4); border-radius:40px; padding:6pt 14pt; margin-bottom:22pt; }
+  .cover h1{ font-family:var(--heading); font-weight:900; font-size:58pt; line-height:.93; letter-spacing:-.02em; color:#fff; }
+  .cover h1 em{ font-style:normal; color:var(--gold); }
+  .cover-sub{ font-family:var(--serif); font-style:italic; font-size:18pt; line-height:1.4; color:rgba(240,208,96,.9); margin-top:18pt; max-width:150mm; }
+  .cover-ref{ font-family:var(--heading); font-size:8.5pt; letter-spacing:.24em; text-transform:uppercase; color:rgba(255,255,255,.45); margin-top:20pt; }
+  .cover-bot{ position:relative; z-index:2; display:flex; justify-content:space-between; align-items:flex-end; }
+  .cover-author{ font-family:var(--heading); }
+  .cover-author .by{ font-size:8pt; letter-spacing:.24em; text-transform:uppercase; color:rgba(255,255,255,.45); }
+  .cover-author .nm{ font-size:17pt; font-weight:800; color:#fff; margin-top:3pt; }
+  .cover-author .rl{ font-size:8.5pt; color:rgba(212,175,55,.8); margin-top:2pt; }
+  .cover-free{ text-align:right; font-family:var(--heading); font-size:8pt; letter-spacing:.2em; text-transform:uppercase; color:rgba(255,255,255,.4); }
+
+  .divider{ background:var(--navy); color:#fff; display:flex; flex-direction:column; justify-content:center; }
+  .divider .kicker{ color:var(--gold-soft); }
+  .divider h2{ color:#fff; font-size:34pt; }
+  .divider h2 .num{ color:var(--gold); }
+  .divider p{ color:rgba(255,255,255,.7); max-width:140mm; }
+  .divider .rule{ background:var(--gold); }
+
+  .engodo{ margin:0 0 13pt; }
+  .engodo .et{ font-family:var(--heading); font-weight:800; font-size:12.5pt; color:var(--navy); }
+  .engodo .et .n{ color:var(--gold); margin-right:6pt; }
+  .engodo p{ margin-top:3pt; margin-bottom:0; }
+  .callout{ background:#fff; border:1px solid rgba(13,27,42,.1); border-left:4px solid var(--gold); border-radius:8px; padding:14pt 16pt; margin:14pt 0; }
+  .callout .ct{ font-family:var(--heading); font-weight:800; font-size:9pt; letter-spacing:.16em; text-transform:uppercase; color:var(--gold); margin-bottom:6pt; }
+  .callout p{ margin-bottom:0; font-size:12.5pt; }
+  ul.checks{ list-style:none; margin:10pt 0; }
+  ul.checks li{ font-size:13pt; line-height:1.55; margin-bottom:9pt; padding-left:24pt; position:relative; }
+  ul.checks li::before{ content:"✓"; position:absolute; left:0; top:0; color:var(--gold); font-weight:900; font-family:var(--heading); }
+
+  .final{ background:var(--navy); color:#fff; display:flex; flex-direction:column; justify-content:center; text-align:center; align-items:center; }
+  .final::before{ content:""; position:absolute; inset:0; background:radial-gradient(circle at 50% 35%, rgba(212,175,55,.14) 0%, transparent 60%); }
+  .final-in{ position:relative; z-index:2; max-width:150mm; }
+  .final h2{ color:#fff; font-size:30pt; }
+  .final p{ color:rgba(255,255,255,.72); text-align:center; }
+  .final .btn{ display:inline-block; font-family:var(--heading); font-weight:800; font-size:11pt; letter-spacing:.1em; text-transform:uppercase; background:var(--gold); color:var(--navy); padding:13pt 30pt; border-radius:50px; margin-top:14pt; }
+  .final .site{ font-family:var(--heading); font-size:9pt; letter-spacing:.2em; text-transform:uppercase; color:rgba(212,175,55,.8); margin-top:20pt; }
+</style>
+</head>
+<body>
+
+<!-- CAPA -->
+<section class="page cover">
+  <div class="cover-top">
+    <div class="cover-brand">ANDRÉ SANTOS<small>Movimento Improváveis · Edição Adolescentes</small></div>
+  </div>
+  <div class="cover-mid">
+    <span class="cover-tag">Ebook Gratuito · Fé &amp; Cultura</span>
+    <h1>NÃO VOS<br><em>CONFORMEIS</em></h1>
+    <p class="cover-sub">O que estão tentando plantar na sua cabeça — e como não cair na armadilha.</p>
+    <p class="cover-ref">“E não vos conformeis com este mundo” · Romanos 12.2</p>
+  </div>
+  <div class="cover-bot">
+    <div class="cover-author">
+      <div class="by">Por</div>
+      <div class="nm">Pr. André Santos</div>
+      <div class="rl">Para a sua geração</div>
+    </div>
+    <div class="cover-free">Distribuição<br>gratuita</div>
+  </div>
+</section>
+
+<!-- INTRO -->
+<section class="page">
+  <div class="kicker">Antes de começar</div>
+  <h2>Tem uma disputa<br>pela sua mente</h2>
+  <div class="rule"></div>
+  <p class="lead">Você acha que escolhe o que pensa. Mas e se boa parte das suas ideias tivesse sido plantada por outra pessoa — sem você perceber?</p>
+  <p>Pensa no seu dia. Você acorda e já desliza o feed. No caminho da escola, um podcast. Na aula, uma “verdade nova”. À noite, série, meme, story. São centenas de mensagens entrando na sua cabeça todo dia — e quase nenhuma delas é neutra. Cada uma está te ensinando o que é certo, o que é legal, o que dá vergonha e o que você deveria querer ser.</p>
+  <p>O problema não é a tela. O problema é que existe um <strong>jeito de ver o mundo</strong> sendo empurrado para você o tempo todo — disfarçado de “mente aberta”, de humor, de liberdade. Esse pacote de ideias tem um nome técnico: <strong>marxismo cultural</strong>. Calma, não é palavrão nem política de adulto chato. É uma estratégia antiga para mudar o que uma geração inteira acredita — começando pelos mais jovens, porque é nessa idade que a cabeça ainda está se formando.</p>
+  <div class="callout">
+    <div class="ct">Por que com você</div>
+    <p>Quem conquista a sua geração agora, molda o país daqui a 20 anos. Você não é alvo por acaso — você é o alvo principal. A boa notícia? Dá pra perceber o jogo. E quem percebe, não cai.</p>
+  </div>
+  <p>Este ebook tem três partes: primeiro, <strong>te mostrar o jogo</strong> (as armadilhas mais comuns). Depois, te dar a <strong>defesa</strong> — e ela está num capítulo escrito há dois mil anos, Romanos 12. Por fim, <strong>o que fazer na prática</strong> a partir de hoje. Bora?</p>
+  <div class="brandfoot">Não Vos Conformeis · Adolescentes</div>
+  <div class="pagenum">02</div>
+</section>
+
+<!-- DIVISOR I -->
+<section class="page divider">
+  <div class="kicker">Parte I</div>
+  <h2>Que jogo é esse,<br>afinal?</h2>
+  <div class="rule"></div>
+  <p>Você não precisa ter medo do que entende. Entender o truque é o primeiro passo pra não ser enganado por ele.</p>
+</section>
+
+<!-- EXPLICAÇÃO -->
+<section class="page">
+  <div class="kicker">Parte I · Entendendo</div>
+  <h2>Não é grito.<br>É sussurro.</h2>
+  <div class="rule"></div>
+  <p>Tem ideia que chega gritando: é fácil dizer “não”. Mas as mais perigosas chegam <strong>sussurrando</strong>, parecendo bondade. Ninguém te fala “pare de crer em Deus”. Em vez disso, vão soltando, aos poucos: “religião é coisa antiga”, “cada um tem a sua verdade”, “quem é você pra julgar?”. Quando você vê, já achou tudo isso normal.</p>
+  <p>A origem é uma estratégia simples. Há quem queira mudar a sociedade, mas percebeu que não conseguia pela força nem pela política direto. Então mudou o campo de batalha: <strong>a cultura</strong>. A ideia é ocupar com paciência os lugares que formam a cabeça das pessoas — escola, faculdade, novela, música, redes — até que o jeito cristão de ver a vida pareça ridículo e ultrapassado.</p>
+  <div class="verse">Porque a nossa luta não é contra a carne e o sangue, mas contra… as hostes espirituais da maldade nas regiões celestes.<cite>Efésios 6.12</cite></div>
+  <p>Repare: não é um “inimigo” específico, uma pessoa que você possa apontar. É um <strong>clima</strong>. E o método nunca é o confronto — é a repetição. Ouça a mesma ideia mil vezes, num meme aqui, numa fala de personagem ali, e ela vira “óbvia” na sua cabeça, mesmo que seja mentira.</p>
+  <p>Importante: buscar justiça é coisa boa, e a Bíblia é cheia disso. O problema não é se importar com os outros. O problema é a <strong>visão de mundo</strong> por trás: a que tira Deus do meio, diz que não existe verdade e transforma toda relação em disputa de poder. É essa raiz que a gente precisa aprender a reconhecer. Mas calma, que isso não nasceu ontem.</p>
+  <div class="brandfoot">Não Vos Conformeis · Adolescentes</div>
+  <div class="pagenum">04</div>
+</section>
+
+<!-- ORIGENS (ADOLESCENTES) -->
+<section class="page">
+  <div class="kicker">Parte I · De onde vem</div>
+  <h2>Isso não<br>nasceu ontem</h2>
+  <div class="rule"></div>
+  <p>Essa forma de pensar tem mais de 100 anos — e foi ficando cada vez mais esperta. Você não precisa decorar nomes; só entender o plano, porque quem entende o jogo não cai nele.</p>
+
+  <div class="engodo"><div class="et"><span class="n">1</span>Primeiro veio a ideia da revolução</div>
+  <p>Karl Marx dividiu o mundo em opressores e oprimidos e apostou numa revolução para virar tudo. Só que não funcionou: as pessoas gostavam da sua fé, da sua família e do seu país. Faltava derrubar isso primeiro.</p></div>
+
+  <div class="engodo"><div class="et"><span class="n">2</span>Aí mudaram de tática: a cultura</div>
+  <p>Um pensador chamado <strong>Gramsci</strong> percebeu que não precisava de arma: bastava ocupar, com paciência, o que forma a cabeça das pessoas — escola, música, cinema, novela. E mirou na <strong>família</strong>, porque é nela que a fé passa de pai pra filho. Enfraquece a família, enfraquece tudo.</p></div>
+
+  <div class="engodo"><div class="et"><span class="n">3</span>Depois veio a “revolução comportamental”</div>
+  <p>Um grupo de intelectuais (a Escola de Frankfurt) levou essas ideias pras universidades. Um deles, Marcuse, popularizou o “faça amor, não faça guerra” — solta tudo pra afrouxar os laços que seguram a família. E a regra de ouro virou <strong>ridicularizar</strong> quem discorda. É por isso que hoje zoam tanto quem tem fé.</p></div>
+
+  <div class="callout">
+    <div class="ct">Ou seja</div>
+    <p>Muita coisa que parece “natural” e “moderna” foi, na verdade, <strong>plantada de propósito</strong>, aos poucos, por filmes, músicas e aulas. Saber disso já te deixa um passo à frente — agora dá pra reconhecer as armadilhas.</p>
+  </div>
+
+  <div class="brandfoot">Não Vos Conformeis · Adolescentes</div>
+  <div class="pagenum">05</div>
+</section>
+
+<!-- DIVISOR II -->
+<section class="page divider">
+  <div class="kicker">Parte II</div>
+  <h2>As <span class="num">7</span> armadilhas<br>mais comuns</h2>
+  <div class="rule"></div>
+  <p>Cada uma se veste de algo bom. Aprender a tirar a fantasia é metade da vitória.</p>
+</section>
+
+<!-- ARMADILHAS 1-4 -->
+<section class="page">
+  <div class="kicker">Parte II · As armadilhas</div>
+  <h2>Quando a mentira<br>parece bondade</h2>
+  <div class="rule"></div>
+
+  <div class="engodo"><div class="et"><span class="n">01</span>“Você é sempre uma vítima”</div>
+  <p>Tudo vira opressor contra oprimido: pais contra filhos, professor contra aluno, homem contra mulher. Parece que te defende, mas te ensina a viver com raiva e a ver inimigo em todo mundo. A Palavra te chama pra algo mais forte: gratidão, responsabilidade e perdão.</p></div>
+
+  <div class="engodo"><div class="et"><span class="n">02</span>“Sua família te atrapalha”</div>
+  <p>Vão te convencer de que seus pais são “atrasados” e que a família é uma prisão. Por quê? Porque é em casa que a fé passa de geração em geração. Enfraquecer isso te deixa sozinho — e mais fácil de influenciar.</p></div>
+
+  <div class="engodo"><div class="et"><span class="n">03</span>“Cada um tem a sua verdade”</div>
+  <p>Soa humilde e moderno. Mas se nada é verdade de verdade, então o que vale é o que você sente na hora — e o sentimento muda toda semana. Sem uma âncora firme, você é levado “por todo vento de doutrina” (Efésios 4.14). Vira folha no vento.</p></div>
+
+  <div class="engodo"><div class="et"><span class="n">04</span>“O certo é o que está em alta”</div>
+  <p>O que a Bíblia chama de errado é rebatizado de “liberdade”; o que ela chama de santo vira “careta”. É exatamente o que o profeta avisou: “Ai dos que ao mal chamam bem, e ao bem, mal” (Isaías 5.20). Estar na moda não é o mesmo que estar certo.</p></div>
+
+  <div class="brandfoot">Não Vos Conformeis · Adolescentes</div>
+  <div class="pagenum">07</div>
+</section>
+
+<!-- ARMADILHAS 5-7 -->
+<section class="page">
+  <div class="kicker">Parte II · As armadilhas</div>
+  <h2>O cerco na sua<br>identidade</h2>
+  <div class="rule"></div>
+
+  <div class="engodo"><div class="et"><span class="n">05</span>“Você é só o seu grupo”</div>
+  <p>Em vez de ser visto como pessoa única, feita à imagem de Deus, você passa a valer pelo rótulo: sua cor, seu gênero, sua turma. Vira mérito ou culpa por causa do grupo, não do caráter. O Evangelho é o oposto: cada um é amado e responde por si diante de Deus.</p></div>
+
+  <div class="engodo"><div class="et"><span class="n">06</span>As palavras trocadas de lugar</div>
+  <p>“Tolerância” vira concordar com tudo. “Amor” vira aprovar qualquer coisa. “Ódio” vira discordar com firmeza. Quem controla as palavras controla os pensamentos — e quem não sabe nomear o certo e o errado fica sem defesa. Conheça o significado real das palavras.</p></div>
+
+  <div class="engodo"><div class="et"><span class="n">07</span>Jesus virou “só um cara legal”</div>
+  <p>Não negam Deus de frente. Só vão tornando Ele irrelevante: Cristo vira “um bom professor”, a Bíblia “uma história entre muitas”, a igreja “gente ultrapassada”. Mas uma fé tratada como hobby de fim de semana não te segura na pressão de segunda-feira.</p></div>
+
+  <div class="callout">
+    <div class="ct">O que liga as sete</div>
+    <p>Todas têm a mesma raiz: <strong>tirar Deus do centro</strong> e colocar você, seu grupo ou o seu desejo no lugar dele. Descoberta a raiz, a resposta fica fácil — e ela já estava escrita.</p>
+  </div>
+
+  <div class="brandfoot">Não Vos Conformeis · Adolescentes</div>
+  <div class="pagenum">08</div>
+</section>
+
+<!-- DIVISOR III -->
+<section class="page divider">
+  <div class="kicker">Parte III · A defesa</div>
+  <h2>Romanos 12:<br>o antídoto</h2>
+  <div class="rule"></div>
+  <p>Deus não te deixou no escuro. Há dois mil anos, Paulo escreveu o manual exato pra resistir a qualquer pressão. Vamos ler como quem recebe uma arma.</p>
+</section>
+
+<!-- ROMANOS v1-2 -->
+<section class="page">
+  <div class="kicker">Parte III · A defesa</div>
+  <h2>Seu corpo, sua mente<br>e a mudança real</h2>
+  <div class="rule"></div>
+
+  <h3>Versículo 1 — Tenha um dono</h3>
+  <div class="verse">Apresentai o vosso corpo em sacrifício vivo, santo e agradável a Deus, que é o vosso culto racional.<cite>Romanos 12.1</cite></div>
+  <p>A cultura te diz: “você é o seu próprio deus, faça o que sentir”. Soa libertador, mas te deixa refém de todo hype que aparece. A Palavra te chama pra entregar a vida toda a Deus. Quem tem dono não é joguete de cada novidade: já sabe a quem pertence — e isso dá uma paz que ninguém te tira.</p>
+
+  <h3>Versículo 2 — O versículo-chave</h3>
+  <div class="verse">E não vos conformeis com este mundo, mas transformai-vos pela renovação da vossa mente.<cite>Romanos 12.2</cite></div>
+  <p>Aqui está toda a defesa, numa frase. <strong>Conformar</strong> é deixar o mundo te moldar de fora pra dentro — pela pressão e pela repetição (de novo o feed). <strong>Transformar</strong> é ser mudado de dentro pra fora, renovando o jeito de pensar.</p>
+  <p>Sacou onde é a batalha? Na <strong>mente</strong> — exatamente onde tentam te pegar. A defesa não é fugir do mundo nem se trancar. É <strong>encher a cabeça de verdade</strong> até você mesmo reconhecer a mentira quando ela aparece. Cabeça vazia se conforma. Cabeça cheia de verdade discerne.</p>
+
+  <div class="brandfoot">Não Vos Conformeis · Adolescentes</div>
+  <div class="pagenum">10</div>
+</section>
+
+<!-- ROMANOS v3-13 -->
+<section class="page">
+  <div class="kicker">Parte III · A defesa</div>
+  <h2>Quem você é<br>e com quem você anda</h2>
+  <div class="rule"></div>
+
+  <h3>Versículo 3 — Nem por baixo, nem por cima</h3>
+  <p>Paulo manda não pensar “de si mesmo além do que convém”. Contra a cultura que ora te infla (“você é incrível, foco em você”) e ora te destrói (a comparação no feed), a Palavra ensina equilíbrio: seu valor não vem dos likes, vem de Deus.</p>
+
+  <h3>Versículos 4 a 8 — Você é peça única</h3>
+  <div class="verse">Assim nós, que somos muitos, somos um só corpo em Cristo, e individualmente membros uns dos outros.<cite>Romanos 12.5</cite></div>
+  <p>Essa é a resposta pra solidão e pra pressão de “ser igual a todo mundo”. Na visão de Deus, você é <strong>único e necessário</strong>, com dons que ninguém tem igual — e ao mesmo tempo <strong>pertence</strong> a um time de verdade. Sua identidade não vem do grupo de vítimas; vem de ser parte do corpo de Cristo.</p>
+
+  <h3>Versículos 9 a 13 — Amor de verdade, sem máscara</h3>
+  <p>“O amor seja não fingido. Detestem o mal, apeguem-se ao bem.” Contra o ódio e o cancelamento, a Palavra propõe um amor que não é hipócrita e que ainda sabe diferenciar o certo do errado. Dá pra ser gentil sem ser covarde, e firme sem ser amargo.</p>
+
+  <div class="brandfoot">Não Vos Conformeis · Adolescentes</div>
+  <div class="pagenum">11</div>
+</section>
+
+<!-- ROMANOS v14-21 -->
+<section class="page">
+  <div class="kicker">Parte III · A defesa</div>
+  <h2>Vença o mal<br>com o bem</h2>
+  <div class="rule"></div>
+
+  <h3>Versículos 14 a 21 — A jogada mais forte</h3>
+  <div class="verse">Não te deixes vencer do mal, mas vence o mal com o bem.<cite>Romanos 12.21</cite></div>
+  <p>O capítulo termina com a atitude mais surpreendente de todas. A cultura do cancelamento ensina a revidar, expor, destruir quem errou. A Palavra ensina o contrário: “abençoem os que perseguem vocês”, “não retribuam a ninguém mal por mal”, “tenham paz com todos, se possível”.</p>
+  <p>Isso não é ser fraco — é a força mais alta que existe. O adolescente blindado pela Palavra não responde ao ódio com ódio: ele <strong>desarma o mal com bondade</strong>. Enquanto o mundo forma gente amarga e cansada, Cristo forma vencedores que têm paz de verdade.</p>
+  <div class="callout">
+    <div class="ct">Romanos 12 em uma frase</div>
+    <p>Tenha um dono (v.1), renove a mente (v.2), saiba quem você é no corpo de Cristo (v.5), ame sem fingir (v.9) e vença o mal com o bem (v.21). Essa é a sua armadura completa.</p>
+  </div>
+  <div class="brandfoot">Não Vos Conformeis · Adolescentes</div>
+  <div class="pagenum">12</div>
+</section>
+
+<!-- DIVISOR IV -->
+<section class="page divider">
+  <div class="kicker">Parte IV · Na prática</div>
+  <h2>O que fazer<br>a partir de hoje</h2>
+  <div class="rule"></div>
+  <p>Saber sem fazer não muda nada. Aqui vão atitudes simples que cabem na sua rotina — e mudam o jogo.</p>
+</section>
+
+<!-- PRÁTICA -->
+<section class="page">
+  <div class="kicker">Parte IV · Na prática</div>
+  <h2>Seis hábitos que<br>te blindam</h2>
+  <div class="rule"></div>
+  <ul class="checks">
+    <li><strong>Abasteça a mente todo dia.</strong> Um pouco de Bíblia por dia renova a cabeça (v.2) mais do que um culto solto por mês. Comece com 5 minutos — só não pule.</li>
+    <li><strong>Pergunte “quem está me dizendo isso, e por quê?”.</strong> Examine antes de engolir (Atos 17.11). Quem aprende a questionar não cai no primeiro discurso bonito.</li>
+    <li><strong>Dê nome à mentira.</strong> Reconheça as 7 armadilhas quando aparecerem num vídeo ou numa conversa. O que tem nome perde o disfarce de bondade.</li>
+    <li><strong>Cuide do que entra.</strong> Você vira aquilo que assiste mil vezes. Siga quem te aproxima de Deus; silencie o que te puxa pra longe. Curadoria também é oração.</li>
+    <li><strong>Não ande sozinho.</strong> Achar um grupo de fé (v.5) é blindagem. Ninguém aguenta a pressão isolado — junto é mais fácil.</li>
+    <li><strong>Não tenha vergonha de Jesus.</strong> Coragem também se treina. Cada vez que você assume sua fé, a próxima fica mais fácil — e você fortalece quem está perto.</li>
+  </ul>
+  <div class="callout">
+    <div class="ct">A promessa</div>
+    <p>“Instrui o menino no caminho em que deve andar, e até quando envelhecer não se desviará dele” (Provérbios 22.6). O que você planta agora, colhe a vida inteira.</p>
+  </div>
+  <div class="brandfoot">Não Vos Conformeis · Adolescentes</div>
+  <div class="pagenum">14</div>
+</section>
+
+<!-- CTA FINAL -->
+<section class="page final">
+  <div class="final-in">
+    <div class="kicker" style="color:var(--gold-soft)">Pra fechar</div>
+    <h2>Não se conforme.<br>Se transforme.</h2>
+    <div class="rule" style="background:var(--gold);margin:14pt auto 18pt;"></div>
+    <p>A pressão é real, mas você não está sem defesa. Enquanto o mundo tenta te moldar por fora, Deus se oferece pra te transformar por dentro. Você tem a Palavra, tem Romanos 12 e não precisa enfrentar nada sozinho.</p>
+    <p>Curtiu? Dá o próximo passo. Faça parte de uma geração que pensa, que crê e que não se dobra na pressão.</p>
+    <span class="btn">Entrar no grupo Improváveis</span>
+    <div class="site">prandresantos.com.br · @prandresantos</div>
+  </div>
+</section>
+
+</body>
+</html>
