@@ -57,6 +57,18 @@
   ul.steps{ list-style:none; margin:8pt 0; }
   ul.steps li{ font-size:13pt; line-height:1.5; margin-bottom:10pt; padding-left:30pt; position:relative; }
   ul.steps li .sn{ position:absolute; left:0; top:-1pt; font-family:var(--heading); font-weight:900; font-size:15pt; color:var(--gold); }
+
+  /* BIO */
+  .biohead{ display:flex; gap:20pt; align-items:center; margin:6pt 0 14pt; }
+  .biohead img{ width:42mm; height:42mm; border-radius:16px; object-fit:cover; border:2px solid var(--gold); box-shadow:0 6px 22px rgba(13,27,42,.18); flex:0 0 auto; }
+  .biohead .bn{ font-family:var(--heading); font-weight:900; font-size:21pt; color:var(--navy); line-height:1.05; }
+  .biohead .br{ font-family:var(--heading); font-size:9pt; letter-spacing:.16em; text-transform:uppercase; color:var(--gold); margin-top:5pt; }
+  .pullquote{ font-style:italic; font-size:15pt; line-height:1.45; color:var(--navy); border-left:3px solid var(--gold); padding:4pt 0 4pt 15pt; margin:14pt 0; }
+  /* PERGUNTAS / ANOTAÇÕES */
+  ol.qa{ list-style:none; counter-reset:q; margin:8pt 0; }
+  ol.qa li{ counter-increment:q; font-size:12.5pt; line-height:1.5; margin-bottom:11pt; padding-left:26pt; position:relative; }
+  ol.qa li::before{ content:counter(q); position:absolute; left:0; top:-1pt; font-family:var(--heading); font-weight:900; font-size:13pt; color:var(--gold); }
+  .blank{ border-bottom:1px dashed rgba(13,27,42,.3); height:15pt; margin:9pt 0; }
 </style>
 </head>
 <body>
@@ -73,6 +85,26 @@
     <div class="nm"><div class="by">Estudo dirigido por</div><div class="name">Pr. André Santos</div></div>
     <div class="eba">Material do aluno</div>
   </div>
+</section>
+
+<!-- BIO -->
+<section class="page">
+  <div class="kicker">Quem escreveu</div>
+  <div class="biohead">
+    <img src="andre-santos.jpg" alt="André Santos">
+    <div>
+      <div class="bn">André Santos</div>
+      <div class="br">Pastor · Movimento Improváveis</div>
+    </div>
+  </div>
+  <div class="rule"></div>
+  <p>André Santos é pastor e idealizador do <strong>Movimento Improváveis</strong>, nascido de uma convicção simples: Deus se especializa em usar os improváveis. Sua missão é despertar uma geração firme na fé, lúcida diante da cultura e cheia de propósito.</p>
+  <p>Comunicador e escritor, ele leva a mensagem do Evangelho à linguagem de hoje — do púlpito às redes — ajudando adolescentes, jovens e famílias a não se conformarem com este mundo, mas a se transformarem pela renovação da mente.</p>
+  <div class="pullquote">“Deus não chama os capacitados; Ele capacita os chamados. Se Ele te alcançou, é porque tem um propósito com a sua geração.”</div>
+  <p>Esta apostila faz parte desse chamado: te equipar para reconhecer as mentiras da nossa época e permanecer de pé, blindado pela Palavra.</p>
+  <p style="font-family:var(--heading);font-size:9pt;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-top:4pt;">prandresantos.com.br · @prandresantos</p>
+  <div class="brandfoot">Inconformáveis · EBA</div>
+  <div class="pagenum">02</div>
 </section>
 
 <!-- CONTEÚDO -->
@@ -92,7 +124,7 @@
   <div class="lie"><div class="lt"><span class="n">5</span>“Fé é coisa do passado.”</div><p>Não negam Deus de frente — só tentam torná-lo irrelevante. Uma fé tratada como hobby não te sustenta na pressão.</p></div>
 
   <div class="brandfoot">Inconformáveis · EBA</div>
-  <div class="pagenum">02</div>
+  <div class="pagenum">03</div>
 </section>
 
 <!-- ANTÍDOTO + QR -->
@@ -111,7 +143,35 @@
     <li><span class="sn">3</span><strong>Não ande sozinho.</strong> “Somos um só corpo em Cristo” (Rm 12.5). Amizades de fé te seguram nos dias difíceis.</li>
   </ul>
 
-  <div class="qrbox">
+  <div class="lie" style="margin-top:14pt;border-left-color:var(--navy);">
+    <div class="lt" style="color:var(--navy);"><span class="n" style="color:var(--navy);">i</span>De onde veio isso?</div>
+    <p>Não é moda nem acidente. Há cerca de 100 anos, um pensador chamado <strong>Gramsci</strong> percebeu que, para mudar a sociedade, era mais fácil trocar a <strong>cultura</strong> (escola, música, série) do que brigar — e mirou na <strong>família</strong> e na <strong>fé</strong>, porque é onde tudo se sustenta. O ebook completo conta essa história inteira.</p>
+  </div>
+
+  <div class="brandfoot">Inconformáveis · EBA</div>
+  <div class="pagenum">04</div>
+</section>
+
+<!-- PARA CONVERSAR + QR -->
+<section class="page">
+  <div class="kicker">Para a turma</div>
+  <h2>Para conversar<br>em grupo</h2>
+  <div class="rule"></div>
+  <p>Sem respostas erradas — a ideia é pensar junto e sair daqui um pouco mais blindado.</p>
+  <ol class="qa">
+    <li>Qual das <strong>5 mentiras</strong> você mais percebe no seu dia a dia? Onde ela aparece (feed, escola, conversas)?</li>
+    <li>Você já se sentiu pressionado a “se encaixar” em algo que sabia ser errado? Como reagiu?</li>
+    <li>O que muda na prática quando você leva a sério o “<strong>não vos conformeis… transformai-vos</strong>” (Rm 12.2)?</li>
+    <li>Qual hábito de “abastecer a mente” você consegue começar <strong>esta semana</strong>?</li>
+    <li>Quem é a sua comunidade de fé — as pessoas que te seguram nos dias difíceis?</li>
+  </ol>
+
+  <h2 style="font-size:15pt;margin-top:10pt;">Meu compromisso desta semana</h2>
+  <div class="rule"></div>
+  <div class="blank"></div>
+  <div class="blank"></div>
+
+  <div class="qrbox" style="margin-top:14pt;">
     <img src="qr.png" alt="QR Code">
     <div>
       <div class="qt">Baixe o ebook completo, grátis</div>
@@ -120,13 +180,8 @@
     </div>
   </div>
 
-  <div class="lie" style="margin-top:14pt;border-left-color:var(--navy);">
-    <div class="lt" style="color:var(--navy);"><span class="n" style="color:var(--navy);">i</span>De onde veio isso?</div>
-    <p>Não é moda nem acidente. Há cerca de 100 anos, um pensador chamado <strong>Gramsci</strong> percebeu que, para mudar a sociedade, era mais fácil trocar a <strong>cultura</strong> (escola, música, série) do que brigar — e mirou na <strong>família</strong> e na <strong>fé</strong>, porque é onde tudo se sustenta. O ebook completo conta essa história inteira.</p>
-  </div>
-
   <div class="brandfoot">Inconformáveis · EBA</div>
-  <div class="pagenum">03</div>
+  <div class="pagenum">05</div>
 </section>
 
 </body>
