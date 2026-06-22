@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Não Vos Conformeis — Apostila EBA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Montserrat:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#0d1b2a; --gold:#d4af37; --gold-soft:#f0d060; --cream:#faf7ef; --ink:#1c2433; --muted:#5b6675;
+    --heading:'Montserrat','Helvetica Neue',Arial,sans-serif;
+    --serif:'Cormorant Garamond',Georgia,'Times New Roman',serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  @page{ size:A4; margin:0; }
+  html,body{ font-family:var(--serif); color:var(--ink); }
+  .page{ width:210mm; min-height:297mm; padding:24mm 22mm; position:relative; background:var(--cream); page-break-after:always; overflow:hidden; }
+  .page:last-child{ page-break-after:auto; }
+  h1,h2,h3,.kicker,.foot,.tag,.eyebrow{ font-family:var(--heading); }
+  p{ font-size:13.5pt; line-height:1.7; margin-bottom:10pt; }
+  .kicker{ font-size:8.5pt; letter-spacing:.26em; text-transform:uppercase; font-weight:800; color:var(--gold); margin-bottom:9pt; }
+  h2{ font-size:25pt; font-weight:900; color:var(--navy); line-height:1.05; margin-bottom:6pt; letter-spacing:-.01em; }
+  .rule{ width:52pt; height:3px; background:var(--gold); margin:0 0 16pt; border-radius:2px; }
+  .verse{ font-style:italic; font-size:14.5pt; line-height:1.5; color:var(--navy); border-left:3px solid var(--gold); padding:4pt 0 4pt 15pt; margin:13pt 0; }
+  .verse cite{ display:block; font-style:normal; font-family:var(--heading); font-size:8.5pt; letter-spacing:.16em; text-transform:uppercase; color:var(--gold); margin-top:6pt; }
+  strong{ color:var(--navy); font-weight:600; }
+  .brandfoot{ position:absolute; bottom:13mm; left:22mm; font-size:8pt; letter-spacing:.22em; text-transform:uppercase; color:var(--muted); font-family:var(--heading); }
+  .pagenum{ position:absolute; bottom:13mm; right:22mm; font-size:8pt; letter-spacing:.2em; color:var(--muted); font-family:var(--heading); }
+
+  /* CAPA */
+  .cover{ background:var(--navy); color:#fff; display:flex; flex-direction:column; justify-content:space-between; padding:28mm 22mm; }
+  .cover::before{ content:""; position:absolute; top:-110mm; right:-80mm; width:220mm; height:220mm; border-radius:50%; background:radial-gradient(circle, rgba(212,175,55,.16) 0%, transparent 62%); }
+  .cover-top .brand{ font-family:var(--heading); font-weight:900; letter-spacing:.26em; font-size:10pt; color:var(--gold); }
+  .cover-top .brand small{ display:block; font-weight:600; letter-spacing:.2em; font-size:7pt; color:rgba(255,255,255,.5); margin-top:3pt; }
+  .cover-mid{ position:relative; z-index:2; }
+  .tag{ display:inline-block; font-size:8pt; font-weight:700; letter-spacing:.24em; text-transform:uppercase; color:var(--gold); border:1px solid rgba(212,175,55,.4); border-radius:40px; padding:5pt 13pt; margin-bottom:18pt; }
+  .cover h1{ font-family:var(--heading); font-weight:900; font-size:50pt; line-height:.92; letter-spacing:-.02em; color:#fff; }
+  .cover h1 em{ font-style:normal; color:var(--gold); }
+  .cover .sub{ font-style:italic; font-size:16pt; line-height:1.35; color:rgba(240,208,96,.9); margin-top:15pt; max-width:140mm; }
+  .cover-bot{ position:relative; z-index:2; display:flex; justify-content:space-between; align-items:flex-end; }
+  .cover-bot .nm .by{ font-family:var(--heading); font-size:7.5pt; letter-spacing:.22em; text-transform:uppercase; color:rgba(255,255,255,.45); }
+  .cover-bot .nm .name{ font-family:var(--heading); font-size:14pt; font-weight:800; color:#fff; margin-top:2pt; }
+  .cover-bot .eba{ text-align:right; font-family:var(--heading); font-size:8pt; letter-spacing:.18em; text-transform:uppercase; color:rgba(212,175,55,.8); }
+
+  /* QR BLOCO */
+  .qrbox{ background:#fff; border:1px solid rgba(13,27,42,.12); border-radius:14px; padding:18pt; display:flex; gap:18pt; align-items:center; margin:16pt 0; }
+  .qrbox img{ width:34mm; height:34mm; display:block; }
+  .qrbox .qt{ font-family:var(--heading); font-weight:800; font-size:13pt; color:var(--navy); line-height:1.2; margin-bottom:6pt; }
+  .qrbox .qd{ font-size:11.5pt; line-height:1.5; color:var(--muted); }
+  .qrbox .ql{ font-family:var(--heading); font-size:8.5pt; letter-spacing:.06em; color:var(--gold); margin-top:6pt; word-break:break-all; }
+
+  .lie{ background:#fff; border:1px solid rgba(13,27,42,.1); border-left:4px solid var(--gold); border-radius:8px; padding:9pt 14pt; margin:0 0 7pt; }
+  .lie .lt{ font-family:var(--heading); font-weight:800; font-size:11pt; color:var(--navy); }
+  .lie .lt .n{ color:var(--gold); margin-right:6pt; }
+  .lie p{ margin:2pt 0 0; font-size:11pt; line-height:1.42; }
+  ul.steps{ list-style:none; margin:8pt 0; }
+  ul.steps li{ font-size:13pt; line-height:1.5; margin-bottom:10pt; padding-left:30pt; position:relative; }
+  ul.steps li .sn{ position:absolute; left:0; top:-1pt; font-family:var(--heading); font-weight:900; font-size:15pt; color:var(--gold); }
+</style>
+</head>
+<body>
+
+<!-- CAPA -->
+<section class="page cover">
+  <div class="cover-top"><div class="brand">ESCOLA BÍBLICA · ADOLESCENTES<small>Movimento Improváveis · André Santos</small></div></div>
+  <div class="cover-mid">
+    <span class="tag">Apostila EBA · Fé &amp; Cultura</span>
+    <h1>NÃO VOS<br><em>CONFORMEIS</em></h1>
+    <p class="sub">5 mentiras que querem te formar — e o antídoto de Romanos 12.</p>
+  </div>
+  <div class="cover-bot">
+    <div class="nm"><div class="by">Estudo dirigido por</div><div class="name">Pr. André Santos</div></div>
+    <div class="eba">Material do aluno</div>
+  </div>
+</section>
+
+<!-- CONTEÚDO -->
+<section class="page">
+  <div class="kicker">Abertura</div>
+  <h2>Tem uma briga<br>pela sua cabeça</h2>
+  <div class="rule"></div>
+  <p>Nem todo perigo aparece como perigo. Os mais fortes chegam disfarçados de “mente aberta”, de meme, de série, de papo normal — não gritam, sussurram. Esse clima de ideias tem nome: <strong>marxismo cultural</strong>. Ele não ataca de frente; vai diluindo a verdade, ridicularizando a fé e enfraquecendo a família, até parecer ultrapassado seguir a Deus. E o alvo preferido é a sua geração.</p>
+  <p>Mas calma: a Bíblia entregou o antídoto há dois mil anos. Vamos primeiro <strong>desmascarar 5 mentiras</strong> e depois conhecer o versículo que blinda qualquer cabeça.</p>
+
+  <h2 style="font-size:17pt;margin-top:10pt;">As 5 mentiras</h2>
+  <div class="rule"></div>
+  <div class="lie"><div class="lt"><span class="n">1</span>“Você é sempre uma vítima.”</div><p>Ensina a ver todo mundo como inimigo e ninguém como responsável. A Palavra ensina gratidão e coragem, não vitimismo.</p></div>
+  <div class="lie"><div class="lt"><span class="n">2</span>“Família é algo a superar.”</div><p>Atacam o lar porque é nele que a fé é passada adiante. Família forte é proteção, não prisão.</p></div>
+  <div class="lie"><div class="lt"><span class="n">3</span>“Cada um tem a sua verdade.”</div><p>Soa legal, mas tira o chão: se nada é verdade, a vontade do momento vira deus. A verdade tem nome (João 14.6).</p></div>
+  <div class="lie"><div class="lt"><span class="n">4</span>“O certo é o que parece atual.”</div><p>Chamam pecado de liberdade e santidade de atraso. “Ai dos que ao mal chamam bem” (Isaías 5.20).</p></div>
+  <div class="lie"><div class="lt"><span class="n">5</span>“Fé é coisa do passado.”</div><p>Não negam Deus de frente — só tentam torná-lo irrelevante. Uma fé tratada como hobby não te sustenta na pressão.</p></div>
+
+  <div class="brandfoot">Não Vos Conformeis · EBA</div>
+  <div class="pagenum">02</div>
+</section>
+
+<!-- ANTÍDOTO + QR -->
+<section class="page">
+  <div class="kicker">O antídoto</div>
+  <h2>Romanos 12.2:<br>a vacina da mente</h2>
+  <div class="rule"></div>
+  <div class="verse">E não vos conformeis com este mundo, mas transformai-vos pela renovação da vossa mente, para que experimenteis qual seja a boa, agradável e perfeita vontade de Deus.<cite>Romanos 12.2</cite></div>
+  <p><strong>Conformar</strong> é deixar o mundo te moldar por fora — pela pressão e pela repetição. <strong>Transformar</strong> é ser mudado por dentro, renovando o jeito de pensar. Repare: a briga é pela <strong>mente</strong>. Cabeça vazia se conforma; cabeça cheia de verdade <strong>discerne</strong>.</p>
+
+  <h2 style="font-size:18pt;margin-top:12pt;">3 atitudes pra se blindar</h2>
+  <div class="rule"></div>
+  <ul class="steps">
+    <li><span class="sn">1</span><strong>Abasteça a mente todo dia.</strong> Um pouco de Bíblia por dia renova mais que um culto isolado. Mente cheia não tem espaço pra mentira.</li>
+    <li><span class="sn">2</span><strong>Aprenda a nomear o engano.</strong> Quando você dá nome à mentira, ela perde o disfarce de bondade.</li>
+    <li><span class="sn">3</span><strong>Não ande sozinho.</strong> “Somos um só corpo em Cristo” (Rm 12.5). Amizades de fé te seguram nos dias difíceis.</li>
+  </ul>
+
+  <div class="qrbox">
+    <img src="qr.png" alt="QR Code">
+    <div>
+      <div class="qt">Baixe o ebook completo, grátis</div>
+      <div class="qd">Aponte a câmera no QR Code e receba a versão completa de <strong>“Não Vos Conformeis”</strong> — com os 7 engodos e Romanos 12 inteiro, versículo a versículo.</div>
+      <div class="ql">leads.prandresantos.com.br/ebook/nao-vos-conformeis</div>
+    </div>
+  </div>
+
+  <div class="brandfoot">Não Vos Conformeis · EBA</div>
+  <div class="pagenum">03</div>
+</section>
+
+</body>
+</html>

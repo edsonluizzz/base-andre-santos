@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Não Vos Conformeis — André Santos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Montserrat:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#0d1b2a; --navy2:#1a2f4e; --gold:#d4af37; --gold-soft:#f0d060;
+    --cream:#faf7ef; --ink:#1c2433; --muted:#5b6675;
+    --heading:'Montserrat','Helvetica Neue',Arial,sans-serif;
+    --serif:'Cormorant Garamond',Georgia,'Times New Roman',serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  @page{ size:A4; margin:0; }
+  html,body{ font-family:var(--serif); color:var(--ink); }
+  .page{
+    width:210mm; min-height:297mm; padding:26mm 24mm; position:relative;
+    background:var(--cream); page-break-after:always; overflow:hidden;
+  }
+  .page:last-child{ page-break-after:auto; }
+
+  /* ---- TIPOGRAFIA ---- */
+  h1,h2,h3,.kicker,.foot,.cta,.pagenum{ font-family:var(--heading); }
+  p{ font-size:13.2pt; line-height:1.72; margin-bottom:11pt; color:var(--ink); text-align:justify; }
+  .lead{ font-size:15pt; line-height:1.6; color:var(--navy); }
+  .kicker{ font-size:8.5pt; letter-spacing:.28em; text-transform:uppercase; font-weight:800; color:var(--gold); margin-bottom:10pt; }
+  h2{ font-size:23pt; font-weight:900; color:var(--navy); line-height:1.06; margin-bottom:6pt; letter-spacing:-.01em; }
+  h2 .num{ color:var(--gold); }
+  h3{ font-size:14pt; font-weight:800; color:var(--navy); margin:16pt 0 5pt; }
+  .rule{ width:54pt; height:3px; background:var(--gold); margin:0 0 18pt; border-radius:2px; }
+  .verse{ font-style:italic; font-size:14.5pt; line-height:1.55; color:var(--navy); border-left:3px solid var(--gold); padding:4pt 0 4pt 16pt; margin:14pt 0; }
+  .verse cite{ display:block; font-style:normal; font-family:var(--heading); font-size:8.5pt; letter-spacing:.18em; text-transform:uppercase; color:var(--gold); margin-top:7pt; }
+  strong{ color:var(--navy); font-weight:600; }
+  .pagenum{ position:absolute; bottom:14mm; right:24mm; font-size:8pt; letter-spacing:.2em; color:var(--muted); }
+  .brandfoot{ position:absolute; bottom:14mm; left:24mm; font-size:8pt; letter-spacing:.22em; text-transform:uppercase; color:var(--muted); font-family:var(--heading); }
+
+  /* ---- CAPA ---- */
+  .cover{ background:var(--navy); color:#fff; display:flex; flex-direction:column; justify-content:space-between; padding:30mm 24mm; }
+  .cover::before{ content:""; position:absolute; top:-120mm; right:-90mm; width:240mm; height:240mm; border-radius:50%;
+    background:radial-gradient(circle, rgba(212,175,55,.16) 0%, transparent 62%); }
+  .cover::after{ content:""; position:absolute; bottom:-140mm; left:-90mm; width:240mm; height:240mm; border-radius:50%;
+    background:radial-gradient(circle, rgba(26,47,78,.9) 0%, transparent 65%); }
+  .cover-top{ position:relative; z-index:2; }
+  .cover-brand{ font-family:var(--heading); font-weight:900; letter-spacing:.28em; font-size:11pt; color:var(--gold); }
+  .cover-brand small{ display:block; font-weight:600; letter-spacing:.22em; font-size:7.5pt; color:rgba(255,255,255,.5); margin-top:4pt; }
+  .cover-mid{ position:relative; z-index:2; }
+  .cover-tag{ display:inline-block; font-family:var(--heading); font-size:8pt; font-weight:700; letter-spacing:.26em; text-transform:uppercase;
+    color:var(--gold); border:1px solid rgba(212,175,55,.4); border-radius:40px; padding:6pt 14pt; margin-bottom:22pt; }
+  .cover h1{ font-family:var(--heading); font-weight:900; font-size:58pt; line-height:.93; letter-spacing:-.02em; color:#fff; }
+  .cover h1 em{ font-style:normal; color:var(--gold); }
+  .cover-sub{ font-family:var(--serif); font-style:italic; font-size:18pt; line-height:1.4; color:rgba(240,208,96,.9); margin-top:18pt; max-width:150mm; }
+  .cover-ref{ font-family:var(--heading); font-size:8.5pt; letter-spacing:.24em; text-transform:uppercase; color:rgba(255,255,255,.45); margin-top:20pt; }
+  .cover-bot{ position:relative; z-index:2; display:flex; justify-content:space-between; align-items:flex-end; }
+  .cover-author{ font-family:var(--heading); }
+  .cover-author .by{ font-size:8pt; letter-spacing:.24em; text-transform:uppercase; color:rgba(255,255,255,.45); }
+  .cover-author .nm{ font-size:17pt; font-weight:800; color:#fff; margin-top:3pt; }
+  .cover-author .rl{ font-size:8.5pt; color:rgba(212,175,55,.8); margin-top:2pt; }
+  .cover-free{ text-align:right; font-family:var(--heading); font-size:8pt; letter-spacing:.2em; text-transform:uppercase; color:rgba(255,255,255,.4); }
+
+  /* ---- DIVISOR DE SEÇÃO ---- */
+  .divider{ background:var(--navy); color:#fff; display:flex; flex-direction:column; justify-content:center; }
+  .divider .kicker{ color:var(--gold-soft); }
+  .divider h2{ color:#fff; font-size:34pt; }
+  .divider h2 .num{ color:var(--gold); }
+  .divider p{ color:rgba(255,255,255,.7); max-width:140mm; }
+  .divider .rule{ background:var(--gold); }
+
+  /* ---- ENGODOS / LISTAS ---- */
+  .engodo{ margin:0 0 13pt; padding-left:0; }
+  .engodo .et{ font-family:var(--heading); font-weight:800; font-size:12.5pt; color:var(--navy); }
+  .engodo .et .n{ color:var(--gold); margin-right:6pt; }
+  .engodo p{ margin-top:3pt; margin-bottom:0; }
+  .callout{ background:#fff; border:1px solid rgba(13,27,42,.1); border-left:4px solid var(--gold); border-radius:8px; padding:14pt 16pt; margin:14pt 0; }
+  .callout .ct{ font-family:var(--heading); font-weight:800; font-size:9pt; letter-spacing:.16em; text-transform:uppercase; color:var(--gold); margin-bottom:6pt; }
+  .callout p{ margin-bottom:0; font-size:12.5pt; }
+  ul.checks{ list-style:none; margin:10pt 0; }
+  ul.checks li{ font-size:13pt; line-height:1.55; margin-bottom:9pt; padding-left:24pt; position:relative; }
+  ul.checks li::before{ content:"✓"; position:absolute; left:0; top:0; color:var(--gold); font-weight:900; font-family:var(--heading); }
+
+  /* ---- CTA FINAL ---- */
+  .final{ background:var(--navy); color:#fff; display:flex; flex-direction:column; justify-content:center; text-align:center; align-items:center; }
+  .final::before{ content:""; position:absolute; inset:0; background:radial-gradient(circle at 50% 35%, rgba(212,175,55,.14) 0%, transparent 60%); }
+  .final-in{ position:relative; z-index:2; max-width:150mm; }
+  .final h2{ color:#fff; font-size:30pt; }
+  .final p{ color:rgba(255,255,255,.72); text-align:center; }
+  .final .btn{ display:inline-block; font-family:var(--heading); font-weight:800; font-size:11pt; letter-spacing:.1em; text-transform:uppercase;
+    background:var(--gold); color:var(--navy); padding:13pt 30pt; border-radius:50px; margin-top:14pt; }
+  .final .site{ font-family:var(--heading); font-size:9pt; letter-spacing:.2em; text-transform:uppercase; color:rgba(212,175,55,.8); margin-top:20pt; }
+</style>
+</head>
+<body>
+
+<!-- ============ CAPA ============ -->
+<section class="page cover">
+  <div class="cover-top">
+    <div class="cover-brand">ANDRÉ SANTOS<small>Movimento Improváveis</small></div>
+  </div>
+  <div class="cover-mid">
+    <span class="cover-tag">Ebook Gratuito · Fé &amp; Cultura</span>
+    <h1>NÃO VOS<br><em>CONFORMEIS</em></h1>
+    <p class="cover-sub">Como blindar adolescentes e jovens contra o marxismo cultural — à luz de Romanos 12.</p>
+    <p class="cover-ref">“E não vos conformeis com este mundo” · Romanos 12.2</p>
+  </div>
+  <div class="cover-bot">
+    <div class="cover-author">
+      <div class="by">Por</div>
+      <div class="nm">André Santos</div>
+      <div class="rl">Pastor · Pré-candidato a Deputado Estadual — PR</div>
+    </div>
+    <div class="cover-free">Distribuição<br>gratuita</div>
+  </div>
+</section>
+
+<!-- ============ INTRODUÇÃO ============ -->
+<section class="page">
+  <div class="kicker">Introdução</div>
+  <h2>A ameaça silenciosa</h2>
+  <div class="rule"></div>
+  <p class="lead">Existe uma batalha sendo travada pela mente dos nossos filhos — e ela não acontece com gritos, mas com sussurros.</p>
+  <p>Nem todo perigo chega batendo à porta. Os mais destrutivos são silenciosos e sutis: entram pela música, pela série, pela aula, pelo vídeo de quinze segundos, pela conversa “normal” entre amigos. Quando percebemos, já não estão mais do lado de fora — estão moldando o que o nosso adolescente acredita ser certo, justo e verdadeiro.</p>
+  <p>É assim que age o que se convencionou chamar de <strong>marxismo cultural</strong>: não como um partido, nem como um discurso explícito, mas como um <strong>clima</strong>. Um conjunto de ideias que se apresenta como bondade, compaixão e liberdade, mas que, na raiz, mina os fundamentos da fé, da família e da própria verdade.</p>
+  <div class="callout">
+    <div class="ct">Por que isso importa agora</div>
+    <p>A formação de um jovem acontece entre os 12 e os 20 anos. É nessa janela que se decidem as convicções que sustentarão (ou não) toda a vida adulta. Quem ocupa esse espaço, colhe essa geração.</p>
+  </div>
+  <p>Este ebook não é um manual de medo. É um chamado à <strong>vigilância serena</strong> e, sobretudo, à <strong>blindagem pela Palavra</strong>. Porque o antídoto não é o desespero — é o discernimento. E o discernimento tem endereço: <strong>Romanos 12</strong>.</p>
+  <p>Nas próximas páginas, vamos primeiro <strong>desmascarar os principais engodos</strong> dessa cosmovisão. Depois, percorreremos Romanos 12 versículo a versículo, descobrindo que Deus já nos deu, há dois mil anos, o mapa exato para resistir. E terminaremos com um plano prático para pais, líderes e professores.</p>
+  <div class="brandfoot">Não Vos Conformeis</div>
+  <div class="pagenum">02</div>
+</section>
+
+<!-- ============ DIVISOR: O QUE É ============ -->
+<section class="page divider">
+  <div class="kicker">Parte I</div>
+  <h2>O que é, afinal,<br>o marxismo cultural?</h2>
+  <div class="rule"></div>
+  <p>Antes de combater uma ideia, é preciso entendê-la sem caricatura. Conhecer o engano é o primeiro passo da blindagem.</p>
+</section>
+
+<!-- ============ EXPLICAÇÃO ============ -->
+<section class="page">
+  <div class="kicker">Parte I · Entendendo</div>
+  <h2>Do conflito de classes<br>à guerra das ideias</h2>
+  <div class="rule"></div>
+  <p>O marxismo clássico dividia o mundo em <strong>opressores e oprimidos</strong> a partir da economia: de um lado os donos do capital, de outro os trabalhadores. A previsão era de uma revolução econômica. Mas a revolução não veio — em parte porque havia algo segurando o Ocidente: a <strong>família, a tradição e, acima de tudo, a fé cristã</strong>.</p>
+  <p>Diante desse “fracasso”, pensadores do século XX deslocaram a luta. Se não era possível vencer pela economia, seria pela <strong>cultura</strong>. A estratégia passou a ser ocupar pacientemente as instituições que formam a mente de um povo — escolas, universidades, meios de comunicação, artes — até que a visão de mundo cristã fosse substituída por outra. A isso se dá o nome popular de <strong>marxismo cultural</strong>.</p>
+  <div class="verse">Porque a nossa luta não é contra a carne e o sangue, mas contra os principados, contra as potestades… contra as hostes espirituais da maldade.<cite>Efésios 6.12</cite></div>
+  <p>O método não é o confronto, mas a <strong>infiltração lenta</strong>. Não se ataca a verdade de frente; ela é diluída até parecer ultrapassada. Não se proíbe a fé; ela é ridicularizada até dar vergonha de assumi-la. É um cerco cultural — e ele mira justamente os mais moldáveis: <strong>os adolescentes e os jovens</strong>.</p>
+  <p>Entenda: o problema não é a busca legítima por justiça — a Bíblia transborda de justiça e cuidado com o oprimido. O problema é a <strong>cosmovisão</strong> por trás: a que nega a Deus, dissolve a verdade e transforma toda relação humana em disputa de poder. É essa raiz que precisamos reconhecer nos seus frutos.</p>
+  <div class="brandfoot">Não Vos Conformeis</div>
+  <div class="pagenum">04</div>
+</section>
+
+<!-- ============ DIVISOR: ENGODOS ============ -->
+<section class="page divider">
+  <div class="kicker">Parte II</div>
+  <h2>Os <span class="num">7</span> engodos<br>que querem formar<br>seus filhos</h2>
+  <div class="rule"></div>
+  <p>Cada engano se veste de virtude. Aprender a desvesti-lo é metade da vitória.</p>
+</section>
+
+<!-- ============ ENGODOS 1-4 ============ -->
+<section class="page">
+  <div class="kicker">Parte II · Os engodos</div>
+  <h2>Quando a mentira<br>se veste de bondade</h2>
+  <div class="rule"></div>
+
+  <div class="engodo"><div class="et"><span class="n">01</span>A vitimização universal</div>
+  <p>Tudo passa a ser lido como opressor contra oprimido: homem e mulher, pais e filhos, professor e aluno, fé e ciência. O resultado é um jovem que aprende a se enxergar como <strong>vítima permanente</strong> e a ver o próximo como inimigo — o oposto da gratidão e da responsabilidade que a Palavra ensina.</p></div>
+
+  <div class="engodo"><div class="et"><span class="n">02</span>A desconstrução da família</div>
+  <p>A família deixa de ser dádiva de Deus e passa a ser tratada como “estrutura de opressão a ser superada”. Enfraquecer o lar é estratégico: é nele que a fé é transmitida de geração a geração. Sem família forte, a criança fica entregue a outros formadores.</p></div>
+
+  <div class="engodo"><div class="et"><span class="n">03</span>A relativização da verdade</div>
+  <p>“Cada um tem a sua verdade.” Soa humilde, mas é uma armadilha: se não há verdade absoluta, não há Palavra de Deus que se imponha sobre o desejo do momento. Um jovem sem âncora de verdade é levado “por todo vento de doutrina” (Efésios 4.14).</p></div>
+
+  <div class="engodo"><div class="et"><span class="n">04</span>A inversão de valores</div>
+  <p>O que a Escritura chama de pecado é rebatizado de liberdade; o que ela chama de santidade é rotulado de atraso. Cumpre-se a advertência: “Ai dos que ao mal chamam bem, e ao bem, mal” (Isaías 5.20).</p></div>
+
+  <div class="brandfoot">Não Vos Conformeis</div>
+  <div class="pagenum">06</div>
+</section>
+
+<!-- ============ ENGODOS 5-7 ============ -->
+<section class="page">
+  <div class="kicker">Parte II · Os engodos</div>
+  <h2>O cerco se fecha<br>sobre a identidade</h2>
+  <div class="rule"></div>
+
+  <div class="engodo"><div class="et"><span class="n">05</span>A culpa coletiva e a identidade de grupo</div>
+  <p>O indivíduo deixa de ser visto como pessoa única, criada à imagem de Deus, e passa a valer pelo grupo a que pertence. Vem daí a culpa ou o mérito atribuídos por cor, sexo ou origem — e não pelo caráter. É o contrário do Evangelho, em que cada um responde por si diante de Deus e é amado individualmente.</p></div>
+
+  <div class="engodo"><div class="et"><span class="n">06</span>A linguagem como arma</div>
+  <p>Palavras são esvaziadas e reescritas. “Tolerância” passa a significar concordar com tudo; “amor”, aprovar qualquer escolha; “ódio”, discordar com firmeza. Quem controla as palavras controla os pensamentos — e um jovem sem vocabulário firme perde a capacidade de nomear o certo e o errado.</p></div>
+
+  <div class="engodo"><div class="et"><span class="n">07</span>O esvaziamento da fé</div>
+  <p>Cristo é reduzido a “um bom homem”, a Bíblia a “uma entre muitas histórias”, a igreja a “opressão organizada”. Não se nega Deus de frente — apenas o tornam irrelevante. E uma fé tratada como hobby não sustenta ninguém na tempestade.</p></div>
+
+  <div class="callout">
+    <div class="ct">O fio que une os sete</div>
+    <p>Todos têm a mesma raiz: <strong>tirar Deus do centro</strong> e colocar o eu, o grupo ou o desejo no lugar. Desmascarada a raiz, a resposta fica clara — e ela já estava escrita.</p>
+  </div>
+
+  <div class="brandfoot">Não Vos Conformeis</div>
+  <div class="pagenum">07</div>
+</section>
+
+<!-- ============ DIVISOR: ROMANOS 12 ============ -->
+<section class="page divider">
+  <div class="kicker">Parte III · A blindagem</div>
+  <h2>Romanos 12,<br>versículo a versículo</h2>
+  <div class="rule"></div>
+  <p>Deus não nos deixou desarmados. Há dois mil anos, Paulo escreveu o manual exato de resistência a qualquer espírito de conformação. Vamos lê-lo como antídoto.</p>
+</section>
+
+<!-- ============ ROMANOS v1-2 ============ -->
+<section class="page">
+  <div class="kicker">Parte III · A blindagem</div>
+  <h2>O corpo, a mente<br>e a transformação</h2>
+  <div class="rule"></div>
+
+  <h3>Versículo 1 — O culto que protege</h3>
+  <div class="verse">Rogo-vos… que apresenteis o vosso corpo em sacrifício vivo, santo e agradável a Deus, que é o vosso culto racional.<cite>Romanos 12.1</cite></div>
+  <p>A blindagem começa pela <strong>entrega</strong>. Enquanto a cultura ensina o jovem a idolatrar o próprio eu — “você é o seu próprio deus” —, a Palavra o chama a colocar a vida inteira no altar. Quem pertence a Deus não fica à mercê de toda novidade: já tem dono.</p>
+
+  <h3>Versículo 2 — O coração do antídoto</h3>
+  <div class="verse">E não vos conformeis com este mundo, mas transformai-vos pela renovação da vossa mente, para que experimenteis qual seja a boa, agradável e perfeita vontade de Deus.<cite>Romanos 12.2</cite></div>
+  <p>Aqui está toda a estratégia espiritual contra o marxismo cultural, em uma só frase. <strong>Conformar-se</strong> é deixar o mundo te moldar por fora, pela pressão e pela repetição. <strong>Transformar-se</strong> é ser remodelado por dentro, pela renovação da mente.</p>
+  <p>Repare: a batalha é pela <strong>mente</strong> — exatamente o território que o inimigo cultural quer ocupar. A defesa não é isolar o jovem do mundo, mas <strong>renovar a forma como ele pensa</strong>, abastecendo-o de verdade até que ele próprio reconheça a mentira. Mente vazia se conforma; mente renovada discerne.</p>
+
+  <div class="brandfoot">Não Vos Conformeis</div>
+  <div class="pagenum">09</div>
+</section>
+
+<!-- ============ ROMANOS v3-13 ============ -->
+<section class="page">
+  <div class="kicker">Parte III · A blindagem</div>
+  <h2>Identidade, comunidade<br>e amor sem máscara</h2>
+  <div class="rule"></div>
+
+  <h3>Versículo 3 — Sobriedade contra o orgulho</h3>
+  <p>Paulo pede que ninguém “pense de si mesmo além do que convém”. Contra a cultura que infla o eu e a identidade de grupo, a Palavra ensina humildade: medir-se “conforme a medida da fé que Deus repartiu”, não pelos aplausos do mundo.</p>
+
+  <h3>Versículos 4 a 8 — Um corpo, muitos membros</h3>
+  <div class="verse">Assim nós, que somos muitos, somos um só corpo em Cristo, e individualmente membros uns dos outros.<cite>Romanos 12.5</cite></div>
+  <p>Eis a resposta ao coletivismo que dissolve a pessoa e à solidão que isola o jovem. Na visão de Deus, cada um é <strong>único e necessário</strong> — com dons próprios — e ao mesmo tempo <strong>pertencente</strong> a uma comunidade real. Identidade firme nasce daqui: não do grupo de vítimas, mas do corpo de Cristo.</p>
+
+  <h3>Versículos 9 a 13 — O amor sem hipocrisia</h3>
+  <p>“Seja o amor não fingido. Aborrecei o mal e apegai-vos ao bem.” Contra o ódio de classe, a Palavra propõe um amor que <strong>não finge</strong> e que sabe distinguir o bem do mal — ternura sem covardia, firmeza sem amargura.</p>
+
+  <div class="brandfoot">Não Vos Conformeis</div>
+  <div class="pagenum">10</div>
+</section>
+
+<!-- ============ ROMANOS v14-21 ============ -->
+<section class="page">
+  <div class="kicker">Parte III · A blindagem</div>
+  <h2>Vencer o mal<br>com o bem</h2>
+  <div class="rule"></div>
+
+  <h3>Versículos 14 a 21 — A arma final</h3>
+  <div class="verse">Não te deixes vencer do mal, mas vence o mal com o bem.<cite>Romanos 12.21</cite></div>
+  <p>O capítulo termina entregando a estratégia mais subversiva de todas. A cultura do cancelamento ensina a revidar, humilhar, destruir o adversário. A Palavra ensina o oposto: “abençoai aos que vos perseguem”, “a ninguém torneis mal por mal”, “se possível, tende paz com todos”.</p>
+  <p>Isso não é fraqueza — é a mais alta forma de força. O jovem blindado pela Palavra não responde ao ódio com ódio; ele <strong>desarma o mal pela bondade</strong>. Enquanto o mundo cria guerreiros amargos, Cristo forma vencedores serenos.</p>
+  <div class="callout">
+    <div class="ct">Romanos 12 em uma frase</div>
+    <p>Entregue o corpo (v.1), renove a mente (v.2), receba a identidade no corpo de Cristo (v.5), ame sem fingir (v.9) e vença o mal com o bem (v.21). Esta é a armadura completa.</p>
+  </div>
+  <div class="brandfoot">Não Vos Conformeis</div>
+  <div class="pagenum">11</div>
+</section>
+
+<!-- ============ DIVISOR: PRÁTICA ============ -->
+<section class="page divider">
+  <div class="kicker">Parte IV · Na prática</div>
+  <h2>Como blindar<br>quem você ama</h2>
+  <div class="rule"></div>
+  <p>Doutrina sem prática vira teoria. Aqui está o que pais, líderes e professores podem começar a fazer hoje.</p>
+</section>
+
+<!-- ============ PRÁTICA ============ -->
+<section class="page">
+  <div class="kicker">Parte IV · Na prática</div>
+  <h2>Seis atitudes que<br>protegem uma geração</h2>
+  <div class="rule"></div>
+  <ul class="checks">
+    <li><strong>Ocupe o espaço primeiro.</strong> Se você não formar a cosmovisão do seu filho, alguém formará. Converse antes que a tela converse por você.</li>
+    <li><strong>Ensine a pensar, não só a obedecer.</strong> Pergunte “por que você acha isso?”. Mente que aprende a examinar (Atos 17.11) não se rende ao primeiro discurso bonito.</li>
+    <li><strong>Faça da Palavra um hábito, não um evento.</strong> Leitura bíblica diária, ainda que curta, renova a mente (v.2) mais do que qualquer sermão isolado.</li>
+    <li><strong>Nomeie os enganos sem medo.</strong> Mostre os sete engodos pelo nome. O que é nomeado perde o poder de se disfarçar de bondade.</li>
+    <li><strong>Seja presença, não só vigilância.</strong> Blindagem não é trancar portas; é encher o coração de verdade e de amor para que a mentira não ache espaço vazio.</li>
+    <li><strong>Plante comunidade.</strong> Insira o jovem num corpo (v.5): igreja viva, amizades de fé, líderes presentes. Ninguém se blinda sozinho.</li>
+  </ul>
+  <div class="callout">
+    <div class="ct">A promessa</div>
+    <p>“Instrui o menino no caminho em que deve andar, e até quando envelhecer não se desviará dele” (Provérbios 22.6). A semeadura é nossa; a colheita é de Deus.</p>
+  </div>
+  <div class="brandfoot">Não Vos Conformeis</div>
+  <div class="pagenum">13</div>
+</section>
+
+<!-- ============ CTA FINAL ============ -->
+<section class="page final">
+  <div class="final-in">
+    <div class="kicker" style="color:var(--gold-soft)">Conclusão</div>
+    <h2>Uma geração não<br>se conforma. Transforma.</h2>
+    <div class="rule" style="background:var(--gold);margin:14pt auto 18pt;"></div>
+    <p>A ameaça é real, mas o antídoto é mais forte. Enquanto o mundo tenta moldar nossos filhos por fora, Deus se oferece para transformá-los por dentro. Não estamos no escuro: temos a Palavra, temos Romanos 12, temos uns aos outros.</p>
+    <p>Se este conteúdo te ajudou, dê o próximo passo. Faça parte do movimento que está formando uma geração firme, lúcida e cheia de fé.</p>
+    <span class="btn">Entre no grupo Improváveis</span>
+    <div class="site">prandresantos.com.br · @prandresantos</div>
+  </div>
+</section>
+
+</body>
+</html>

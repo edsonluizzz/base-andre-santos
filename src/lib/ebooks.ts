@@ -33,6 +33,22 @@ export const EBOOKS: Record<string, EbookConfig> = {
     whatsappGroupUrl: WHATSAPP_GROUP_URL,
     postRedirectUrl: POST_REDIRECT_URL,
   },
+  "nao-vos-conformeis": {
+    slug: "nao-vos-conformeis",
+    title: "Não Vos Conformeis",
+    titleLines: ["NÃO VOS", "CONFORMEIS"],
+    subtitle: "Romanos 12 e o antídoto ao marxismo cultural",
+    description:
+      "Existe uma ameaça silenciosa e sutil na formação de adolescentes e jovens — o marxismo cultural. Neste ebook, André Santos desmascara os principais engodos dessa cosmovisão e mostra, versículo a versículo em Romanos 12, como blindar quem você ama pela renovação da mente: 'E não vos conformeis com este mundo, mas transformai-vos.'",
+    pdfPath: "/ebooks/nao-vos-conformeis.pdf",
+    pdfDownloadName: "nao-vos-conformeis.pdf",
+    ctaDownloadLabel: "Baixar Não Vos Conformeis",
+    metaTitle: "Não Vos Conformeis — Ebook Gratuito | André Santos",
+    metaDescription:
+      "Romanos 12 e o antídoto ao marxismo cultural na formação de adolescentes e jovens. Baixe o ebook gratuito de André Santos e blinde sua família pela Palavra.",
+    whatsappGroupUrl: WHATSAPP_GROUP_URL,
+    postRedirectUrl: POST_REDIRECT_URL,
+  },
   casamento: {
     slug: "casamento",
     title: "Sob a Tua Palavra",
