@@ -4,29 +4,35 @@
 
 ---
 
-## 🛠️ Sessão 2026-06-22 — Canal "Não Vos Conformeis" (3 edições)
+## 🛠️ Sessão 2026-06-22 — Canal "INCONFORMÁVEIS" (3 edições)
 
-- **Novo ebook/canal** (pedido do Pr. André): "NÃO VOS CONFORMEIS" — Romanos 12 ×
-  marxismo cultural ("ameaça silenciosa na formação de adolescentes e jovens").
-- **TRÊS edições do mesmo tema** (Edson pediu separar público; pais ≠ filhos):
-  - **Adolescentes** (15 págs) → canal principal `/ebook/nao-vos-conformeis`
-    (`nao-vos-conformeis.pdf`). É o **destino do QR Code da apostila** (evento EBA).
-  - **Pais/líderes** (15 págs) → `/ebook/nao-vos-conformeis-pais`
-    (`nao-vos-conformeis-pais.pdf`).
-  - **Apostila EBA** (3 págs, com QR) → `nao-vos-conformeis-apostila-eba.pdf` (impressão).
-- **Conteúdo histórico** incorporado (de material enviado pelo Edson): Marx → Gramsci
-  (hegemonia cultural, 3 pilares Jerusalém/Atenas/Roma, família como alvo) → Escola de
-  Frankfurt (Teoria Crítica, Escala F) → Marcuse/Alinsky → engenharia social. Profundidade
-  calibrada por público (pais = seção completa; adolescentes = "isso não nasceu ontem";
-  apostila = caixa "de onde veio").
+- **Novo ebook/canal** (pedido do Pr. André): Romanos 12 × marxismo cultural ("ameaça
+  silenciosa na formação de adolescentes e jovens").
+- **Título final: "INCONFORMÁVEIS"** · subtítulo **"Chamados para transformar"**
+  (slug mantido `nao-vos-conformeis`, então o QR não mudou).
+- **SEM referência à pré-campanha** nas 3 peças (só "Pr. André Santos"); rodapé da landing
+  virou configurável (`footerNote` em `EbookConfig` + `ebook-form.tsx`).
+- **TRÊS edições do mesmo tema** (público separado; pais ≠ filhos), todas com **página de
+  bio + foto** após a capa (foto em `tools/.../andre-santos.jpg`; bio real: ministério na
+  Congregação Santa Bárbara/AD Curitiba, formação, família):
+  - **Adolescentes** (16 págs) → canal principal `/ebook/nao-vos-conformeis`
+    (`nao-vos-conformeis.pdf`). **Destino do QR Code da apostila** (evento EBA).
+  - **Pais/líderes** (16 págs) → `/ebook/nao-vos-conformeis-pais` (`nao-vos-conformeis-pais.pdf`).
+  - **Apostila EBA** (5 págs, com QR) → `nao-vos-conformeis-apostila-eba.pdf` (impressão):
+    capa, bio, intro+5 mentiras, antídoto+atitudes, "Para conversar em grupo" + compromisso.
+- **Conteúdo histórico** incorporado (material do Edson): Marx → Gramsci (hegemonia cultural,
+  3 pilares Jerusalém/Atenas/Roma, família como alvo) → Escola de Frankfurt (Teoria Crítica,
+  Escala F) → Marcuse/Alinsky → engenharia social. Profundidade calibrada por público.
 - **2 entradas em `src/lib/ebooks.ts`** (`nao-vos-conformeis` = teen, `-pais`). Backend
   genérico (rate-limit `EBOOK_*`, source, rótulos, broadcast) trata sem mais mudanças.
-- **Fonte reproduzível** (≠ ebooks antigos no Canva): HTML branded + `gen-qr.py` em
-  `tools/ebooks/nao-vos-conformeis/`, render via Chromium headless. `tools/` fora do deploy.
-- ⚠️ **Lock do Google Drive**: `GoogleDriveFS.exe` travou PDFs já versionados; resolvido
-  apagando os antigos (Edson) e regravando. Cuidado ao sobrescrever assets no Drive.
-- ⚠️ **Pendente**: revisão teológica (Edson/Cláudia) antes de divulgar; diagramar a
-  apostila na EBA. Lint OK; build só no Vercel (clone `ovile-ci` desatualizado).
+- **Fonte reproduzível** (≠ ebooks antigos no Canva): HTML branded + `gen-qr.py` +
+  `andre-santos.jpg` em `tools/ebooks/nao-vos-conformeis/`, render via Chromium headless
+  (`--print-to-pdf` com path em barras normais; com espaços/`$var` falha). `tools/` fora do deploy.
+- ⚠️ **Lock do Google Drive**: `GoogleDriveFS.exe` trava PDFs já versionados ao sobrescrever
+  (`Device or resource busy`); contornar apagando os antigos no Explorer ou pausando o Drive.
+- ⚠️ **Pendente**: revisão teológica (Edson/Cláudia) antes de divulgar; diagramar a apostila
+  na EBA. Lint OK; build só no Vercel (clone `ovile-ci` desatualizado, falhas pré-existentes).
+- Commits: `3e057d2` → `a0ce1aa` (canal, 3 edições, história, título Inconformáveis, bio+foto).
 
 ---
 
