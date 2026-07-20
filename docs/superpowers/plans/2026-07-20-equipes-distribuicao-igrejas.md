@@ -16,6 +16,7 @@
 - **All routes must:** check `session?.user?.id` first (401 if absent), resolve tenant via `getCampaignContext(session)` (never hardcode `"andre-santos-2026"`), and wrap DB calls in try/catch returning `{ error }` with a proper status.
 - **Every `route.ts` handler needs try/catch** per the project's security rule #7 in `CLAUDE.md`.
 - **Commit after every task** (project workflow: "Sempre commitar e fazer push após qualquer alteração"). Push is left to the user's judgement per task unless stated otherwise — batch pushes are fine, but each task must at least be committed locally so work is never lost mid-stream.
+- **Never run `npx playwright test` locally in this repo.** `playwright.config.ts`'s `webServer` runs `npm run start`, which requires `npm run build` first — the same forbidden `prisma db push`-against-prod path. The e2e suite only runs safely in CI (`.github/workflows/deploy-guardian.yml`, job `e2e-cadastro`, against a disposable Postgres) — it already runs the whole `e2e/` directory with no path filter, so any new spec file is picked up automatically. For every task with an e2e test step: write the spec file, commit, push, and treat the GitHub Actions run as the pass/fail signal — do not attempt to execute it locally.
 
 ---
 
@@ -350,10 +351,16 @@ test.describe("API /api/churches", () => {
 });
 ```
 
-- [ ] **Step 2: Rodar e confirmar que falha**
+- [ ] **Step 2: Commitar só o teste e confirmar que falha no CI**
 
-Run: `npx playwright test e2e/churches-import.spec.ts`
+Não rodar `npx playwright test` localmente (ver Global Constraints). Commitar o spec sozinho, dar push, e abrir a aba Actions do GitHub no job `e2e-cadastro`.
 Expected: FAIL (rotas retornam 404, não 401 — ainda não existem)
+
+```bash
+git add e2e/churches-import.spec.ts
+git commit -m "test(e2e): adiciona teste de 401 pra rotas de igrejas (falha esperada)"
+git push
+```
 
 - [ ] **Step 3: Implementar `src/app/api/churches/route.ts` (GET)**
 
@@ -478,17 +485,17 @@ export async function POST(req: NextRequest) {
 }
 ```
 
-- [ ] **Step 5: Rodar e confirmar que passa**
+- [ ] **Step 5: Commit, push e confirmar no CI**
 
-Run: `npx playwright test e2e/churches-import.spec.ts`
-Expected: 2 passed
-
-- [ ] **Step 6: Commit**
+Não rodar `npx playwright test` localmente (ver Global Constraints).
 
 ```bash
 git add src/app/api/churches/route.ts src/app/api/churches/import/route.ts e2e/churches-import.spec.ts
 git commit -m "feat(api): lista e importação de igrejas (Church)"
+git push
 ```
+
+Conferir no GitHub Actions (job `e2e-cadastro`): 2 passed.
 
 ---
 
@@ -518,10 +525,17 @@ test.describe("API /api/churches/:id/assignments", () => {
 });
 ```
 
-- [ ] **Step 2: Rodar e confirmar que falha**
+- [ ] **Step 2: Commitar só o teste, dar push e confirmar que falha no CI**
 
-Run: `npx playwright test e2e/churches-assignments.spec.ts`
-Expected: FAIL (404, rota não existe)
+Não rodar `npx playwright test` localmente (ver Global Constraints).
+
+```bash
+git add e2e/churches-assignments.spec.ts
+git commit -m "test(e2e): adiciona teste de 401 pra atribuição de dupla (falha esperada)"
+git push
+```
+
+Conferir no GitHub Actions: FAIL (404, rota não existe ainda).
 
 - [ ] **Step 3: Implementar `src/app/api/churches/[id]/assignments/route.ts`**
 
@@ -594,17 +608,17 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 }
 ```
 
-- [ ] **Step 4: Rodar e confirmar que passa**
+- [ ] **Step 4: Commit, push e confirmar no CI**
 
-Run: `npx playwright test e2e/churches-assignments.spec.ts`
-Expected: 1 passed
-
-- [ ] **Step 5: Commit**
+Não rodar `npx playwright test` localmente (ver Global Constraints).
 
 ```bash
-git add src/app/api/churches/[id]/assignments/route.ts e2e/churches-assignments.spec.ts
+git add "src/app/api/churches/[id]/assignments/route.ts" e2e/churches-assignments.spec.ts
 git commit -m "feat(api): atribuição/redistribuição de dupla por igreja"
+git push
 ```
+
+Conferir no GitHub Actions: 1 passed.
 
 ---
 
@@ -728,10 +742,17 @@ test.describe("API /api/church-assignments", () => {
 });
 ```
 
-- [ ] **Step 2: Rodar e confirmar que falha**
+- [ ] **Step 2: Commitar só o teste, dar push e confirmar que falha no CI**
 
-Run: `npx playwright test e2e/church-assignments-mine.spec.ts`
-Expected: FAIL (404)
+Não rodar `npx playwright test` localmente (ver Global Constraints).
+
+```bash
+git add e2e/church-assignments-mine.spec.ts
+git commit -m "test(e2e): adiciona teste de 401 pra rotas de church-assignments (falha esperada)"
+git push
+```
+
+Conferir no GitHub Actions: FAIL (404).
 
 - [ ] **Step 3: Implementar `src/app/api/church-assignments/mine/route.ts`**
 
@@ -842,17 +863,17 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 }
 ```
 
-- [ ] **Step 5: Rodar e confirmar que passa**
+- [ ] **Step 5: Commit, push e confirmar no CI**
 
-Run: `npx playwright test e2e/church-assignments-mine.spec.ts`
-Expected: 2 passed
-
-- [ ] **Step 6: Commit**
+Não rodar `npx playwright test` localmente (ver Global Constraints).
 
 ```bash
-git add src/app/api/church-assignments/mine/route.ts src/app/api/church-assignments/[id]/route.ts e2e/church-assignments-mine.spec.ts
+git add src/app/api/church-assignments/mine/route.ts "src/app/api/church-assignments/[id]/route.ts" e2e/church-assignments-mine.spec.ts
 git commit -m "feat(api): marcar entregue/não foi possível e listar minhas igrejas"
+git push
 ```
+
+Conferir no GitHub Actions: 2 passed.
 
 ---
 
