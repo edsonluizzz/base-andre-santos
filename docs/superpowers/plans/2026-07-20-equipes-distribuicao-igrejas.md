@@ -16,6 +16,7 @@
 - **All routes must:** check `session?.user?.id` first (401 if absent), resolve tenant via `getCampaignContext(session)` (never hardcode `"andre-santos-2026"`), and wrap DB calls in try/catch returning `{ error }` with a proper status.
 - **Every `route.ts` handler needs try/catch** per the project's security rule #7 in `CLAUDE.md`.
 - **Commit after every task** (project workflow: "Sempre commitar e fazer push após qualquer alteração"). Push is left to the user's judgement per task unless stated otherwise — batch pushes are fine, but each task must at least be committed locally so work is never lost mid-stream.
+- **"Verificação manual no Vercel" means production, not a preview environment.** Pushes to `main` deploy straight to production (`ovile.com.br`) — there is no separate preview stage in this project's setup. Manual verification steps below happen there, after the push, using disposable/clearly-labeled test data.
 - **Never run `npx playwright test` locally in this repo.** `playwright.config.ts`'s `webServer` runs `npm run start`, which requires `npm run build` first — the same forbidden `prisma db push`-against-prod path. The e2e suite only runs safely in CI (`.github/workflows/deploy-guardian.yml`, job `e2e-cadastro`, against a disposable Postgres) — it already runs the whole `e2e/` directory with no path filter, so any new spec file is picked up automatically. For every task with an e2e test step: write the spec file, commit, push, and treat the GitHub Actions run as the pass/fail signal — do not attempt to execute it locally.
 
 ---
@@ -699,7 +700,7 @@ export async function POST(request: Request): Promise<NextResponse> {
 
 - [ ] **Step 2: Verificação manual (upload real exige `BLOB_READ_WRITE_TOKEN` de produção — não dá pra rodar local sem o env de prod)**
 
-Documentar no PR: testar no Vercel preview enviando uma foto pela tela `/minhas-igrejas` (Task 9) e conferir que a URL retornada abre publicamente (mesmo smoke test já usado pro upload do WhatsApp: `curl` na URL retornada deve dar HTTP 200 sem autenticação).
+Documentar no PR: testar no Vercel (produção) enviando uma foto pela tela `/minhas-igrejas` (Task 9) e conferir que a URL retornada abre publicamente (mesmo smoke test já usado pro upload do WhatsApp: `curl` na URL retornada deve dar HTTP 200 sem autenticação).
 
 - [ ] **Step 3: Commit**
 
@@ -1081,7 +1082,7 @@ export function ImportChurchesDialog({ open, onOpenChange, onSuccess }: Props) {
 
 - [ ] **Step 2: Verificação manual**
 
-Rodar `next dev` local (não precisa de banco pra renderizar o componente isoladamente — mas o submit final precisa do Vercel preview). Verificar: arrastar/selecionar a planilha real (`lista assembleia de deus - curitiba.xlsx`) mostra 165 linhas e 12 regionais na tela de revisão, incluindo a variação de case ("Santa Felicidade" aparecendo uma vez só, count 11, já deduplicada visualmente pela normalização).
+Rodar `next dev` local (não precisa de banco pra renderizar o componente isoladamente — mas o submit final precisa do Vercel (produção)). Verificar: arrastar/selecionar a planilha real (`lista assembleia de deus - curitiba.xlsx`) mostra 165 linhas e 12 regionais na tela de revisão, incluindo a variação de case ("Santa Felicidade" aparecendo uma vez só, count 11, já deduplicada visualmente pela normalização).
 
 - [ ] **Step 3: Commit**
 
@@ -1240,7 +1241,7 @@ export function AssignDialog({ open, churchId, churchName, onOpenChange, onSucce
 
 - [ ] **Step 2: Verificação manual**
 
-No Vercel preview: abrir `/igrejas` (Task 10), atribuir dupla numa igreja, confirmar que a mesma pessoa não pode ser escolhida duas vezes (campo já selecionado some da lista de busca do outro campo via `exclude`).
+No Vercel (produção): abrir `/igrejas` (Task 10), atribuir dupla numa igreja, confirmar que a mesma pessoa não pode ser escolhida duas vezes (campo já selecionado some da lista de busca do outro campo via `exclude`).
 
 - [ ] **Step 3: Commit**
 
@@ -1404,7 +1405,7 @@ export default function IgrejasPage() {
 }
 ```
 
-- [ ] **Step 2: Verificação manual no Vercel preview**
+- [ ] **Step 2: Verificação manual no Vercel (produção)**
 
 Checklist: (1) importar a planilha real → 165 igrejas aparecem; (2) filtro por regional funciona; (3) atribuir dupla numa igreja sem dupla → status vira "Pendente" com os 2 nomes; (4) reimportar a mesma planilha → 0 criadas, 165 puladas (dedup).
 
@@ -1590,7 +1591,7 @@ export default function MinhasIgrejasPage() {
 }
 ```
 
-- [ ] **Step 2: Verificação manual no Vercel preview**
+- [ ] **Step 2: Verificação manual no Vercel (produção)**
 
 Checklist: (1) logar como colaborador que é `member1` ou `member2` de uma atribuição → vê a igreja na lista; (2) "Marcar entregue" sem foto é impossível (o input `file` é obrigatório para chegar no upload); (3) marcar "não foi possível" → item continua na lista com o aviso de tentativa anterior; (4) marcar entregue com foto → item some da lista.
 
@@ -1626,7 +1627,7 @@ logo após a linha do `/convites` (grupo "Administração"). `Building2` já est
 
 - [ ] **Step 2: Verificação manual**
 
-No Vercel preview: logar como MEMBER → vê "Minhas Igrejas" no grupo Base, não vê "Igrejas". Logar como ADMIN → vê os dois.
+No Vercel (produção): logar como MEMBER → vê "Minhas Igrejas" no grupo Base, não vê "Igrejas". Logar como ADMIN → vê os dois.
 
 - [ ] **Step 3: Commit**
 
