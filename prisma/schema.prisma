@@ -40,6 +40,7 @@ model Campaign {
   zones          Zone[]
   whatsappGroups WhatsAppGroup[]
   userCampaigns  UserCampaign[]
+  churches       Church[]
 }
 
 model Account {
@@ -197,6 +198,8 @@ model Collaborator {
   whatsappGroups WhatsAppGroupMember[]
   attendances    Attendance[]
   rsvps          EventRsvp[]
+  assignmentsAsMember1 ChurchAssignment[] @relation("AssignmentMember1")
+  assignmentsAsMember2 ChurchAssignment[] @relation("AssignmentMember2")
   contactLogs    ContactLog[]
   @@index([campaignId])
   @@index([email])
@@ -570,4 +573,50 @@ enum TaskPriority {
   LOW
   NORMAL
   HIGH
+}
+
+model Church {
+  id          String   @id @default(cuid())
+  campaignId  String   @default("andre-santos-2026")
+  name        String
+  regional    String?
+  denominacao String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  campaign    Campaign           @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  assignments ChurchAssignment[]
+
+  @@index([campaignId])
+  @@index([regional])
+  @@index([denominacao])
+}
+
+model ChurchAssignment {
+  id           String                 @id @default(cuid())
+  churchId     String
+  status       ChurchAssignmentStatus @default(PENDENTE)
+  photoUrl     String?                @db.Text
+  notes        String?
+  assignedById String
+  member1Id    String
+  member2Id    String
+  deliveredAt  DateTime?
+  createdAt    DateTime               @default(now())
+  updatedAt    DateTime               @updatedAt
+
+  church  Church       @relation(fields: [churchId], references: [id], onDelete: Cascade)
+  member1 Collaborator @relation("AssignmentMember1", fields: [member1Id], references: [id], onDelete: Cascade)
+  member2 Collaborator @relation("AssignmentMember2", fields: [member2Id], references: [id], onDelete: Cascade)
+
+  @@index([churchId])
+  @@index([status])
+  @@index([member1Id])
+  @@index([member2Id])
+}
+
+enum ChurchAssignmentStatus {
+  PENDENTE
+  ENTREGUE
+  NAO_FOI_POSSIVEL
 }
