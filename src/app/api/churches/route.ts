@@ -8,6 +8,9 @@ export async function GET(req: NextRequest) {
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
     }
+    if (session.user.role !== "ADMIN") {
+      return NextResponse.json({ error: "Apenas administradores podem ver a lista de igrejas" }, { status: 403 });
+    }
 
     const { db, cid: CID } = getCampaignContext(session);
     const { searchParams } = new URL(req.url);
