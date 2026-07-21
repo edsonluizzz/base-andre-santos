@@ -20,7 +20,7 @@ export function normalizeRegional(raw: string): string {
     .join(" ");
 }
 
-function normalizeName(raw: string): string {
+export function normalizeName(raw: string): string {
   return raw
     .trim()
     .normalize("NFD")

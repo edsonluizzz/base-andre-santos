@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { getCampaignContext } from "@/lib/campaign-context";
-import { dedupeChurchRows } from "@/lib/churches";
+import { dedupeChurchRows, normalizeName } from "@/lib/churches";
 
 const rowSchema = z.object({
   name: z.string().min(1).max(255),
@@ -38,11 +38,11 @@ export async function POST(req: NextRequest) {
       select: { name: true, regional: true },
     });
     const existingKeys = new Set(
-      existing.map((e) => `${e.name.trim().toLowerCase()}|${(e.regional ?? "").trim().toLowerCase()}`),
+      existing.map((e) => `${normalizeName(e.name)}|${normalizeName(e.regional ?? "")}`),
     );
 
     const toCreate = deduped.filter(
-      (row) => !existingKeys.has(`${row.name.toLowerCase()}|${row.regional.toLowerCase()}`),
+      (row) => !existingKeys.has(`${normalizeName(row.name)}|${normalizeName(row.regional)}`),
     );
 
     if (toCreate.length > 0) {
