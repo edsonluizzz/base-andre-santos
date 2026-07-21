@@ -27,6 +27,7 @@ CREATE TYPE "SupportStatus" AS ENUM ('CONFIRMADO', 'NEGOCIANDO', 'NEUTRO', 'ADVE
 CREATE TYPE "CollaboratorTier" AS ENUM ('APOIADOR', 'ATIVISTA', 'LIDER_CELULA', 'COORDENADOR');
 CREATE TYPE "TaskStatus" AS ENUM ('PENDING', 'DONE');
 CREATE TYPE "TaskPriority" AS ENUM ('LOW', 'NORMAL', 'HIGH');
+CREATE TYPE "ChurchAssignmentStatus" AS ENUM ('PENDENTE', 'ENTREGUE', 'NAO_FOI_POSSIVEL');
 
 -- CreateTable
 CREATE TABLE "Campaign" (
@@ -187,6 +188,30 @@ CREATE TABLE "Task" (
     CONSTRAINT "Task_pkey" PRIMARY KEY ("id")
 );
 
+CREATE TABLE "Church" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "campaignId" TEXT NOT NULL DEFAULT 'andre-santos-2026',
+    "name" TEXT NOT NULL,
+    "regional" TEXT,
+    "denominacao" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL
+);
+
+CREATE TABLE "ChurchAssignment" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "churchId" TEXT NOT NULL,
+    "status" "ChurchAssignmentStatus" NOT NULL DEFAULT 'PENDENTE',
+    "photoUrl" TEXT,
+    "notes" TEXT,
+    "assignedById" TEXT NOT NULL,
+    "member1Id" TEXT NOT NULL,
+    "member2Id" TEXT NOT NULL,
+    "deliveredAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL
+);
+
 -- Indexes
 CREATE UNIQUE INDEX "Campaign_joinCode_key" ON "Campaign"("joinCode");
 CREATE UNIQUE INDEX "Campaign_slug_key" ON "Campaign"("slug");
@@ -238,6 +263,13 @@ ALTER TABLE "ContactLog" ADD CONSTRAINT "ContactLog_collaboratorId_fkey" FOREIGN
 CREATE INDEX "Task_campaignId_idx" ON "Task"("campaignId");
 CREATE INDEX "Task_assignedToId_idx" ON "Task"("assignedToId");
 CREATE INDEX "Task_status_idx" ON "Task"("status");
+CREATE INDEX "Church_campaignId_idx" ON "Church"("campaignId");
+CREATE INDEX "Church_regional_idx" ON "Church"("regional");
+CREATE INDEX "Church_denominacao_idx" ON "Church"("denominacao");
+CREATE INDEX "ChurchAssignment_churchId_idx" ON "ChurchAssignment"("churchId");
+CREATE INDEX "ChurchAssignment_status_idx" ON "ChurchAssignment"("status");
+CREATE INDEX "ChurchAssignment_member1Id_idx" ON "ChurchAssignment"("member1Id");
+CREATE INDEX "ChurchAssignment_member2Id_idx" ON "ChurchAssignment"("member2Id");
 
 -- Foreign Keys
 ALTER TABLE "Account" ADD CONSTRAINT "Account_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -262,4 +294,8 @@ ALTER TABLE "Attendance" ADD CONSTRAINT "Attendance_eventId_fkey" FOREIGN KEY ("
 ALTER TABLE "Attendance" ADD CONSTRAINT "Attendance_collaboratorId_fkey" FOREIGN KEY ("collaboratorId") REFERENCES "Collaborator"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 ALTER TABLE "EventRsvp" ADD CONSTRAINT "EventRsvp_eventId_fkey" FOREIGN KEY ("eventId") REFERENCES "Event"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE "EventRsvp" ADD CONSTRAINT "EventRsvp_collaboratorId_fkey" FOREIGN KEY ("collaboratorId") REFERENCES "Collaborator"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Church" ADD CONSTRAINT "Church_campaignId_fkey" FOREIGN KEY ("campaignId") REFERENCES "Campaign"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "ChurchAssignment" ADD CONSTRAINT "ChurchAssignment_churchId_fkey" FOREIGN KEY ("churchId") REFERENCES "Church"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "ChurchAssignment" ADD CONSTRAINT "ChurchAssignment_member1Id_fkey" FOREIGN KEY ("member1Id") REFERENCES "Collaborator"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "ChurchAssignment" ADD CONSTRAINT "ChurchAssignment_member2Id_fkey" FOREIGN KEY ("member2Id") REFERENCES "Collaborator"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 `;
