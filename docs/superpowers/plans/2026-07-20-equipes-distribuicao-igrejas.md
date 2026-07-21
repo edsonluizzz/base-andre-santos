@@ -11,7 +11,7 @@
 ## Global Constraints
 
 - **Never run `npm run build` in the Drive clone** — the `build` script runs `prisma db push` against the **production** database (`package.json`: `"build": "prisma db push || ... && prisma generate && next build"`). Schema changes only reach prod via the Vercel deploy build. Locally, validate with `npx prisma validate` / `npx prisma generate` only (no DB connection).
-- **Lint before push:** run `next lint` from the clone `C:\Users\usuario\ovile-ci` (has no `.env`, so its own `db push` step no-ops offline), not from the Drive folder.
+- **From Task 2 onward, do all editing, committing, and pushing from `C:\dev\ovile-local`, not the Drive folder.** `npm install`/git operations in the Drive folder are unreliable (npm fails with `TAR_ENTRY_ERROR`/`EBADF` — Google Drive doesn't handle thousands of small `node_modules` files well; git commands there routinely take 1-2 minutes). The clone `C:\Users\usuario\ovile-ci` referenced in this project's older docs does not exist on this machine; `C:\dev\ovile-local` replaces it — already cloned from `origin/main` with a working `node_modules` (confirmed: `npx prisma validate`/`npx prisma generate` both succeed there). Start each task with `git pull` in that clone, do the work there (`next lint`, `npx prisma validate`/`generate`, the `ts-node` verification script, editing files, committing, pushing), and treat it as the working copy for the rest of this plan. It has no `.env`, so `prisma db push` (part of the `build` script) still no-ops safely offline there too. The Drive folder can be brought up to date with a single `git pull` once the whole plan is done.
 - **PT-BR, sênior, direto** — all UI copy and code comments in Portuguese where the surrounding file already is (matches `CLAUDE.md`).
 - **All routes must:** check `session?.user?.id` first (401 if absent), resolve tenant via `getCampaignContext(session)` (never hardcode `"andre-santos-2026"`), and wrap DB calls in try/catch returning `{ error }` with a proper status.
 - **Every `route.ts` handler needs try/catch** per the project's security rule #7 in `CLAUDE.md`.
@@ -98,7 +98,7 @@ In `model Collaborator`, add to the relations block (next to `rsvps EventRsvp[]`
 
 - [ ] **Step 3: Validate the schema (no DB connection needed)**
 
-Run: `cd "G:\Meu Drive\PROJETOS IA - EDSON\BASE ANDRE SANTOS - OVILE" && npx prisma validate`
+Run (from `C:\dev\ovile-local`, after `git pull`): `npx prisma validate`
 Expected: `The schema at prisma/schema.prisma is valid 🚀`
 
 Run: `npx prisma generate`
@@ -251,7 +251,7 @@ try {
 
 - [ ] **Step 2: Rodar e confirmar que falha (módulo `./churches` ainda não existe)**
 
-Run: `cd "G:\Meu Drive\PROJETOS IA - EDSON\BASE ANDRE SANTOS - OVILE" && npx ts-node --compiler-options "{\"module\":\"CommonJS\"}" src/lib/churches.test-manual.ts`
+Run (from `C:\dev\ovile-local`): `npx ts-node --compiler-options "{\"module\":\"CommonJS\"}" src/lib/churches.test-manual.ts`
 Expected: erro de módulo não encontrado (`Cannot find module './churches'`)
 
 - [ ] **Step 3: Implementar `src/lib/churches.ts`**
