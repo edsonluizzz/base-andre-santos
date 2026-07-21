@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Church, Camera, X, Loader2, CheckCircle2 } from "lucide-react";
+import { Church, Camera, X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 type MyAssignment = {
@@ -137,7 +137,7 @@ export default function MinhasIgrejasPage() {
                 <div className="flex gap-2">
                   <button
                     onClick={() => openCamera(a.id)}
-                    disabled={uploading && activeId === a.id}
+                    disabled={uploading || activeId !== null}
                     className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold bg-primary text-primary-foreground disabled:opacity-60"
                   >
                     {uploading && activeId === a.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
