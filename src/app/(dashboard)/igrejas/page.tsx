@@ -1,12 +1,15 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Building2, Upload, Users, RefreshCw } from "lucide-react";
+import { Building2, Upload, Users, RefreshCw, Pencil, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { ImportChurchesDialog } from "@/components/churches/import-churches-dialog";
 import { AssignDialog } from "@/components/churches/assign-dialog";
+import { EditChurchDialog } from "@/components/churches/edit-church-dialog";
 
 type Assignment = {
+  id: string;
   status: "PENDENTE" | "ENTREGUE" | "NAO_FOI_POSSIVEL";
   member1: { name: string };
   member2: { name: string };
@@ -16,6 +19,7 @@ type Church = {
   name: string;
   regional: string | null;
   denominacao: string | null;
+  pastor: { id: string; name: string } | null;
   latestAssignment: Assignment | null;
 };
 
@@ -37,6 +41,7 @@ export default function IgrejasPage() {
   const [loading, setLoading] = useState(true);
   const [importOpen, setImportOpen] = useState(false);
   const [assignTarget, setAssignTarget] = useState<Church | null>(null);
+  const [editTarget, setEditTarget] = useState<Church | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -101,6 +106,7 @@ export default function IgrejasPage() {
             <tr className="border-b border-white/[0.07]" style={{ background: "rgba(13,27,42,0.5)" }}>
               <th className="px-4 py-2.5 text-left text-muted-foreground font-medium">Congregação</th>
               <th className="px-4 py-2.5 text-left text-muted-foreground font-medium">Regional</th>
+              <th className="px-4 py-2.5 text-left text-muted-foreground font-medium">Pastor</th>
               <th className="px-4 py-2.5 text-left text-muted-foreground font-medium">Status</th>
               <th className="px-4 py-2.5 text-left text-muted-foreground font-medium">Dupla</th>
               <th className="px-4 py-2.5 text-right text-muted-foreground font-medium">Ação</th>
@@ -108,14 +114,15 @@ export default function IgrejasPage() {
           </thead>
           <tbody className="divide-y divide-white/[0.04]">
             {loading ? (
-              <tr><td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">Carregando...</td></tr>
+              <tr><td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">Carregando...</td></tr>
             ) : churches.length === 0 ? (
-              <tr><td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">Nenhuma igreja importada ainda.</td></tr>
+              <tr><td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">Nenhuma igreja importada ainda.</td></tr>
             ) : (
               churches.map((c) => (
                 <tr key={c.id} className="hover:bg-white/[0.02]">
                   <td className="px-4 py-2.5 text-foreground">{c.name}</td>
                   <td className="px-4 py-2.5 text-muted-foreground">{c.regional ?? "—"}</td>
+                  <td className="px-4 py-2.5 text-muted-foreground">{c.pastor?.name ?? "—"}</td>
                   <td className="px-4 py-2.5">
                     <span className={`px-2 py-0.5 rounded-full text-xs border ${STATUS_COLOR[c.latestAssignment?.status ?? "SEM_DUPLA"] ?? "border-border text-muted-foreground"}`}>
                       {c.latestAssignment ? STATUS_LABEL[c.latestAssignment.status] : "Sem dupla"}
@@ -125,10 +132,30 @@ export default function IgrejasPage() {
                     {c.latestAssignment ? `${c.latestAssignment.member1.name} + ${c.latestAssignment.member2.name}` : "—"}
                   </td>
                   <td className="px-4 py-2.5 text-right">
-                    <Button size="sm" variant="outline" onClick={() => setAssignTarget(c)} className="gap-1.5">
-                      {c.latestAssignment?.status === "NAO_FOI_POSSIVEL" ? <RefreshCw className="w-3.5 h-3.5" /> : <Users className="w-3.5 h-3.5" />}
-                      {c.latestAssignment ? "Redistribuir" : "Atribuir dupla"}
-                    </Button>
+                    <div className="flex justify-end gap-1.5">
+                      <Button size="sm" variant="outline" onClick={() => setEditTarget(c)} className="gap-1.5">
+                        <Pencil className="w-3.5 h-3.5" /> Editar
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => setAssignTarget(c)} className="gap-1.5">
+                        {c.latestAssignment?.status === "NAO_FOI_POSSIVEL" ? <RefreshCw className="w-3.5 h-3.5" /> : <Users className="w-3.5 h-3.5" />}
+                        {c.latestAssignment ? "Redistribuir" : "Atribuir dupla"}
+                      </Button>
+                      {c.latestAssignment && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="gap-1.5 text-destructive hover:bg-destructive/10"
+                          onClick={async () => {
+                            if (!confirm(`Excluir a dupla atribuída a "${c.name}"?`)) return;
+                            const res = await fetch(`/api/church-assignments/${c.latestAssignment!.id}`, { method: "DELETE" });
+                            if (res.ok) { toast.success("Atribuição excluída"); load(); }
+                            else { const d = await res.json().catch(() => ({})); toast.error(d.error ?? "Erro ao excluir"); }
+                          }}
+                        >
+                          <Trash2 className="w-3.5 h-3.5" /> Excluir
+                        </Button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))
@@ -147,6 +174,12 @@ export default function IgrejasPage() {
           onSuccess={load}
         />
       )}
+      <EditChurchDialog
+        open={!!editTarget}
+        church={editTarget}
+        onOpenChange={(v) => !v && setEditTarget(null)}
+        onSuccess={load}
+      />
     </div>
   );
 }
