@@ -24,6 +24,7 @@ export async function GET(req: NextRequest) {
         ...(denominacao && { denominacao }),
       },
       include: {
+        pastor: { select: { id: true, name: true, phone: true } },
         assignments: {
           orderBy: { createdAt: "desc" },
           take: 1,
@@ -41,6 +42,7 @@ export async function GET(req: NextRequest) {
       name: c.name,
       regional: c.regional,
       denominacao: c.denominacao,
+      pastor: c.pastor,
       latestAssignment: c.assignments[0] ?? null,
     }));
 

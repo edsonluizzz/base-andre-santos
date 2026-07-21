@@ -69,3 +69,32 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     return NextResponse.json({ error: "Erro ao atualizar" }, { status: 500 });
   }
 }
+
+export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
+    }
+    if (session.user.role !== "ADMIN") {
+      return NextResponse.json({ error: "Apenas administradores podem excluir uma atribuição" }, { status: 403 });
+    }
+
+    const { db, cid: CID } = getCampaignContext(session);
+
+    const assignment = await db.churchAssignment.findUnique({
+      where: { id: params.id },
+      select: { church: { select: { campaignId: true } } },
+    });
+    if (!assignment || assignment.church.campaignId !== CID) {
+      return NextResponse.json({ error: "Atribuição não encontrada" }, { status: 404 });
+    }
+
+    await db.churchAssignment.delete({ where: { id: params.id } });
+
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    console.error("[api/church-assignments/:id DELETE] erro:", err);
+    return NextResponse.json({ error: "Erro ao excluir atribuição" }, { status: 500 });
+  }
+}
