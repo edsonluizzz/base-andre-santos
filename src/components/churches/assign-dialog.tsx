@@ -121,7 +121,7 @@ export function AssignDialog({ open, churchId, churchName, onOpenChange, onSucce
           {error && <p className="text-xs text-destructive flex items-center gap-1"><AlertCircle className="w-3.5 h-3.5" />{error}</p>}
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => handleClose(false)}>Cancelar</Button>
-            <Button onClick={handleSave} disabled={saving} className="bg-primary text-primary-foreground">
+            <Button onClick={handleSave} disabled={saving || (member1 !== null && member2 !== null && member1.id === member2.id)} className="bg-primary text-primary-foreground">
               {saving ? "Salvando..." : "Atribuir"}
             </Button>
           </div>
