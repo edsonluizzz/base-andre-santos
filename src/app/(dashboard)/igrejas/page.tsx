@@ -32,6 +32,7 @@ const STATUS_COLOR: Record<string, string> = {
 
 export default function IgrejasPage() {
   const [churches, setChurches] = useState<Church[]>([]);
+  const [allChurches, setAllChurches] = useState<Church[]>([]);
   const [regionalFilter, setRegionalFilter] = useState("");
   const [loading, setLoading] = useState(true);
   const [importOpen, setImportOpen] = useState(false);
@@ -51,7 +52,18 @@ export default function IgrejasPage() {
 
   useEffect(() => { load(); }, [load]);
 
-  const regionais = Array.from(new Set(churches.map((c) => c.regional).filter(Boolean))) as string[];
+  useEffect(() => {
+    const fetchAllChurches = async () => {
+      const res = await fetch("/api/churches");
+      if (res.ok) {
+        const j = await res.json();
+        setAllChurches(j.data);
+      }
+    };
+    fetchAllChurches();
+  }, []);
+
+  const regionais = Array.from(new Set(allChurches.map((c) => c.regional).filter(Boolean))) as string[];
 
   return (
     <div className="space-y-5">
