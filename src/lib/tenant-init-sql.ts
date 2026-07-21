@@ -194,6 +194,7 @@ CREATE TABLE "Church" (
     "name" TEXT NOT NULL,
     "regional" TEXT,
     "denominacao" TEXT,
+    "pastorId" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL
 );
@@ -266,6 +267,7 @@ CREATE INDEX "Task_status_idx" ON "Task"("status");
 CREATE INDEX "Church_campaignId_idx" ON "Church"("campaignId");
 CREATE INDEX "Church_regional_idx" ON "Church"("regional");
 CREATE INDEX "Church_denominacao_idx" ON "Church"("denominacao");
+CREATE INDEX "Church_pastorId_idx" ON "Church"("pastorId");
 CREATE INDEX "ChurchAssignment_churchId_idx" ON "ChurchAssignment"("churchId");
 CREATE INDEX "ChurchAssignment_status_idx" ON "ChurchAssignment"("status");
 CREATE INDEX "ChurchAssignment_member1Id_idx" ON "ChurchAssignment"("member1Id");
@@ -295,6 +297,7 @@ ALTER TABLE "Attendance" ADD CONSTRAINT "Attendance_collaboratorId_fkey" FOREIGN
 ALTER TABLE "EventRsvp" ADD CONSTRAINT "EventRsvp_eventId_fkey" FOREIGN KEY ("eventId") REFERENCES "Event"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE "EventRsvp" ADD CONSTRAINT "EventRsvp_collaboratorId_fkey" FOREIGN KEY ("collaboratorId") REFERENCES "Collaborator"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE "Church" ADD CONSTRAINT "Church_campaignId_fkey" FOREIGN KEY ("campaignId") REFERENCES "Campaign"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Church" ADD CONSTRAINT "Church_pastorId_fkey" FOREIGN KEY ("pastorId") REFERENCES "Collaborator"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 ALTER TABLE "ChurchAssignment" ADD CONSTRAINT "ChurchAssignment_churchId_fkey" FOREIGN KEY ("churchId") REFERENCES "Church"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE "ChurchAssignment" ADD CONSTRAINT "ChurchAssignment_member1Id_fkey" FOREIGN KEY ("member1Id") REFERENCES "Collaborator"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE "ChurchAssignment" ADD CONSTRAINT "ChurchAssignment_member2Id_fkey" FOREIGN KEY ("member2Id") REFERENCES "Collaborator"("id") ON DELETE CASCADE ON UPDATE CASCADE;

@@ -200,6 +200,7 @@ model Collaborator {
   rsvps          EventRsvp[]
   assignmentsAsMember1 ChurchAssignment[] @relation("AssignmentMember1")
   assignmentsAsMember2 ChurchAssignment[] @relation("AssignmentMember2")
+  pastorOfChurches Church[] @relation("ChurchPastor")
   contactLogs    ContactLog[]
   @@index([campaignId])
   @@index([email])
@@ -581,15 +582,18 @@ model Church {
   name        String
   regional    String?
   denominacao String?
+  pastorId    String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   campaign    Campaign           @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  pastor      Collaborator?      @relation("ChurchPastor", fields: [pastorId], references: [id], onDelete: SetNull)
   assignments ChurchAssignment[]
 
   @@index([campaignId])
   @@index([regional])
   @@index([denominacao])
+  @@index([pastorId])
 }
 
 model ChurchAssignment {
