@@ -1,6 +1,49 @@
 # Estado Atual da Produção — 2026-06-22
 
-**Última atualização:** 2026-06-22 BRT
+**Última atualização:** 2026-07-21 BRT (módulo de equipes de distribuição em igrejas)
+
+---
+
+## 🛠️ Sessão 2026-07-20/21 — Módulo "Equipes de Distribuição em Igrejas"
+
+**Novo módulo completo** (spec/plano em `docs/superpowers/specs/` e `docs/superpowers/plans/`,
+2026-07-20-equipes-distribuicao-igrejas): controle de duplas (2 colaboradores) atribuídas a
+congregações pra distribuição de material impresso, com comprovação por foto.
+
+- **Menu:** "Igrejas" (`/igrejas`, ADMIN — importar planilha, atribuir/redistribuir/excluir
+  dupla, editar igreja e vincular pastor) e "Minhas Igrejas" (`/minhas-igrejas`, qualquer
+  colaborador — marcar entregue com foto obrigatória, ou "não foi possível" com retentativa
+  pela mesma dupla).
+- **Schema novo:** `Church` (nome, regional/denominação como texto livre — não usa `Zone` da
+  campanha, é a divisão interna da denominação — e `pastorId` opcional ligado a
+  `Collaborator`, `onDelete: SetNull`) + `ChurchAssignment` (`member1Id`/`member2Id` diretos,
+  status `PENDENTE/ENTREGUE/NAO_FOI_POSSIVEL`). Redistribuir cria uma nova linha (histórico
+  preservado); a dupla antiga fica automaticamente sem acesso à igreja reatribuída.
+- **Import de planilha:** só nome da congregação + regional (testado com a lista real da
+  Assembleia de Deus Curitiba, 165 congregações/12 regionais); denominação é definida uma vez
+  por importação, não por linha.
+- **Pastor:** vinculado como `Collaborator` de verdade (`profile: PASTOR`) — busca na base
+  existente ou cadastro rápido (nome+telefone+cidade) direto no modal de edição da igreja.
+- Construído com **subagent-driven-development** (12 tasks, implementador+revisor por task).
+  3 bugs reais pegos e corrigidos nas revisões de task (race de foto indo pra igreja errada
+  em `/minhas-igrejas`, filtro de regional que sumia, seleção duplicada na dupla) e mais 3 na
+  revisão final de branch completo (redistribuição não bloqueava a dupla antiga de agir —
+  quebrava a accountability; dedup de import incompatível com acentuação; `GET /api/churches`
+  sem checagem de ADMIN). Todos corrigidos e re-revisados antes do push.
+- ⚠️ **Ambiente local:** a pasta do Drive não consegue rodar `npm install` (erros de I/O do
+  Google Drive com muitos arquivos pequenos) — o clone `C:\Users\usuario\ovile-ci` citado
+  antes não existe nesta máquina. Criado `C:\dev\ovile-local` como clone de trabalho (fora do
+  Drive) pra validação local (`prisma validate/generate`, `tsc`, scripts `ts-node`). Manter
+  esse clone sincronizado (`git pull`) antes de usar.
+- ⚠️ **Nunca rodar `npx playwright test` localmente** — o `webServer` do Playwright depende de
+  `npm run build` → `prisma db push` em produção. A suíte e2e só roda com segurança no CI
+  (`deploy-guardian.yml`, job `e2e-cadastro`, Postgres descartável) — já confirmado verde no
+  commit `33b7c911` com os 3 specs novos.
+- **Pendências não bloqueantes:** sem drag-and-drop no import (só clique); cancelar o seletor
+  de foto em `/minhas-igrejas` sem escolher nada trava a lista até recarregar a página;
+  upload de foto real e import da planilha real ainda não testados manualmente em produção
+  (dependem do `BLOB_READ_WRITE_TOKEN` de prod).
+- Commits: `1ccee3a`…`79fe971` (schema, APIs, UI, 6 fixes de revisão, pastor+edição+exclusão).
 
 ---
 
@@ -30,8 +73,9 @@
   (`--print-to-pdf` com path em barras normais; com espaços/`$var` falha). `tools/` fora do deploy.
 - ⚠️ **Lock do Google Drive**: `GoogleDriveFS.exe` trava PDFs já versionados ao sobrescrever
   (`Device or resource busy`); contornar apagando os antigos no Explorer ou pausando o Drive.
-- ⚠️ **Pendente**: revisão teológica (Edson/Cláudia) antes de divulgar; diagramar a apostila
-  na EBA. Lint OK; build só no Vercel (clone `ovile-ci` desatualizado, falhas pré-existentes).
+- ✅ **Revisão teológica (Edson/Cláudia) OK** (2026-07-20) — liberado pra divulgar.
+- ⚠️ **Pendente**: diagramar a apostila na EBA. Lint OK; build só no Vercel (clone `ovile-ci`
+  desatualizado, falhas pré-existentes).
 - Commits: `3e057d2` → `a0ce1aa` (canal, 3 edições, história, título Inconformáveis, bio+foto).
 
 ---

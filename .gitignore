@@ -57,3 +57,6 @@ temporaria/*.xlsx
 temporaria/*.csv
 "Stride - Proposta André Santos.pdf"
 .env*
+
+# Vídeo de treinamento (projeto Remotion) — não versionar no repo do app
+/treinamento/
