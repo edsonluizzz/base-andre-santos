@@ -19,7 +19,7 @@ export async function GET() {
       return NextResponse.json({ data: [] });
     }
 
-    const assignments = await db.churchAssignment.findMany({
+    const candidates = await db.churchAssignment.findMany({
       where: {
         status: { not: "ENTREGUE" },
         OR: [{ member1Id: collaborator.id }, { member2Id: collaborator.id }],
@@ -31,6 +31,20 @@ export async function GET() {
       },
       orderBy: { createdAt: "asc" },
     });
+
+    if (candidates.length === 0) {
+      return NextResponse.json({ data: [] });
+    }
+
+    const churchIds = candidates.map((c) => c.churchId);
+    const latestPerChurch = await db.churchAssignment.findMany({
+      where: { churchId: { in: churchIds } },
+      orderBy: { createdAt: "desc" },
+      distinct: ["churchId"],
+      select: { id: true, churchId: true },
+    });
+    const latestIdByChurch = new Map(latestPerChurch.map((a) => [a.churchId, a.id]));
+    const assignments = candidates.filter((a) => latestIdByChurch.get(a.churchId) === a.id);
 
     return NextResponse.json({ data: assignments });
   } catch (err) {

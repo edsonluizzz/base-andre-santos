@@ -21,7 +21,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       return NextResponse.json({ error: parsed.error.errors[0]?.message ?? "Dados inválidos" }, { status: 400 });
     }
 
-    const { db } = getCampaignContext(session);
+    const { db, cid: CID } = getCampaignContext(session);
 
     const collaborator = await db.collaborator.findUnique({
       where: { userId: session.user.id },
@@ -33,13 +33,25 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
     const assignment = await db.churchAssignment.findUnique({
       where: { id: params.id },
-      select: { member1Id: true, member2Id: true },
+      select: { member1Id: true, member2Id: true, churchId: true, church: { select: { campaignId: true } } },
     });
-    if (!assignment) {
+    if (!assignment || assignment.church.campaignId !== CID) {
       return NextResponse.json({ error: "Atribuição não encontrada" }, { status: 404 });
     }
     if (assignment.member1Id !== collaborator.id && assignment.member2Id !== collaborator.id) {
       return NextResponse.json({ error: "Você não faz parte desta dupla" }, { status: 403 });
+    }
+
+    const latest = await db.churchAssignment.findFirst({
+      where: { churchId: assignment.churchId },
+      orderBy: { createdAt: "desc" },
+      select: { id: true },
+    });
+    if (latest?.id !== params.id) {
+      return NextResponse.json(
+        { error: "Esta atribuição foi substituída por uma redistribuição mais recente." },
+        { status: 409 },
+      );
     }
 
     const data = parsed.data;
