@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import {
   LayoutDashboard, Users, Calendar,
-  Megaphone, Settings, LogOut, Shield, Star, Map, BarChart2, Network, Target, ClipboardList, Camera, Award, Building2, Plus, UserPlus, Link2,
+  Megaphone, Settings, LogOut, Shield, Star, Map, BarChart2, Network, Target, ClipboardList, Camera, Award, Building2, Plus, UserPlus, Link2, Church,
   ChevronLeft, ChevronRight, Sun, Moon, GraduationCap, Send,
 } from "lucide-react";
 import { NotificationBell } from "@/components/notifications/notification-bell";
@@ -24,6 +24,7 @@ const navItems = [
   { href: "/colaboradores",  icon: Users,            label: "Colaboradores",   minRole: "MEMBER", superAdminOnly: false },
   { href: "/rua",            icon: UserPlus,         label: "Cadastro na Rua", minRole: "MEMBER", superAdminOnly: false },
   { href: "/celulas",        icon: Network,          label: "Células",         minRole: "MEMBER", superAdminOnly: false },
+  { href: "/minhas-igrejas", icon: Church,          label: "Minhas Igrejas",  minRole: "MEMBER", superAdminOnly: false },
   { href: "/mapa",           icon: Map,              label: "Mapa de Apoio",   minRole: "LEADER", superAdminOnly: false },
   { href: "/agenda",         icon: Calendar,         label: "Agenda",          minRole: "LEADER", superAdminOnly: false },
   { href: "/relatorio",      icon: BarChart2,        label: "Relatório",       minRole: "LEADER", superAdminOnly: false },
@@ -31,6 +32,7 @@ const navItems = [
   { href: "/instagram",      icon: Camera,           label: "Instagram",       minRole: "LEADER", superAdminOnly: false },
   { href: "/eleitos-2022",   icon: Award,            label: "Eleitos 2022",    minRole: "LEADER", superAdminOnly: false },
   { href: "/convites",       icon: Link2,            label: "Convites",        minRole: "ADMIN",  superAdminOnly: false },
+  { href: "/igrejas",        icon: Building2,        label: "Igrejas",         minRole: "ADMIN",  superAdminOnly: false },
   { href: "/tarefas",        icon: ClipboardList,    label: "Tarefas",         minRole: "ADMIN",  superAdminOnly: false },
   { href: "/whatsapp",       icon: Send,             label: "WhatsApp",        minRole: "ADMIN",  superAdminOnly: false },
   { href: "/comunicados",    icon: Megaphone,        label: "Comunicados",     minRole: "ADMIN",  superAdminOnly: false },
