@@ -31,10 +31,15 @@ que já está pago fica congelado por já ter saído da lista de pendentes. Se n
 auditar valores pagos por período, migra pra tabela `Payment` separada — não faz sentido agora
 (YAGNI).
 
+Projeto não usa `Decimal` em nenhum outro lugar do schema (sem precedente de lidar com
+serialização de `Decimal` do Prisma no client) — usar `Float` é mais simples aqui e evita
+converter decimal.js pra número em toda resposta de API. Não é dinheiro somado em milhares de
+transações (é 1 valor fixo × dezenas de entregas), então não há risco prático de arredondamento.
+
 ```prisma
 model Settings {
   // ...campos existentes...
-  deliveryPaymentValue Decimal @default(10) @db.Decimal(10, 2) // R$ por entrega confirmada, por membro
+  deliveryPaymentValue Float @default(10) // R$ por entrega confirmada, por membro
 }
 
 model ChurchAssignment {
