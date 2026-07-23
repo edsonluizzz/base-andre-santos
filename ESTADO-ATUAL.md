@@ -1,6 +1,37 @@
 # Estado Atual da Produção — 2026-06-22
 
-**Última atualização:** 2026-07-21 BRT (módulo de equipes de distribuição em igrejas)
+**Última atualização:** 2026-07-23 BRT (financeiro de entregas em Igrejas)
+
+---
+
+## 🛠️ Sessão 2026-07-23 — Financeiro de Entregas (Igrejas)
+
+**Nova aba "Financeiro"** dentro de `/igrejas` (spec/plano em `docs/superpowers/specs/` e
+`docs/superpowers/plans/`, 2026-07-23-financeiro-entregas-igrejas): calcula, por colaborador,
+quanto é devido pelas entregas confirmadas (`ChurchAssignment.status = ENTREGUE`) e permite
+marcar pagamentos individual ou em lote, sem reprocessar quem já foi pago.
+
+- **Sem tabela nova**: reaproveita `Settings` (campo `deliveryPaymentValue`, valor fixo global
+  por entrega/membro, editável na própria aba) e `ChurchAssignment` (`member1PaidAt`/
+  `member2PaidAt` — timestamp null = pendente, preenchido = pago/auditoria).
+- **Helper único** `markAssignmentMemberPaid` (`src/lib/church-payments.ts`) concentra a regra
+  "só marca pago se ENTREGUE e ainda não pago" — usado tanto no endpoint individual quanto no
+  em lote, evitando duplicar a regra de negócio.
+- **Endpoints novos**: `POST /api/church-assignments/:id/pay` (individual), `POST
+  /api/church-assignments/pay-bulk` (todas as entregas pendentes de 1 colaborador), `GET
+  /api/church-assignments/payments` (relatório agregado: devido/pago por colaborador + totais).
+  `PUT /api/settings` estendido para aceitar `deliveryPaymentValue`.
+- **UI**: `/igrejas` ganhou abas "Igrejas"/"Financeiro"; a aba nova mostra totais pendente/pago,
+  tabela por colaborador com expansão das entregas pendentes, e botões "Marcar pago"/"Pagar tudo".
+- Todas as rotas novas seguem o padrão já estabelecido: `auth()` → 401 → checa `ADMIN` → 403 →
+  `getCampaignContext` → filtra por `campaignId`.
+- Validado no clone `C:\dev\ovile-local`: `prisma validate`/`generate` OK, `tsc --noEmit` sem
+  erros novos (23 erros pré-existentes no restante do projeto, dívida técnica já mapeada,
+  nenhum nos arquivos tocados), `next lint` sem warnings/erros. CI (`deploy-guardian.yml`,
+  branch `feat/financeiro-entregas-igrejas`) verde, incluindo o job `e2e-cadastro` com o novo
+  spec de auth-redirect.
+- Commits: `5bc15d3`…`8d803b8` (schema, helper+endpoint individual, pay-bulk, relatório
+  agregado, settings, UI, e2e). Branch mergeada em `main`.
 
 ---
 

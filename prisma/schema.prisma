@@ -433,12 +433,13 @@ model InviteLink {
 }
 
 model Settings {
-  id                  String   @id @default("singleton")
-  campaignName        String   @default("Base Andre Santos")
-  logoBase64          String?  @db.Text
-  googleRefreshToken  String?  @db.Text
-  whatsappGroupLink   String?  // Link de convite do grupo WhatsApp de apoiadores
-  updatedAt           DateTime @updatedAt
+  id                   String   @id @default("singleton")
+  campaignName         String   @default("Base Andre Santos")
+  logoBase64           String?  @db.Text
+  googleRefreshToken   String?  @db.Text
+  whatsappGroupLink    String?  // Link de convite do grupo WhatsApp de apoiadores
+  deliveryPaymentValue Float    @default(10) // R$ por entrega confirmada (ChurchAssignment ENTREGUE), por membro da dupla
+  updatedAt            DateTime @updatedAt
 }
 
 model MunicipalityGoal {
@@ -597,17 +598,19 @@ model Church {
 }
 
 model ChurchAssignment {
-  id           String                 @id @default(cuid())
-  churchId     String
-  status       ChurchAssignmentStatus @default(PENDENTE)
-  photoUrl     String?                @db.Text
-  notes        String?
-  assignedById String
-  member1Id    String
-  member2Id    String
-  deliveredAt  DateTime?
-  createdAt    DateTime               @default(now())
-  updatedAt    DateTime               @updatedAt
+  id            String                 @id @default(cuid())
+  churchId      String
+  status        ChurchAssignmentStatus @default(PENDENTE)
+  photoUrl      String?                @db.Text
+  notes         String?
+  assignedById  String
+  member1Id     String
+  member2Id     String
+  deliveredAt   DateTime?
+  member1PaidAt DateTime? // null = pendente de pagamento; preenchido = pago (timestamp = auditoria)
+  member2PaidAt DateTime?
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt
 
   church  Church       @relation(fields: [churchId], references: [id], onDelete: Cascade)
   member1 Collaborator @relation("AssignmentMember1", fields: [member1Id], references: [id], onDelete: Cascade)

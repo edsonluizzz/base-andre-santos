@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { ImportChurchesDialog } from "@/components/churches/import-churches-dialog";
 import { AssignDialog } from "@/components/churches/assign-dialog";
 import { EditChurchDialog } from "@/components/churches/edit-church-dialog";
+import { FinanceiroTab } from "@/components/churches/financeiro-tab";
 
 type Assignment = {
   id: string;
@@ -35,6 +36,7 @@ const STATUS_COLOR: Record<string, string> = {
 };
 
 export default function IgrejasPage() {
+  const [tab, setTab] = useState<"igrejas" | "financeiro">("igrejas");
   const [churches, setChurches] = useState<Church[]>([]);
   const [allChurches, setAllChurches] = useState<Church[]>([]);
   const [regionalFilter, setRegionalFilter] = useState("");
@@ -77,92 +79,115 @@ export default function IgrejasPage() {
           <Building2 className="w-6 h-6 text-primary" />
           <h1 className="text-xl lg:text-2xl font-bold gradient-title">Igrejas</h1>
         </div>
-        <Button onClick={() => setImportOpen(true)} className="bg-primary text-primary-foreground gap-2">
-          <Upload className="w-4 h-4" /> Importar planilha
-        </Button>
+        {tab === "igrejas" && (
+          <Button onClick={() => setImportOpen(true)} className="bg-primary text-primary-foreground gap-2">
+            <Upload className="w-4 h-4" /> Importar planilha
+          </Button>
+        )}
       </div>
 
-      <div className="flex items-center gap-2 flex-wrap">
+      <div className="flex items-center gap-2">
         <button
-          onClick={() => setRegionalFilter("")}
-          className={`px-3 py-1.5 rounded-full text-xs border ${!regionalFilter ? "bg-primary/10 border-primary/30 text-primary" : "border-border text-muted-foreground"}`}
+          onClick={() => setTab("igrejas")}
+          className={`px-3 py-1.5 rounded-lg text-sm border ${tab === "igrejas" ? "bg-primary/10 border-primary/30 text-primary" : "border-border text-muted-foreground"}`}
         >
-          Todas
+          Igrejas
         </button>
-        {regionais.map((r) => (
-          <button
-            key={r}
-            onClick={() => setRegionalFilter(r)}
-            className={`px-3 py-1.5 rounded-full text-xs border ${regionalFilter === r ? "bg-primary/10 border-primary/30 text-primary" : "border-border text-muted-foreground"}`}
-          >
-            {r}
-          </button>
-        ))}
+        <button
+          onClick={() => setTab("financeiro")}
+          className={`px-3 py-1.5 rounded-lg text-sm border ${tab === "financeiro" ? "bg-primary/10 border-primary/30 text-primary" : "border-border text-muted-foreground"}`}
+        >
+          Financeiro
+        </button>
       </div>
 
-      <div className="rounded-xl border border-white/[0.08] overflow-hidden">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-white/[0.07]" style={{ background: "rgba(13,27,42,0.5)" }}>
-              <th className="px-4 py-2.5 text-left text-muted-foreground font-medium">Congregação</th>
-              <th className="px-4 py-2.5 text-left text-muted-foreground font-medium">Regional</th>
-              <th className="px-4 py-2.5 text-left text-muted-foreground font-medium">Pastor</th>
-              <th className="px-4 py-2.5 text-left text-muted-foreground font-medium">Status</th>
-              <th className="px-4 py-2.5 text-left text-muted-foreground font-medium">Dupla</th>
-              <th className="px-4 py-2.5 text-right text-muted-foreground font-medium">Ação</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-white/[0.04]">
-            {loading ? (
-              <tr><td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">Carregando...</td></tr>
-            ) : churches.length === 0 ? (
-              <tr><td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">Nenhuma igreja importada ainda.</td></tr>
-            ) : (
-              churches.map((c) => (
-                <tr key={c.id} className="hover:bg-white/[0.02]">
-                  <td className="px-4 py-2.5 text-foreground">{c.name}</td>
-                  <td className="px-4 py-2.5 text-muted-foreground">{c.regional ?? "—"}</td>
-                  <td className="px-4 py-2.5 text-muted-foreground">{c.pastor?.name ?? "—"}</td>
-                  <td className="px-4 py-2.5">
-                    <span className={`px-2 py-0.5 rounded-full text-xs border ${STATUS_COLOR[c.latestAssignment?.status ?? "SEM_DUPLA"] ?? "border-border text-muted-foreground"}`}>
-                      {c.latestAssignment ? STATUS_LABEL[c.latestAssignment.status] : "Sem dupla"}
-                    </span>
-                  </td>
-                  <td className="px-4 py-2.5 text-muted-foreground text-xs">
-                    {c.latestAssignment ? `${c.latestAssignment.member1.name} + ${c.latestAssignment.member2.name}` : "—"}
-                  </td>
-                  <td className="px-4 py-2.5 text-right">
-                    <div className="flex justify-end gap-1.5">
-                      <Button size="sm" variant="outline" onClick={() => setEditTarget(c)} className="gap-1.5">
-                        <Pencil className="w-3.5 h-3.5" /> Editar
-                      </Button>
-                      <Button size="sm" variant="outline" onClick={() => setAssignTarget(c)} className="gap-1.5">
-                        {c.latestAssignment?.status === "NAO_FOI_POSSIVEL" ? <RefreshCw className="w-3.5 h-3.5" /> : <Users className="w-3.5 h-3.5" />}
-                        {c.latestAssignment ? "Redistribuir" : "Atribuir dupla"}
-                      </Button>
-                      {c.latestAssignment && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="gap-1.5 text-destructive hover:bg-destructive/10"
-                          onClick={async () => {
-                            if (!confirm(`Excluir a dupla atribuída a "${c.name}"?`)) return;
-                            const res = await fetch(`/api/church-assignments/${c.latestAssignment!.id}`, { method: "DELETE" });
-                            if (res.ok) { toast.success("Atribuição excluída"); load(); }
-                            else { const d = await res.json().catch(() => ({})); toast.error(d.error ?? "Erro ao excluir"); }
-                          }}
-                        >
-                          <Trash2 className="w-3.5 h-3.5" /> Excluir
-                        </Button>
-                      )}
-                    </div>
-                  </td>
+      {tab === "financeiro" ? (
+        <FinanceiroTab />
+      ) : (
+        <>
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              onClick={() => setRegionalFilter("")}
+              className={`px-3 py-1.5 rounded-full text-xs border ${!regionalFilter ? "bg-primary/10 border-primary/30 text-primary" : "border-border text-muted-foreground"}`}
+            >
+              Todas
+            </button>
+            {regionais.map((r) => (
+              <button
+                key={r}
+                onClick={() => setRegionalFilter(r)}
+                className={`px-3 py-1.5 rounded-full text-xs border ${regionalFilter === r ? "bg-primary/10 border-primary/30 text-primary" : "border-border text-muted-foreground"}`}
+              >
+                {r}
+              </button>
+            ))}
+          </div>
+
+          <div className="rounded-xl border border-white/[0.08] overflow-hidden">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-white/[0.07]" style={{ background: "rgba(13,27,42,0.5)" }}>
+                  <th className="px-4 py-2.5 text-left text-muted-foreground font-medium">Congregação</th>
+                  <th className="px-4 py-2.5 text-left text-muted-foreground font-medium">Regional</th>
+                  <th className="px-4 py-2.5 text-left text-muted-foreground font-medium">Pastor</th>
+                  <th className="px-4 py-2.5 text-left text-muted-foreground font-medium">Status</th>
+                  <th className="px-4 py-2.5 text-left text-muted-foreground font-medium">Dupla</th>
+                  <th className="px-4 py-2.5 text-right text-muted-foreground font-medium">Ação</th>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+              </thead>
+              <tbody className="divide-y divide-white/[0.04]">
+                {loading ? (
+                  <tr><td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">Carregando...</td></tr>
+                ) : churches.length === 0 ? (
+                  <tr><td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">Nenhuma igreja importada ainda.</td></tr>
+                ) : (
+                  churches.map((c) => (
+                    <tr key={c.id} className="hover:bg-white/[0.02]">
+                      <td className="px-4 py-2.5 text-foreground">{c.name}</td>
+                      <td className="px-4 py-2.5 text-muted-foreground">{c.regional ?? "—"}</td>
+                      <td className="px-4 py-2.5 text-muted-foreground">{c.pastor?.name ?? "—"}</td>
+                      <td className="px-4 py-2.5">
+                        <span className={`px-2 py-0.5 rounded-full text-xs border ${STATUS_COLOR[c.latestAssignment?.status ?? "SEM_DUPLA"] ?? "border-border text-muted-foreground"}`}>
+                          {c.latestAssignment ? STATUS_LABEL[c.latestAssignment.status] : "Sem dupla"}
+                        </span>
+                      </td>
+                      <td className="px-4 py-2.5 text-muted-foreground text-xs">
+                        {c.latestAssignment ? `${c.latestAssignment.member1.name} + ${c.latestAssignment.member2.name}` : "—"}
+                      </td>
+                      <td className="px-4 py-2.5 text-right">
+                        <div className="flex justify-end gap-1.5">
+                          <Button size="sm" variant="outline" onClick={() => setEditTarget(c)} className="gap-1.5">
+                            <Pencil className="w-3.5 h-3.5" /> Editar
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={() => setAssignTarget(c)} className="gap-1.5">
+                            {c.latestAssignment?.status === "NAO_FOI_POSSIVEL" ? <RefreshCw className="w-3.5 h-3.5" /> : <Users className="w-3.5 h-3.5" />}
+                            {c.latestAssignment ? "Redistribuir" : "Atribuir dupla"}
+                          </Button>
+                          {c.latestAssignment && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="gap-1.5 text-destructive hover:bg-destructive/10"
+                              onClick={async () => {
+                                if (!confirm(`Excluir a dupla atribuída a "${c.name}"?`)) return;
+                                const res = await fetch(`/api/church-assignments/${c.latestAssignment!.id}`, { method: "DELETE" });
+                                if (res.ok) { toast.success("Atribuição excluída"); load(); }
+                                else { const d = await res.json().catch(() => ({})); toast.error(d.error ?? "Erro ao excluir"); }
+                              }}
+                            >
+                              <Trash2 className="w-3.5 h-3.5" /> Excluir
+                            </Button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
 
       <ImportChurchesDialog open={importOpen} onOpenChange={setImportOpen} onSuccess={load} />
       {assignTarget && (
