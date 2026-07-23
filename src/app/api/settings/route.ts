@@ -11,7 +11,15 @@ export async function GET() {
       where: { id: "singleton" },
       update: {},
       create: { id: "singleton", campaignName: "Base Andre Santos", updatedAt: new Date() },
-      select: { id: true, campaignName: true, logoBase64: true, whatsappGroupLink: true, googleRefreshToken: true, updatedAt: true },
+      select: {
+        id: true,
+        campaignName: true,
+        logoBase64: true,
+        whatsappGroupLink: true,
+        googleRefreshToken: true,
+        deliveryPaymentValue: true,
+        updatedAt: true,
+      },
     });
     // Nunca expor o refresh token (mesmo criptografado) ao client — só o status.
     const { googleRefreshToken, ...rest } = settings;
@@ -28,13 +36,17 @@ export async function PUT(req: NextRequest) {
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     if (session.user.role !== "ADMIN") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     const { db } = getCampaignContext(session);
-    const { campaignName, logoBase64, whatsappGroupLink } = await req.json();
+    const { campaignName, logoBase64, whatsappGroupLink, deliveryPaymentValue } = await req.json();
+    if (deliveryPaymentValue !== undefined && (typeof deliveryPaymentValue !== "number" || deliveryPaymentValue < 0)) {
+      return NextResponse.json({ error: "Valor de pagamento inválido" }, { status: 400 });
+    }
     const settings = await db.settings.upsert({
       where: { id: "singleton" },
       update: {
         ...(campaignName && { campaignName }),
         ...(logoBase64 !== undefined && { logoBase64 }),
         ...(whatsappGroupLink !== undefined && { whatsappGroupLink: whatsappGroupLink || null }),
+        ...(deliveryPaymentValue !== undefined && { deliveryPaymentValue }),
         updatedAt: new Date(),
       },
       create: {
@@ -42,6 +54,7 @@ export async function PUT(req: NextRequest) {
         campaignName: campaignName ?? "Base Andre Santos",
         logoBase64: logoBase64 ?? null,
         whatsappGroupLink: whatsappGroupLink ?? null,
+        deliveryPaymentValue: deliveryPaymentValue ?? 10,
         updatedAt: new Date(),
       },
     });
