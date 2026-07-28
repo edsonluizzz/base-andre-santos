@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Star, ChevronRight } from "lucide-react";
 import { CONTRIBUTION_OPTIONS } from "@/lib/contribution";
+import { formatCpf, normalizeCpf, isValidCpf } from "@/lib/cpf";
 
 const PROFILE_OPTIONS = [
   { value: "PASTOR", label: "Pastor" },
@@ -31,6 +32,7 @@ export function CompletarPerfilForm({ defaultName, defaultEmail }: Props) {
 
   const [name, setName] = useState(defaultName);
   const [phone, setPhone] = useState("");
+  const [cpf, setCpf] = useState("");
   const [city, setCity] = useState("");
   const [neighborhood, setNeighborhood] = useState("");
   const [citySuggestions, setCitySuggestions] = useState<string[]>([]);
@@ -62,13 +64,14 @@ export function CompletarPerfilForm({ defaultName, defaultEmail }: Props) {
     setError("");
     if (!name.trim()) { setError("Informe seu nome"); return; }
     if (phone.replace(/\D/g, "").length < 10) { setError("Informe um WhatsApp válido"); return; }
+    if (!isValidCpf(cpf)) { setError("Informe um CPF válido"); return; }
 
     setLoading(true);
     try {
       const res = await fetch("/api/invite/complete-profile", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, phone, city, neighborhood, profile, contributionTypes: selectedTypes }),
+        body: JSON.stringify({ name, phone, cpf: normalizeCpf(cpf), city, neighborhood, profile, contributionTypes: selectedTypes }),
       });
       if (!res.ok) {
         const data = await res.json();
@@ -121,6 +124,14 @@ export function CompletarPerfilForm({ defaultName, defaultEmail }: Props) {
               <input id="cp-phone" type="tel" value={phone} onChange={(e) => setPhone(formatPhone(e.target.value))} placeholder="(41) 99999-9999" inputMode="numeric" autoComplete="tel"
                 className={INPUT_CLASS}
               />
+            </div>
+
+            <div className="space-y-1.5">
+              <label htmlFor="cp-cpf" className="text-xs font-medium text-muted-foreground">CPF <span className="text-primary">*</span></label>
+              <input id="cp-cpf" type="text" value={cpf} onChange={(e) => setCpf(formatCpf(e.target.value))} placeholder="000.000.000-00" inputMode="numeric" maxLength={14}
+                className={INPUT_CLASS}
+              />
+              <p className="text-xs text-muted-foreground/60">Necessário para receber recibos de pagamento por entregas.</p>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
