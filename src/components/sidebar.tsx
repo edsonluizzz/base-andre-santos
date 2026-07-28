@@ -7,7 +7,7 @@ import { signOut, useSession } from "next-auth/react";
 import {
   LayoutDashboard, Users, Calendar,
   Megaphone, Settings, LogOut, Shield, Star, Map, BarChart2, Network, Target, ClipboardList, Camera, Award, Building2, Plus, UserPlus, Link2, Church,
-  ChevronLeft, ChevronRight, Sun, Moon, GraduationCap, Send,
+  ChevronLeft, ChevronRight, Sun, Moon, GraduationCap, Send, IdCard,
 } from "lucide-react";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { useTheme } from "next-themes";
@@ -20,6 +20,7 @@ const ROLE_RANK: Record<string, number> = { MEMBER: 0, LEADER: 1, ADMIN: 2 };
 
 const navItems = [
   { href: "/dashboard",      icon: LayoutDashboard, label: "Dashboard",       minRole: "MEMBER", superAdminOnly: false },
+  { href: "/meu-perfil",     icon: IdCard,          label: "Meu Perfil",      minRole: "MEMBER", superAdminOnly: false },
   { href: "/treinamento",    icon: GraduationCap,    label: "Treinamento",     minRole: "MEMBER", superAdminOnly: false },
   { href: "/colaboradores",  icon: Users,            label: "Colaboradores",   minRole: "MEMBER", superAdminOnly: false },
   { href: "/rua",            icon: UserPlus,         label: "Cadastro na Rua", minRole: "MEMBER", superAdminOnly: false },

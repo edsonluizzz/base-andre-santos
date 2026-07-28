@@ -170,6 +170,7 @@ model Collaborator {
   email        String?
   phone        String?
   phoneNormalized String?   // últimos 8 dígitos de phone — dedup indexável (Sprint 25)
+  cpf          String?   // apenas dígitos — necessário pro recibo eleitoral (prestação de contas)
   city         String?
   neighborhood String?
   campaignRole CollaboratorRole   @default(VOLUNTARIO)

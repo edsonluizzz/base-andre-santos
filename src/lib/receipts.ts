@@ -3,17 +3,30 @@ import PDFDocument from "pdfkit";
 import { put } from "@vercel/blob";
 import { sendPaymentReceiptEmail } from "./email";
 import { zapiSendDocument, toZapiPhone, ZapiNotConfiguredError } from "./zapi";
+import { valorPorExtenso } from "./valor-extenso";
+import { formatCpf } from "./cpf";
 
+/**
+ * Recibo eleitoral formal (Lei nº 9.504/1997 + Resoluções TSE de prestação de
+ * contas). Não expõe o nome da igreja — só a localidade (regional) — por
+ * prudência em não vincular publicamente instituições religiosas a
+ * movimentação financeira de campanha.
+ */
 function buildReceiptPdf(opts: {
+  receiptNumber: string;
   collaboratorName: string;
+  collaboratorCpf: string | null;
   candidateName: string;
+  office: string | null;
+  party: string | null;
+  electionYear: number | null;
   issuedAt: Date;
   rate: number;
-  rows: { churchName: string; deliveredAt: Date | null }[];
+  rows: { locality: string; deliveredAt: Date | null }[];
   total: number;
 }): Promise<Buffer> {
   return new Promise((resolve, reject) => {
-    const doc = new PDFDocument({ size: "A4", margin: 50 });
+    const doc = new PDFDocument({ size: "A4", margin: 56 });
     const chunks: Buffer[] = [];
     doc.on("data", (chunk) => chunks.push(chunk));
     doc.on("end", () => resolve(Buffer.concat(chunks)));
@@ -21,24 +34,85 @@ function buildReceiptPdf(opts: {
 
     const fmtMoney = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
     const fmtDate = (d: Date | null) => (d ? d.toLocaleDateString("pt-BR") : "—");
+    const pageWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
+    const officeLabel = opts.office ?? "candidato(a)";
+    const cpfLabel = opts.collaboratorCpf ? formatCpf(opts.collaboratorCpf) : "não cadastrado";
 
-    doc.fontSize(18).text(`Recibo de pagamento — ${opts.candidateName}`, { align: "center" });
-    doc.moveDown(0.5);
-    doc.fontSize(10).fillColor("#555").text(`Emitido em ${opts.issuedAt.toLocaleDateString("pt-BR")}`, { align: "center" });
-    doc.moveDown(2);
+    doc.font("Helvetica-Bold").fontSize(9).fillColor("#666").text("RECIBO ELEITORAL", { align: "center" });
+    doc.moveDown(0.2);
+    doc.font("Helvetica").fontSize(9).text(
+      "Comprovante de pagamento por prestação de serviços à campanha eleitoral, nos termos da Lei nº 9.504/1997 " +
+      "e das Resoluções do TSE relativas à arrecadação e aos gastos de campanha.",
+      { align: "center" },
+    );
+    doc.moveDown(0.8);
+    doc.moveTo(doc.page.margins.left, doc.y).lineTo(doc.page.width - doc.page.margins.right, doc.y).strokeColor("#999").stroke();
+    doc.moveDown(0.8);
 
-    doc.fillColor("#000").fontSize(12).text(`Colaborador: ${opts.collaboratorName}`);
-    doc.text(`Valor unitário por entrega: ${fmtMoney(opts.rate)}`);
+    doc.fillColor("#000").font("Helvetica-Bold").fontSize(14).text(`Recibo nº ${opts.receiptNumber}`);
+    doc.moveDown(0.3);
+    doc.font("Helvetica").fontSize(10);
+    doc.text(`Campanha: ${opts.candidateName} — ${officeLabel}${opts.electionYear ? ` — ${opts.electionYear}` : ""}`);
+    if (opts.party) doc.text(`Partido: ${opts.party}`);
     doc.moveDown(1);
 
-    doc.fontSize(12).text("Entregas cobertas por este recibo:", { underline: true });
-    doc.moveDown(0.5);
-    opts.rows.forEach((r, i) => {
-      doc.fontSize(11).text(`${i + 1}. ${r.churchName} — entregue em ${fmtDate(r.deliveredAt)}`);
-    });
+    doc.font("Helvetica").fontSize(11).text(
+      `Recebi da campanha de ${opts.candidateName} ao cargo de ${officeLabel}, a importância de ` +
+      `${fmtMoney(opts.total)} (${valorPorExtenso(opts.total)}), referente ao pagamento por serviços de apoio ` +
+      `logístico e entrega de material de campanha, conforme discriminado abaixo:`,
+      { align: "justify", width: pageWidth, lineGap: 2 },
+    );
+    doc.moveDown(1);
 
+    const colX = doc.page.margins.left;
+    const col1 = colX, col2 = colX + 30, col3 = colX + pageWidth - 100;
+    doc.font("Helvetica-Bold").fontSize(9);
+    const headerY = doc.y;
+    doc.text("Nº", col1, headerY, { width: 25 });
+    doc.text("Localidade", col2, headerY);
+    doc.text("Data", col3, headerY, { width: 100 });
+    doc.moveDown(0.3);
+    doc.moveTo(colX, doc.y).lineTo(colX + pageWidth, doc.y).strokeColor("#ccc").stroke();
+    doc.moveDown(0.3);
+
+    doc.font("Helvetica").fontSize(9.5);
+    opts.rows.forEach((r, i) => {
+      const rowY = doc.y;
+      doc.text(String(i + 1), col1, rowY, { width: 25 });
+      doc.text(r.locality, col2, rowY, { width: col3 - col2 - 10 });
+      doc.text(fmtDate(r.deliveredAt), col3, rowY, { width: 100 });
+      doc.moveDown(0.4);
+    });
+    doc.moveDown(0.2);
+    doc.moveTo(colX, doc.y).lineTo(colX + pageWidth, doc.y).strokeColor("#ccc").stroke();
+    doc.moveDown(0.6);
+
+    doc.font("Helvetica").fontSize(10).text(`Valor unitário por entrega: ${fmtMoney(opts.rate)}`);
+    doc.font("Helvetica-Bold").fontSize(12).text(`Valor total: ${fmtMoney(opts.total)}`, { align: "right" });
+    doc.moveDown(1.2);
+
+    doc.font("Helvetica").fontSize(10.5).text(
+      "Declaro, para os devidos fins eleitorais e de prestação de contas perante a Justiça Eleitoral, ter " +
+      "recebido a quantia acima discriminada, sendo esta a expressão da verdade.",
+      { align: "justify", width: pageWidth, lineGap: 2 },
+    );
     doc.moveDown(1.5);
-    doc.fontSize(14).text(`Total pago: ${fmtMoney(opts.total)}`, { align: "right" });
+
+    doc.font("Helvetica").fontSize(10).text(`Emitido em ${opts.issuedAt.toLocaleDateString("pt-BR")}.`, { align: "right" });
+    doc.moveDown(2.5);
+
+    const sigWidth = 260;
+    const sigX = doc.page.width / 2 - sigWidth / 2;
+    doc.moveTo(sigX, doc.y).lineTo(sigX + sigWidth, doc.y).strokeColor("#000").stroke();
+    doc.moveDown(0.3);
+    doc.font("Helvetica-Bold").fontSize(10).text(opts.collaboratorName, { align: "center" });
+    doc.font("Helvetica").fontSize(9).text(`CPF: ${cpfLabel}`, { align: "center" });
+
+    doc.moveDown(2);
+    doc.fontSize(7.5).fillColor("#888").text(
+      "Documento gerado eletronicamente pelo sistema Ovile Eleitoral.",
+      { align: "center", width: pageWidth },
+    );
 
     doc.end();
   });
@@ -62,9 +136,12 @@ export async function generateAndSendReceipt(
     const [collaborator, campaign, settings, assignments] = await Promise.all([
       db.collaborator.findUnique({
         where: { id: collaboratorId },
-        select: { name: true, email: true, phone: true },
+        select: { name: true, email: true, phone: true, cpf: true },
       }),
-      db.campaign.findUnique({ where: { id: campaignId }, select: { candidateName: true, name: true } }),
+      db.campaign.findUnique({
+        where: { id: campaignId },
+        select: { candidateName: true, name: true, party: true, electionYear: true },
+      }),
       db.settings.upsert({
         where: { id: "singleton" },
         update: {},
@@ -73,7 +150,7 @@ export async function generateAndSendReceipt(
       }),
       db.churchAssignment.findMany({
         where: { id: { in: assignmentIds } },
-        select: { deliveredAt: true, church: { select: { name: true } } },
+        select: { deliveredAt: true, church: { select: { regional: true } } },
       }),
     ]);
 
@@ -90,11 +167,16 @@ export async function generateAndSendReceipt(
     let pdfUrl: string | null = null;
     try {
       const pdfBuffer = await buildReceiptPdf({
+        receiptNumber: receipt.id.slice(-8).toUpperCase(),
         collaboratorName: collaborator.name,
+        collaboratorCpf: collaborator.cpf,
         candidateName,
+        office: null,
+        party: campaign?.party ?? null,
+        electionYear: campaign?.electionYear ?? null,
         issuedAt: new Date(),
         rate,
-        rows: assignments.map((a) => ({ churchName: a.church.name, deliveredAt: a.deliveredAt })),
+        rows: assignments.map((a) => ({ locality: a.church.regional ?? "Não informado", deliveredAt: a.deliveredAt })),
         total: amount,
       });
 

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { getCampaignContext } from "@/lib/campaign-context";
 import { normalizeCity, normalizePhone } from "@/lib/utils";
+import { normalizeCpf, isValidCpf } from "@/lib/cpf";
 
 
 export async function POST(req: NextRequest) {
@@ -10,11 +11,15 @@ export async function POST(req: NextRequest) {
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const { db, cid } = getCampaignContext(session);
 
-    const { name, phone, city, neighborhood, profile, contributionTypes } = await req.json();
+    const { name, phone, cpf, city, neighborhood, profile, contributionTypes } = await req.json();
 
     if (!name?.trim()) return NextResponse.json({ error: "Nome obrigatório" }, { status: 400 });
     if (!phone || phone.replace(/\D/g, "").length < 10) {
       return NextResponse.json({ error: "WhatsApp inválido" }, { status: 400 });
+    }
+    const cleanCpf = normalizeCpf(cpf ?? "");
+    if (!isValidCpf(cleanCpf)) {
+      return NextResponse.json({ error: "CPF inválido" }, { status: 400 });
     }
 
     const userId = session.user.id;
@@ -59,6 +64,7 @@ export async function POST(req: NextRequest) {
           name: name.trim(),
           phone: cleanPhone,
           phoneNormalized: pNorm,
+          cpf: cleanCpf || prior.cpf,
           city: normalizeCity(city) || prior.city,
           neighborhood: neighborhood?.trim() || prior.neighborhood,
           email: user?.email ?? prior.email,
@@ -76,6 +82,7 @@ export async function POST(req: NextRequest) {
           name: name.trim(),
           phone: cleanPhone,
           phoneNormalized: pNorm,
+          cpf: cleanCpf || existing.cpf,
           city: normalizeCity(city),
           neighborhood: neighborhood?.trim() || null,
           profile: profile ?? existing.profile,
@@ -91,6 +98,7 @@ export async function POST(req: NextRequest) {
           name: name.trim(),
           phone: cleanPhone,
           phoneNormalized: pNorm,
+          cpf: cleanCpf,
           city: normalizeCity(city),
           neighborhood: neighborhood?.trim() || null,
           email: user?.email ?? null,
