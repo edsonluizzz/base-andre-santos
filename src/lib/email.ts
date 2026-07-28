@@ -134,6 +134,56 @@ export async function sendAccessGrantedEmail({
   }).catch(() => {});
 }
 
+// ─── Recibo de pagamento (Financeiro de Entregas — Igrejas) ──────────────────
+
+export async function sendPaymentReceiptEmail({
+  to,
+  collaboratorName,
+  amount,
+  pdfBuffer,
+  fileName,
+  campaignName,
+}: {
+  to: string;
+  collaboratorName: string;
+  amount: number;
+  pdfBuffer: Buffer;
+  fileName: string;
+  campaignName?: string;
+}): Promise<void> {
+  const resend = getResend();
+  if (!resend) throw new Error("Resend não configurado (RESEND_API_KEY ausente)");
+  const label = campaignLabel(campaignName);
+  const amountLabel = amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+  // resend.emails.send() resolve normalmente (não lança) em erros de validação da API —
+  // o resultado precisa ser inspecionado explicitamente pra não marcar SENT indevidamente.
+  const result = await resend.emails.send({
+    from: FROM,
+    to,
+    subject: `Recibo de pagamento — ${label}`,
+    html: `
+      <div style="${baseStyle}">
+        <p style="${tagStyle}">${label}</p>
+        <h1 style="font-size:22px;font-weight:700;color:#fff;margin:0 0 16px;">
+          Recibo de pagamento
+        </h1>
+        <p style="color:#94a3b8;line-height:1.6;">
+          Olá, <strong style="color:#fff">${collaboratorName}</strong>! Segue em anexo o recibo
+          referente ao pagamento de <strong style="color:#d4af37">${amountLabel}</strong> pelas
+          entregas realizadas.
+        </p>
+        <p style="color:#475569;font-size:12px;margin-top:32px;">
+          ${label} — comunicação interna da base de apoio.
+        </p>
+      </div>
+    `,
+    attachments: [{ filename: fileName, content: pdfBuffer }],
+  });
+
+  if (result.error) throw new Error(result.error.message ?? "Falha ao enviar email via Resend");
+}
+
 // ─── Notificação de novo lead via link de convite ─────────────────────────────
 
 export async function sendNewLeadNotificationEmail({

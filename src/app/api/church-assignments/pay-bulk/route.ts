@@ -3,8 +3,11 @@ import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { getCampaignContext } from "@/lib/campaign-context";
 import { markAssignmentMemberPaid } from "@/lib/church-payments";
+import { generateAndSendReceipt } from "@/lib/receipts";
 
 const bodySchema = z.object({ collaboratorId: z.string().min(1) });
+
+export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
   try {
@@ -35,9 +38,15 @@ export async function POST(req: NextRequest) {
       select: { id: true, member1Id: true },
     });
 
+    const paidNowIds: string[] = [];
     for (const a of pending) {
       const member = a.member1Id === collaboratorId ? "member1" : "member2";
-      await markAssignmentMemberPaid(db, a.id, member, CID);
+      const result = await markAssignmentMemberPaid(db, a.id, member, CID);
+      if (result.ok && !result.alreadyPaid) paidNowIds.push(a.id);
+    }
+
+    if (paidNowIds.length > 0) {
+      await generateAndSendReceipt(db, collaboratorId, paidNowIds, CID);
     }
 
     return NextResponse.json({ ok: true, count: pending.length });

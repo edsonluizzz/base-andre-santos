@@ -205,6 +205,13 @@ export async function zapiSendAudio(cid: string, to: string, url: string): Promi
   return zapiFetch<ZapiSendResult>(cid, "send-audio", { method: "POST", body: { phone: to, audio: url } });
 }
 
+export async function zapiSendDocument(cid: string, to: string, url: string, fileName: string): Promise<ZapiSendResult> {
+  return zapiFetch<ZapiSendResult>(cid, "send-document/pdf", {
+    method: "POST",
+    body: { phone: to, document: url, fileName },
+  });
+}
+
 // ─── Histórico de conversa (Fase 2 — inbox no painel) ───────────────────────
 
 export type ZapiMessageKind = "text" | "image" | "video" | "audio" | "document" | "other";
