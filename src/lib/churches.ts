@@ -47,9 +47,9 @@ export function dedupeChurchRows(
   return out;
 }
 
-/** Lança erro se os dois membros da dupla forem a mesma pessoa. */
-export function assertDistinctMembers(member1Id: string, member2Id: string): void {
-  if (member1Id === member2Id) {
+/** Lança erro se os dois membros da dupla forem a mesma pessoa (member2 é opcional). */
+export function assertDistinctMembers(member1Id: string, member2Id?: string | null): void {
+  if (member2Id && member1Id === member2Id) {
     throw new Error("Os dois membros da dupla precisam ser pessoas diferentes.");
   }
 }

@@ -88,14 +88,14 @@ export function AssignDialog({ open, churchId, churchName, onOpenChange, onSucce
   }
 
   async function handleSave() {
-    if (!member1 || !member2) { setError("Selecione as 2 pessoas da dupla."); return; }
+    if (!member1) { setError("Selecione ao menos a primeira pessoa."); return; }
     setSaving(true);
     setError("");
     try {
       const res = await fetch(`/api/churches/${churchId}/assignments`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ member1Id: member1.id, member2Id: member2.id }),
+        body: JSON.stringify({ member1Id: member1.id, ...(member2 ? { member2Id: member2.id } : {}) }),
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error ?? "Erro ao atribuir"); setSaving(false); return; }
@@ -117,11 +117,15 @@ export function AssignDialog({ open, churchId, churchName, onOpenChange, onSucce
         </DialogHeader>
         <div className="space-y-4">
           <CollaboratorSearch label="Primeira pessoa" selected={member1} exclude={member2?.id} onSelect={setMember1} />
-          <CollaboratorSearch label="Segunda pessoa" selected={member2} exclude={member1?.id} onSelect={setMember2} />
+          <CollaboratorSearch label="Segunda pessoa (opcional — dupla é o ideal)" selected={member2} exclude={member1?.id} onSelect={setMember2} />
           {error && <p className="text-xs text-destructive flex items-center gap-1"><AlertCircle className="w-3.5 h-3.5" />{error}</p>}
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => handleClose(false)}>Cancelar</Button>
-            <Button onClick={handleSave} disabled={saving || (member1 !== null && member2 !== null && member1.id === member2.id)} className="bg-primary text-primary-foreground">
+            <Button
+              onClick={handleSave}
+              disabled={saving || !member1 || (member2 !== null && member1.id === member2.id)}
+              className="bg-primary text-primary-foreground"
+            >
               {saving ? "Salvando..." : "Atribuir"}
             </Button>
           </div>
