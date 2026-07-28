@@ -6,7 +6,7 @@ import { assertDistinctMembers } from "@/lib/churches";
 
 const assignSchema = z.object({
   member1Id: z.string().min(1),
-  member2Id: z.string().min(1),
+  member2Id: z.string().min(1).optional(),
 });
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
@@ -41,9 +41,11 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
     const [m1, m2] = await Promise.all([
       db.collaborator.findFirst({ where: { id: member1Id, campaignId: CID }, select: { id: true } }),
-      db.collaborator.findFirst({ where: { id: member2Id, campaignId: CID }, select: { id: true } }),
+      member2Id
+        ? db.collaborator.findFirst({ where: { id: member2Id, campaignId: CID }, select: { id: true } })
+        : Promise.resolve(null),
     ]);
-    if (!m1 || !m2) {
+    if (!m1 || (member2Id && !m2)) {
       return NextResponse.json({ error: "Colaborador inválido" }, { status: 400 });
     }
 
@@ -51,7 +53,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       data: {
         churchId: church.id,
         member1Id,
-        member2Id,
+        member2Id: member2Id ?? null,
         assignedById: session.user.id,
         status: "PENDENTE",
       },

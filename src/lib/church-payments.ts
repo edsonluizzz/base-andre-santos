@@ -92,7 +92,9 @@ export async function getPaymentsReport(db: PrismaClient, campaignId: string): P
 
   for (const a of assignments) {
     touch(a.member1.id, a.member1.name, a.member1PaidAt, a.id, a.church.name, a.deliveredAt, "member1");
-    touch(a.member2.id, a.member2.name, a.member2PaidAt, a.id, a.church.name, a.deliveredAt, "member2");
+    if (a.member2) {
+      touch(a.member2.id, a.member2.name, a.member2PaidAt, a.id, a.church.name, a.deliveredAt, "member2");
+    }
   }
 
   const collaboratorIds = Array.from(map.keys());
@@ -139,6 +141,7 @@ export async function markAssignmentMemberPaid(
     where: { id: assignmentId },
     select: {
       status: true,
+      member2Id: true,
       member1PaidAt: true,
       member2PaidAt: true,
       church: { select: { campaignId: true } },
@@ -149,6 +152,9 @@ export async function markAssignmentMemberPaid(
   }
   if (assignment.status !== "ENTREGUE") {
     return { ok: false, error: "Só é possível marcar como pago uma entrega confirmada", status: 400 };
+  }
+  if (member === "member2" && !assignment.member2Id) {
+    return { ok: false, error: "Esta atribuição não tem uma segunda pessoa", status: 400 };
   }
 
   const alreadyPaid = member === "member1" ? assignment.member1PaidAt : assignment.member2PaidAt;

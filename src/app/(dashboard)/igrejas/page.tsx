@@ -13,7 +13,7 @@ type Assignment = {
   id: string;
   status: "PENDENTE" | "ENTREGUE" | "NAO_FOI_POSSIVEL";
   member1: { name: string };
-  member2: { name: string };
+  member2: { name: string } | null;
 };
 type Church = {
   id: string;
@@ -152,7 +152,11 @@ export default function IgrejasPage() {
                         </span>
                       </td>
                       <td className="px-4 py-2.5 text-muted-foreground text-xs">
-                        {c.latestAssignment ? `${c.latestAssignment.member1.name} + ${c.latestAssignment.member2.name}` : "—"}
+                        {c.latestAssignment
+                          ? c.latestAssignment.member2
+                            ? `${c.latestAssignment.member1.name} + ${c.latestAssignment.member2.name}`
+                            : c.latestAssignment.member1.name
+                          : "—"}
                       </td>
                       <td className="px-4 py-2.5 text-right">
                         <div className="flex justify-end gap-1.5">
