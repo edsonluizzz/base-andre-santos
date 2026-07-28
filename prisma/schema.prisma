@@ -202,6 +202,7 @@ model Collaborator {
   assignmentsAsMember2 ChurchAssignment[] @relation("AssignmentMember2")
   pastorOfChurches Church[] @relation("ChurchPastor")
   contactLogs    ContactLog[]
+  paymentReceipts PaymentReceipt[]
   @@index([campaignId])
   @@index([email])
   @@index([city])
@@ -626,4 +627,28 @@ enum ChurchAssignmentStatus {
   PENDENTE
   ENTREGUE
   NAO_FOI_POSSIVEL
+}
+
+model PaymentReceipt {
+  id             String   @id @default(cuid())
+  collaboratorId String
+  amount         Float // total pago neste recibo (rate × count, snapshot)
+  rate           Float // valor unitário aplicado no momento (auditoria)
+  assignmentIds  String[]
+  pdfUrl         String?              @db.Text
+  emailStatus    ReceiptChannelStatus @default(SKIPPED)
+  whatsappStatus ReceiptChannelStatus @default(SKIPPED)
+  emailError     String?              @db.Text
+  whatsappError  String?              @db.Text
+  createdAt      DateTime             @default(now())
+
+  collaborator Collaborator @relation(fields: [collaboratorId], references: [id], onDelete: Cascade)
+
+  @@index([collaboratorId])
+}
+
+enum ReceiptChannelStatus {
+  SKIPPED
+  SENT
+  FAILED
 }
