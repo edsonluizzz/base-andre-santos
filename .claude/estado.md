@@ -1,6 +1,72 @@
 # Estado — Ovile Eleitoral (Base André Santos)
 
-**Última atualização:** 2026-06-06 (Sprint 24 — auditoria completa + correções de segurança crítica)
+**Última atualização:** 2026-07-29 (sessão: recibos de pagamento + CPF + dupla opcional)
+
+---
+
+## Sessão 2026-07-28/29 — Recibos de pagamento, dupla opcional, CPF do colaborador
+
+### Feature: Recibos de pagamento (Financeiro de Entregas — Igrejas) — NO AR
+Branch `feat/recibos-pagamento-igrejas` mergeada em `main`.
+- Model `PaymentReceipt` + enum `ReceiptChannelStatus` (SKIPPED/SENT/FAILED).
+- `generateAndSendReceipt` (`src/lib/receipts.ts`): gera PDF (pdfkit) consolidado por lote de
+  pagamento, sobe pro Vercel Blob, envia por email (Resend, anexo) e WhatsApp (Z-API,
+  `zapiSendDocument`) — best-effort, nunca desfaz o pagamento já commitado.
+- `pay`/`pay-bulk` disparam o recibo automaticamente (só assignments que não eram no-op).
+- `POST /api/payment-receipts/:id/resend` — reenvio manual por canal, idempotente.
+- `GET /api/church-assignments/payments/export` — XLSX do agregado financeiro.
+- `FinanceiroTab`: botão Exportar XLSX + indicadores de canal (✓/✗ reenviar/—) + link PDF.
+- **Reformulado depois pra formato de recibo eleitoral formal** (a pedido do Edson, "TSE"):
+  título "RECIBO ELEITORAL", referência à Lei 9.504/1997 + Resoluções TSE, numeração, valor
+  por extenso, assinatura com CPF do colaborador. **Não expõe mais o nome da igreja** — só a
+  `Church.regional` (localidade) — por prudência em não vincular igrejas a movimentação
+  financeira de campanha publicamente.
+
+### Pendências de configuração encontradas ao testar o envio (NÃO RESOLVIDAS)
+- ⚠️ **`RESEND_API_KEY` não existe nas env vars de produção da Vercel** (só `RESEND_FROM`
+  está setado). Todo o canal de email do recibo (e de qualquer outro fluxo que use
+  `src/lib/email.ts`) está com o código certo mas nunca envia nada até essa chave ser
+  adicionada em `vercel env add RESEND_API_KEY production`.
+- ⚠️ **Z-API não descriptografa com a `APP_ENCRYPTION_KEY` atual** — testado diretamente
+  contra o banco de produção, erro `Unsupported state or unable to authenticate data`
+  (AES-GCM auth tag mismatch) tanto em `zApiToken` quanto `zApiClientToken` de
+  `Campaign.andre-santos-2026`. Mesmo padrão do incidente de 2026-06-06 acima, mas parece
+  ter voltado — **provavelmente todo envio de WhatsApp da campanha está quebrado agora**,
+  não só recibos. Fix provável: re-colar o Client-Token em Configurações → Integrações
+  (gera criptografia nova com a chave atual), mas não foi confirmado/aplicado nesta sessão.
+
+### Fix: dupla de igrejas aceita 1 pessoa (member2 opcional) — NO AR
+Branch `fix/dupla-igrejas-opcional` mergeada. `ChurchAssignment.member2Id` virou opcional
+no schema, na API de atribuição (`POST /api/churches/:id/assignments`), no `AssignDialog`,
+e em todo o fluxo financeiro (`church-payments.ts`, exibição em `/igrejas`). Dupla continua
+sendo o ideal, mas atribuir só 1 pessoa não trava mais o salvamento.
+
+### Feature: CPF do colaborador — NO AR
+Branch `feat/cpf-recibo-localidade` mergeada (junto com a reformulação do recibo acima).
+- `Collaborator.cpf` (schema) + `src/lib/cpf.ts` (validação módulo-11 + máscara).
+- Onboarding (`completar-perfil`) agora exige CPF pra novos colaboradores.
+- **Nova página `/meu-perfil`** (link na sidebar, visível a qualquer colaborador logado) +
+  `GET/PUT /api/collaborators/me` — pra quem já tinha conta (passou pelo onboarding antes
+  do campo existir) conseguir cadastrar o CPF depois, já que `completar-perfil` só aparece
+  uma vez (gate por telefone preenchido).
+
+### Bug de login de colaboradores convidados (não-master) — AINDA NÃO RESOLVIDO
+Reportado pelo Edson: colaboradores que não são o usuário master (ex: Jimmy Alan,
+jimmyalanoliver@gmail.com) às vezes veem "Erro do servidor" (`/api/auth/...`, tela padrão
+do NextAuth — mensagem de "Configuration") logo após o login com Google, e não são
+redirecionados pro `/dashboard` — mas se navegam manualmente pra `/dashboard` depois,
+funciona (sessão já estava válida). NÃO é a tela `/sem-acesso` do app.
+**Hipótese não confirmada:** o callback `jwt` em `src/lib/auth.ts` faz uma sequência pesada
+de queries só pro caminho de convite pendente (linkar collaborator por email, ativar
+convite numa transação) — caminho que o usuário master não percorre (não tem convite
+pendente) — podendo estourar o tempo da função serverless (`maxDuration=30` declarado em
+`src/app/api/auth/[...nextauth]/route.ts`, mas o plano Vercel pode ter um teto real menor).
+**Não foi possível confirmar via logs** — o retention de runtime log da Vercel neste plano
+parece muito curto (minutos, não horas), mesmo pedindo `--since` maior. Tentativa de captura
+ao vivo (`vercel logs --follow`) rodada 2x nesta sessão sem coincidir com uma tentativa real
+de login do Jimmy. **Próximo passo:** pedir pro Jimmy tentar logar enquanto o log ao vivo
+está rodando, ou considerar mover a lógica pesada do `jwt` callback pra fora do caminho
+crítico do login (ex: processar convite pendente de forma assíncrona/lazy).
 
 ---
 
