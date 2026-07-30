@@ -163,3 +163,16 @@ export function renderAllMessages(ctx: RenderContext): Record<MessageKind, strin
     reactivation: renderMessage("reactivation", ctx),
   };
 }
+
+/**
+ * Mensagem avulsa (fora do pool invite/welcome/optOut/reactivation) pedindo
+ * pra finalizar o cadastro — usada quando um colaborador é criado com só
+ * nome+telefone (ex: atribuição rápida em Igrejas) e precisa completar CPF
+ * pra receber pagamento/recibo.
+ */
+export function buildCompleteProfileMessage(fullName: string, inviteUrl: string, candidateName: string): string {
+  const primeiro = firstName(fullName);
+  const gender = detectGender(fullName);
+  const pronouns = PRONOUNS[gender];
+  return `Olá, ${primeiro}. Tudo bem?\n\nAqui é da equipe do ${candidateName}. Você foi incluído(a) na nossa lista de colaboradores.\n\nPra conseguirmos te pagar certinho e emitir seu recibo, precisamos que você complete seu cadastro (CPF e demais dados) — leva menos de um minuto:\n${inviteUrl}\n\nQualquer dúvida, é só responder por aqui. Obrigado desde já, ${pronouns.querido}!`;
+}
