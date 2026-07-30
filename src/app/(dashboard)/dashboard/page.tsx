@@ -8,7 +8,6 @@ import { ROLE_LABEL } from "@/lib/labels";
 import { CopyButton } from "@/components/dashboard/copy-button";
 import { FunnelPanel } from "@/components/dashboard/funnel-panel";
 import { ConversionPanel } from "@/components/dashboard/conversion-panel";
-import { InstagramPanel } from "@/components/dashboard/instagram-panel";
 import { VelocityPanel } from "@/components/dashboard/velocity-panel";
 import { ElectionCountdown } from "@/components/dashboard/election-countdown";
 import { KpiCard } from "@/components/dashboard/kpi-card";
@@ -253,9 +252,6 @@ export default async function DashboardPage() {
 
       {/* Funil de conversão WhatsApp (ContactLog) */}
       <ConversionPanel />
-
-      {/* Instagram Analytics */}
-      <InstagramPanel />
 
       {/* Velocidade por município */}
       <Suspense fallback={<div className="glass-card rounded-2xl p-6 border border-border h-32 animate-pulse" />}>

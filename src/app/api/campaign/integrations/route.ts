@@ -5,7 +5,7 @@ import { encrypt } from "@/lib/crypto";
 
 /**
  * GET /api/campaign/integrations
- * Retorna integrações da campanha ativa do usuário (Metricool, Telegram, Z-API).
+ * Retorna integrações da campanha ativa do usuário (Telegram, Z-API).
  * Tokens são mascarados — só revela presença/ausência via *Set boolean.
  */
 export async function GET() {
@@ -18,7 +18,6 @@ export async function GET() {
     const c = await db.campaign.findUnique({
       where: { id: cid },
       select: {
-        metricoolToken: true, metricoolBlogId: true,
         telegramBotToken: true, telegramChatId: true,
         zApiInstance: true, zApiToken: true, zApiClientToken: true,
         domain: true,
@@ -43,10 +42,6 @@ export async function GET() {
 
     return NextResponse.json({
       domain: c?.domain ?? null,
-      metricool: {
-        tokenSet: Boolean(c?.metricoolToken),
-        blogId: c?.metricoolBlogId ?? null,
-      },
       telegram: {
         botTokenSet: Boolean(c?.telegramBotToken),
         chatId: c?.telegramChatId ?? null,
@@ -72,8 +67,6 @@ export async function GET() {
 
 interface IntegrationPatch {
   domain?: string | null;
-  metricoolToken?: string | null;
-  metricoolBlogId?: string | null;
   telegramBotToken?: string | null;
   telegramChatId?: string | null;
   zApiInstance?: string | null;
@@ -97,13 +90,12 @@ export async function PATCH(req: NextRequest) {
 
     // Campos sensíveis — criptografar antes de salvar
     const SECRET_FIELDS = new Set<keyof IntegrationPatch>([
-      "metricoolToken", "telegramBotToken", "zApiToken", "zApiClientToken",
+      "telegramBotToken", "zApiToken", "zApiClientToken",
     ]);
 
     const data: IntegrationPatch = {};
     const fields: (keyof IntegrationPatch)[] = [
       "domain",
-      "metricoolToken", "metricoolBlogId",
       "telegramBotToken", "telegramChatId",
       "zApiInstance", "zApiToken", "zApiClientToken",
     ];

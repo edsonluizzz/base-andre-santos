@@ -24,8 +24,6 @@ export async function getCampaignDbUrl(campaignId: string): Promise<string | nul
  * Retorna null para qualquer campo não configurado para o tenant.
  */
 export interface CampaignIntegrations {
-  metricoolToken: string | null;
-  metricoolBlogId: string | null;
   telegramBotToken: string | null;
   telegramChatId: string | null;
   zApiInstance: string | null;
@@ -38,14 +36,11 @@ export async function getCampaignIntegrations(campaignId: string): Promise<Campa
     const c = await db.campaign.findUnique({
       where: { id: campaignId },
       select: {
-        metricoolToken: true, metricoolBlogId: true,
         telegramBotToken: true, telegramChatId: true,
         zApiInstance: true, zApiToken: true, zApiClientToken: true,
       },
     });
     return {
-      metricoolToken: decrypt(c?.metricoolToken ?? null),
-      metricoolBlogId: c?.metricoolBlogId ?? null,
       telegramBotToken: decrypt(c?.telegramBotToken ?? null),
       telegramChatId: c?.telegramChatId ?? null,
       zApiInstance: c?.zApiInstance ?? null,
@@ -54,7 +49,6 @@ export async function getCampaignIntegrations(campaignId: string): Promise<Campa
     };
   } catch {
     return {
-      metricoolToken: null, metricoolBlogId: null,
       telegramBotToken: null, telegramChatId: null,
       zApiInstance: null, zApiToken: null, zApiClientToken: null,
     };

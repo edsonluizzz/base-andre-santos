@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Camera, Send, MessageCircle, Globe, Save, CheckCircle2, AlertCircle, Eye, EyeOff, Workflow, ExternalLink } from "lucide-react";
+import { Send, MessageCircle, Globe, Save, CheckCircle2, AlertCircle, Eye, EyeOff, Workflow, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,6 @@ import { Label } from "@/components/ui/label";
 
 interface IntegrationsStatus {
   domain: string | null;
-  metricool: { tokenSet: boolean; blogId: string | null };
   telegram: { botTokenSet: boolean; chatId: string | null };
   zapi: { instance: string | null; tokenSet: boolean; clientTokenSet: boolean };
   n8n?: {
@@ -24,8 +23,6 @@ interface IntegrationsStatus {
 // Helper: campos string com "" significa "limpar"; null/undefined "não mexer"
 type PatchPayload = Partial<{
   domain: string | null;
-  metricoolToken: string | null;
-  metricoolBlogId: string | null;
   telegramBotToken: string | null;
   telegramChatId: string | null;
   zApiInstance: string | null;
@@ -40,8 +37,6 @@ export function IntegrationsSection() {
 
   // Estados de input — null = "não tocar", string = novo valor
   const [domain, setDomain] = useState("");
-  const [metricoolToken, setMetricoolToken] = useState("");
-  const [metricoolBlogId, setMetricoolBlogId] = useState("");
   const [telegramBotToken, setTelegramBotToken] = useState("");
   const [telegramChatId, setTelegramChatId] = useState("");
   const [zApiInstance, setZApiInstance] = useState("");
@@ -57,7 +52,6 @@ export function IntegrationsSection() {
       const d: IntegrationsStatus = await r.json();
       setStatus(d);
       setDomain(d.domain ?? "");
-      setMetricoolBlogId(d.metricool.blogId ?? "");
       setTelegramChatId(d.telegram.chatId ?? "");
       setZApiInstance(d.zapi.instance ?? "");
     } catch { /* silencioso */ }
@@ -74,7 +68,6 @@ export function IntegrationsSection() {
       if (r.ok) {
         toast.success(`${label} salvo`);
         // Limpa tokens sensíveis dos inputs após salvar (já estão no banco)
-        if ("metricoolToken" in patch) setMetricoolToken("");
         if ("telegramBotToken" in patch) setTelegramBotToken("");
         if ("zApiToken" in patch) setZApiToken("");
         if ("zApiClientToken" in patch) setZApiClientToken("");
@@ -118,73 +111,6 @@ export function IntegrationsSection() {
         </div>
       </div>
 
-      {/* Metricool */}
-      <div className="glass-card rounded-2xl p-5 border border-white/[0.08] space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Camera className="w-4 h-4 text-pink-400" />
-            <h2 className="text-sm font-semibold">Metricool (Instagram)</h2>
-          </div>
-          <StatusBadge ok={status.metricool.tokenSet} />
-        </div>
-        <p className="text-[11px] text-muted-foreground">
-          Cole o token <code>X-Mc-Auth</code> da sua conta Metricool. Sem isso, o painel Instagram fica oculto.
-        </p>
-        <div>
-          <Label className="text-[11px]">Token Metricool</Label>
-          <div className="flex gap-2">
-            <Input
-              type={showSecrets ? "text" : "password"}
-              value={metricoolToken}
-              onChange={(e) => setMetricoolToken(e.target.value)}
-              placeholder={status.metricool.tokenSet ? "•••••••••• (já salvo)" : "Cole o token"}
-              className="font-mono text-xs"
-            />
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setShowSecrets((s) => !s)}
-              className="px-2"
-              title={showSecrets ? "Ocultar" : "Mostrar"}
-            >
-              {showSecrets ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-            </Button>
-          </div>
-        </div>
-        <div>
-          <Label className="text-[11px]">Blog ID (opcional — apenas se a conta tem múltiplas marcas)</Label>
-          <Input
-            value={metricoolBlogId}
-            onChange={(e) => setMetricoolBlogId(e.target.value)}
-            placeholder="123456"
-            className="font-mono text-xs"
-          />
-        </div>
-        <div className="flex gap-2">
-          <Button
-            size="sm"
-            disabled={loading}
-            onClick={() => save({
-              metricoolToken: metricoolToken.trim() === "" ? undefined : metricoolToken.trim(),
-              metricoolBlogId: metricoolBlogId.trim() || null,
-            }, "Metricool")}
-            className="gap-1.5 text-xs"
-          >
-            <Save className="w-3.5 h-3.5" /> Salvar
-          </Button>
-          {status.metricool.tokenSet && (
-            <Button
-              size="sm"
-              variant="ghost"
-              className="text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
-              onClick={() => save({ metricoolToken: null, metricoolBlogId: null }, "Metricool removido")}
-            >
-              Remover
-            </Button>
-          )}
-        </div>
-      </div>
-
       {/* Telegram */}
       <div className="glass-card rounded-2xl p-5 border border-white/[0.08] space-y-3">
         <div className="flex items-center justify-between">
@@ -199,13 +125,24 @@ export function IntegrationsSection() {
         </p>
         <div>
           <Label className="text-[11px]">Bot Token</Label>
-          <Input
-            type={showSecrets ? "text" : "password"}
-            value={telegramBotToken}
-            onChange={(e) => setTelegramBotToken(e.target.value)}
-            placeholder={status.telegram.botTokenSet ? "•••••••••• (já salvo)" : "123456:ABC..."}
-            className="font-mono text-xs"
-          />
+          <div className="flex gap-2">
+            <Input
+              type={showSecrets ? "text" : "password"}
+              value={telegramBotToken}
+              onChange={(e) => setTelegramBotToken(e.target.value)}
+              placeholder={status.telegram.botTokenSet ? "•••••••••• (já salvo)" : "123456:ABC..."}
+              className="font-mono text-xs"
+            />
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setShowSecrets((s) => !s)}
+              className="px-2"
+              title={showSecrets ? "Ocultar segredos" : "Mostrar segredos"}
+            >
+              {showSecrets ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+            </Button>
+          </div>
         </div>
         <div>
           <Label className="text-[11px]">Chat ID</Label>

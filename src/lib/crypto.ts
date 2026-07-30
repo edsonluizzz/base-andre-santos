@@ -1,6 +1,6 @@
 /**
  * Criptografia simétrica para tokens sensíveis em banco.
- * Uso: criptografar tokens Z-API, Metricool, Telegram bot, Google refresh token
+ * Uso: criptografar tokens Z-API, Telegram bot, Google refresh token
  * antes de salvar; descriptografar ao ler.
  *
  * Estratégia: AES-256-GCM com IV aleatório por valor. Formato armazenado:
