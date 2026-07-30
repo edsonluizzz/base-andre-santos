@@ -2,12 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { db as globalDb } from "@/lib/db";
 import { ensureCityGoal } from "@/lib/municipality-goals";
 import { getCampaignContext } from "@/lib/campaign-context";
+import { cronSecretMatches } from "@/lib/api-auth";
 
 // Safety net diário — 10h UTC (7h BRT). Itera todas as campanhas ativas.
 export async function GET(req: NextRequest) {
   const secret = req.headers.get("x-vercel-cron-signature") ??
     req.nextUrl.searchParams.get("secret");
-  if (secret !== process.env.CRON_SECRET) {
+  if (!cronSecretMatches(secret)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

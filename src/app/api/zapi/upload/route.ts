@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { put } from "@vercel/blob";
 import { auth } from "@/lib/auth";
+import { detectImageMime } from "@/lib/file-validation";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -51,13 +52,27 @@ export async function POST(request: Request): Promise<NextResponse> {
     return NextResponse.json({ error: "Arquivo acima de 16MB (limite do WhatsApp)" }, { status: 400 });
   }
 
+  // Imagem declarada precisa bater com o conteúdo real (magic bytes) — barra
+  // SVG/HTML disfarçado de imagem (stored XSS no Blob público). Vídeo/áudio de
+  // WhatsApp não têm o mesmo risco de execução no navegador e seguem confiando
+  // no MIME do form (sem tabela de assinaturas de codec neste escopo).
+  let contentType = file.type || undefined;
+  if (file.type.startsWith("image/")) {
+    const buf = new Uint8Array(await file.arrayBuffer());
+    const detectedMime = detectImageMime(buf);
+    if (!detectedMime) {
+      return NextResponse.json({ error: "Arquivo não é uma imagem válida (JPG, PNG, WebP ou GIF)." }, { status: 400 });
+    }
+    contentType = detectedMime;
+  }
+
   try {
     const safeName = (file.name || "midia").replace(/[^a-zA-Z0-9._-]/g, "_");
     const blob = await put(`whatsapp/${safeName}`, file, {
       access: "public",
       token: process.env.BLOB_READ_WRITE_TOKEN, // força o store PÚBLICO wpp-publico
       addRandomSuffix: true,
-      contentType: file.type || undefined,
+      contentType,
     });
     return NextResponse.json({ url: blob.url });
   } catch (err) {

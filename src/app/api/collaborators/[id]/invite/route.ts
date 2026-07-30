@@ -51,7 +51,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       await db.collaborator.update({ where: { id: params.id }, data: { userId: existingUser.id } }).catch(() => {});
       await sendAccessGrantedEmail({ to: targetEmail, role: targetRole });
       await db.auditLog.create({
-        data: { action: "GRANT_ACCESS", actorId: session.user.id, targetId: existingUser.id, metadata: { email: targetEmail, role: targetRole, collaboratorId: params.id } },
+        data: { action: "GRANT_ACCESS", actorId: session.user.id, targetId: existingUser.id, campaignId: CID, metadata: { email: targetEmail, role: targetRole, collaboratorId: params.id } },
       }).catch(() => {});
       return NextResponse.json({ status: "linked", message: "Acesso concedido e colaborador vinculado" });
     }
@@ -74,7 +74,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     }
     await sendAccessGrantedEmail({ to: targetEmail, role: targetRole });
     await db.auditLog.create({
-      data: { action: "GRANT_ACCESS", actorId: session.user.id, metadata: { email: targetEmail, role: targetRole, collaboratorId: params.id, status: "pending" } },
+      data: { action: "GRANT_ACCESS", actorId: session.user.id, campaignId: CID, metadata: { email: targetEmail, role: targetRole, collaboratorId: params.id, status: "pending" } },
     }).catch(() => {});
     return NextResponse.json({ status: "pending", message: "Convite enviado — acesso ativo ao fazer login com Google" });
   } catch (err) {

@@ -40,6 +40,14 @@ export async function PUT(req: NextRequest) {
     if (deliveryPaymentValue !== undefined && (typeof deliveryPaymentValue !== "number" || deliveryPaymentValue < 0)) {
       return NextResponse.json({ error: "Valor de pagamento inválido" }, { status: 400 });
     }
+    if (
+      logoBase64 !== undefined && logoBase64 !== null &&
+      (typeof logoBase64 !== "string" ||
+        !/^data:image\/(png|jpeg|webp|gif);base64,/.test(logoBase64) ||
+        logoBase64.length > 2_000_000)
+    ) {
+      return NextResponse.json({ error: "Logo inválido (use PNG/JPEG/WebP/GIF, máx. ~1.5MB)" }, { status: 400 });
+    }
     const settings = await db.settings.upsert({
       where: { id: "singleton" },
       update: {

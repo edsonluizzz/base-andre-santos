@@ -1,13 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { n8nAuthCheck as authCheck } from "@/lib/api-auth";
 import { getCampaignContext } from "@/lib/campaign-context";
 import { validateCampaign } from "@/lib/validate-campaign";
 import { z } from "zod";
-
-function authCheck(req: NextRequest): boolean {
-  const key = process.env.N8N_API_KEY;
-  if (!key) return false;
-  return req.headers.get("authorization") === `Bearer ${key}`;
-}
 
 const patchSchema = z.object({
   campaignId: z.string().optional(),

@@ -457,14 +457,16 @@ model MunicipalityGoal {
 }
 
 model AuditLog {
-  id        String   @id @default(cuid())
-  action    String
-  actorId   String
-  targetId  String?
-  metadata  Json?
-  createdAt DateTime @default(now())
+  id         String   @id @default(cuid())
+  action     String
+  actorId    String
+  targetId   String?
+  campaignId String?
+  metadata   Json?
+  createdAt  DateTime @default(now())
   @@index([actorId])
   @@index([createdAt])
+  @@index([campaignId])
 }
 
 enum Role {

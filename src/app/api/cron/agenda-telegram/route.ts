@@ -3,6 +3,7 @@ import { db as globalDb } from "@/lib/db";
 import { sendTelegram, buildAgendaMessage, buildDailyDigestMessage, isTelegramConfigured } from "@/lib/telegram";
 import { getCampaignContext } from "@/lib/campaign-context";
 import { buildAgendaWhatsApp, sendToAgendaGroup } from "@/lib/agenda-whatsapp";
+import { cronSecretMatches } from "@/lib/api-auth";
 
 function startOfDay(d: Date) {
   const x = new Date(d); x.setHours(0, 0, 0, 0); return x;
@@ -20,8 +21,8 @@ function nowBRT() {
 
 // Itera todas as campanhas ativas que tenham Telegram configurado.
 export async function GET(req: NextRequest) {
-  const auth = req.headers.get("authorization");
-  if (process.env.CRON_SECRET && auth !== `Bearer ${process.env.CRON_SECRET}`) {
+  const secret = req.headers.get("authorization")?.replace("Bearer ", "");
+  if (!cronSecretMatches(secret)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

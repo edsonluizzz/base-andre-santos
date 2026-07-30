@@ -125,6 +125,7 @@ export async function PATCH(req: NextRequest) {
         action: "CAMPAIGN_INTEGRATIONS_UPDATE",
         actorId: session.user.id,
         targetId: cid,
+        campaignId: cid,
         metadata: { fields: Object.keys(data) },
       },
     }).catch(() => {});

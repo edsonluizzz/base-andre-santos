@@ -30,7 +30,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     }
 
     await db.auditLog.create({
-      data: { action: "UPDATE_USER", actorId: session.user.id, targetId: params.id, metadata: { role, tier } },
+      data: { action: "UPDATE_USER", actorId: session.user.id, targetId: params.id, campaignId: CID, metadata: { role, tier } },
     }).catch(() => {});
 
     return NextResponse.json({ ok: true });
@@ -54,7 +54,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: { id: stri
     await db.userCampaign.deleteMany({ where: { userId: params.id, campaignId: CID } });
 
     await db.auditLog.create({
-      data: { action: "REVOKE_ACCESS", actorId: session.user.id, targetId: params.id },
+      data: { action: "REVOKE_ACCESS", actorId: session.user.id, targetId: params.id, campaignId: CID },
     }).catch(() => {});
 
     return NextResponse.json({ ok: true });
@@ -71,11 +71,14 @@ export async function PATCH(_req: NextRequest, { params }: { params: { id: strin
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     if (!["ADMIN"].includes(session.user.role ?? "")) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-    const uc = await db.userCampaign.findUnique({ where: { id: params.id } });
-    await db.userCampaign.delete({ where: { id: params.id } });
+    const CID = getCid(session);
+    const uc = await db.userCampaign.findFirst({ where: { id: params.id, campaignId: CID } });
+    if (!uc) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+    await db.userCampaign.deleteMany({ where: { id: params.id, campaignId: CID } });
 
     await db.auditLog.create({
-      data: { action: "REVOKE_ACCESS", actorId: session.user.id, metadata: { pendingEmail: uc?.pendingEmail } },
+      data: { action: "REVOKE_ACCESS", actorId: session.user.id, campaignId: CID, metadata: { pendingEmail: uc?.pendingEmail } },
     }).catch(() => {});
 
     return NextResponse.json({ ok: true });

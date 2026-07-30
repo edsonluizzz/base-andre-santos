@@ -1,15 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import { n8nAuthCheck as authCheck } from "@/lib/api-auth";
 import { getCampaignContext } from "@/lib/campaign-context";
 import { getCampaignIntegrations } from "@/lib/meta-db";
 import { validateCampaign } from "@/lib/validate-campaign";
 import { regionForCity, type PRRegion } from "@/lib/pr-regions";
 import { renderAllMessages, INVITE_TEMPLATES, WELCOME_TEMPLATES, OPTOUT_TEMPLATES, REACTIVATION_TEMPLATES, periodoEleitoral } from "@/lib/message-templates";
-
-function authCheck(req: NextRequest): boolean {
-  const key = process.env.N8N_API_KEY;
-  if (!key) return false;
-  return req.headers.get("authorization") === `Bearer ${key}`;
-}
 
 // Fallback global mantido APENAS para a campanha original (andre-santos-2026).
 // Credenciais Z-API NUNCA hardcoded — vêm de env vars (Vercel) ou, idealmente,

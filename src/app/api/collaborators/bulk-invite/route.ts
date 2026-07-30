@@ -188,6 +188,7 @@ export async function POST(req: NextRequest) {
       data: {
         action: kind === "reactivation" ? "BULK_REACTIVATION" : "BULK_INVITE",
         actorId: session.user.id,
+        campaignId,
         metadata: {
           campaignId,
           kind,

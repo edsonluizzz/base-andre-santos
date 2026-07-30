@@ -3,13 +3,14 @@ import { db as globalDb } from "@/lib/db";
 import { getCalendarClient } from "@/lib/google-calendar";
 import { getCampaignContext } from "@/lib/campaign-context";
 import { decrypt } from "@/lib/crypto";
+import { cronSecretMatches } from "@/lib/api-auth";
 
 const GCAL_ID = process.env.GOOGLE_CALENDAR_ID ?? "primary";
 
 // Itera todas as campanhas ativas. Apenas processa as que têm Google Calendar conectado.
 export async function GET(req: NextRequest) {
   const secret = req.headers.get("authorization")?.replace("Bearer ", "");
-  if (process.env.CRON_SECRET && secret !== process.env.CRON_SECRET) {
+  if (!cronSecretMatches(secret)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

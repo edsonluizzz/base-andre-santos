@@ -16,7 +16,9 @@ export async function GET() {
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     if (!["ADMIN"].includes(session.user.role ?? "")) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
+    const CID = session.user.campaignId ?? "andre-santos-2026";
     const logs = await db.auditLog.findMany({
+      where: { campaignId: CID },
       orderBy: { createdAt: "desc" },
       take: 50,
     });

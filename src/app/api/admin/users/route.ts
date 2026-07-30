@@ -94,7 +94,7 @@ export async function POST(req: NextRequest) {
       });
       await db.user.update({ where: { id: existingUser.id }, data: { role: targetRole as "ADMIN" | "LEADER" | "MEMBER" } });
       await sendAccessGrantedEmail({ to: targetEmail, role: targetRole });
-      await db.auditLog.create({ data: { action: "GRANT_ACCESS", actorId: session.user.id, targetId: existingUser.id, metadata: { email: targetEmail, role: targetRole } } }).catch(() => {});
+      await db.auditLog.create({ data: { action: "GRANT_ACCESS", actorId: session.user.id, targetId: existingUser.id, campaignId: CID, metadata: { email: targetEmail, role: targetRole } } }).catch(() => {});
       return NextResponse.json({ status: "linked", message: "Acesso concedido ao usuário existente" });
     }
 
@@ -107,7 +107,7 @@ export async function POST(req: NextRequest) {
       });
     }
     await sendAccessGrantedEmail({ to: targetEmail, role: targetRole });
-    await db.auditLog.create({ data: { action: "GRANT_ACCESS", actorId: session.user.id, metadata: { email: targetEmail, role: targetRole, status: "pending" } } }).catch(() => {});
+    await db.auditLog.create({ data: { action: "GRANT_ACCESS", actorId: session.user.id, campaignId: CID, metadata: { email: targetEmail, role: targetRole, status: "pending" } } }).catch(() => {});
     return NextResponse.json({ status: "pending", message: "Convite criado — ativo ao fazer login com Google" });
   } catch (err) {
     console.error("[admin/users POST]", err);

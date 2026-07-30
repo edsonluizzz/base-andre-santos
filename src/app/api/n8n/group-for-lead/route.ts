@@ -1,13 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { n8nAuthCheck as authCheck } from "@/lib/api-auth";
 import { getCampaignContext } from "@/lib/campaign-context";
 import { validateCampaign } from "@/lib/validate-campaign";
 import { regionForCity, type PRRegion } from "@/lib/pr-regions";
-
-function authCheck(req: NextRequest): boolean {
-  const key = process.env.N8N_API_KEY;
-  if (!key) return false;
-  return req.headers.get("authorization") === `Bearer ${key}`;
-}
 
 /**
  * GET /api/n8n/group-for-lead?phone=X&campaign_id=Y

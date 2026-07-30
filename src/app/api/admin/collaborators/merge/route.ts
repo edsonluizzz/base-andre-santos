@@ -101,7 +101,7 @@ export async function POST(req: NextRequest) {
     }, { timeout: 30000 });
 
     await db.auditLog.create({
-      data: { action: "MERGE_COLLABORATORS", actorId: session.user.id, targetId: keepId, metadata: { mergedId: mergeId } },
+      data: { action: "MERGE_COLLABORATORS", actorId: session.user.id, targetId: keepId, campaignId: CID, metadata: { mergedId: mergeId } },
     }).catch(() => {});
 
     return NextResponse.json({ ok: true, message: "Registros mesclados com sucesso" });

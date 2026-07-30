@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { put } from "@vercel/blob";
 import { auth } from "@/lib/auth";
+import { detectImageMime } from "@/lib/file-validation";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -46,13 +47,21 @@ export async function POST(request: Request): Promise<NextResponse> {
       return NextResponse.json({ error: "Foto acima de 8MB" }, { status: 400 });
     }
 
+    // Valida o conteúdo real (magic bytes) — o MIME acima vem do cliente e é
+    // falsificável (ex: SVG disfarçado de imagem executaria script no Blob público).
+    const buf = new Uint8Array(await file.arrayBuffer());
+    const detectedMime = detectImageMime(buf);
+    if (!detectedMime) {
+      return NextResponse.json({ error: "Arquivo não é uma imagem válida (JPG, PNG, WebP ou GIF)." }, { status: 400 });
+    }
+
     try {
       const safeName = (file.name || "entrega").replace(/[^a-zA-Z0-9._-]/g, "_");
       const blob = await put(`church-deliveries/${safeName}`, file, {
         access: "public",
         token: process.env.BLOB_READ_WRITE_TOKEN,
         addRandomSuffix: true,
-        contentType: file.type || undefined,
+        contentType: detectedMime,
       });
       return NextResponse.json({ url: blob.url });
     } catch (err) {

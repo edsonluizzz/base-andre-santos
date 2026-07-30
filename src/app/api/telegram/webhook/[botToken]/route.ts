@@ -10,9 +10,16 @@ import { db } from "@/lib/db";
 import { handleTelegramUpdate, type TelegramUpdateBody } from "@/lib/telegram-handler";
 import { getCampaignContext } from "@/lib/campaign-context";
 import { getCampaignDbUrl } from "@/lib/meta-db";
+import { safeEqual } from "@/lib/api-auth";
 
 export async function POST(req: NextRequest, { params }: { params: { botToken: string } }) {
   try {
+    const expectedSecret = process.env.TELEGRAM_WEBHOOK_SECRET;
+    const providedSecret = req.headers.get("x-telegram-bot-api-secret-token");
+    if (!expectedSecret || !providedSecret || !safeEqual(providedSecret, expectedSecret)) {
+      return NextResponse.json({ ok: false }, { status: 401 });
+    }
+
     const botToken = params.botToken;
     if (!botToken) return NextResponse.json({ ok: false }, { status: 400 });
 

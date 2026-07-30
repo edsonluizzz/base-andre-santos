@@ -7,8 +7,10 @@ import { normalizePhone } from "@/lib/utils";
 // recebida (inbox do "agora pra frente") e repassa ao WF2 (n8n SIM/NÃO) para não
 // quebrar a automação. Rota PÚBLICA (a Z-API chama de fora) — ver isPublic em auth.config.
 //
-// Configurar na Z-API: on-message-received → /api/zapi/webhook?cid=andre-santos-2026
-// Opcional: &key=<ZAPI_WEBHOOK_SECRET> (se a env estiver setada, é exigida).
+// Configurar na Z-API: on-message-received → /api/zapi/webhook?cid=andre-santos-2026&key=<ZAPI_WEBHOOK_SECRET>
+// ZAPI_WEBHOOK_SECRET é OBRIGATÓRIA — sem ela a rota rejeita tudo (fail-closed).
+// Antes era opcional; isso permitia injeção de whatsappMessage falsas em qualquer
+// campanha via ?cid= sem autenticação (auditoria 2026-07-30).
 
 const DEFAULT_CID = "andre-santos-2026";
 
@@ -65,9 +67,9 @@ export async function POST(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
 
-    // Segredo opcional: se ZAPI_WEBHOOK_SECRET estiver setado, exige ?key= igual.
+    // ZAPI_WEBHOOK_SECRET é obrigatória — sem ela, rejeita tudo (fail-closed).
     const secret = process.env.ZAPI_WEBHOOK_SECRET;
-    if (secret && searchParams.get("key") !== secret) {
+    if (!secret || searchParams.get("key") !== secret) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
