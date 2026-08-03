@@ -4,8 +4,9 @@ import { getCampaignContext } from "@/lib/campaign-context";
 import ExcelJS from "exceljs";
 import {
   ROLE_LABEL, STATUS_LABEL, SUPPORT_LABEL, PROFILE_LABEL,
-  CONTRIB_LABEL, ROLE_ORDER, PROFILE_ORDER, SUPPORT_ORDER,
+  CONTRIB_LABEL, ROLE_ORDER,
 } from "@/lib/labels";
+import { getRelatorioAggregates, getGrowth, coverageScore, KEY_PROFILES } from "@/lib/relatorio-data";
 
 // Geração de XLSX com a base inteira pode levar segundos — evita corte do Vercel.
 export const maxDuration = 60;
@@ -85,11 +86,8 @@ function styleData(row: ExcelJS.Row, alt: boolean) {
   row.height = 18;
 }
 
-function coverageScore(roles: Record<string, number>): "Alta" | "Média" | "Baixa" {
-  if (roles.COORD_GERAL > 0 || roles.COORD_REGIONAL > 0 || roles.LIDER_MUNICIPAL > 0) return "Alta";
-  if (roles.LIDER_BAIRRO > 0) return "Média";
-  return "Baixa";
-}
+// coverageScore compartilhado (@/lib/relatorio-data) retorna "alta"/"media"/"baixa" — mapeia pro rótulo em PT usado nas planilhas.
+const COVERAGE_LABEL: Record<string, "Alta" | "Média" | "Baixa"> = { alta: "Alta", media: "Média", baixa: "Baixa" };
 
 export async function GET() {
   try {
@@ -98,15 +96,22 @@ export async function GET() {
     const { db, cid } = getCampaignContext(session);
     const CID = cid;
 
-    const all = await db.collaborator.findMany({
-      where: { campaignId: CID },
-      select: {
-        name: true, city: true, neighborhood: true, phone: true, email: true,
-        campaignRole: true, status: true, supportStatus: true, profile: true,
-        contributionTypes: true, createdAt: true,
-      },
-      orderBy: [{ city: "asc" }, { name: "asc" }],
-    });
+    // Roster (linha por colaborador) só é necessário pra aba "Colaboradores" —
+    // as abas de agregado (Resumo/Cobertura/Análise Política) vêm de groupBy,
+    // rodando em paralelo, em vez de reduzir esse array em JS várias vezes.
+    const [all, agg, growth] = await Promise.all([
+      db.collaborator.findMany({
+        where: { campaignId: CID },
+        select: {
+          name: true, city: true, neighborhood: true, phone: true, email: true,
+          campaignRole: true, status: true, supportStatus: true, profile: true,
+          contributionTypes: true, createdAt: true,
+        },
+        orderBy: [{ city: "asc" }, { name: "asc" }],
+      }),
+      getRelatorioAggregates(db, CID, {}),
+      getGrowth(db, CID, {}, 30),
+    ]);
 
     const wb = new ExcelJS.Workbook();
     wb.creator  = "Base André Santos";
@@ -114,11 +119,11 @@ export async function GET() {
     const today = new Date().toLocaleDateString("pt-BR");
 
     // ── Aba 1: Resumo ────────────────────────────────────────────
-    const active   = all.filter((c) => c.status === "ACTIVE").length;
-    const leads    = all.filter((c) => c.status === "LEAD").length;
-    const inactive = all.filter((c) => c.status === "INACTIVE").length;
-    const confirm  = all.filter((c) => c.supportStatus === "CONFIRMADO" && c.status === "ACTIVE").length;
-    const cityCount = new Set(all.map((c) => c.city).filter(Boolean)).size;
+    const active   = agg.totalActive;
+    const leads    = agg.totalLeads;
+    const inactive = agg.totalAll - agg.totalActive - agg.totalLeads;
+    const confirm  = agg.totalConfirm;
+    const cityCount = agg.cities.length;
 
     const wsR = wb.addWorksheet("Resumo", { properties: { tabColor: { argb: C.gold } } });
     wsR.columns = [{ width: 30 }, { width: 14 }];
@@ -141,7 +146,7 @@ export async function GET() {
         title: "VISÃO GERAL",
         rows: [
           ["Municípios com presença", cityCount],
-          ["Total de pessoas",        all.length],
+          ["Total de pessoas",        agg.totalAll],
           ["Ativas",                  active],
           ["Leads",                   leads],
           ["Inativas",                inactive],
@@ -150,23 +155,15 @@ export async function GET() {
       },
       {
         title: "POR CARGO (ativos)",
-        rows: ROLE_ORDER.map((r) => [
-          ROLE_LABEL[r],
-          all.filter((c) => c.status === "ACTIVE" && c.campaignRole === r).length,
-        ] as [string, number]),
+        rows: agg.byRole.map((r) => [r.label, r.count] as [string, number]),
       },
       {
         title: "POR PERFIL (total)",
-        rows: PROFILE_ORDER
-          .map((p) => [PROFILE_LABEL[p], all.filter((c) => c.profile === p).length] as [string, number])
-          .filter(([, n]) => n > 0),
+        rows: agg.byProfile.map((p) => [p.label, p.count] as [string, number]),
       },
       {
         title: "STATUS DE APOIO (ativos)",
-        rows: SUPPORT_ORDER.map((s) => [
-          SUPPORT_LABEL[s],
-          all.filter((c) => c.supportStatus === s && c.status === "ACTIVE").length,
-        ] as [string, number]),
+        rows: agg.bySupport.map((s) => [s.label, s.count] as [string, number]),
       },
     ];
 
@@ -192,19 +189,7 @@ export async function GET() {
     }
 
     // ── Aba 2: Cobertura por Município ───────────────────────────
-    type CityRow = { roles: Record<string, number>; active: number; leads: number; confirmados: number; total: number };
-    const cityMap: Record<string, CityRow> = {};
-    for (const c of all.filter((c) => c.city)) {
-      const key = c.city!;
-      if (!cityMap[key]) cityMap[key] = { roles: {}, active: 0, leads: 0, confirmados: 0, total: 0 };
-      const m = cityMap[key];
-      m.total++;
-      m.roles[c.campaignRole] = (m.roles[c.campaignRole] ?? 0) + 1;
-      if (c.status === "ACTIVE") m.active++;
-      if (c.status === "LEAD")   m.leads++;
-      if (c.supportStatus === "CONFIRMADO" && c.status === "ACTIVE") m.confirmados++;
-    }
-    const cityEntries = Object.entries(cityMap).sort((a, b) => b[1].active - a[1].active);
+    const cityEntries = agg.cities;
 
     const wsCov = wb.addWorksheet("Cobertura", { properties: { tabColor: { argb: C.gold } } });
     wsCov.columns = [
@@ -222,7 +207,7 @@ export async function GET() {
 
     let altCov = false;
     for (const [city, m] of cityEntries) {
-      const cov = coverageScore(m.roles);
+      const cov = COVERAGE_LABEL[coverageScore(m.roles)];
       const r = wsCov.addRow([
         city, cov,
         m.roles["COORD_GERAL"]     ?? 0,
@@ -312,36 +297,22 @@ export async function GET() {
     }
 
     // ── Aba 4: Análise Política ──────────────────────────────────
-    const activeAll  = all.filter((c) => c.status === "ACTIVE");
-    const leadsAll   = all.filter((c) => c.status === "LEAD");
-    const confirmAll = activeAll.filter((c) => c.supportStatus === "CONFIRMADO");
-    const pctAct     = all.length > 0 ? ((activeAll.length / all.length) * 100).toFixed(1) : "0";
-    const pctConf    = activeAll.length > 0 ? ((confirmAll.length / activeAll.length) * 100).toFixed(1) : "0";
+    const pctAct  = agg.totalAll > 0 ? ((agg.totalActive / agg.totalAll) * 100).toFixed(1) : "0";
+    const pctConf = agg.totalActive > 0 ? ((agg.totalConfirm / agg.totalActive) * 100).toFixed(1) : "0";
+    const { newN: new30b, prevN: prev30b } = growth;
 
-    const now2   = new Date();
-    const d30b   = new Date(now2.getTime() - 30 * 86400000);
-    const d60b   = new Date(now2.getTime() - 60 * 86400000);
-    const new30b  = all.filter((c) => new Date(c.createdAt) >= d30b).length;
-    const prev30b = all.filter((c) => new Date(c.createdAt) >= d60b && new Date(c.createdAt) < d30b).length;
-
-    const KEY_PROFILES_XLSX = ["PASTOR", "VEREADOR", "LIDER_POLITICO", "EMPRESARIO", "PRESIDENTE_ASSOCIACAO", "LIDERANCA_COMUNITARIA"];
-    const crossRows = KEY_PROFILES_XLSX
+    const crossRows = KEY_PROFILES
       .map((p) => {
-        const grp = activeAll.filter((c) => c.profile === p);
+        const row = agg.crossTable[p];
         return {
           profile: PROFILE_LABEL[p] ?? p,
-          confirm: grp.filter((c) => c.supportStatus === "CONFIRMADO").length,
-          negoc:   grp.filter((c) => c.supportStatus === "NEGOCIANDO").length,
-          neutro:  grp.filter((c) => c.supportStatus === "NEUTRO").length,
-          adv:     grp.filter((c) => c.supportStatus === "ADVERSARIO").length,
-          total:   grp.length,
+          confirm: row.confirmado, negoc: row.negociando, neutro: row.neutro, adv: row.adversario,
+          total: row.total,
         };
       })
       .filter((r) => r.total > 0);
 
-    const orphans = cityEntries
-      .filter(([, m]) => coverageScore(m.roles) === "Baixa" && m.active > 0)
-      .map(([city, m]) => [city, m.active, m.leads, m.total]);
+    const orphans = agg.orphanCities.map(([city, m]) => [city, m.active, m.leads, m.total]);
 
     const top10conf = [...cityEntries]
       .filter(([, m]) => m.confirmados > 0)
@@ -370,10 +341,10 @@ export async function GET() {
     const funilHeader = wsA.addRow(["Etapa", "Quantidade", "Taxa"]);
     styleHeader(funilHeader);
     const funilData: [string, number | string, string][] = [
-      ["Total cadastrado",           all.length,          "100%"],
-      ["Ativos",                     activeAll.length,    `${pctAct}%`],
-      ["Confirmados (apoio ativo)",  confirmAll.length,   `${pctConf}% dos ativos`],
-      ["Leads não convertidos",      leadsAll.length,     "—"],
+      ["Total cadastrado",           agg.totalAll,        "100%"],
+      ["Ativos",                     agg.totalActive,     `${pctAct}%`],
+      ["Confirmados (apoio ativo)",  agg.totalConfirm,    `${pctConf}% dos ativos`],
+      ["Leads não convertidos",      agg.totalLeads,      "—"],
     ];
     funilData.forEach(([label, qty, taxa], i) => {
       const r = wsA.addRow([label, qty, taxa]);

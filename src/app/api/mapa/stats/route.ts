@@ -10,19 +10,23 @@ export async function GET() {
     const { db, cid } = getCampaignContext(session);
     const CID = cid;
 
-    const rows = await db.collaborator.findMany({
+    const groups = await db.collaborator.groupBy({
+      by: ["city", "supportStatus"],
       where: { campaignId: CID, status: { not: "INACTIVE" }, city: { not: null } },
-      select: { city: true, supportStatus: true },
+      _count: true,
     });
 
+    // Merge trimando o nome — cidades com espaço extra não normalizado ainda
+    // caem no mesmo grupo (groupBy no banco não sabe disso, só JS pós-hoc).
     const agg: Record<string, { confirmado: number; negociando: number; neutro: number; adversario: number }> = {};
-    for (const r of rows) {
-      const city = r.city!.trim();
+    for (const g of groups) {
+      if (!g.city) continue;
+      const city = g.city.trim();
       if (!agg[city]) agg[city] = { confirmado: 0, negociando: 0, neutro: 0, adversario: 0 };
-      if (r.supportStatus === "CONFIRMADO")  agg[city].confirmado++;
-      else if (r.supportStatus === "NEGOCIANDO") agg[city].negociando++;
-      else if (r.supportStatus === "NEUTRO")     agg[city].neutro++;
-      else if (r.supportStatus === "ADVERSARIO") agg[city].adversario++;
+      if (g.supportStatus === "CONFIRMADO")  agg[city].confirmado += g._count;
+      else if (g.supportStatus === "NEGOCIANDO") agg[city].negociando += g._count;
+      else if (g.supportStatus === "NEUTRO")     agg[city].neutro += g._count;
+      else if (g.supportStatus === "ADVERSARIO") agg[city].adversario += g._count;
     }
 
     const cities = Object.entries(agg).map(([name, counts]) => ({ name, ...counts }));

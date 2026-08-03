@@ -15,19 +15,20 @@ export function FunnelPanel() {
   const [data, setData] = useState<FunnelData | null>(null);
 
   useEffect(() => {
-    fetch("/api/collaborators?status=ALL")
+    // Reaproveita /api/collaborators/stats (groupBy no banco) em vez de
+    // buscar a lista de colaboradores no client — o endpoint de listagem
+    // tem limite padrão de 500 registros, então os números aqui ficavam
+    // errados (não só lentos) acima disso.
+    fetch("/api/collaborators/stats")
       .then((r) => r.json())
-      .then((res) => {
-        const all: Array<{ status: string; supportStatus: string }> = res.data ?? res;
-        return all;
-      })
-      .then((all) => {
-        const total = all.length;
-        const leads = all.filter((c) => c.status === "LEAD").length;
-        const ativos = all.filter((c) => c.status === "ACTIVE").length;
-        const inativos = all.filter((c) => c.status === "INACTIVE").length;
-        const confirmados = all.filter((c) => c.supportStatus === "CONFIRMADO").length;
-        setData({ total, leads, ativos, confirmados, inativos });
+      .then((s: { total: number; leads: number; inativos: number; confirmados: number }) => {
+        setData({
+          total: s.total,
+          leads: s.leads,
+          inativos: s.inativos,
+          ativos: s.total - s.leads - s.inativos,
+          confirmados: s.confirmados,
+        });
       })
       .catch(() => {});
   }, []);

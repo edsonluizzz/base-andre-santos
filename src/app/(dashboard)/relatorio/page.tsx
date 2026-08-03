@@ -1,11 +1,14 @@
 import { auth } from "@/lib/auth";
 import { getCampaignContext } from "@/lib/campaign-context";
-import { BarChart2, Download, FileSpreadsheet, AlertTriangle, TrendingUp, Users } from "lucide-react";
+import { BarChart2, Download, FileSpreadsheet, FileText, AlertTriangle, TrendingUp, Users, CalendarRange, Target, Wallet, Trophy } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Link from "next/link";
 import { PrintButton } from "@/components/relatorio/print-button";
 import { EngagementPanel } from "@/components/relatorio/engagement-panel";
+import { CityFilterSelect } from "@/components/relatorio/city-filter-select";
 import { Suspense } from "react";
-import { ROLE_LABEL, PROFILE_LABEL, SUPPORT_LABEL, ROLE_ORDER, PROFILE_ORDER, SUPPORT_ORDER } from "@/lib/labels";
+import { PROFILE_LABEL, ROLE_LABEL, ROLE_ORDER } from "@/lib/labels";
+import { getRelatorioAggregates, getGrowth, getContribuicoes, getMonthlySeries, getAvailableCities, getExecutiveSummary, coverageScore } from "@/lib/relatorio-data";
 
 
 const ROLE_LABEL_SHORT: Record<string, string> = {
@@ -29,12 +32,6 @@ const PROFILE_COLOR: Record<string, string> = {
   LIDERANCA_COMUNITARIA: "text-orange-400",
   APOIADOR:              "text-slate-400",
 };
-
-function coverageScore(roles: Record<string, number>): "alta" | "media" | "baixa" {
-  if (roles.COORD_GERAL > 0 || roles.COORD_REGIONAL > 0 || roles.LIDER_MUNICIPAL > 0) return "alta";
-  if (roles.LIDER_BAIRRO > 0) return "media";
-  return "baixa";
-}
 
 const COVERAGE_STYLE: Record<string, string> = {
   alta:  "border-green-500/30 bg-green-500/[0.05]",
@@ -64,7 +61,7 @@ const KEY_PROFILE_OPTIONS = [
 export default async function RelatorioPage({
   searchParams,
 }: {
-  searchParams: { cob?: string; perfil?: string; periodo?: string };
+  searchParams: { cob?: string; perfil?: string; periodo?: string; cidade?: string; cargo?: string };
 }) {
   const session = await auth();
   if (!session?.user) return null;
@@ -72,12 +69,16 @@ export default async function RelatorioPage({
   const activeCob     = searchParams.cob    ?? null;
   const activeProfile = searchParams.perfil ?? null;
   const activePeriodo = searchParams.periodo ?? "30";
+  const activeCity    = searchParams.cidade ?? null;
+  const activeRole    = searchParams.cargo  ?? null;
 
   function buildUrl(overrides: Record<string, string | null>): string {
     const p: Record<string, string> = {};
     if (activeCob)                    p.cob     = activeCob;
     if (activeProfile)                p.perfil  = activeProfile;
     if (activePeriodo !== "30")       p.periodo = activePeriodo;
+    if (activeCity)                   p.cidade  = activeCity;
+    if (activeRole)                   p.cargo   = activeRole;
     for (const [k, v] of Object.entries(overrides)) {
       if (v === null) delete p[k];
       else            p[k] = v;
@@ -86,54 +87,29 @@ export default async function RelatorioPage({
     return qs ? `/relatorio?${qs}` : "/relatorio";
   }
 
-  const all = await db.collaborator.findMany({
-    where: { campaignId: CID },
-    select: { city: true, campaignRole: true, status: true, supportStatus: true, profile: true, contributionTypes: true, createdAt: true },
-    take: 5000,
-    orderBy: { createdAt: "desc" },
-  });
+  const filters = { profile: activeProfile, city: activeCity, role: activeRole };
+  const periodDays = activePeriodo === "all" ? null : parseInt(activePeriodo);
 
-  const active = all.filter((c) => c.status === "ACTIVE");
+  const [agg, { newN, prevN }, topContrib, monthlySeries, availableCities, execSummary] = await Promise.all([
+    getRelatorioAggregates(db, CID, filters),
+    getGrowth(db, CID, filters, periodDays),
+    getContribuicoes(db, CID, filters),
+    getMonthlySeries(db, CID, filters, 6),
+    getAvailableCities(db, CID),
+    getExecutiveSummary(db, CID),
+  ]);
 
-  // Subconjuntos filtrados por perfil (para funil e insights)
-  const viewAll    = activeProfile ? all.filter((c) => c.profile === activeProfile)    : all;
-  const viewActive = activeProfile ? active.filter((c) => c.profile === activeProfile) : active;
+  const {
+    totalAll, totalLeads, totalActive, totalConfirm,
+    cities, totals, highCoverage, medCoverage, orphanCities,
+    crossTable, crossProfiles, byProfile, byRole, bySupport,
+  } = agg;
 
-  // Funil de conversão (respeita filtro de perfil)
-  const totalAll     = viewAll.length;
-  const totalLeads   = viewAll.filter((c) => c.status === "LEAD").length;
-  const totalActive  = viewActive.length;
-  const totalConfirm = viewActive.filter((c) => c.supportStatus === "CONFIRMADO").length;
   const pctLeadActive = totalAll > 0 ? Math.round((totalActive / totalAll) * 100) : 0;
   const pctActiveConf = totalActive > 0 ? Math.round((totalConfirm / totalActive) * 100) : 0;
 
-  // Crescimento — janela dinâmica pelo filtro de período
-  const now = new Date();
-  const periodDays = activePeriodo === "all" ? null : parseInt(activePeriodo);
-  const dStart  = periodDays ? new Date(now.getTime() - periodDays * 86400000) : null;
-  const dPrev   = periodDays ? new Date(now.getTime() - periodDays * 2 * 86400000) : null;
-  const newN  = dStart
-    ? viewAll.filter((c) => new Date(c.createdAt) >= dStart).length
-    : viewAll.length;
-  const prevN = (dStart && dPrev)
-    ? viewAll.filter((c) => new Date(c.createdAt) >= dPrev && new Date(c.createdAt) < dStart).length
-    : 0;
   const growthDelta = newN - prevN;
   const growthLabel = activePeriodo === "all" ? "total cadastrado" : `últimos ${PERIODO_OPTIONS.find(p => p.key === activePeriodo)?.label ?? activePeriodo}`;
-
-  // Cobertura por cidade
-  const cityMap: Record<string, { roles: Record<string, number>; active: number; leads: number; confirmados: number; total: number }> = {};
-  for (const c of all.filter((c) => c.city)) {
-    const city = c.city!;
-    if (!cityMap[city]) cityMap[city] = { roles: {}, active: 0, leads: 0, confirmados: 0, total: 0 };
-    const m = cityMap[city];
-    m.total++;
-    m.roles[c.campaignRole] = (m.roles[c.campaignRole] ?? 0) + 1;
-    if (c.status === "ACTIVE") m.active++;
-    if (c.status === "LEAD")   m.leads++;
-    if (c.supportStatus === "CONFIRMADO" && c.status === "ACTIVE") m.confirmados++;
-  }
-  const cities = Object.entries(cityMap).sort((a, b) => b[1].active - a[1].active);
 
   const allFilteredCities = cities.filter(([, m]) => {
     if (activeCob === "alta")    return coverageScore(m.roles) === "alta";
@@ -142,60 +118,11 @@ export default async function RelatorioPage({
     return true;
   });
   const filteredCities = allFilteredCities.slice(0, 50);
-
-  const totals  = cities.reduce((acc, [, m]) => ({
-    total: acc.total + m.total, active: acc.active + m.active,
-    leads: acc.leads + m.leads, confirmados: acc.confirmados + m.confirmados,
-  }), { total: 0, active: 0, leads: 0, confirmados: 0 });
-
-  const highCoverage = cities.filter(([, m]) => coverageScore(m.roles) === "alta").length;
-  const medCoverage  = cities.filter(([, m]) => coverageScore(m.roles) === "media").length;
-
-  // Municípios órfãos
-  const orphanCities = cities.filter(([, m]) => coverageScore(m.roles) === "baixa" && m.active > 0);
-  const orphanShown  = orphanCities.slice(0, 8);
-
-  // Tabela cruzada: perfil × status de apoio (filtrada por perfil se selecionado)
-  const KEY_PROFILES = ["PASTOR", "VEREADOR", "LIDER_POLITICO", "EMPRESARIO", "PRESIDENTE_ASSOCIACAO", "LIDERANCA_COMUNITARIA"];
-  type CrossRow = { confirmado: number; negociando: number; neutro: number; adversario: number; total: number };
-  const crossTable: Record<string, CrossRow> = {};
-  const crossSource = activeProfile ? KEY_PROFILES.filter(p => p === activeProfile) : KEY_PROFILES;
-  for (const p of KEY_PROFILES) {
-    const group = active.filter((c) => c.profile === p);
-    crossTable[p] = {
-      confirmado: group.filter((c) => c.supportStatus === "CONFIRMADO").length,
-      negociando: group.filter((c) => c.supportStatus === "NEGOCIANDO").length,
-      neutro:     group.filter((c) => c.supportStatus === "NEUTRO").length,
-      adversario: group.filter((c) => c.supportStatus === "ADVERSARIO").length,
-      total: group.length,
-    };
-  }
-  const crossProfiles = crossSource.filter((p) => crossTable[p].total > 0);
-
-  // Formas de contribuição (respeita filtro de perfil)
-  const contribMap: Record<string, number> = {};
-  for (const c of viewActive) {
-    for (const t of c.contributionTypes) {
-      contribMap[t] = (contribMap[t] ?? 0) + 1;
-    }
-  }
-  const topContrib = Object.entries(contribMap).sort((a, b) => b[1] - a[1]).slice(0, 6);
-
-  // Breakdowns
-  const byProfile = PROFILE_ORDER.map((p) => ({
-    key: p, label: PROFILE_LABEL[p], count: all.filter((c) => c.profile === p).length,
-  })).filter((x) => x.count > 0);
-
-  const bySupport = SUPPORT_ORDER.map((s) => ({
-    key: s, label: SUPPORT_LABEL[s], count: active.filter((c) => c.supportStatus === s).length,
-  }));
-
-  const byRole = ROLE_ORDER.map((r) => ({
-    key: r, label: ROLE_LABEL[r], count: active.filter((c) => c.campaignRole === r).length,
-  }));
+  const orphanShown = orphanCities.slice(0, 8);
 
   const maxProfile = Math.max(...byProfile.map((x) => x.count), 1);
   const maxRole    = Math.max(...byRole.map((x) => x.count), 1);
+  const maxMonthly = Math.max(...monthlySeries.map((x) => x.total), 1);
 
   return (
     <div className="space-y-6">
@@ -218,6 +145,12 @@ export default async function RelatorioPage({
             <Download className="w-4 h-4" /> CSV
           </Link>
           <Link
+            href="/api/relatorio/export-pdf"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl border border-white/[0.12] text-sm text-muted-foreground hover:text-foreground hover:bg-white/[0.04] transition-colors"
+          >
+            <FileText className="w-4 h-4" /> PDF
+          </Link>
+          <Link
             href="/api/relatorio/export-xlsx"
             className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
           >
@@ -226,34 +159,145 @@ export default async function RelatorioPage({
         </div>
       </div>
 
-      {/* Barra de filtros */}
-      <div className="glass-card rounded-2xl p-3 sm:p-4 border border-white/[0.07] flex flex-col sm:flex-row gap-3 no-print">
-        {/* Filtro por perfil */}
-        <div className="flex-1">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2">Perfil</p>
-          <div className="flex flex-wrap gap-1.5">
-            <Link href={buildUrl({ perfil: null })}
-              className={`text-xs px-2.5 py-1 rounded-full border transition-all ${!activeProfile ? "bg-primary/15 text-primary border-primary/40" : "text-muted-foreground border-white/[0.08] hover:border-white/[0.2]"}`}>
-              Todos
-            </Link>
-            {KEY_PROFILE_OPTIONS.map((o) => (
-              <Link key={o.key} href={buildUrl({ perfil: activeProfile === o.key ? null : o.key })}
-                className={`text-xs px-2.5 py-1 rounded-full border transition-all ${activeProfile === o.key ? "bg-primary/15 text-primary border-primary/40" : "text-muted-foreground border-white/[0.08] hover:border-white/[0.2]"}`}>
-                {o.label}
+      {/* Resumo Executivo — cruza Metas, Financeiro (Igrejas) e Ranking */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="glass-card rounded-2xl p-5 border border-white/[0.08]">
+          <div className="flex items-center gap-2 mb-3">
+            <Target className="w-4 h-4 text-primary" />
+            <h2 className="text-sm font-semibold text-foreground">Meta Eleitoral</h2>
+          </div>
+          {execSummary.metaVotesPct === null ? (
+            <p className="text-xs text-muted-foreground">
+              Nenhuma meta configurada — defina em{" "}
+              <Link href="/metas" className="text-primary hover:underline">Metas</Link>.
+            </p>
+          ) : (
+            <>
+              <div className="flex items-end justify-between mb-1.5">
+                <span className="text-2xl font-bold text-foreground">{execSummary.metaVotesPct}%</span>
+                <span className="text-xs text-muted-foreground">{totalConfirm} / {execSummary.metaVotesTotal} votos</span>
+              </div>
+              <div className="h-2 rounded-full bg-white/[0.06]">
+                <div className="h-full rounded-full bg-primary/70" style={{ width: `${Math.min(100, execSummary.metaVotesPct)}%` }} />
+              </div>
+              <Link href="/metas" className="text-[10px] text-muted-foreground hover:text-foreground mt-2 inline-block underline underline-offset-2">
+                Ver detalhamento por cidade
               </Link>
-            ))}
+            </>
+          )}
+        </div>
+
+        <div className="glass-card rounded-2xl p-5 border border-white/[0.08]">
+          <div className="flex items-center gap-2 mb-3">
+            <Wallet className="w-4 h-4 text-primary" />
+            <h2 className="text-sm font-semibold text-foreground">Financeiro (Igrejas)</h2>
+          </div>
+          {!execSummary.financeiro ? (
+            <p className="text-xs text-muted-foreground">Sem dados financeiros ainda.</p>
+          ) : (
+            <>
+              <div className="flex justify-between text-xs mb-1.5">
+                <span className="text-muted-foreground">Pago</span>
+                <span className="text-green-400 font-bold">
+                  {execSummary.financeiro.amountPaid.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                </span>
+              </div>
+              <div className="flex justify-between text-xs">
+                <span className="text-muted-foreground">Pendente</span>
+                <span className="text-amber-400 font-bold">
+                  {execSummary.financeiro.amountPending.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                </span>
+              </div>
+              <Link href="/igrejas" className="text-[10px] text-muted-foreground hover:text-foreground mt-3 inline-block underline underline-offset-2">
+                Ver financeiro completo
+              </Link>
+            </>
+          )}
+        </div>
+
+        <div className="glass-card rounded-2xl p-5 border border-white/[0.08]">
+          <div className="flex items-center gap-2 mb-3">
+            <Trophy className="w-4 h-4 text-primary" />
+            <h2 className="text-sm font-semibold text-foreground">Top Líderes</h2>
+          </div>
+          {execSummary.topLeaders.length === 0 ? (
+            <p className="text-xs text-muted-foreground">Ninguém registrou colaborador ativo ainda.</p>
+          ) : (
+            <div className="space-y-2.5">
+              {execSummary.topLeaders.map((l, i) => (
+                <div key={l.id} className="flex items-center gap-2">
+                  <span className="text-[10px] text-muted-foreground w-3">{i + 1}º</span>
+                  <Avatar className="w-6 h-6">
+                    <AvatarImage src={l.image ?? undefined} referrerPolicy="no-referrer" />
+                    <AvatarFallback className="bg-primary/10 text-primary text-[10px]">
+                      {(l.name ?? "?").split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="text-xs text-foreground flex-1 truncate">{l.name ?? "Sem nome"}</span>
+                  <span className="text-xs font-bold text-primary">{l.active}</span>
+                </div>
+              ))}
+              <Link href="/ranking" className="text-[10px] text-muted-foreground hover:text-foreground mt-1 inline-block underline underline-offset-2">
+                Ver ranking completo
+              </Link>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Barra de filtros */}
+      <div className="glass-card rounded-2xl p-3 sm:p-4 border border-white/[0.07] space-y-3 no-print">
+        <div className="flex flex-col sm:flex-row gap-3">
+          {/* Filtro por perfil */}
+          <div className="flex-1">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2">Perfil</p>
+            <div className="flex flex-wrap gap-1.5">
+              <Link href={buildUrl({ perfil: null })}
+                className={`text-xs px-2.5 py-1 rounded-full border transition-all ${!activeProfile ? "bg-primary/15 text-primary border-primary/40" : "text-muted-foreground border-white/[0.08] hover:border-white/[0.2]"}`}>
+                Todos
+              </Link>
+              {KEY_PROFILE_OPTIONS.map((o) => (
+                <Link key={o.key} href={buildUrl({ perfil: activeProfile === o.key ? null : o.key })}
+                  className={`text-xs px-2.5 py-1 rounded-full border transition-all ${activeProfile === o.key ? "bg-primary/15 text-primary border-primary/40" : "text-muted-foreground border-white/[0.08] hover:border-white/[0.2]"}`}>
+                  {o.label}
+                </Link>
+              ))}
+            </div>
+          </div>
+          {/* Filtro por período */}
+          <div className="shrink-0">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2">Período de crescimento</p>
+            <div className="flex gap-1.5">
+              {PERIODO_OPTIONS.map((o) => (
+                <Link key={o.key} href={buildUrl({ periodo: o.key === "30" ? null : o.key })}
+                  className={`text-xs px-2.5 py-1 rounded-full border transition-all ${activePeriodo === o.key ? "bg-primary/15 text-primary border-primary/40" : "text-muted-foreground border-white/[0.08] hover:border-white/[0.2]"}`}>
+                  {o.label}
+                </Link>
+              ))}
+            </div>
           </div>
         </div>
-        {/* Filtro por período */}
-        <div className="shrink-0">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2">Período de crescimento</p>
-          <div className="flex gap-1.5">
-            {PERIODO_OPTIONS.map((o) => (
-              <Link key={o.key} href={buildUrl({ periodo: o.key === "30" ? null : o.key })}
-                className={`text-xs px-2.5 py-1 rounded-full border transition-all ${activePeriodo === o.key ? "bg-primary/15 text-primary border-primary/40" : "text-muted-foreground border-white/[0.08] hover:border-white/[0.2]"}`}>
-                {o.label}
+        <div className="flex flex-col sm:flex-row gap-3 pt-3 border-t border-white/[0.06]">
+          {/* Filtro por cargo */}
+          <div className="flex-1">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2">Cargo</p>
+            <div className="flex flex-wrap gap-1.5">
+              <Link href={buildUrl({ cargo: null })}
+                className={`text-xs px-2.5 py-1 rounded-full border transition-all ${!activeRole ? "bg-primary/15 text-primary border-primary/40" : "text-muted-foreground border-white/[0.08] hover:border-white/[0.2]"}`}>
+                Todos
               </Link>
-            ))}
+              {ROLE_ORDER.map((r) => (
+                <Link key={r} href={buildUrl({ cargo: activeRole === r ? null : r })}
+                  className={`text-xs px-2.5 py-1 rounded-full border transition-all ${activeRole === r ? "bg-primary/15 text-primary border-primary/40" : "text-muted-foreground border-white/[0.08] hover:border-white/[0.2]"}`}>
+                  {ROLE_LABEL_SHORT[r] ?? ROLE_LABEL[r]}
+                </Link>
+              ))}
+            </div>
+          </div>
+          {/* Filtro por cidade */}
+          <div className="shrink-0">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2">Cidade</p>
+            <CityFilterSelect cities={availableCities} value={activeCity} />
           </div>
         </div>
       </div>
@@ -431,6 +475,29 @@ export default async function RelatorioPage({
         </div>
       )}
 
+      {/* Evolução mensal */}
+      <div className="glass-card rounded-2xl p-5 border border-white/[0.08]">
+        <div className="flex items-center gap-2 mb-4">
+          <CalendarRange className="w-4 h-4 text-primary" />
+          <h2 className="text-sm font-semibold text-foreground">Evolução Mensal (últimos 6 meses)</h2>
+        </div>
+        <div className="flex items-end gap-2 sm:gap-4 h-32">
+          {monthlySeries.map((m) => (
+            <div key={m.month} className="flex-1 flex flex-col items-center justify-end h-full gap-1">
+              <span className="text-xs font-bold text-foreground">{m.total || ""}</span>
+              <div className="w-full flex flex-col justify-end h-full rounded-t-md overflow-hidden bg-white/[0.04]">
+                <div
+                  className="w-full bg-primary/70 rounded-t-md"
+                  style={{ height: `${Math.round((m.total / maxMonthly) * 100)}%`, minHeight: m.total > 0 ? "4px" : "0" }}
+                  title={`${m.total} cadastrados (${m.active} ativos)`}
+                />
+              </div>
+              <span className="text-[10px] text-muted-foreground uppercase">{m.label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* Breakdowns */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="glass-card rounded-2xl p-5 border border-white/[0.08]">
@@ -477,7 +544,7 @@ export default async function RelatorioPage({
                 <div className="flex items-center gap-2">
                   <div className="w-20 h-1.5 rounded-full bg-white/[0.06]">
                     <div className={`h-full rounded-full ${key === "CONFIRMADO" ? "bg-green-400" : key === "NEGOCIANDO" ? "bg-yellow-400" : key === "ADVERSARIO" ? "bg-red-400" : "bg-slate-400"}`}
-                      style={{ width: active.length > 0 ? `${Math.round((count / active.length) * 100)}%` : "0%" }} />
+                      style={{ width: totalActive > 0 ? `${Math.round((count / totalActive) * 100)}%` : "0%" }} />
                   </div>
                   <span className="text-sm font-bold text-foreground w-8 text-right">{count}</span>
                 </div>
