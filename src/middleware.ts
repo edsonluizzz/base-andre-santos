@@ -6,10 +6,10 @@ export const { auth: middleware } = NextAuth(authConfig);
 
 export const config = {
   // Rotas públicas de alto tráfego (cadastro em evento, landing de ebook,
-  // CEP lookup, stats) ficam FORA do middleware: páginas estáticas saem
-  // direto do CDN e cada request economiza uma invocação edge — essencial
-  // para aguentar burst de evento dentro do plano Hobby.
+  // foto de perfil com moldura, CEP lookup, stats) ficam FORA do middleware:
+  // páginas estáticas saem direto do CDN e cada request economiza uma
+  // invocação edge — essencial para aguentar burst de evento dentro do plano Hobby.
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|manifest.json|sw.js|icons|ebooks|robots.txt|sitemap.xml|cadastro|ebook|privacidade|r$|r/|api/public|api/cep).*)",
+    "/((?!_next/static|_next/image|favicon.ico|manifest.json|sw.js|icons|ebooks|robots.txt|sitemap.xml|cadastro|ebook|privacidade|fotoperfil|r$|r/|api/public|api/cep).*)",
   ],
 };
