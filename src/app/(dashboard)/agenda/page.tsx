@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { useSession } from "next-auth/react";
 import { QRCodeSVG } from "qrcode.react";
 import {
   Calendar, List, MapPin, Clock, RefreshCw, Plus,
   ChevronLeft, ChevronRight, X, Users, Tag, FileText,
-  ExternalLink, ClipboardList, Search, QrCode, Copy, Check,
+  ExternalLink, ClipboardList, Search, QrCode, Copy, Check, ShieldAlert,
 } from "lucide-react";
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isSameDay, isToday, addMonths, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -54,6 +55,7 @@ const TYPE_DOT: Record<string, string> = {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function AgendaPage() {
+  const { data: session } = useSession();
   const [events, setEvents]           = useState<Event[]>([]);
   const [zones, setZones]             = useState<Zone[]>([]);
   const [loading, setLoading]         = useState(true);
@@ -66,6 +68,7 @@ export default function AgendaPage() {
   const [form, setForm]               = useState({ title: "", type: "REUNIAO", date: "", time: "09:00", location: "", notes: "", zoneId: "" });
   const [saving, setSaving]           = useState(false);
   const [syncing, setSyncing]         = useState(false);
+  const [correcting, setCorrecting]   = useState(false);
   const [attendanceOpen, setAttendanceOpen] = useState(false);
   const [attendanceEvent, setAttendanceEvent] = useState<Event | null>(null);
   const [qrOpen, setQrOpen] = useState(false);
@@ -100,6 +103,30 @@ export default function AgendaPage() {
     } else {
       const e = await res.json();
       toast.error(e.error ?? "Erro ao sincronizar");
+    }
+  }
+
+  async function handleForceSync() {
+    if (!confirm(
+      "Isso vai sobrescrever os eventos futuros daqui com os dados do Google Calendar " +
+      "(que está correto) e APAGAR os eventos futuros que não existirem lá. Confirma?",
+    )) return;
+    setCorrecting(true);
+    const res = await fetch("/api/google-calendar/force-sync", { method: "POST" });
+    setCorrecting(false);
+    if (res.ok) {
+      const d = await res.json();
+      const parts = [
+        d.matched ? `${d.matched} vinculado(s)` : null,
+        d.updated ? `${d.updated} corrigido(s)` : null,
+        d.created ? `${d.created} importado(s)` : null,
+        d.removed ? `${d.removed} removido(s)` : null,
+      ].filter(Boolean);
+      toast.success(parts.length ? `Correção: ${parts.join(", ")}` : "Correção: tudo já batia com o Google");
+      fetchEvents();
+    } else {
+      const e = await res.json();
+      toast.error(e.error ?? "Erro ao corrigir com o Google");
     }
   }
 
@@ -191,6 +218,19 @@ export default function AgendaPage() {
             <RefreshCw className={cn("w-3.5 h-3.5", syncing && "animate-spin")} />
             {syncing ? "Sincronizando..." : "Google Calendar"}
           </Button>
+          {session?.user?.role === "ADMIN" && (
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={correcting}
+              className="gap-1.5 text-xs hidden sm:flex border-yellow-500/30 text-yellow-500 hover:bg-yellow-500/10 hover:text-yellow-400"
+              onClick={handleForceSync}
+              title="Sobrescreve os eventos futuros daqui com os dados do Google Calendar (fonte da verdade), removendo o que divergir"
+            >
+              <ShieldAlert className={cn("w-3.5 h-3.5", correcting && "animate-pulse")} />
+              {correcting ? "Corrigindo..." : "Corrigir com Google"}
+            </Button>
+          )}
           <Button onClick={() => openNew()} className="bg-primary text-primary-foreground hover:bg-primary/90 gap-2 text-xs">
             <Plus className="w-4 h-4" /> Novo Evento
           </Button>

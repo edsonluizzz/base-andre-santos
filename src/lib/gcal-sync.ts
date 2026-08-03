@@ -135,3 +135,112 @@ export async function syncGoogleCalendar(
 
   return result;
 }
+
+export interface GcalForceSyncResult {
+  matched: number;  // evento local sem vínculo que foi casado com um evento do Google (por data+título)
+  updated: number;  // evento já vinculado, sobrescrito com os dados do Google
+  created: number;  // evento do Google sem correspondente aqui, criado
+  removed: number;  // evento local que não existe no Google, removido
+}
+
+/**
+ * Correção unidirecional: Google Calendar é a fonte da verdade.
+ *
+ * Diferente de `syncGoogleCalendar` (bidirecional, guiado por timestamp), esta função
+ * NUNCA escreve no Google — só lê de lá e sobrescreve o nosso banco, ignorando
+ * `updatedAt`. Usada quando os dois lados divergiram e o Edson confirmou que o Google
+ * está correto. Escopo: só eventos futuros (`date >= now`), igual ao sync normal.
+ *
+ * Eventos locais sem `googleCalendarEventId` são casados com um evento do Google ainda
+ * não reivindicado por data+hora exatas e título (case-insensitive) antes de decidir que
+ * "não existe no Google" — só remove se nenhuma correspondência for encontrada.
+ */
+export async function forceSyncFromGoogle(
+  db: PrismaClient,
+  calendar: calendar_v3.Calendar,
+  campaignId: string,
+): Promise<GcalForceSyncResult> {
+  const result: GcalForceSyncResult = { matched: 0, updated: 0, created: 0, removed: 0 };
+
+  const gcalEvents: calendar_v3.Schema$Event[] = [];
+  let pageToken: string | undefined;
+  do {
+    const resp = await calendar.events.list({
+      calendarId: GCAL_ID,
+      timeMin: new Date().toISOString(),
+      maxResults: 250,
+      singleEvents: true,
+      orderBy: "startTime",
+      pageToken,
+    });
+    gcalEvents.push(...(resp.data.items ?? []));
+    pageToken = resp.data.nextPageToken ?? undefined;
+  } while (pageToken);
+
+  const timedGcalEvents = gcalEvents.filter((ev): ev is calendar_v3.Schema$Event & { id: string; start: { dateTime: string } } =>
+    !!ev.id && !!ev.start?.dateTime,
+  );
+  const gcalById = new Map(timedGcalEvents.map((ev) => [ev.id, ev]));
+  const claimed = new Set<string>();
+
+  const ourEvents = await db.event.findMany({
+    where: { campaignId, date: { gte: new Date() } },
+  });
+
+  for (const local of ourEvents) {
+    let gcEv = local.googleCalendarEventId ? gcalById.get(local.googleCalendarEventId) : undefined;
+    const wasLinked = !!gcEv;
+
+    if (!gcEv) {
+      gcEv = timedGcalEvents.find((ev) =>
+        !claimed.has(ev.id) &&
+        new Date(ev.start.dateTime).getTime() === local.date.getTime() &&
+        (ev.summary ?? "").trim().toLowerCase() === local.title.trim().toLowerCase(),
+      );
+    }
+
+    if (!gcEv) {
+      await db.event.delete({ where: { id: local.id } });
+      result.removed++;
+      continue;
+    }
+
+    claimed.add(gcEv.id);
+    const gcUpdated = gcEv.updated ? new Date(gcEv.updated) : new Date();
+
+    await db.event.update({
+      where: { id: local.id },
+      data: {
+        title: gcEv.summary ?? local.title,
+        date: new Date(gcEv.start.dateTime),
+        location: gcEv.location ?? null,
+        notes: gcEv.description ?? null,
+        googleCalendarEventId: gcEv.id,
+        updatedAt: gcUpdated,
+      },
+    });
+
+    if (wasLinked) result.updated++;
+    else result.matched++;
+  }
+
+  for (const gcEv of timedGcalEvents) {
+    if (claimed.has(gcEv.id)) continue;
+    const gcUpdated = gcEv.updated ? new Date(gcEv.updated) : new Date();
+    await db.event.create({
+      data: {
+        campaignId,
+        title: gcEv.summary ?? "Evento do Google Calendar",
+        date: new Date(gcEv.start.dateTime),
+        location: gcEv.location ?? null,
+        notes: gcEv.description ?? null,
+        type: "OUTRO",
+        googleCalendarEventId: gcEv.id,
+        updatedAt: gcUpdated,
+      },
+    });
+    result.created++;
+  }
+
+  return result;
+}
