@@ -3,8 +3,7 @@ import { auth } from "@/lib/auth";
 import { getCampaignContext } from "@/lib/campaign-context";
 import { getCalendarClient } from "@/lib/google-calendar";
 import { decrypt } from "@/lib/crypto";
-
-const GCAL_ID = process.env.GOOGLE_CALENDAR_ID ?? "primary";
+import { syncGoogleCalendar } from "@/lib/gcal-sync";
 
 export async function POST() {
   try {
@@ -21,61 +20,9 @@ export async function POST() {
     }
 
     const calendar = await getCalendarClient(refreshToken);
-    let pushed = 0;
-    let pulled = 0;
+    const result = await syncGoogleCalendar(db, calendar, CID);
 
-    // Push: nossos eventos sem googleCalendarEventId → criar no Google
-    const ourEvents = await db.event.findMany({
-      where: { campaignId: CID, googleCalendarEventId: null, date: { gte: new Date() } },
-    });
-
-    for (const ev of ourEvents) {
-      try {
-        const endDate = new Date(ev.date.getTime() + 60 * 60 * 1000); // +1h
-        const gcalEvent = await calendar.events.insert({
-          calendarId: GCAL_ID,
-          requestBody: {
-            summary: ev.title,
-            description: ev.notes ?? undefined,
-            location: ev.location ?? undefined,
-            start: { dateTime: ev.date.toISOString(), timeZone: "America/Sao_Paulo" },
-            end: { dateTime: endDate.toISOString(), timeZone: "America/Sao_Paulo" },
-          },
-        });
-        await db.event.update({ where: { id: ev.id }, data: { googleCalendarEventId: gcalEvent.data.id ?? null } });
-        pushed++;
-      } catch { /* ignora eventos com erro */ }
-    }
-
-    // Pull: eventos do Google não existentes no nosso banco
-    const gcalList = await calendar.events.list({
-      calendarId: GCAL_ID,
-      timeMin: new Date().toISOString(),
-      maxResults: 100,
-      singleEvents: true,
-      orderBy: "startTime",
-    });
-
-    for (const gcEv of gcalList.data.items ?? []) {
-      if (!gcEv.id || !gcEv.start?.dateTime) continue;
-      const exists = await db.event.findFirst({ where: { campaignId: CID, googleCalendarEventId: gcEv.id } });
-      if (!exists) {
-        await db.event.create({
-          data: {
-            campaignId: CID,
-            title: gcEv.summary ?? "Evento do Google Calendar",
-            date: new Date(gcEv.start.dateTime),
-            location: gcEv.location ?? null,
-            notes: gcEv.description ?? null,
-            type: "OUTRO",
-            googleCalendarEventId: gcEv.id,
-          },
-        });
-        pulled++;
-      }
-    }
-
-    return NextResponse.json({ ok: true, pushed, pulled });
+    return NextResponse.json({ ok: true, ...result });
   } catch (err) {
     console.error("[gcal/sync]", err);
     return NextResponse.json({ error: "Erro ao sincronizar" }, { status: 500 });

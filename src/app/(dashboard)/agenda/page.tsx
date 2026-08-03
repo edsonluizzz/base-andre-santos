@@ -89,7 +89,13 @@ export default function AgendaPage() {
     setSyncing(false);
     if (res.ok) {
       const d = await res.json();
-      toast.success(`Sync: ${d.pushed} enviados, ${d.pulled} importados`);
+      const parts = [
+        d.pushed ? `${d.pushed} enviado(s)` : null,
+        d.pushedUpdates ? `${d.pushedUpdates} atualizado(s) no Google` : null,
+        d.pulled ? `${d.pulled} importado(s)` : null,
+        d.pulledUpdates ? `${d.pulledUpdates} atualizado(s) aqui` : null,
+      ].filter(Boolean);
+      toast.success(parts.length ? `Sync: ${parts.join(", ")}` : "Sync: tudo já estava atualizado");
       fetchEvents();
     } else {
       const e = await res.json();
