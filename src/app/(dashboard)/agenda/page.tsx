@@ -197,6 +197,7 @@ export default function AgendaPage() {
             <Calendar className="w-6 h-6 text-primary" /> Agenda
           </h1>
           <p className="text-sm text-muted-foreground mt-1">{upcoming.length} eventos futuros</p>
+          <p data-debug-role="1" className="text-[10px] text-red-500">DEBUG role={JSON.stringify(session?.user?.role)} email={JSON.stringify(session?.user?.email)}</p>
         </div>
         <div className="flex items-center gap-2">
           {/* Toggle view */}
