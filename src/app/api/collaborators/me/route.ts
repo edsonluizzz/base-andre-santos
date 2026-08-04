@@ -14,7 +14,10 @@ export async function GET() {
 
     const collaborator = await db.collaborator.findUnique({
       where: { userId: session.user.id },
-      select: { id: true, name: true, phone: true, cpf: true },
+      select: {
+        id: true, name: true, phone: true, cpf: true,
+        city: true, neighborhood: true, campaignRole: true, photoUrl: true,
+      },
     });
     if (!collaborator) {
       return NextResponse.json({ error: "Colaborador não encontrado" }, { status: 404 });
