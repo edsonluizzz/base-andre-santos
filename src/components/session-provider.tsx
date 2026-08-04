@@ -5,7 +5,7 @@ import { Session } from "next-auth";
 
 export function SessionProvider({
   children,
-  session = null,
+  session,
 }: {
   children: React.ReactNode;
   session?: Session | null;
