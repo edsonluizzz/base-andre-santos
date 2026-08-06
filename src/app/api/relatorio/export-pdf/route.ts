@@ -14,6 +14,9 @@ export async function GET() {
   try {
     const session = await auth();
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!["ADMIN", "LEADER"].includes(session.user.role ?? "")) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
     const { db, cid: CID } = getCampaignContext(session);
 
     const [agg, growth, execSummary, campaign] = await Promise.all([

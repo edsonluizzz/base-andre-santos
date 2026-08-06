@@ -65,6 +65,7 @@ export default async function RelatorioPage({
 }) {
   const session = await auth();
   if (!session?.user) return null;
+  if (!["ADMIN", "LEADER"].includes(session.user.role ?? "")) return null;
   const { db, cid: CID } = getCampaignContext(session);
   const activeCob     = searchParams.cob    ?? null;
   const activeProfile = searchParams.perfil ?? null;
