@@ -14,6 +14,8 @@ import senadores from "@/data/eleitos-2022/senadores.json";
 import governadorData from "@/data/eleitos-2022/governador.json";
 import presidenteData from "@/data/eleitos-2022/presidente.json";
 
+type Situacao = "ELEITO" | "NÃO ELEITO" | "SUPLENTE";
+
 type Candidate = {
   id: number;
   nomeUrna: string;
@@ -27,11 +29,13 @@ type Candidate = {
   percentual?: number;
   mandato?: string;
   suplentes?: string[];
+  situacao?: Situacao;
 };
 
 type Municipio = { codigo: string; municipio: string; votos: number };
 
 type TabKey = "estadual" | "federal" | "senador" | "governador" | "presidente";
+type SituacaoFilter = "ELEITO" | "TODOS";
 
 const PARTY_COLORS: Record<string, string> = {
   PT:            "#C0392B",
@@ -49,6 +53,27 @@ const PARTY_COLORS: Record<string, string> = {
   Solidariedade: "#15803D",
   Pros:          "#9A3412",
   PV:            "#15803D",
+  Agir:          "#4C1D95",
+  DC:            "#78350F",
+  Novo:          "#EA580C",
+  Patriota:      "#1E293B",
+  "PC do B":     "#B91C1C",
+  PCB:           "#7F1D1D",
+  PCO:           "#991B1B",
+  PMB:           "#DB2777",
+  PMN:           "#0891B2",
+  PRTB:          "#166534",
+  PSC:           "#1D4ED8",
+  PSOL:          "#B45309",
+  PSTU:          "#DC2626",
+  PTB:           "#1E3A5F",
+  Rede:          "#059669",
+};
+
+const SITUACAO_STYLE: Record<Situacao, string> = {
+  ELEITO:       "bg-green-500/15 text-green-400 border-green-500/30",
+  "NÃO ELEITO": "bg-white/[0.04] text-muted-foreground border-white/10",
+  SUPLENTE:     "bg-amber-500/15 text-amber-400 border-amber-500/30",
 };
 
 function partyColor(partido: string) {
@@ -64,8 +89,8 @@ function initials(name: string) {
 }
 
 const TABS: { key: TabKey; label: string; count: number | null }[] = [
-  { key: "estadual",   label: "Dep. Estadual", count: depEstaduais.length },
-  { key: "federal",    label: "Dep. Federal",  count: depFederais.length  },
+  { key: "estadual",   label: "Dep. Estadual", count: (depEstaduais as Candidate[]).filter((c) => c.situacao === "ELEITO").length },
+  { key: "federal",    label: "Dep. Federal",  count: (depFederais  as Candidate[]).filter((c) => c.situacao === "ELEITO").length },
   { key: "senador",    label: "Senador",        count: senadores.length    },
   { key: "governador", label: "Governador",     count: null                },
   { key: "presidente", label: "Presidente",     count: null                },
@@ -75,6 +100,7 @@ export function EleitoralPanel() {
   const [activeTab, setActiveTab]     = useState<TabKey>("estadual");
   const [search, setSearch]           = useState("");
   const [partido, setPartido]         = useState("");
+  const [situacaoFilter, setSituacaoFilter] = useState<SituacaoFilter>("ELEITO");
   const [selected, setSelected]       = useState<Candidate | null>(null);
   const [munData, setMunData]         = useState<Municipio[]>([]);
   const [munLoading, setMunLoading]   = useState(false);
@@ -82,6 +108,8 @@ export function EleitoralPanel() {
   const [favorites, setFavorites]     = useState<string[]>([]);
   const [onlyFavs, setOnlyFavs]       = useState(false);
   const [viewMode, setViewMode]       = useState<"grid" | "list">("grid");
+
+  const hasSituacao = activeTab === "estadual" || activeTab === "federal";
 
   const hasMunicipios = activeTab === "estadual" || activeTab === "federal";
 
@@ -152,12 +180,13 @@ export function EleitoralPanel() {
   const filtered = useMemo(
     () => candidates.filter((c) => {
       const q = search.toLowerCase();
-      const okSearch = !q || c.nomeUrna.toLowerCase().includes(q);
-      const okParty  = !partido || c.partido === partido;
-      const okFav    = !onlyFavs || favorites.includes(`${activeTab}:${c.nomeUrna}`);
-      return okSearch && okParty && okFav;
+      const okSearch   = !q || c.nomeUrna.toLowerCase().includes(q);
+      const okParty    = !partido || c.partido === partido;
+      const okFav      = !onlyFavs || favorites.includes(`${activeTab}:${c.nomeUrna}`);
+      const okSituacao = !hasSituacao || situacaoFilter === "TODOS" || c.situacao === situacaoFilter;
+      return okSearch && okParty && okFav && okSituacao;
     }),
-    [candidates, search, partido, onlyFavs, favorites, activeTab]
+    [candidates, search, partido, onlyFavs, favorites, activeTab, hasSituacao, situacaoFilter]
   );
 
   const filteredMun = useMemo(
@@ -176,6 +205,7 @@ export function EleitoralPanel() {
     setPartido("");
     setSelected(null);
     setOnlyFavs(false);
+    setSituacaoFilter("ELEITO");
   }
 
   const isGrid = activeTab === "estadual" || activeTab === "federal" || activeTab === "senador";
@@ -228,6 +258,22 @@ export function EleitoralPanel() {
                 ))}
               </select>
             )}
+            {hasSituacao && (
+              <div className="flex items-center rounded-lg border border-white/10 bg-white/[0.03] p-0.5">
+                <button
+                  onClick={() => setSituacaoFilter("ELEITO")}
+                  className={cn("px-3 py-1.5 rounded-md text-sm font-medium transition-all", situacaoFilter === "ELEITO" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground")}
+                >
+                  Eleitos
+                </button>
+                <button
+                  onClick={() => setSituacaoFilter("TODOS")}
+                  className={cn("px-3 py-1.5 rounded-md text-sm font-medium transition-all", situacaoFilter === "TODOS" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground")}
+                >
+                  Todos
+                </button>
+              </div>
+            )}
             <button
               onClick={() => setOnlyFavs((v) => !v)}
               className={cn(
@@ -247,7 +293,10 @@ export function EleitoralPanel() {
             </button>
             <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
               <Users className="h-4 w-4" />
-              <span>{filtered.length} eleito{filtered.length !== 1 ? "s" : ""}</span>
+              <span>
+                {filtered.length} candidato{filtered.length !== 1 ? "s" : ""}
+                {hasSituacao && situacaoFilter === "ELEITO" && " eleito" + (filtered.length !== 1 ? "s" : "")}
+              </span>
             </div>
             {/* Toggle grade/lista */}
             <div className="flex items-center gap-1 rounded-lg border border-white/10 p-0.5 bg-white/[0.03]">
@@ -303,7 +352,14 @@ export function EleitoralPanel() {
                       <div className="text-xs font-semibold mt-0.5" style={{ color: partyColor(c.partido) }}>{c.partido}</div>
                     </div>
                   </div>
-                  <div className="text-xs text-muted-foreground">{fmtVotes(c.votos)} votos</div>
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="text-xs text-muted-foreground">{fmtVotes(c.votos)} votos</div>
+                    {c.situacao && (
+                      <Badge className={cn("text-[10px] px-1.5 py-0", SITUACAO_STYLE[c.situacao])} variant="outline">
+                        {c.situacao}
+                      </Badge>
+                    )}
+                  </div>
                   {hasMunicipios && (
                     <div className="mt-2 flex items-center gap-1 text-xs text-muted-foreground/60">
                       <MapPin className="h-3 w-3" /><span>ver por município</span>
@@ -345,6 +401,11 @@ export function EleitoralPanel() {
                   </div>
                   <span className="text-xs font-semibold flex-shrink-0" style={{ color: partyColor(c.partido) }}>{c.partido}</span>
                   <span className="text-xs text-muted-foreground flex-shrink-0 hidden sm:block">{fmtVotes(c.votos)} votos</span>
+                  {c.situacao && (
+                    <Badge className={cn("text-[10px] px-1.5 py-0 flex-shrink-0 hidden md:inline-flex", SITUACAO_STYLE[c.situacao])} variant="outline">
+                      {c.situacao}
+                    </Badge>
+                  )}
 
                   {/* Botão "Usar como rival nas Metas" */}
                   {(activeTab === "estadual") && (
@@ -650,9 +711,15 @@ export function EleitoralPanel() {
                 </div>
               )}
 
-              <div className="flex items-center justify-center gap-2 py-2 rounded-lg border border-green-500/30 bg-green-500/5">
-                <span className="text-xs font-semibold text-green-400 uppercase tracking-wider">Eleito nas Eleições 2022</span>
-              </div>
+              {selected.situacao ? (
+                <div className={cn("flex items-center justify-center gap-2 py-2 rounded-lg border", SITUACAO_STYLE[selected.situacao])}>
+                  <span className="text-xs font-semibold uppercase tracking-wider">{selected.situacao} — Eleições 2022</span>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center gap-2 py-2 rounded-lg border border-green-500/30 bg-green-500/5">
+                  <span className="text-xs font-semibold text-green-400 uppercase tracking-wider">Eleito nas Eleições 2022</span>
+                </div>
+              )}
             </div>
           )}
         </DialogContent>
