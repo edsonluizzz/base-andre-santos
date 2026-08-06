@@ -2,16 +2,17 @@
 
 import Link from "next/link";
 import { useState, useEffect, useCallback } from "react";
-import { Megaphone, Plus, Clock, Users, Mail, Send, MessageCircle } from "lucide-react";
+import { Megaphone, Plus, Clock, Users, Mail, Send, MessageCircle, BarChart3 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 
 type Broadcast = { id: string; title: string; message: string; audience: string; sentCount: number; createdAt: string };
 
@@ -92,11 +93,12 @@ export default function ComunicadosPage() {
           <p className="text-sm text-muted-foreground mt-1">Registro de comunicações da base de apoio</p>
         </div>
         <div className="flex gap-2 shrink-0">
-          <Button asChild variant="outline" className="gap-2">
-            <Link href="/comunicados/disparar">
-              <MessageCircle className="w-4 h-4" /> Disparar WhatsApp
-            </Link>
-          </Button>
+          <Link href="/comunicados/disparos" className={cn(buttonVariants({ variant: "outline" }), "gap-2")}>
+            <BarChart3 className="w-4 h-4" /> Ver Disparos
+          </Link>
+          <Link href="/comunicados/disparar" className={cn(buttonVariants({ variant: "outline" }), "gap-2")}>
+            <MessageCircle className="w-4 h-4" /> Disparar WhatsApp
+          </Link>
           <Button
             onClick={() => { setForm({ title: "", message: "", audience: "ALL" }); setDialogOpen(true); }}
             className="bg-primary text-primary-foreground hover:bg-primary/90 gap-2"

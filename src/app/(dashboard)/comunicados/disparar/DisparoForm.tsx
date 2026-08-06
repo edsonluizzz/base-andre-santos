@@ -27,6 +27,7 @@ type FormState = {
   delayMin: number;
   delayMax: number;
   dailyLimit: number;
+  scheduledFor: string; // datetime-local ("" = disparar imediatamente)
 };
 
 const INITIAL: FormState = {
@@ -41,6 +42,7 @@ const INITIAL: FormState = {
   delayMin: 300,
   delayMax: 600,
   dailyLimit: 200,
+  scheduledFor: "",
 };
 
 export function DisparoForm() {
@@ -138,6 +140,10 @@ export function DisparoForm() {
     if (form.delayMin > form.delayMax) {
       toast.error("Delay mínimo maior que máximo"); return;
     }
+    const scheduledDate = form.scheduledFor ? new Date(form.scheduledFor) : null;
+    if (scheduledDate && scheduledDate.getTime() <= Date.now()) {
+      toast.error("Agendamento precisa ser no futuro"); return;
+    }
 
     setSubmitting(true);
     try {
@@ -154,18 +160,21 @@ export function DisparoForm() {
           delaySecondsMax: form.delayMax,
           dailyLimit: form.dailyLimit,
           filters: filters(),
+          scheduledFor: scheduledDate ? scheduledDate.toISOString() : undefined,
           immediate,
         }),
       });
       const data = await res.json();
       if (res.ok && data?.ok) {
         toast.success(
-          immediate
-            ? `Disparo iniciado — ${data.broadcast.totalCount} destinatários na fila`
-            : `Rascunho salvo — id ${data.broadcast.id.slice(0, 8)}…`
+          !immediate
+            ? `Rascunho salvo — id ${data.broadcast.id.slice(0, 8)}…`
+            : scheduledDate
+              ? `Disparo agendado pra ${scheduledDate.toLocaleString("pt-BR")} — ${data.broadcast.totalCount} destinatários`
+              : `Disparo iniciado — ${data.broadcast.totalCount} destinatários na fila`
         );
         if (immediate) {
-          window.location.href = `/comunicados`;
+          window.location.href = `/comunicados/disparos/${data.broadcast.id}`;
         }
       } else {
         toast.error(data?.error ?? "Erro ao criar disparo");
@@ -208,9 +217,9 @@ export function DisparoForm() {
                 onClick={() => patch("type", opt.v)}
                 className="text-left rounded-lg p-3 transition-all"
                 style={{
-                  background: form.type === opt.v ? "rgba(212,175,55,0.12)" : "rgba(26,47,78,0.5)",
-                  border: form.type === opt.v ? "1px solid rgba(212,175,55,0.4)" : "1px solid rgba(255,255,255,0.07)",
-                  color: form.type === opt.v ? "#d4af37" : "#94a3b8",
+                  background: form.type === opt.v ? "rgba(255,107,4,0.12)" : "rgba(26,47,78,0.5)",
+                  border: form.type === opt.v ? "1px solid rgba(255,107,4,0.4)" : "1px solid rgba(255,255,255,0.07)",
+                  color: form.type === opt.v ? "#ff6b04" : "#94a3b8",
                 }}
               >
                 <p className="text-sm font-semibold">{opt.t}</p>
@@ -318,11 +327,25 @@ export function DisparoForm() {
             Padrão recomendado: 300-600s (5-10 min) entre msgs, 200/dia.
           </p>
         </div>
+
+        {/* Agendamento */}
+        <div className="rounded-xl p-4 space-y-3" style={{ background: "rgba(13,27,42,0.70)", border: "1px solid rgba(255,255,255,0.07)" }}>
+          <h3 className="text-sm font-semibold text-foreground">6. Agendamento (opcional)</h3>
+          <div className="space-y-2">
+            <Label htmlFor="scheduledFor">Agendar para</Label>
+            <Input id="scheduledFor" type="datetime-local"
+              value={form.scheduledFor} onChange={(e) => patch("scheduledFor", e.target.value)} />
+            <p className="text-xs text-muted-foreground">
+              Deixe vazio pra disparar imediatamente ao clicar em &quot;Disparar&quot;. Se preenchido, o disparo
+              fica na fila e só começa a enviar a partir dessa data/hora.
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Coluna direita — Preview e ações */}
       <div className="lg:col-span-1 space-y-5">
-        <div className="rounded-xl p-4 space-y-3 sticky top-4" style={{ background: "rgba(13,27,42,0.70)", border: "1px solid rgba(212,175,55,0.25)" }}>
+        <div className="rounded-xl p-4 space-y-3 sticky top-4" style={{ background: "rgba(13,27,42,0.70)", border: "1px solid rgba(255,107,4,0.25)" }}>
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-semibold text-foreground">Destinatários</h3>
             <Button variant="ghost" size="sm" onClick={refreshPreview} disabled={previewLoading}>
@@ -338,7 +361,7 @@ export function DisparoForm() {
           ) : (
             <>
               <div className="text-center py-2">
-                <p className="text-3xl font-bold" style={{ color: "#d4af37" }}>
+                <p className="text-3xl font-bold" style={{ color: "#ff6b04" }}>
                   {previewLoading ? "…" : (previewCount ?? 0)}
                 </p>
                 <p className="text-xs text-muted-foreground">destinatários únicos com WhatsApp</p>
@@ -362,8 +385,8 @@ export function DisparoForm() {
 
           {/* Estimativa de tempo */}
           {form.type !== "GROUP" && previewCount && previewCount > 0 && (
-            <div className="rounded-lg p-2 text-xs" style={{ background: "rgba(212,175,55,0.06)", border: "1px solid rgba(212,175,55,0.2)" }}>
-              <p className="font-semibold mb-0.5" style={{ color: "#d4af37" }}>Estimativa:</p>
+            <div className="rounded-lg p-2 text-xs" style={{ background: "rgba(255,107,4,0.06)", border: "1px solid rgba(255,107,4,0.2)" }}>
+              <p className="font-semibold mb-0.5" style={{ color: "#ff6b04" }}>Estimativa:</p>
               <p className="text-muted-foreground">
                 ~{Math.ceil((previewCount * (form.delayMin + form.delayMax) / 2) / 60)} min total
                 · {Math.min(previewCount, form.dailyLimit)}/dia
@@ -381,10 +404,10 @@ export function DisparoForm() {
               onClick={() => submit(true)}
               disabled={submitting}
               className="w-full"
-              style={{ background: "#d4af37", color: "#0a1220" }}
+              style={{ background: "#ff6b04", color: "#0a1220" }}
             >
               <Send className="w-3.5 h-3.5 mr-2" />
-              {submitting ? "Disparando…" : "Disparar agora"}
+              {submitting ? "Enviando…" : form.scheduledFor ? "Agendar disparo" : "Disparar agora"}
             </Button>
             <Button
               onClick={() => submit(false)}

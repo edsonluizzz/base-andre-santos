@@ -61,6 +61,17 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ ok: true, paused: true, reason: "manual-pause" });
   }
 
+  if (broadcast.scheduledFor && broadcast.scheduledFor > new Date()) {
+    const retryAfterMinutes = Math.max(1, Math.ceil((broadcast.scheduledFor.getTime() - Date.now()) / 60000));
+    return NextResponse.json({
+      ok: true,
+      paused: true,
+      reason: "scheduled",
+      scheduledFor: broadcast.scheduledFor,
+      retryAfterMinutes,
+    });
+  }
+
   // Conta deliveries enviadas nas últimas 24h pra impor dailyLimit
   const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
   const sentLast24h = await db.broadcastDelivery.count({
