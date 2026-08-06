@@ -232,8 +232,8 @@ export function ImportCsvDialog({ open, onOpenChange, onSuccess }: Props) {
             {rows.length > 5 && <p className="text-xs text-muted-foreground text-center">+ {rows.length - 5} linha{rows.length - 5 !== 1 ? "s" : ""} não mostrada{rows.length - 5 !== 1 ? "s" : ""}</p>}
 
             {/* Origem custom (sourceOverride) — opcional, default IMPORTACAO_XLSX */}
-            <div className="rounded-xl p-3 space-y-2" style={{ background: "rgba(212,175,55,0.06)", border: "1px solid rgba(212,175,55,0.25)" }}>
-              <label className="text-xs font-semibold tracking-wider uppercase" style={{ color: "#d4af37" }}>
+            <div className="rounded-xl p-3 space-y-2" style={{ background: "rgba(255,107,4,0.06)", border: "1px solid rgba(255,107,4,0.25)" }}>
+              <label className="text-xs font-semibold tracking-wider uppercase" style={{ color: "#ff6b04" }}>
                 Origem desta importação <span className="opacity-50 font-normal lowercase">(opcional)</span>
               </label>
               <input

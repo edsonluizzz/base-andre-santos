@@ -20,11 +20,11 @@ const baseStyle = `
 
 const tagStyle = `
   font-size:11px;letter-spacing:4px;text-transform:uppercase;
-  color:rgba(212,175,55,0.7);margin-bottom:8px;
+  color:rgba(255,107,4,0.7);margin-bottom:8px;
 `;
 
 const btnStyle = `
-  display:inline-block;background:#d4af37;color:#0a1220;text-decoration:none;
+  display:inline-block;background:#ff6b04;color:#0a1220;text-decoration:none;
   padding:12px 24px;border-radius:10px;font-size:14px;font-weight:700;
 `;
 
@@ -116,7 +116,7 @@ export async function sendAccessGrantedEmail({
         </h1>
         <p style="color:#94a3b8;line-height:1.6;">
           Você recebeu acesso a <strong style="color:#fff">${label}</strong> como
-          <strong style="color:#d4af37"> ${roleLabel}</strong>.
+          <strong style="color:#ff6b04"> ${roleLabel}</strong>.
         </p>
         <p style="color:#94a3b8;line-height:1.6;">
           Faça login com a conta Google associada a este e-mail para acessar o sistema.
@@ -170,7 +170,7 @@ export async function sendPaymentReceiptEmail({
         </h1>
         <p style="color:#94a3b8;line-height:1.6;">
           Olá, <strong style="color:#fff">${collaboratorName}</strong>! Segue em anexo o recibo
-          referente ao pagamento de <strong style="color:#d4af37">${amountLabel}</strong> pelas
+          referente ao pagamento de <strong style="color:#ff6b04">${amountLabel}</strong> pelas
           entregas realizadas.
         </p>
         <p style="color:#475569;font-size:12px;margin-top:32px;">
@@ -226,7 +226,7 @@ export async function sendNewLeadNotificationEmail({
           Olá, <strong style="color:#fff">${cellLeaderName}</strong>!
           Alguém se cadastrou pelo seu link de convite:
         </p>
-        <div style="background:#0f1a2e;border:1px solid rgba(212,175,55,0.2);border-radius:8px;padding:16px;margin:16px 0;">
+        <div style="background:#0f1a2e;border:1px solid rgba(255,107,4,0.2);border-radius:8px;padding:16px;margin:16px 0;">
           <p style="font-size:16px;font-weight:700;color:#fff;margin:0 0 8px;">${leadName}</p>
           ${cityLine}
           ${phoneLine}

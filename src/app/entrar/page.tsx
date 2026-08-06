@@ -87,7 +87,7 @@ function EntrarContent() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="seu@gmail.com"
               autoComplete="email"
-              className="w-full rounded-xl px-4 py-3 text-sm text-white placeholder-white/30 outline-none bg-white/5 border border-white/10 focus:border-[#d4af37]/50 transition"
+              className="w-full rounded-xl px-4 py-3 text-sm text-white placeholder-white/30 outline-none bg-white/5 border border-white/10 focus:border-[#ff6b04]/50 transition"
             />
             {formError && (
               <p className="text-xs text-red-400 text-center">{formError}</p>
@@ -96,7 +96,7 @@ function EntrarContent() {
               type="submit"
               disabled={submitting}
               className="w-full py-3 rounded-xl font-semibold text-sm transition disabled:opacity-60"
-              style={{ background: "#d4af37", color: "#0a0a0a" }}
+              style={{ background: "#ff6b04", color: "#0a0a0a" }}
             >
               {submitting ? "Processando..." : "Continuar"}
             </button>
@@ -112,7 +112,7 @@ function EntrarContent() {
           <p className="text-white/60 text-center text-sm mb-2">
             Entre com o Gmail abaixo para ativar seu acesso:
           </p>
-          <p className="text-[#d4af37] text-center text-sm font-mono mb-6">{email}</p>
+          <p className="text-[#ff6b04] text-center text-sm font-mono mb-6">{email}</p>
           <button
             onClick={handleSignIn}
             disabled={signingIn}
@@ -157,12 +157,12 @@ export default function EntrarPage() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
-            <div className="w-16 h-16 rounded-full bg-[#d4af37]/20 flex items-center justify-center">
+            <div className="w-16 h-16 rounded-full bg-[#ff6b04]/20 flex items-center justify-center">
               <span className="text-3xl">🤝</span>
             </div>
           </div>
           <h1 className="text-2xl font-bold text-white mb-1">Ovile Eleitoral</h1>
-          <p className="text-[#d4af37] font-semibold">Gestão de base eleitoral</p>
+          <p className="text-[#ff6b04] font-semibold">Gestão de base eleitoral</p>
         </div>
 
         <Suspense fallback={<div className="bg-[#111] border border-white/10 rounded-2xl p-8 text-center text-white/50">Carregando...</div>}>

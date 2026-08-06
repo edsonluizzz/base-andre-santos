@@ -55,7 +55,7 @@ export function ElectionCountdown() {
   const urgency =
     days <= 30  ? { ring: "border-red-500/40",    bg: "bg-red-500/[0.07]",    num: "text-red-400",    label: "text-red-300/80",    glow: "rgba(239,68,68,0.15)"  } :
     days <= 90  ? { ring: "border-amber-500/40",  bg: "bg-amber-500/[0.07]",  num: "text-amber-400",  label: "text-amber-300/80",  glow: "rgba(245,158,11,0.15)" } :
-                  { ring: "border-primary/30",    bg: "bg-primary/[0.05]",    num: "text-primary",    label: "text-primary/70",    glow: "rgba(212,175,55,0.12)" };
+                  { ring: "border-primary/30",    bg: "bg-primary/[0.05]",    num: "text-primary",    label: "text-primary/70",    glow: "rgba(255,107,4,0.12)" };
 
   return (
     <div

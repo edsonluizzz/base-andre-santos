@@ -143,11 +143,11 @@ export function EbookForm({ ebook }: { ebook: EbookConfig }) {
         />
         <div
           className="absolute top-1/4 -right-48 w-[500px] h-[500px] rounded-full"
-          style={{ background: "radial-gradient(circle, rgba(212,175,55,0.18) 0%, transparent 65%)", filter: "blur(70px)" }}
+          style={{ background: "radial-gradient(circle, rgba(255,107,4,0.18) 0%, transparent 65%)", filter: "blur(70px)" }}
         />
         <div
           className="absolute bottom-0 left-1/3 w-[450px] h-[450px] rounded-full"
-          style={{ background: "radial-gradient(circle, rgba(212,175,55,0.08) 0%, transparent 70%)", filter: "blur(80px)" }}
+          style={{ background: "radial-gradient(circle, rgba(255,107,4,0.08) 0%, transparent 70%)", filter: "blur(80px)" }}
         />
       </div>
 
@@ -155,11 +155,11 @@ export function EbookForm({ ebook }: { ebook: EbookConfig }) {
         <div className="flex flex-col items-center gap-1">
           <span
             className="font-black tracking-[0.25em] text-sm uppercase"
-            style={{ color: "#d4af37", fontFamily: FONT_HEADING }}
+            style={{ color: "#ff6b04", fontFamily: FONT_HEADING }}
           >
             André Santos
           </span>
-          <div className="w-12 h-px" style={{ background: "rgba(212,175,55,0.4)" }} />
+          <div className="w-12 h-px" style={{ background: "rgba(255,107,4,0.4)" }} />
         </div>
       </header>
 
@@ -170,18 +170,18 @@ export function EbookForm({ ebook }: { ebook: EbookConfig }) {
               <div
                 className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 mb-5 text-xs font-bold tracking-widest uppercase"
                 style={{
-                  background: "rgba(212,175,55,0.1)",
-                  border: "1px solid rgba(212,175,55,0.25)",
-                  color: "#d4af37",
+                  background: "rgba(255,107,4,0.1)",
+                  border: "1px solid rgba(255,107,4,0.25)",
+                  color: "#ff6b04",
                   fontFamily: FONT_HEADING,
                 }}
               >
-                <span className="w-1.5 h-1.5 rounded-full bg-[#d4af37]" />
+                <span className="w-1.5 h-1.5 rounded-full bg-[#ff6b04]" />
                 Ebook Gratuito
               </div>
               <h1
                 className="font-black text-4xl sm:text-5xl leading-none mb-3 tracking-tight"
-                style={{ color: "#d4af37", fontFamily: FONT_HEADING }}
+                style={{ color: "#ff6b04", fontFamily: FONT_HEADING }}
               >
                 {ebook.titleLines.map((line, i) => (
                   <span key={i}>
@@ -209,7 +209,7 @@ export function EbookForm({ ebook }: { ebook: EbookConfig }) {
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Nome completo"
                   autoComplete="name"
-                  className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all placeholder:text-white/30 focus:ring-2 focus:ring-[#d4af37]/40"
+                  className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all placeholder:text-white/30 focus:ring-2 focus:ring-[#ff6b04]/40"
                   style={inputStyle}
                 />
                 <div className="grid grid-cols-2 gap-3">
@@ -222,7 +222,7 @@ export function EbookForm({ ebook }: { ebook: EbookConfig }) {
                     placeholder="CEP"
                     inputMode="numeric"
                     maxLength={9}
-                    className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all placeholder:text-white/30 focus:ring-2 focus:ring-[#d4af37]/40"
+                    className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all placeholder:text-white/30 focus:ring-2 focus:ring-[#ff6b04]/40"
                     style={inputStyle}
                   />
                   <input
@@ -234,7 +234,7 @@ export function EbookForm({ ebook }: { ebook: EbookConfig }) {
                     placeholder="WhatsApp"
                     autoComplete="tel"
                     inputMode="numeric"
-                    className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all placeholder:text-white/30 focus:ring-2 focus:ring-[#d4af37]/40"
+                    className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all placeholder:text-white/30 focus:ring-2 focus:ring-[#ff6b04]/40"
                     style={inputStyle}
                   />
                 </div>
@@ -246,7 +246,7 @@ export function EbookForm({ ebook }: { ebook: EbookConfig }) {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Seu melhor e-mail"
                   autoComplete="email"
-                  className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all placeholder:text-white/30 focus:ring-2 focus:ring-[#d4af37]/40"
+                  className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all placeholder:text-white/30 focus:ring-2 focus:ring-[#ff6b04]/40"
                   style={inputStyle}
                 />
                 {state === "error" && errorMessage && (
@@ -257,9 +257,9 @@ export function EbookForm({ ebook }: { ebook: EbookConfig }) {
                   disabled={state === "loading"}
                   className="w-full py-4 rounded-xl font-black text-sm tracking-widest uppercase transition-all mt-1 disabled:opacity-60"
                   style={{
-                    background: state === "loading" ? "rgba(212,175,55,0.7)" : "#d4af37",
+                    background: state === "loading" ? "rgba(255,107,4,0.7)" : "#ff6b04",
                     color: "#0d1b2a",
-                    boxShadow: state === "loading" ? "none" : "0 8px 30px rgba(212,175,55,0.35)",
+                    boxShadow: state === "loading" ? "none" : "0 8px 30px rgba(255,107,4,0.35)",
                     fontFamily: FONT_HEADING,
                   }}
                 >
@@ -287,15 +287,15 @@ export function EbookForm({ ebook }: { ebook: EbookConfig }) {
               <div
                 className="w-20 h-20 rounded-full flex items-center justify-center mb-8 animate-glow-pulse"
                 style={{
-                  background: "rgba(212,175,55,0.12)",
-                  border: "2px solid rgba(212,175,55,0.4)",
-                  boxShadow: "0 0 40px rgba(212,175,55,0.15)",
+                  background: "rgba(255,107,4,0.12)",
+                  border: "2px solid rgba(255,107,4,0.4)",
+                  boxShadow: "0 0 40px rgba(255,107,4,0.15)",
                 }}
               >
                 <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
                   <path
                     d="M8 18l7 7 13-13"
-                    stroke="#d4af37"
+                    stroke="#ff6b04"
                     strokeWidth="2.5"
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -305,7 +305,7 @@ export function EbookForm({ ebook }: { ebook: EbookConfig }) {
 
               <h2
                 className="font-black text-3xl sm:text-4xl mb-2"
-                style={{ color: "#d4af37", fontFamily: FONT_HEADING }}
+                style={{ color: "#ff6b04", fontFamily: FONT_HEADING }}
               >
                 Seu ebook está pronto!
               </h2>
@@ -319,9 +319,9 @@ export function EbookForm({ ebook }: { ebook: EbookConfig }) {
                 download={ebook.pdfDownloadName}
                 className="inline-flex items-center gap-3 px-8 py-4 rounded-xl font-black text-sm tracking-widest uppercase transition-all hover:scale-105 active:scale-95 mb-4"
                 style={{
-                  background: "#d4af37",
+                  background: "#ff6b04",
                   color: "#0d1b2a",
-                  boxShadow: "0 8px 30px rgba(212,175,55,0.4)",
+                  boxShadow: "0 8px 30px rgba(255,107,4,0.4)",
                   fontFamily: FONT_HEADING,
                 }}
               >
@@ -346,7 +346,7 @@ export function EbookForm({ ebook }: { ebook: EbookConfig }) {
 
               <p
                 className="text-xs mb-3 font-bold tracking-widest uppercase"
-                style={{ color: "rgba(212,175,55,0.6)", fontFamily: FONT_HEADING }}
+                style={{ color: "rgba(255,107,4,0.6)", fontFamily: FONT_HEADING }}
               >
                 Enquanto lê, faça parte do movimento
               </p>
@@ -373,7 +373,7 @@ export function EbookForm({ ebook }: { ebook: EbookConfig }) {
               <div className="w-full max-w-xs mx-auto">
                 <p className="text-xs mb-2" style={{ color: "rgba(255,255,255,0.35)" }}>
                   Redirecionando para o site em{" "}
-                  <span style={{ color: "rgba(212,175,55,0.7)" }}>{countdown}s</span>
+                  <span style={{ color: "rgba(255,107,4,0.7)" }}>{countdown}s</span>
                 </p>
                 <div
                   className="w-full h-1 rounded-full overflow-hidden"
@@ -382,7 +382,7 @@ export function EbookForm({ ebook }: { ebook: EbookConfig }) {
                   <div
                     className="h-full rounded-full transition-all duration-500"
                     style={{
-                      background: "linear-gradient(90deg, #d4af37, #f0d060)",
+                      background: "linear-gradient(90deg, #ff6b04, #ffb37a)",
                       width: `${progress}%`,
                     }}
                   />

@@ -52,9 +52,9 @@ const config: Config = {
         success: "var(--success)",
         warning: "var(--warning)",
         gold: {
-          DEFAULT: "#d4a817",
-          light: "#e8c97a",
-          muted: "rgba(212,168,23,0.35)",
+          DEFAULT: "#ff6b04",
+          light: "#ffb37a",
+          muted: "rgba(255,107,4,0.35)",
         },
         // Sidebar tokens
         sidebar: {

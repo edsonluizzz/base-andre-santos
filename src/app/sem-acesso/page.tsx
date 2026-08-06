@@ -16,7 +16,7 @@ export default function SemAcessoPage() {
         </div>
 
         <div>
-          <p className="text-xs tracking-[3px] uppercase mb-2" style={{ color: "rgba(212,175,55,0.7)" }}>
+          <p className="text-xs tracking-[3px] uppercase mb-2" style={{ color: "rgba(255,107,4,0.7)" }}>
             Ovile Eleitoral
           </p>
           <h1 className="text-2xl font-bold text-white">Acesso restrito</h1>
@@ -38,7 +38,7 @@ export default function SemAcessoPage() {
         <Link
           href="/login"
           className="block text-sm rounded-xl py-3 px-6 transition-all"
-          style={{ background: "rgba(212,175,55,0.12)", border: "1px solid rgba(212,175,55,0.25)", color: "#d4af37" }}
+          style={{ background: "rgba(255,107,4,0.12)", border: "1px solid rgba(255,107,4,0.25)", color: "#ff6b04" }}
         >
           Tentar com outra conta Google
         </Link>

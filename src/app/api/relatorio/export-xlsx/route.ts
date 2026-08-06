@@ -14,7 +14,7 @@ export const maxDuration = 60;
 
 // ─── Paleta ────────────────────────────────────────────────────────────────
 const C = {
-  gold:       "FFD4AF37",
+  gold:       "FFFF6B04",
   goldDark:   "FF1A160B",
   slate900:   "FF0F172A",
   white:      "FFFFFFFF",

@@ -79,14 +79,14 @@ export function LandingContent() {
       <div
         className="fixed inset-0 z-0 pointer-events-none"
         style={{
-          backgroundImage: "radial-gradient(circle at 1px 1px, rgba(212,175,55,0.05) 1px, transparent 0)",
+          backgroundImage: "radial-gradient(circle at 1px 1px, rgba(255,107,4,0.05) 1px, transparent 0)",
           backgroundSize: "44px 44px",
         }}
       />
 
       {/* Glow ambiental */}
       <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[700px] h-[500px] rounded-full pointer-events-none z-0"
-        style={{ background: "radial-gradient(ellipse, rgba(212,175,55,0.07) 0%, transparent 65%)" }}
+        style={{ background: "radial-gradient(ellipse, rgba(255,107,4,0.07) 0%, transparent 65%)" }}
       />
 
       {/* ─── HERO ─── */}
@@ -102,7 +102,7 @@ export function LandingContent() {
               style={{ inset: "-15px" }}
             >
               <rect x="4" y="4" width="102" height="102" rx="28"
-                fill="none" stroke="rgba(212,175,55,0.18)" strokeWidth="1"
+                fill="none" stroke="rgba(255,107,4,0.18)" strokeWidth="1"
                 strokeDasharray="8 6"
               />
             </svg>
@@ -113,16 +113,16 @@ export function LandingContent() {
               style={{ inset: "-8px" }}
             >
               <rect x="3" y="3" width="90" height="90" rx="22"
-                fill="none" stroke="rgba(212,175,55,0.10)" strokeWidth="1"
+                fill="none" stroke="rgba(255,107,4,0.10)" strokeWidth="1"
                 strokeDasharray="4 8"
               />
             </svg>
             {/* Caixa do logo */}
             <div className="w-20 h-20 rounded-[20px] flex items-center justify-center animate-[float_5s_ease-in-out_infinite]"
               style={{
-                background: "rgba(212,175,55,0.09)",
-                border: "1px solid rgba(212,175,55,0.32)",
-                boxShadow: "0 0 30px rgba(212,175,55,0.12), inset 0 1px 0 rgba(212,175,55,0.15)",
+                background: "rgba(255,107,4,0.09)",
+                border: "1px solid rgba(255,107,4,0.32)",
+                boxShadow: "0 0 30px rgba(255,107,4,0.12), inset 0 1px 0 rgba(255,107,4,0.15)",
               }}
             >
               <span className="text-[34px] font-black text-gold leading-none" style={{ fontFamily: "var(--font-display, var(--font-sans))", letterSpacing: "-1px" }}>
@@ -146,7 +146,7 @@ export function LandingContent() {
             }}
           >
             OVILE<br />
-            <span style={{ WebkitTextStroke: "1px rgba(212,175,55,0.7)", color: "transparent" }}>
+            <span style={{ WebkitTextStroke: "1px rgba(255,107,4,0.7)", color: "transparent" }}>
               ELEITORAL
             </span>
           </h1>
@@ -186,7 +186,7 @@ export function LandingContent() {
       </section>
 
       {/* Divider */}
-      <div className="relative z-10 h-px mx-6" style={{ background: "linear-gradient(90deg, transparent, rgba(212,175,55,0.15), transparent)" }} />
+      <div className="relative z-10 h-px mx-6" style={{ background: "linear-gradient(90deg, transparent, rgba(255,107,4,0.15), transparent)" }} />
 
       {/* ─── MODULES ─── */}
       <section className="relative z-10 px-6 py-24 max-w-[1160px] mx-auto">
@@ -218,8 +218,8 @@ export function LandingContent() {
                 border: "1px solid rgba(255,255,255,0.055)",
               }}
               onMouseEnter={(e) => {
-                (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(212,175,55,0.28)";
-                (e.currentTarget as HTMLDivElement).style.boxShadow = "0 12px 40px rgba(212,175,55,0.07)";
+                (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(255,107,4,0.28)";
+                (e.currentTarget as HTMLDivElement).style.boxShadow = "0 12px 40px rgba(255,107,4,0.07)";
               }}
               onMouseLeave={(e) => {
                 (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(255,255,255,0.055)";
@@ -227,7 +227,7 @@ export function LandingContent() {
               }}
             >
               <div className="w-[38px] h-[38px] rounded-[10px] flex items-center justify-center mb-4 bg-gold/[0.09] border border-gold/20">
-                <Icon size={17} color="#d4af37" />
+                <Icon size={17} color="#ff6b04" />
               </div>
               <p className="font-semibold text-white text-sm mb-1.5">{label}</p>
               <p className="text-[0.77rem] text-slate-400/75 leading-relaxed">{desc}</p>
@@ -237,7 +237,7 @@ export function LandingContent() {
       </section>
 
       {/* Divider */}
-      <div className="relative z-10 h-px mx-6" style={{ background: "linear-gradient(90deg, transparent, rgba(212,175,55,0.15), transparent)" }} />
+      <div className="relative z-10 h-px mx-6" style={{ background: "linear-gradient(90deg, transparent, rgba(255,107,4,0.15), transparent)" }} />
 
       {/* ─── ACESSO ─── */}
       <section className="relative z-10 px-6 py-24 pb-32 text-center">
@@ -251,13 +251,13 @@ export function LandingContent() {
             className="rounded-3xl px-8 py-11"
             style={{
               background: "rgba(13,27,42,0.9)",
-              border: "1px solid rgba(212,175,55,0.18)",
-              boxShadow: "0 2px 0 rgba(212,175,55,0.12), 0 40px 80px rgba(0,0,0,0.4)",
+              border: "1px solid rgba(255,107,4,0.18)",
+              boxShadow: "0 2px 0 rgba(255,107,4,0.12), 0 40px 80px rgba(0,0,0,0.4)",
             }}
           >
             {/* Ícone */}
             <div className="w-[50px] h-[50px] rounded-[14px] flex items-center justify-center mx-auto mb-6 bg-gold/[0.09] border border-gold/25">
-              <ShieldCheck size={22} color="#d4af37" />
+              <ShieldCheck size={22} color="#ff6b04" />
             </div>
 
             <h3

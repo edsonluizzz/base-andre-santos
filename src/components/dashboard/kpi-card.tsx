@@ -20,7 +20,7 @@ function easeOutExpo(t: number) {
 
 /** Mapeia a classe Tailwind de cor para o prefixo rgba (sem alpha) */
 const colorMap: Record<string, string> = {
-  "text-primary":    "rgba(212,175,55,",
+  "text-primary":    "rgba(255,107,4,",
   "text-green-400":  "rgba(74,222,128,",
   "text-blue-400":   "rgba(96,165,250,",
   "text-purple-400": "rgba(192,132,252,",
@@ -34,7 +34,7 @@ export function KpiCard({ icon, label, value, href, color, delay = 0 }: KpiCardP
   // Resolve a cor base (rgba sem alpha) a partir da classe Tailwind recebida.
   const baseColor =
     Object.entries(colorMap).find(([k]) => color.includes(k.split("-").slice(-2).join("-")))?.[1] ??
-    "rgba(212,175,55,";
+    "rgba(255,107,4,";
 
   /* Animação de entrada da card (translate + fade) */
   useEffect(() => {

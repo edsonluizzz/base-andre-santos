@@ -11,11 +11,11 @@ export default function PrivacidadePage() {
         {/* Header */}
         <div className="flex items-center gap-3 mb-8 pt-4">
           <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-            style={{ background: "rgba(212,175,55,0.12)", border: "1px solid rgba(212,175,55,0.25)" }}>
-            <Star className="w-4 h-4" style={{ color: "#d4af37" }} />
+            style={{ background: "rgba(255,107,4,0.12)", border: "1px solid rgba(255,107,4,0.25)" }}>
+            <Star className="w-4 h-4" style={{ color: "#ff6b04" }} />
           </div>
           <div>
-            <p className="text-[10px] tracking-[3px] uppercase" style={{ color: "rgba(212,175,55,0.7)" }}>Base de Apoio 2026</p>
+            <p className="text-[10px] tracking-[3px] uppercase" style={{ color: "rgba(255,107,4,0.7)" }}>Base de Apoio 2026</p>
             <p className="text-sm font-bold text-white">André Santos · Deputado Estadual PR</p>
           </div>
         </div>
@@ -89,7 +89,7 @@ export default function PrivacidadePage() {
 
         <div className="mt-10 pt-6 border-t border-white/[0.07] flex items-center justify-between">
           <p className="text-xs text-slate-500">Ovile Eleitoral · LGPD Art. 9</p>
-          <Link href="/cadastro" className="text-xs underline underline-offset-2" style={{ color: "rgba(212,175,55,0.7)" }}>
+          <Link href="/cadastro" className="text-xs underline underline-offset-2" style={{ color: "rgba(255,107,4,0.7)" }}>
             Voltar ao cadastro
           </Link>
         </div>
