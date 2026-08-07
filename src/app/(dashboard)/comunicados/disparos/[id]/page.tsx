@@ -96,7 +96,7 @@ export default function DisparoDetailPage() {
     return () => { if (pollRef.current) clearInterval(pollRef.current); };
   }, [broadcast, fetchDetail]);
 
-  async function runAction(action: "cancel" | "pause" | "resume" | "retry-failed" | "start", confirmMsg?: string) {
+  async function runAction(action: "cancel" | "pause" | "resume" | "retry-failed" | "start" | "kick", confirmMsg?: string) {
     if (confirmMsg && !confirm(confirmMsg)) return;
     setActing(true);
     try {
@@ -108,7 +108,9 @@ export default function DisparoDetailPage() {
       const data = await res.json();
       if (res.ok && data?.ok) {
         toast.success(
-          action === "retry-failed" ? `${data.retried} entrega(s) reenviada(s) pra fila` : "Atualizado"
+          action === "retry-failed" ? `${data.retried} entrega(s) reenviada(s) pra fila`
+          : action === "kick" ? "n8n notificado de novo — acompanhe o progresso"
+          : "Atualizado"
         );
         fetchDetail();
       } else {
@@ -164,6 +166,16 @@ export default function DisparoDetailPage() {
         {["QUEUED", "SENDING"].includes(broadcast.status) && (
           <Button size="sm" variant="outline" disabled={acting} onClick={() => runAction("pause")} className="gap-1.5">
             <Pause className="w-3.5 h-3.5" /> Pausar
+          </Button>
+        )}
+        {["QUEUED", "SENDING"].includes(broadcast.status) && broadcast.sentCount + broadcast.failedCount === 0 && (
+          <Button
+            size="sm" variant="outline" disabled={acting}
+            onClick={() => runAction("kick")}
+            className="gap-1.5"
+            title="Reenvia a notificação pro n8n — use se o disparo está parado sem processar nada"
+          >
+            <RefreshCw className="w-3.5 h-3.5" /> Notificar n8n de novo
           </Button>
         )}
         {broadcast.status === "PAUSED" && (

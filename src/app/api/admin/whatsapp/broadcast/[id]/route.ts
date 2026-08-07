@@ -72,12 +72,23 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
   const { db, cid: CID } = getCampaignContext(session);
   const body = await req.json().catch(() => null);
-  const action = body?.action as "cancel" | "pause" | "resume" | "retry-failed" | "start" | undefined;
+  const action = body?.action as "cancel" | "pause" | "resume" | "retry-failed" | "start" | "kick" | undefined;
 
   const broadcast = await db.broadcast.findFirst({
     where: { id: params.id, campaignId: CID },
   });
   if (!broadcast) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  // kick: reenvia o webhook do n8n sem mudar status/dados — pra quando o disparo
+  // ficou QUEUED/SENDING sem avançar porque a notificação original ao n8n falhou
+  // silenciosamente (fire-and-forget na criação, sem retry automático).
+  if (action === "kick") {
+    if (!["QUEUED", "SENDING"].includes(broadcast.status)) {
+      return NextResponse.json({ error: `Só faz sentido reenviar em QUEUED/SENDING (status atual: ${broadcast.status})` }, { status: 400 });
+    }
+    await triggerN8nBroadcast(broadcast.id, CID);
+    return NextResponse.json({ ok: true, broadcast });
+  }
 
   // retry-failed: reseta FAILED -> PENDING e reabre o broadcast pro n8n retomar.
   // Não é mutuamente exclusivo com os outros status changes abaixo (retorna antes).
