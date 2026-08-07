@@ -3,6 +3,7 @@ import { n8nAuthCheck as authCheck } from "@/lib/api-auth";
 import { getCampaignContext } from "@/lib/campaign-context";
 import { validateCampaign } from "@/lib/validate-campaign";
 import { renderMessage } from "@/lib/broadcast-helpers";
+import { applyMessageVariation, variantIndexFor } from "@/lib/message-variation";
 
 /**
  * GET /api/n8n/broadcast/next?broadcastId=...&campaign_id=...
@@ -124,10 +125,16 @@ export async function GET(req: NextRequest) {
     ? (await db.collaborator.findUnique({ where: { id: next.collaboratorId }, select: { city: true } }))?.city ?? null
     : null;
 
-  const renderedMessage = renderMessage(broadcast.message, {
+  let renderedMessage = renderMessage(broadcast.message, {
     name: next.name ?? "apoiador(a)",
     city: recipientCity,
   });
+
+  // Anti-ban: varia saudação/fechamento por destinatário (sem alterar o conteúdo).
+  // Só se aplica a envios individuais (GROUP é uma postagem única, sem sentido variar).
+  if (broadcast.varyMessage && broadcast.type !== "GROUP") {
+    renderedMessage = applyMessageVariation(renderedMessage, variantIndexFor(next.id, 8));
+  }
 
   // Garante que broadcast.status = SENDING + startedAt setado
   if (broadcast.status === "QUEUED") {

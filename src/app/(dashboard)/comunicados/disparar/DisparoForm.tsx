@@ -11,6 +11,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { sourceLabel } from "@/lib/labels";
+import { applyMessageVariation } from "@/lib/message-variation";
 
 type SourceRow = { source: string; total: number; lead: number; active: number; inactive: number };
 type PreviewRecipient = { id: string; name: string; phone: string; city: string | null };
@@ -28,6 +29,7 @@ type FormState = {
   delayMax: number;
   dailyLimit: number;
   scheduledFor: string; // datetime-local ("" = disparar imediatamente)
+  varyMessage: boolean;
 };
 
 const INITIAL: FormState = {
@@ -43,6 +45,7 @@ const INITIAL: FormState = {
   delayMax: 600,
   dailyLimit: 200,
   scheduledFor: "",
+  varyMessage: true,
 };
 
 export function DisparoForm() {
@@ -159,6 +162,7 @@ export function DisparoForm() {
           delaySecondsMin: form.delayMin,
           delaySecondsMax: form.delayMax,
           dailyLimit: form.dailyLimit,
+          varyMessage: form.type !== "GROUP" ? form.varyMessage : false,
           filters: filters(),
           scheduledFor: scheduledDate ? scheduledDate.toISOString() : undefined,
           immediate,
@@ -299,6 +303,30 @@ export function DisparoForm() {
               <p className="text-xs whitespace-pre-wrap" style={{ color: "rgba(255,255,255,0.85)" }}>
                 {renderPreview(form.message)}
               </p>
+            </div>
+          )}
+
+          {form.type !== "GROUP" && (
+            <div className="pt-1 space-y-2">
+              <label className="flex items-center gap-2 text-xs text-foreground cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={form.varyMessage}
+                  onChange={(e) => patch("varyMessage", e.target.checked)}
+                  className="rounded"
+                />
+                Variar saudação/fechamento entre destinatários (anti-ban, recomendado)
+              </label>
+              {form.varyMessage && form.message && (
+                <div className="rounded-lg p-3 space-y-2" style={{ background: "rgba(255,107,4,0.05)", border: "1px solid rgba(255,107,4,0.18)" }}>
+                  <p className="text-xs font-semibold text-primary">Exemplos de variação (cada destinatário recebe uma):</p>
+                  {[0, 1, 2].map((i) => (
+                    <p key={i} className="text-xs whitespace-pre-wrap text-muted-foreground border-t border-white/[0.06] pt-1.5 first:border-0 first:pt-0">
+                      {applyMessageVariation(renderPreview(form.message), i)}
+                    </p>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>

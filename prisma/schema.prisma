@@ -358,6 +358,7 @@ model Broadcast {
   delaySecondsMin Int       @default(300)            // 5min default (anti-ban)
   delaySecondsMax Int       @default(600)            // 10min default
   dailyLimit      Int       @default(200)            // Máx mensagens iniciadas por dia
+  varyMessage     Boolean   @default(true)           // Varia saudação/fechamento por destinatário (anti-ban, sem IA)
   totalCount      Int       @default(0)              // Total agendadas
   sentCount       Int       @default(0)              // Já enviadas
   failedCount     Int       @default(0)              // Falharam (Z-API erro, phone inválido)

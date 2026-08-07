@@ -33,6 +33,7 @@ const createSchema = z.object({
   delaySecondsMin: z.number().int().min(60).max(3600).default(300),
   delaySecondsMax: z.number().int().min(60).max(3600).default(600),
   dailyLimit: z.number().int().min(10).max(2000).default(200),
+  varyMessage: z.boolean().default(true),
   filters: filtersSchema,
   scheduledFor: z.string().datetime().optional(),
   immediate: z.boolean().default(true),               // se true, status vai pra QUEUED imediato
@@ -105,6 +106,7 @@ export async function POST(req: NextRequest) {
       delaySecondsMin: data.delaySecondsMin,
       delaySecondsMax: data.delaySecondsMax,
       dailyLimit: data.dailyLimit,
+      varyMessage: data.varyMessage,
       totalCount: data.type === "GROUP" ? 1 : count,
       scheduledFor: data.scheduledFor ? new Date(data.scheduledFor) : null,
       createdBy: session.user.id,
