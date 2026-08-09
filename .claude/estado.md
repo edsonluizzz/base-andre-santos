@@ -1,6 +1,37 @@
 # Estado — Ovile Eleitoral (Base André Santos)
 
-**Última atualização:** 2026-08-06 (sessão: Agenda/Calendar, WhatsApp robusto, paleta 30777, anti-ban)
+**Última atualização:** 2026-08-06 (sessão: diagnóstico de dados + estratégia de campanha "45 Dias de Chão")
+
+---
+
+## Sessão 2026-08-06 (tarde) — Diagnóstico de dados + estratégia "45 Dias de Chão" (sem alteração de código)
+
+A pedido do Edson: estratégia territorial completa para os 45 dias de campanha (16/ago–29/set/2026),
+cruzando dados reais do banco de produção com a agenda sincronizada do Google Calendar. Entregue como
+Claude Artifact (documento fora do repo) — não gerou PR nem deploy, nenhum arquivo do projeto alterado.
+
+### Método
+Consulta direta ao banco de produção via `vercel env pull` + Prisma 7 com `@prisma/adapter-pg`
+(**nota técnica:** `datasourceUrl` sozinho no construtor do `PrismaClient` não funciona mais no client
+engine do Prisma 7 — dá `PrismaClientConstructorValidationError`; é obrigatório usar o `adapter` do
+`@prisma/adapter-pg`/`@prisma/adapter-neon`). Scripts temporários deletados ao final da sessão, junto
+com `.env.production.local`.
+
+### Achados de dados (estado real do CRM, não bug — mas relevantes pro produto)
+- **64% da base (1.680 de 2.628 Collaborator) está sem `city` preenchido** — maior bolsão invisível
+  no `/mapa`. Recomendação registrada no plano: campanha de complemento de cadastro (1 campo só).
+- **165 `Church` cadastradas, 100% em bairros de Curitiba** — nenhuma no litoral ou interior, apesar
+  de 151 colaboradores com `profile=PASTOR` espalhados pela base.
+- **Apenas 1 das 165 igrejas tem `pastorId` vinculado** a um Collaborator — relação pastor↔igreja
+  quase toda por preencher.
+- **As 6 `Zone` cadastradas têm 0 `ZoneCollaborator` vinculado** — estrutura existe no schema, ainda
+  não é usada operacionalmente.
+- **`WhatsAppGroupMember` vazio (0 registros)** nos 7 `WhatsAppGroup` cadastrados — sistema não sabe
+  quem está em qual grupo real (mesmo com o disparo via Broadcast agora robusto, ver sessão abaixo).
+- **`MunicipalityGoal` da RMC soma ~11.600 votos** — abaixo da meta real de 30.000 que o Edson definiu
+  para a região; sugerido recalibrar os targets municipais da RMC.
+- Litoral (Antonina/Paranaguá/Pontal/Guaratuba/Matinhos) tem só 8 `Collaborator` no total; Pontal do
+  Paraná não tem nenhum registro.
 
 ---
 
