@@ -414,7 +414,7 @@ model BroadcastDelivery {
   collaboratorId String?                                  // Pode ser null se for número avulso
   phone          String                                   // Phone normalizado (só dígitos)
   name           String?                                  // Snapshot do nome no momento do envio
-  status         DeliveryStatus  @default(PENDING)        // PENDING/SENT/DELIVERED/READ/FAILED/SKIPPED
+  status         DeliveryStatus  @default(PENDING)        // PENDING/SENDING/SENT/DELIVERED/READ/FAILED/SKIPPED
   zapiMessageId  String?                                  // ID retornado pelo Z-API send-text
   sentAt         DateTime?
   deliveredAt    DateTime?
@@ -446,6 +446,7 @@ enum BroadcastStatus {
 
 enum DeliveryStatus {
   PENDING     // Aguardando envio
+  SENDING     // Reservada por uma chamada a /api/n8n/broadcast/next, aguardando confirmação
   SENT        // Enviado via Z-API, aguardando ACK
   DELIVERED   // Z-API confirmou entrega
   READ        // Destinatário leu

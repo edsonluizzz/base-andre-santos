@@ -65,8 +65,11 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
   await db.broadcastDelivery.update({ where: { id: delivery.id }, data });
 
-  // Atualiza contadores no broadcast pai + lastContactedAt do Collaborator
-  if (status === "SENT") {
+  // Só soma no contador do broadcast pai na 1ª confirmação dessa entrega — se o n8n
+  // chamar esse webhook de novo pra mesma entrega (retry/timeout), não pode contar 2x.
+  const isFirstConfirmation = delivery.status === "PENDING" || delivery.status === "SENDING";
+
+  if (isFirstConfirmation && status === "SENT") {
     await db.broadcast.update({
       where: { id: delivery.broadcastId },
       data: { sentCount: { increment: 1 } },
@@ -77,7 +80,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
         data: { lastContactedAt: now },
       }).catch(() => {});
     }
-  } else if (status === "FAILED") {
+  } else if (isFirstConfirmation && status === "FAILED") {
     await db.broadcast.update({
       where: { id: delivery.broadcastId },
       data: { failedCount: { increment: 1 } },

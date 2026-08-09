@@ -93,14 +93,43 @@ export async function GET(req: NextRequest) {
     });
   }
 
-  // Pega próxima PENDING
-  const next = await db.broadcastDelivery.findFirst({
-    where: { broadcastId, status: "PENDING" },
-    orderBy: { createdAt: "asc" },
-  });
+  // Uma entrega SENDING "presa" (n8n travou/crashou antes de confirmar) volta a ficar
+  // disponível depois desse tempo, pra não travar o broadcast inteiro pra sempre.
+  const staleCutoff = new Date(Date.now() - 10 * 60 * 1000);
+
+  // Pega próxima PENDING (ou SENDING expirada) e reserva atomicamente — evita que duas
+  // chamadas concorrentes/duplicadas do n8n peguem e reenviem pra mesma pessoa.
+  let next: { id: string; phone: string; name: string | null; collaboratorId: string | null } | null = null;
+  for (let attempt = 0; attempt < 3 && !next; attempt++) {
+    const candidate = await db.broadcastDelivery.findFirst({
+      where: {
+        broadcastId,
+        OR: [{ status: "PENDING" }, { status: "SENDING", updatedAt: { lt: staleCutoff } }],
+      },
+      orderBy: { createdAt: "asc" },
+      select: { id: true, status: true, phone: true, name: true, collaboratorId: true },
+    });
+    if (!candidate) break;
+
+    const claimed = await db.broadcastDelivery.updateMany({
+      where: { id: candidate.id, status: candidate.status },
+      data: { status: "SENDING", attemptCount: { increment: 1 }, updatedAt: new Date() },
+    });
+    if (claimed.count === 1) next = candidate;
+    // Se outra chamada ganhou a corrida (count === 0), tenta a próxima da fila.
+  }
 
   if (!next) {
-    // Sem mais PENDING — marcar broadcast como COMPLETED
+    // Ainda há entregas SENDING dentro do prazo (em voo) — não é o fim, só não há nada
+    // pronto pra entregar agora.
+    const inFlight = await db.broadcastDelivery.count({
+      where: { broadcastId, status: "SENDING", updatedAt: { gte: staleCutoff } },
+    });
+    if (inFlight > 0) {
+      return NextResponse.json({ ok: true, paused: true, reason: "in-flight" });
+    }
+
+    // Sem mais PENDING/SENDING — marcar broadcast como COMPLETED
     const counts = await db.broadcastDelivery.groupBy({
       by: ["status"],
       where: { broadcastId },

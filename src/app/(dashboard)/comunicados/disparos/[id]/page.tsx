@@ -47,11 +47,12 @@ const STATUS_STYLE: Record<string, string> = {
   CANCELLED: "bg-white/[0.04] text-muted-foreground border-white/10",
 };
 const DELIVERY_LABEL: Record<string, string> = {
-  PENDING: "Pendente", SENT: "Enviado", DELIVERED: "Entregue", READ: "Lido",
+  PENDING: "Pendente", SENDING: "Enviando", SENT: "Enviado", DELIVERED: "Entregue", READ: "Lido",
   FAILED: "Falhou", SKIPPED: "Ignorado",
 };
 const DELIVERY_STYLE: Record<string, string> = {
   PENDING: "bg-white/[0.04] text-muted-foreground border-white/10",
+  SENDING: "bg-amber-500/15 text-amber-400 border-amber-500/30",
   SENT: "bg-blue-500/15 text-blue-400 border-blue-500/30",
   DELIVERED: "bg-primary/15 text-primary border-primary/30",
   READ: "bg-green-500/15 text-green-400 border-green-500/30",
@@ -168,12 +169,12 @@ export default function DisparoDetailPage() {
             <Pause className="w-3.5 h-3.5" /> Pausar
           </Button>
         )}
-        {["QUEUED", "SENDING"].includes(broadcast.status) && broadcast.sentCount + broadcast.failedCount === 0 && (
+        {["QUEUED", "SENDING"].includes(broadcast.status) && (
           <Button
             size="sm" variant="outline" disabled={acting}
             onClick={() => runAction("kick")}
             className="gap-1.5"
-            title="Reenvia a notificação pro n8n — use se o disparo está parado sem processar nada"
+            title="Reenvia a notificação pro n8n — use se o disparo está parado sem avançar"
           >
             <RefreshCw className="w-3.5 h-3.5" /> Notificar n8n de novo
           </Button>
