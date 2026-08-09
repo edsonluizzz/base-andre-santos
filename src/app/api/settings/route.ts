@@ -18,6 +18,15 @@ export async function GET() {
         whatsappGroupLink: true,
         googleRefreshToken: true,
         deliveryPaymentValue: true,
+        cnpj: true,
+        razaoSocial: true,
+        cnpjLogradouro: true,
+        cnpjNumero: true,
+        cnpjComplemento: true,
+        cnpjBairro: true,
+        cnpjCep: true,
+        cnpjMunicipio: true,
+        cnpjUf: true,
         updatedAt: true,
       },
     });
@@ -36,7 +45,11 @@ export async function PUT(req: NextRequest) {
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     if (session.user.role !== "ADMIN") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     const { db } = getCampaignContext(session);
-    const { campaignName, logoBase64, whatsappGroupLink, deliveryPaymentValue } = await req.json();
+    const {
+      campaignName, logoBase64, whatsappGroupLink, deliveryPaymentValue,
+      cnpj, razaoSocial, cnpjLogradouro, cnpjNumero, cnpjComplemento,
+      cnpjBairro, cnpjCep, cnpjMunicipio, cnpjUf,
+    } = await req.json();
     if (deliveryPaymentValue !== undefined && (typeof deliveryPaymentValue !== "number" || deliveryPaymentValue < 0)) {
       return NextResponse.json({ error: "Valor de pagamento inválido" }, { status: 400 });
     }
@@ -55,6 +68,15 @@ export async function PUT(req: NextRequest) {
         ...(logoBase64 !== undefined && { logoBase64 }),
         ...(whatsappGroupLink !== undefined && { whatsappGroupLink: whatsappGroupLink || null }),
         ...(deliveryPaymentValue !== undefined && { deliveryPaymentValue }),
+        ...(cnpj !== undefined && { cnpj: cnpj || null }),
+        ...(razaoSocial !== undefined && { razaoSocial: razaoSocial || null }),
+        ...(cnpjLogradouro !== undefined && { cnpjLogradouro: cnpjLogradouro || null }),
+        ...(cnpjNumero !== undefined && { cnpjNumero: cnpjNumero || null }),
+        ...(cnpjComplemento !== undefined && { cnpjComplemento: cnpjComplemento || null }),
+        ...(cnpjBairro !== undefined && { cnpjBairro: cnpjBairro || null }),
+        ...(cnpjCep !== undefined && { cnpjCep: cnpjCep || null }),
+        ...(cnpjMunicipio !== undefined && { cnpjMunicipio: cnpjMunicipio || null }),
+        ...(cnpjUf !== undefined && { cnpjUf: cnpjUf || null }),
         updatedAt: new Date(),
       },
       create: {
@@ -63,6 +85,15 @@ export async function PUT(req: NextRequest) {
         logoBase64: logoBase64 ?? null,
         whatsappGroupLink: whatsappGroupLink ?? null,
         deliveryPaymentValue: deliveryPaymentValue ?? 10,
+        cnpj: cnpj ?? null,
+        razaoSocial: razaoSocial ?? null,
+        cnpjLogradouro: cnpjLogradouro ?? null,
+        cnpjNumero: cnpjNumero ?? null,
+        cnpjComplemento: cnpjComplemento ?? null,
+        cnpjBairro: cnpjBairro ?? null,
+        cnpjCep: cnpjCep ?? null,
+        cnpjMunicipio: cnpjMunicipio ?? null,
+        cnpjUf: cnpjUf ?? null,
         updatedAt: new Date(),
       },
     });

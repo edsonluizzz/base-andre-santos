@@ -35,18 +35,26 @@ export async function POST(req: NextRequest) {
           { member2Id: collaboratorId, member2PaidAt: null },
         ],
       },
-      select: { id: true, member1Id: true },
+      select: { id: true, member1Id: true, payingEntityId: true },
     });
 
-    const paidNowIds: string[] = [];
+    // Cada recibo é um documento legal "recebi de [fonte pagadora]" — não dá pra
+    // misturar entregas de fontes pagadoras diferentes num único recibo, então
+    // agrupamos por fonte antes de gerar (uma fonte = uma chave "DEFAULT"|id).
+    const paidByEntity = new Map<string, string[]>();
     for (const a of pending) {
       const member = a.member1Id === collaboratorId ? "member1" : "member2";
       const result = await markAssignmentMemberPaid(db, a.id, member, CID);
-      if (result.ok && !result.alreadyPaid) paidNowIds.push(a.id);
+      if (result.ok && !result.alreadyPaid) {
+        const key = a.payingEntityId ?? "DEFAULT";
+        const list = paidByEntity.get(key) ?? [];
+        list.push(a.id);
+        paidByEntity.set(key, list);
+      }
     }
 
-    if (paidNowIds.length > 0) {
-      await generateAndSendReceipt(db, collaboratorId, paidNowIds, CID);
+    for (const [key, assignmentIds] of paidByEntity) {
+      await generateAndSendReceipt(db, collaboratorId, assignmentIds, CID, key === "DEFAULT" ? null : key);
     }
 
     return NextResponse.json({ ok: true, count: pending.length });

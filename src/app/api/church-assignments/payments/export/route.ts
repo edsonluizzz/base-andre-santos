@@ -1,7 +1,8 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { getCampaignContext } from "@/lib/campaign-context";
 import { getPaymentsReport } from "@/lib/church-payments";
+import { formatCnpj } from "@/lib/cnpj";
 import ExcelJS from "exceljs";
 
 export const maxDuration = 60;
@@ -10,7 +11,7 @@ function fmtMoney(n: number) {
   return n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -21,32 +22,48 @@ export async function GET() {
     }
 
     const { db, cid: CID } = getCampaignContext(session);
-    const report = await getPaymentsReport(db, CID);
+    const payingEntityId = new URL(req.url).searchParams.get("payingEntityId") ?? undefined;
+    const report = await getPaymentsReport(db, CID, payingEntityId);
+
+    let payerLabel = "Todas as fontes (consolidado)";
+    if (payingEntityId === "DEFAULT") {
+      const settings = await db.settings.findUnique({ where: { id: "singleton" }, select: { razaoSocial: true, cnpj: true } });
+      payerLabel = [settings?.razaoSocial, settings?.cnpj ? `CNPJ ${formatCnpj(settings.cnpj)}` : null].filter(Boolean).join(" — ") || "Padrão (candidato da campanha)";
+    } else if (payingEntityId) {
+      const entity = await db.payingEntity.findUnique({ where: { id: payingEntityId }, select: { name: true, razaoSocial: true, cnpj: true } });
+      payerLabel = [entity?.name, entity?.razaoSocial, entity?.cnpj ? `CNPJ ${formatCnpj(entity.cnpj)}` : null].filter(Boolean).join(" — ") || "Fonte não encontrada";
+    }
 
     const workbook = new ExcelJS.Workbook();
     workbook.creator = "Ovile Eleitoral";
     workbook.created = new Date();
 
     const sheet = workbook.addWorksheet("Financeiro de Entregas", {
-      views: [{ state: "frozen", ySplit: 1 }],
+      views: [{ state: "frozen", ySplit: 4 }],
     });
 
     sheet.columns = [
-      { header: "Colaborador", key: "name", width: 30 },
-      { header: "Entregas", key: "deliveredCount", width: 12 },
-      { header: "Pagas", key: "paidCount", width: 10 },
-      { header: "Pendentes", key: "pendingCount", width: 12 },
-      { header: "Valor pendente", key: "amountPending", width: 18 },
-      { header: "Valor pago", key: "amountPaid", width: 18 },
+      { key: "name", width: 30 },
+      { key: "deliveredCount", width: 12 },
+      { key: "paidCount", width: 10 },
+      { key: "pendingCount", width: 12 },
+      { key: "amountPending", width: 18 },
+      { key: "amountPaid", width: 18 },
     ];
 
-    sheet.getRow(1).eachCell((cell) => {
+    sheet.addRow(["Relatório de Pagamentos — Cabos Eleitorais"]).font = { bold: true, size: 12 };
+    sheet.addRow([`Fonte pagadora: ${payerLabel}`]).font = { italic: true, size: 10, color: { argb: "FF666666" } };
+    sheet.addRow([]);
+
+    const headerRow = sheet.addRow(["Colaborador", "Entregas", "Pagas", "Pendentes", "Valor pendente", "Valor pago"]);
+    headerRow.eachCell((cell) => {
       cell.font = { bold: true, color: { argb: "FFFFFFFF" }, size: 11 };
       cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF1B3A5C" } };
       cell.alignment = { vertical: "middle", horizontal: "center" };
       cell.border = { bottom: { style: "thin", color: { argb: "FF2563EB" } } };
     });
-    sheet.getRow(1).height = 22;
+    headerRow.height = 22;
+    const headerRowNumber = headerRow.number;
 
     report.collaborators.forEach((c, i) => {
       const row = sheet.addRow({
@@ -75,17 +92,18 @@ export async function GET() {
     totalsRow.font = { bold: true };
 
     sheet.autoFilter = {
-      from: { row: 1, column: 1 },
-      to: { row: 1, column: sheet.columns.length },
+      from: { row: headerRowNumber, column: 1 },
+      to: { row: headerRowNumber, column: sheet.columns.length },
     };
 
     const buffer = await workbook.xlsx.writeBuffer();
     const date = new Date().toISOString().split("T")[0];
+    const suffix = payingEntityId ? `-${payingEntityId.toLowerCase()}` : "";
 
     return new NextResponse(new Uint8Array(buffer as ArrayBuffer), {
       headers: {
         "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        "Content-Disposition": `attachment; filename="financeiro-entregas-${date}.xlsx"`,
+        "Content-Disposition": `attachment; filename="financeiro-entregas${suffix}-${date}.xlsx"`,
         "Cache-Control": "no-store",
       },
     });

@@ -3,13 +3,14 @@
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
-import { Settings, Upload, X, Calendar, CheckCircle2, AlertCircle, RefreshCw, Unlink, Target, Zap, MessageSquare, Webhook, ExternalLink } from "lucide-react";
+import { Settings, Upload, X, Calendar, CheckCircle2, AlertCircle, RefreshCw, Unlink, Target, Zap, MessageSquare, Webhook, ExternalLink, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Image from "next/image";
 import { IntegrationsSection } from "@/components/configuracoes/integrations-section";
+import { PayingEntitiesSection } from "@/components/configuracoes/paying-entities-section";
 
 interface N8nStatus {
   status: { apiKeySet: boolean; leadWebhookSet: boolean; importWebhookSet: boolean; allConfigured: boolean };
@@ -34,6 +35,15 @@ function ConfiguracoesContent() {
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [logoBase64, setLogoBase64] = useState<string | null | undefined>(undefined);
   const [whatsappGroupLink, setWhatsappGroupLink] = useState("");
+  const [cnpj, setCnpj] = useState("");
+  const [razaoSocial, setRazaoSocial] = useState("");
+  const [cnpjLogradouro, setCnpjLogradouro] = useState("");
+  const [cnpjNumero, setCnpjNumero] = useState("");
+  const [cnpjComplemento, setCnpjComplemento] = useState("");
+  const [cnpjBairro, setCnpjBairro] = useState("");
+  const [cnpjCep, setCnpjCep] = useState("");
+  const [cnpjMunicipio, setCnpjMunicipio] = useState("");
+  const [cnpjUf, setCnpjUf] = useState("");
   const [saving, setSaving] = useState(false);
   const [gcalConnected, setGcalConnected] = useState(false);
   const [gcalSyncing, setGcalSyncing] = useState(false);
@@ -55,6 +65,15 @@ function ConfiguracoesContent() {
         if (s.logoBase64) setLogoPreview(s.logoBase64);
         if (s.googleCalendarConnected) setGcalConnected(true);
         if (s.whatsappGroupLink) setWhatsappGroupLink(s.whatsappGroupLink);
+        if (s.cnpj) setCnpj(s.cnpj);
+        if (s.razaoSocial) setRazaoSocial(s.razaoSocial);
+        if (s.cnpjLogradouro) setCnpjLogradouro(s.cnpjLogradouro);
+        if (s.cnpjNumero) setCnpjNumero(s.cnpjNumero);
+        if (s.cnpjComplemento) setCnpjComplemento(s.cnpjComplemento);
+        if (s.cnpjBairro) setCnpjBairro(s.cnpjBairro);
+        if (s.cnpjCep) setCnpjCep(s.cnpjCep);
+        if (s.cnpjMunicipio) setCnpjMunicipio(s.cnpjMunicipio);
+        if (s.cnpjUf) setCnpjUf(s.cnpjUf);
       })
       .catch(() => toast.error("Falha ao carregar configurações"));
 
@@ -85,7 +104,11 @@ function ConfiguracoesContent() {
 
   async function handleSave() {
     setSaving(true);
-    const payload: Record<string, unknown> = { campaignName, whatsappGroupLink };
+    const payload: Record<string, unknown> = {
+      campaignName, whatsappGroupLink,
+      cnpj, razaoSocial, cnpjLogradouro, cnpjNumero, cnpjComplemento,
+      cnpjBairro, cnpjCep, cnpjMunicipio, cnpjUf,
+    };
     if (logoBase64 !== undefined) payload.logoBase64 = logoBase64;
 
     const res = await fetch("/api/settings", {
@@ -179,6 +202,63 @@ function ConfiguracoesContent() {
               </a>
             )}
           </div>
+
+          {/* Dados Cadastrais (CNPJ) */}
+          <div className={`${CARD} space-y-4 lg:col-span-2`}>
+            <div className="flex items-center gap-2">
+              <FileText className="w-4 h-4 text-primary" />
+              <h2 className="text-sm font-semibold">Dados Cadastrais (CNPJ)</h2>
+            </div>
+            <p className="text-[11px] text-muted-foreground -mt-2">
+              Dados do comitê financeiro eleitoral, conforme cartão CNPJ emitido pela Receita Federal.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <Label>CNPJ</Label>
+                <Input value={cnpj} onChange={(e) => setCnpj(e.target.value)} placeholder="00.000.000/0001-00" className="font-mono text-xs" />
+              </div>
+              <div>
+                <Label>Razão Social</Label>
+                <Input value={razaoSocial} onChange={(e) => setRazaoSocial(e.target.value)} placeholder="ELEICAO 2026 ..." />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+              <div className="sm:col-span-3">
+                <Label>Logradouro</Label>
+                <Input value={cnpjLogradouro} onChange={(e) => setCnpjLogradouro(e.target.value)} placeholder="Rua..." />
+              </div>
+              <div>
+                <Label>Número</Label>
+                <Input value={cnpjNumero} onChange={(e) => setCnpjNumero(e.target.value)} />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <Label>Complemento</Label>
+                <Input value={cnpjComplemento} onChange={(e) => setCnpjComplemento(e.target.value)} placeholder="Bloco / Ap" />
+              </div>
+              <div>
+                <Label>Bairro</Label>
+                <Input value={cnpjBairro} onChange={(e) => setCnpjBairro(e.target.value)} />
+              </div>
+              <div>
+                <Label>CEP</Label>
+                <Input value={cnpjCep} onChange={(e) => setCnpjCep(e.target.value)} placeholder="00000-000" className="font-mono text-xs" />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+              <div className="sm:col-span-3">
+                <Label>Município</Label>
+                <Input value={cnpjMunicipio} onChange={(e) => setCnpjMunicipio(e.target.value)} />
+              </div>
+              <div>
+                <Label>UF</Label>
+                <Input value={cnpjUf} onChange={(e) => setCnpjUf(e.target.value.toUpperCase().slice(0, 2))} maxLength={2} className="uppercase" />
+              </div>
+            </div>
+          </div>
+
+          <PayingEntitiesSection />
         </div>
       </section>
 

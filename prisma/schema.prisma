@@ -41,6 +41,39 @@ model Campaign {
   whatsappGroups WhatsAppGroup[]
   userCampaigns  UserCampaign[]
   churches       Church[]
+  payingEntities PayingEntity[]
+}
+
+/// Fonte pagadora de cabos eleitorais — usada quando a campanha roda em chapa
+/// conjunta com outros candidatos e cada um paga uma parte das duplas de entrega.
+/// payingEntityId nulo em ChurchAssignment/PaymentReceipt = pagador padrão (o
+/// próprio candidato da campanha, com CNPJ em Settings).
+model PayingEntity {
+  id             String   @id @default(cuid())
+  campaignId     String   @default("andre-santos-2026")
+  name           String // rótulo interno, ex: "Indiara Barbosa Custódio"
+  candidateName  String?
+  office         String?
+  party          String?
+  electionYear   Int?
+  cnpj           String?
+  razaoSocial    String?
+  logradouro     String?
+  numero         String?
+  complemento    String?
+  bairro         String?
+  cep            String?
+  municipio      String?
+  uf             String?
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  campaign    Campaign           @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  assignments ChurchAssignment[]
+  receipts    PaymentReceipt[]
+
+  @@index([campaignId])
 }
 
 model Account {
@@ -442,6 +475,16 @@ model Settings {
   googleRefreshToken   String?  @db.Text
   whatsappGroupLink    String?  // Link de convite do grupo WhatsApp de apoiadores
   deliveryPaymentValue Float    @default(10) // R$ por entrega confirmada (ChurchAssignment ENTREGUE), por membro da dupla
+  // Dados cadastrais do CNPJ da campanha (comitê financeiro eleitoral)
+  cnpj                 String?
+  razaoSocial          String?
+  cnpjLogradouro       String?
+  cnpjNumero           String?
+  cnpjComplemento      String?
+  cnpjBairro           String?
+  cnpjCep              String?
+  cnpjMunicipio        String?
+  cnpjUf               String?
   updatedAt            DateTime @updatedAt
 }
 
@@ -614,17 +657,20 @@ model ChurchAssignment {
   deliveredAt   DateTime?
   member1PaidAt DateTime? // null = pendente de pagamento; preenchido = pago (timestamp = auditoria)
   member2PaidAt DateTime?
+  payingEntityId String? // null = fonte padrão (candidato da própria campanha, CNPJ em Settings)
   createdAt     DateTime               @default(now())
   updatedAt     DateTime               @updatedAt
 
-  church  Church        @relation(fields: [churchId], references: [id], onDelete: Cascade)
-  member1 Collaborator  @relation("AssignmentMember1", fields: [member1Id], references: [id], onDelete: Cascade)
-  member2 Collaborator? @relation("AssignmentMember2", fields: [member2Id], references: [id], onDelete: Cascade)
+  church       Church        @relation(fields: [churchId], references: [id], onDelete: Cascade)
+  member1      Collaborator  @relation("AssignmentMember1", fields: [member1Id], references: [id], onDelete: Cascade)
+  member2      Collaborator? @relation("AssignmentMember2", fields: [member2Id], references: [id], onDelete: Cascade)
+  payingEntity PayingEntity? @relation(fields: [payingEntityId], references: [id], onDelete: SetNull)
 
   @@index([churchId])
   @@index([status])
   @@index([member1Id])
   @@index([member2Id])
+  @@index([payingEntityId])
 }
 
 enum ChurchAssignmentStatus {
@@ -639,6 +685,7 @@ model PaymentReceipt {
   amount         Float // total pago neste recibo (rate × count, snapshot)
   rate           Float // valor unitário aplicado no momento (auditoria)
   assignmentIds  String[]
+  payingEntityId String? // null = fonte padrão (candidato da própria campanha)
   pdfUrl         String?              @db.Text
   emailStatus    ReceiptChannelStatus @default(SKIPPED)
   whatsappStatus ReceiptChannelStatus @default(SKIPPED)
@@ -646,9 +693,11 @@ model PaymentReceipt {
   whatsappError  String?              @db.Text
   createdAt      DateTime             @default(now())
 
-  collaborator Collaborator @relation(fields: [collaboratorId], references: [id], onDelete: Cascade)
+  collaborator Collaborator  @relation(fields: [collaboratorId], references: [id], onDelete: Cascade)
+  payingEntity PayingEntity? @relation(fields: [payingEntityId], references: [id], onDelete: SetNull)
 
   @@index([collaboratorId])
+  @@index([payingEntityId])
 }
 
 enum ReceiptChannelStatus {

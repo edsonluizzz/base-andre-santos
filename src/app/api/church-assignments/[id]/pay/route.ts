@@ -33,11 +33,11 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     if (!result.alreadyPaid) {
       const assignment = await db.churchAssignment.findUnique({
         where: { id: params.id },
-        select: { member1Id: true, member2Id: true },
+        select: { member1Id: true, member2Id: true, payingEntityId: true },
       });
       const collaboratorId = parsed.data.member === "member1" ? assignment?.member1Id : assignment?.member2Id;
       if (collaboratorId) {
-        await generateAndSendReceipt(db, collaboratorId, [params.id], CID);
+        await generateAndSendReceipt(db, collaboratorId, [params.id], CID, assignment?.payingEntityId ?? null);
       }
     }
 

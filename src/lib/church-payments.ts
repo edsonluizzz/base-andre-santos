@@ -7,6 +7,8 @@ export type PendingAssignment = {
   churchName: string;
   deliveredAt: string | null;
   member: MemberSlot;
+  payingEntityId: string | null;
+  payingEntityName: string | null;
 };
 export type ReceiptSummary = {
   id: string;
@@ -31,8 +33,18 @@ export type PaymentsReport = {
   totals: { amountPending: number; amountPaid: number };
 };
 
+/**
+ * Filtro de fonte pagadora: undefined = todas; "DEFAULT" = só a fonte padrão
+ * (payingEntityId nulo, candidato da própria campanha); string = fonte específica.
+ */
+export type PayingEntityFilter = string | "DEFAULT" | undefined;
+
 /** Agregado financeiro por colaborador (entregas x pago x devido) + recibo mais recente. */
-export async function getPaymentsReport(db: PrismaClient, campaignId: string): Promise<PaymentsReport> {
+export async function getPaymentsReport(
+  db: PrismaClient,
+  campaignId: string,
+  payingEntityFilter?: PayingEntityFilter,
+): Promise<PaymentsReport> {
   const settings = await db.settings.upsert({
     where: { id: "singleton" },
     update: {},
@@ -41,13 +53,22 @@ export async function getPaymentsReport(db: PrismaClient, campaignId: string): P
   });
   const rate = settings.deliveryPaymentValue;
 
+  const payingEntityWhere =
+    payingEntityFilter === undefined
+      ? {}
+      : payingEntityFilter === "DEFAULT"
+        ? { payingEntityId: null }
+        : { payingEntityId: payingEntityFilter };
+
   const assignments = await db.churchAssignment.findMany({
-    where: { status: "ENTREGUE", church: { campaignId } },
+    where: { status: "ENTREGUE", church: { campaignId }, ...payingEntityWhere },
     select: {
       id: true,
       deliveredAt: true,
       member1PaidAt: true,
       member2PaidAt: true,
+      payingEntityId: true,
+      payingEntity: { select: { name: true } },
       member1: { select: { id: true, name: true } },
       member2: { select: { id: true, name: true } },
       church: { select: { name: true } },
@@ -63,6 +84,8 @@ export async function getPaymentsReport(db: PrismaClient, campaignId: string): P
     churchName: string,
     deliveredAt: Date | null,
     member: MemberSlot,
+    payingEntityId: string | null,
+    payingEntityName: string | null,
   ) {
     let row = map.get(collaboratorId);
     if (!row) {
@@ -86,21 +109,24 @@ export async function getPaymentsReport(db: PrismaClient, campaignId: string): P
         assignmentId, churchName,
         deliveredAt: deliveredAt ? deliveredAt.toISOString() : null,
         member,
+        payingEntityId,
+        payingEntityName,
       });
     }
   }
 
   for (const a of assignments) {
-    touch(a.member1.id, a.member1.name, a.member1PaidAt, a.id, a.church.name, a.deliveredAt, "member1");
+    const payingEntityName = a.payingEntity?.name ?? null;
+    touch(a.member1.id, a.member1.name, a.member1PaidAt, a.id, a.church.name, a.deliveredAt, "member1", a.payingEntityId, payingEntityName);
     if (a.member2) {
-      touch(a.member2.id, a.member2.name, a.member2PaidAt, a.id, a.church.name, a.deliveredAt, "member2");
+      touch(a.member2.id, a.member2.name, a.member2PaidAt, a.id, a.church.name, a.deliveredAt, "member2", a.payingEntityId, payingEntityName);
     }
   }
 
   const collaboratorIds = Array.from(map.keys());
   if (collaboratorIds.length > 0) {
     const receipts = await db.paymentReceipt.findMany({
-      where: { collaboratorId: { in: collaboratorIds } },
+      where: { collaboratorId: { in: collaboratorIds }, ...payingEntityWhere },
       orderBy: { createdAt: "desc" },
       select: { id: true, collaboratorId: true, pdfUrl: true, emailStatus: true, whatsappStatus: true },
     });

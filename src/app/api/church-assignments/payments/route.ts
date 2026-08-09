@@ -1,9 +1,9 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { getCampaignContext } from "@/lib/campaign-context";
 import { getPaymentsReport } from "@/lib/church-payments";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -14,7 +14,8 @@ export async function GET() {
     }
 
     const { db, cid: CID } = getCampaignContext(session);
-    const report = await getPaymentsReport(db, CID);
+    const payingEntityId = new URL(req.url).searchParams.get("payingEntityId") ?? undefined;
+    const report = await getPaymentsReport(db, CID, payingEntityId);
     return NextResponse.json(report);
   } catch (err) {
     console.error("[api/church-assignments/payments] erro:", err);

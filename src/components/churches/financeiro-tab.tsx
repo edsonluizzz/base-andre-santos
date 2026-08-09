@@ -10,7 +10,10 @@ type PendingAssignment = {
   churchName: string;
   deliveredAt: string | null;
   member: "member1" | "member2";
+  payingEntityId: string | null;
+  payingEntityName: string | null;
 };
+type PayingEntity = { id: string; name: string; active: boolean };
 type ReceiptChannelStatus = "SKIPPED" | "SENT" | "FAILED";
 type ReceiptSummary = {
   id: string;
@@ -84,19 +87,42 @@ export function FinanceiroTab() {
   const [expanded, setExpanded] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [resendBusyKey, setResendBusyKey] = useState<string | null>(null);
+  const [entities, setEntities] = useState<PayingEntity[]>([]);
+  const [entityFilter, setEntityFilter] = useState<string>(""); // "" = todas, "DEFAULT" = padrão, ou id
+  const [payerBusyId, setPayerBusyId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
-    const res = await fetch("/api/church-assignments/payments");
+    const qs = entityFilter ? `?payingEntityId=${entityFilter}` : "";
+    const res = await fetch(`/api/church-assignments/payments${qs}`);
     if (res.ok) {
       const j: PaymentsData = await res.json();
       setData(j);
       setRateInput(String(j.rate));
     }
     setLoading(false);
-  }, []);
+  }, [entityFilter]);
 
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    fetch("/api/paying-entities")
+      .then((r) => r.json())
+      .then((j) => setEntities(j.data ?? []))
+      .catch(() => {});
+  }, []);
+
+  async function setPayer(assignmentId: string, payingEntityId: string | null) {
+    setPayerBusyId(assignmentId);
+    const res = await fetch(`/api/church-assignments/${assignmentId}/paying-entity`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ payingEntityId }),
+    });
+    if (res.ok) load();
+    else { const d = await res.json().catch(() => ({})); toast.error(d.error ?? "Erro ao definir fonte pagadora"); }
+    setPayerBusyId(null);
+  }
 
   async function saveRate() {
     const value = Number(rateInput.replace(",", "."));
@@ -180,6 +206,21 @@ export function FinanceiroTab() {
       </div>
 
       <div className="flex items-center gap-3 flex-wrap">
+        <label className="text-xs font-medium text-muted-foreground">Fonte pagadora</label>
+        <select
+          value={entityFilter}
+          onChange={(e) => setEntityFilter(e.target.value)}
+          className="rounded-lg px-3 py-1.5 text-sm bg-secondary border border-border outline-none"
+        >
+          <option value="">Todas</option>
+          <option value="DEFAULT">Padrão (candidato da campanha)</option>
+          {entities.filter((e) => e.active).map((e) => (
+            <option key={e.id} value={e.id}>{e.name}</option>
+          ))}
+        </select>
+      </div>
+
+      <div className="flex items-center gap-3 flex-wrap">
         <div className="grid grid-cols-2 gap-3 flex-1 min-w-[280px]">
           <div className="rounded-xl border border-white/[0.08] p-4">
             <p className="text-xs text-muted-foreground">Total pendente</p>
@@ -190,7 +231,7 @@ export function FinanceiroTab() {
             <p className="text-xl font-bold text-foreground">{fmt(data.totals.amountPaid)}</p>
           </div>
         </div>
-        <a href="/api/church-assignments/payments/export" download>
+        <a href={`/api/church-assignments/payments/export${entityFilter ? `?payingEntityId=${entityFilter}` : ""}`} download>
           <Button size="sm" variant="outline" className="gap-1.5">
             <FileDown className="w-3.5 h-3.5" /> Exportar XLSX
           </Button>
@@ -276,9 +317,21 @@ export function FinanceiroTab() {
                   </tr>
                   {expanded === c.collaboratorId && c.pendingAssignments.map((p) => (
                     <tr key={p.assignmentId + p.member} className="bg-white/[0.015]">
-                      <td className="px-4 py-2 pl-9 text-muted-foreground text-xs" colSpan={3}>{p.churchName}</td>
+                      <td className="px-4 py-2 pl-9 text-muted-foreground text-xs" colSpan={2}>{p.churchName}</td>
                       <td className="px-4 py-2 text-muted-foreground text-xs">{fmt(data.rate)}</td>
-                      <td className="px-4 py-2"></td>
+                      <td className="px-4 py-2" colSpan={2}>
+                        <select
+                          value={p.payingEntityId ?? ""}
+                          disabled={payerBusyId === p.assignmentId}
+                          onChange={(e) => setPayer(p.assignmentId, e.target.value || null)}
+                          className="w-full max-w-[220px] rounded-lg px-2 py-1 text-xs bg-secondary border border-border outline-none"
+                        >
+                          <option value="">Padrão (candidato da campanha)</option>
+                          {entities.filter((e) => e.active).map((e) => (
+                            <option key={e.id} value={e.id}>{e.name}</option>
+                          ))}
+                        </select>
+                      </td>
                       <td className="px-4 py-2 text-right">
                         <Button
                           size="sm" variant="outline"

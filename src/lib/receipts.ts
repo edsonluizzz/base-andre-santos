@@ -5,6 +5,7 @@ import { sendPaymentReceiptEmail } from "./email";
 import { zapiSendDocument, toZapiPhone, ZapiNotConfiguredError } from "./zapi";
 import { valorPorExtenso } from "./valor-extenso";
 import { formatCpf } from "./cpf";
+import { formatCnpj, formatEndereco } from "./cnpj";
 
 /**
  * Recibo eleitoral formal (Lei nº 9.504/1997 + Resoluções TSE de prestação de
@@ -20,6 +21,9 @@ function buildReceiptPdf(opts: {
   office: string | null;
   party: string | null;
   electionYear: number | null;
+  payerRazaoSocial: string | null;
+  payerCnpj: string | null;
+  payerAddress: string | null;
   issuedAt: Date;
   rate: number;
   rows: { locality: string; deliveredAt: Date | null }[];
@@ -54,6 +58,14 @@ function buildReceiptPdf(opts: {
     doc.font("Helvetica").fontSize(10);
     doc.text(`Campanha: ${opts.candidateName} — ${officeLabel}${opts.electionYear ? ` — ${opts.electionYear}` : ""}`);
     if (opts.party) doc.text(`Partido: ${opts.party}`);
+    if (opts.payerRazaoSocial || opts.payerCnpj) {
+      doc.moveDown(0.3);
+      doc.fontSize(9).fillColor("#333");
+      if (opts.payerRazaoSocial) doc.text(`Comitê financeiro: ${opts.payerRazaoSocial}`);
+      if (opts.payerCnpj) doc.text(`CNPJ: ${formatCnpj(opts.payerCnpj)}`);
+      if (opts.payerAddress) doc.text(opts.payerAddress);
+      doc.fillColor("#000").fontSize(10);
+    }
     doc.moveDown(1);
 
     doc.font("Helvetica").fontSize(11).text(
@@ -129,11 +141,12 @@ export async function generateAndSendReceipt(
   collaboratorId: string,
   assignmentIds: string[],
   campaignId: string,
+  payingEntityId: string | null = null,
 ): Promise<void> {
   if (assignmentIds.length === 0) return;
 
   try {
-    const [collaborator, campaign, settings, assignments] = await Promise.all([
+    const [collaborator, campaign, settings, assignments, payingEntity] = await Promise.all([
       db.collaborator.findUnique({
         where: { id: collaboratorId },
         select: { name: true, email: true, phone: true, cpf: true },
@@ -146,22 +159,35 @@ export async function generateAndSendReceipt(
         where: { id: "singleton" },
         update: {},
         create: { id: "singleton", campaignName: "Base Andre Santos", updatedAt: new Date() },
-        select: { deliveryPaymentValue: true },
+        select: {
+          deliveryPaymentValue: true, cnpj: true, razaoSocial: true,
+          cnpjLogradouro: true, cnpjNumero: true, cnpjComplemento: true,
+          cnpjBairro: true, cnpjCep: true, cnpjMunicipio: true, cnpjUf: true,
+        },
       }),
       db.churchAssignment.findMany({
         where: { id: { in: assignmentIds } },
         select: { deliveredAt: true, church: { select: { regional: true } } },
       }),
+      payingEntityId ? db.payingEntity.findUnique({ where: { id: payingEntityId } }) : Promise.resolve(null),
     ]);
 
     if (!collaborator) return;
 
     const rate = settings.deliveryPaymentValue;
     const amount = rate * assignmentIds.length;
-    const candidateName = campaign?.candidateName ?? campaign?.name ?? "Campanha";
+    const candidateName = payingEntity?.candidateName ?? payingEntity?.name ?? campaign?.candidateName ?? campaign?.name ?? "Campanha";
+    const payerRazaoSocial = payingEntity?.razaoSocial ?? settings.razaoSocial ?? null;
+    const payerCnpj = payingEntity?.cnpj ?? settings.cnpj ?? null;
+    const payerAddress = payingEntity
+      ? formatEndereco(payingEntity)
+      : formatEndereco({
+          logradouro: settings.cnpjLogradouro, numero: settings.cnpjNumero, complemento: settings.cnpjComplemento,
+          bairro: settings.cnpjBairro, cep: settings.cnpjCep, municipio: settings.cnpjMunicipio, uf: settings.cnpjUf,
+        });
 
     const receipt = await db.paymentReceipt.create({
-      data: { collaboratorId, amount, rate, assignmentIds },
+      data: { collaboratorId, amount, rate, assignmentIds, payingEntityId },
     });
 
     let pdfUrl: string | null = null;
@@ -171,9 +197,12 @@ export async function generateAndSendReceipt(
         collaboratorName: collaborator.name,
         collaboratorCpf: collaborator.cpf,
         candidateName,
-        office: null,
-        party: campaign?.party ?? null,
-        electionYear: campaign?.electionYear ?? null,
+        office: payingEntity?.office ?? null,
+        party: payingEntity?.party ?? campaign?.party ?? null,
+        electionYear: payingEntity?.electionYear ?? campaign?.electionYear ?? null,
+        payerRazaoSocial,
+        payerCnpj,
+        payerAddress,
         issuedAt: new Date(),
         rate,
         rows: assignments.map((a) => ({ locality: a.church.regional ?? "Não informado", deliveredAt: a.deliveredAt })),
