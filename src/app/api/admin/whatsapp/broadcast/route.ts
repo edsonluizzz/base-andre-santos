@@ -14,8 +14,6 @@ const filtersSchema = z.object({
   city: z.string().optional(),
   profile: z.union([z.string(), z.array(z.string())]).optional(),
   channel: z.string().optional(),
-  scoreMin: z.number().optional(),
-  scoreMax: z.number().optional(),
   notContactedDays: z.number().optional(),
   hasPhone: z.boolean().optional(),
   lgpdConsent: z.boolean().optional(),

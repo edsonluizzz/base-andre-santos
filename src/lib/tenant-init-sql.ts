@@ -84,7 +84,7 @@ CREATE TABLE "Collaborator" (
     "status" "CollaboratorStatus" NOT NULL DEFAULT 'ACTIVE', "notes" TEXT, "photoUrl" TEXT, "birthday" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP(3) NOT NULL,
     "source" TEXT, "channel" "CollaboratorChannel", "profile" "CollaboratorProfile" NOT NULL DEFAULT 'APOIADOR',
-    "supportStatus" "SupportStatus" NOT NULL DEFAULT 'NEUTRO', "mobilizationScore" DOUBLE PRECISION,
+    "supportStatus" "SupportStatus" NOT NULL DEFAULT 'NEUTRO',
     "contributionTypes" TEXT[], "registeredById" TEXT,
     "lgpdConsent" BOOLEAN NOT NULL DEFAULT false, "lgpdConsentAt" TIMESTAMP(3), "lastContactedAt" TIMESTAMP(3), "userId" TEXT,
     CONSTRAINT "Collaborator_pkey" PRIMARY KEY ("id")

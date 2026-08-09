@@ -81,7 +81,7 @@ export async function GET(req: NextRequest) {
           id: true, name: true, email: true, phone: true, city: true,
           neighborhood: true, campaignRole: true, status: true, notes: true,
           birthday: true, contributionTypes: true, lastContactedAt: true,
-          mobilizationScore: true, profile: true, supportStatus: true, source: true,
+          profile: true, supportStatus: true, source: true,
           registeredBy: { select: { name: true, email: true } },
           zones: { select: { zone: { select: { id: true, name: true } } } },
           whatsappGroups: { select: { group: { select: { id: true, name: true } } } },

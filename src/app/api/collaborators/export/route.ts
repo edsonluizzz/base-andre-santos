@@ -126,7 +126,6 @@ export async function GET(req: NextRequest) {
         supportStatus: true,
         source: true,
         channel: true,
-        mobilizationScore: true,
         registeredBy: { select: { name: true } },
         createdAt: true,
       },
@@ -155,7 +154,6 @@ export async function GET(req: NextRequest) {
       { header: "Apoio", key: "supportStatus", width: 15 },
       { header: "Origem", key: "source", width: 25 },
       { header: "Canal", key: "channel", width: 15 },
-      { header: "Score", key: "mobilizationScore", width: 10 },
       { header: "Cadastrado por", key: "registeredBy", width: 25 },
       { header: "Data cadastro", key: "createdAt", width: 18 },
     ];
@@ -184,7 +182,6 @@ export async function GET(req: NextRequest) {
         supportStatus: SUPPORT_LABEL[c.supportStatus ?? ""] ?? c.supportStatus ?? "",
         source: c.source ?? "",
         channel: CHANNEL_LABEL[c.channel ?? ""] ?? c.channel ?? "",
-        mobilizationScore: c.mobilizationScore != null ? Math.round(c.mobilizationScore) : "",
         registeredBy: c.registeredBy?.name ?? "",
         createdAt: c.createdAt.toLocaleDateString("pt-BR"),
       });

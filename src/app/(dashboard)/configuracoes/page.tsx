@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
-import { Settings, Upload, X, Calendar, CheckCircle2, AlertCircle, RefreshCw, Unlink, Target, Zap, MessageSquare, Webhook, ExternalLink, FileText } from "lucide-react";
+import { Settings, Upload, X, Calendar, CheckCircle2, AlertCircle, RefreshCw, Unlink, Target, MessageSquare, Webhook, ExternalLink, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -47,7 +47,6 @@ function ConfiguracoesContent() {
   const [saving, setSaving] = useState(false);
   const [gcalConnected, setGcalConnected] = useState(false);
   const [gcalSyncing, setGcalSyncing] = useState(false);
-  const [recalcLoading, setRecalcLoading] = useState(false);
   const [syncGoalsLoading, setSyncGoalsLoading] = useState(false);
   const [n8nStatus, setN8nStatus] = useState<N8nStatus | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -342,28 +341,6 @@ function ConfiguracoesContent() {
             </Button>
           </div>
 
-          {/* Score de Mobilização */}
-          <div className={`${CARD} space-y-3`}>
-            <div className="flex items-center gap-2">
-              <Zap className="w-4 h-4 text-primary" />
-              <h2 className="text-sm font-semibold">Score de Mobilização</h2>
-            </div>
-            <p className="text-[11px] text-muted-foreground">
-              Recalcula o score de cada colaborador com base em perfil, apoio, status e formas de contribuição.
-            </p>
-            <Button size="sm" variant="outline" disabled={recalcLoading} className="gap-1.5 text-xs"
-              onClick={async () => {
-                setRecalcLoading(true);
-                const res = await fetch("/api/admin/recalc-scores", { method: "POST" });
-                setRecalcLoading(false);
-                if (res.ok) { const d = await res.json(); toast.success(`Scores recalculados: ${d.updated} colaboradores`); }
-                else toast.error("Erro ao recalcular");
-              }}
-            >
-              <Zap className={`w-3.5 h-3.5 ${recalcLoading ? "animate-pulse" : ""}`} />
-              {recalcLoading ? "Calculando..." : "Recalcular scores agora"}
-            </Button>
-          </div>
         </div>
       </section>
 

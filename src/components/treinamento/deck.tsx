@@ -6,7 +6,6 @@ import {
   Users,
   UserPlus,
   Trophy,
-  Gauge,
   MessageCircle,
   Smartphone,
   Shield,
@@ -231,43 +230,6 @@ export function TreinamentoDeck({ candidateName, userName, userRole }: DeckProps
                   {t.tier}
                 </div>
                 <p className="text-sm text-muted-foreground">{t.desc}</p>
-              </div>
-            ))}
-          </div>
-        </>
-      ),
-    },
-    {
-      icon: Gauge,
-      badge: "Mobilização",
-      title: "Score de engajamento.",
-      accent: "from-rose-500/20 to-rose-500/5",
-      body: (
-        <>
-          <p className="text-sm lg:text-base text-muted-foreground mb-4">
-            Cada apoiador tem um <strong className="text-foreground">score de 0 a 100</strong> calculado
-            pelo sistema com base na atividade.
-          </p>
-          <div className="space-y-3">
-            {[
-              { value: 85, label: "Engajado", color: "text-green-400", desc: "Está confirmado, responde rápido, foi contatado recentemente." },
-              { value: 55, label: "Moderado", color: "text-amber-400", desc: "Cadastrado, mas há tempo sem contato." },
-              { value: 20, label: "Frio", color: "text-red-400", desc: "Precisa de reativação. O sistema pode mandar mensagem pra ele." },
-            ].map((row) => (
-              <div key={row.value} className="flex items-center gap-3">
-                <div className="flex-1 h-2 rounded-full bg-white/[0.05] overflow-hidden">
-                  <div
-                    className="h-full rounded-full"
-                    style={{
-                      width: `${row.value}%`,
-                      background: "linear-gradient(90deg, #ef4444 0%, #f59e0b 50%, #22c55e 100%)",
-                    }}
-                  />
-                </div>
-                <div className="min-w-[110px]">
-                  <p className={cn("text-xs lg:text-sm font-semibold", row.color)}>{row.value} · {row.label}</p>
-                  <p className="text-[10px] text-muted-foreground/70 leading-tight mt-0.5">{row.desc}</p>
-                </div>
               </div>
             ))}
           </div>

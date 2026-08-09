@@ -78,7 +78,6 @@ async function checkAllGaps(db: PrismaClient, cid: string): Promise<GapResult[]>
     hasSourceField,
     hasLeaderTypeEnum,
     hasMunGoal,
-    hasMobScore,
     groupsPct,
   ] = await Promise.all([
     colExists(db, "Collaborator", "neighborhood"),
@@ -86,7 +85,6 @@ async function checkAllGaps(db: PrismaClient, cid: string): Promise<GapResult[]>
     colExists(db, "Collaborator", "source"),
     enumHasValue(db, "CollaboratorProfile", "LIDER_RELIGIOSO"),
     tableExists(db, "MunicipalityGoal"),
-    colExists(db, "Collaborator", "mobilizationScore"),
     groupsTerritorialized(db, cid),
   ]);
 
@@ -126,12 +124,11 @@ async function checkAllGaps(db: PrismaClient, cid: string): Promise<GapResult[]>
         ? "Tabela MunicipalityGoal criada e disponível para configuração de metas"
         : "Tabela MunicipalityGoal não encontrada no banco",
     },
-    // 4 — GAP 5: Score de potencial
+    // 4 — GAP 5: Score de potencial — implementado e depois removido (2026-08-09):
+    // métrica não influenciava filtro, ordenação ou disparo em nenhuma tela, só decorativa.
     {
-      status: hasMobScore ? "resolved" : "pending",
-      detail: hasMobScore
-        ? "Coluna mobilizationScore calculada e disponível em Collaborator"
-        : "Coluna mobilizationScore ausente — nenhum score por colaborador",
+      status: "resolved",
+      detail: "Descontinuado deliberadamente — não tinha função real no fluxo de trabalho",
     },
     // 5 — GAP 6: Painel funil em tempo real
     {
@@ -245,7 +242,7 @@ export default async function PlanejamentoPage() {
     {
       num: "05", impacto: "MÉDIO",
       titulo: "Score de Potencial do Colaborador",
-      desc: "mobilizationScore calculado por fórmula: perfil_base × apoio_mult × status_mult + bônus contribuições. Recalcule em Configurações → Score de Mobilização.",
+      desc: "Implementado e depois descontinuado (2026-08-09): a fórmula existia mas não influenciava filtro, ordenação ou disparo em nenhuma tela — só era exibida.",
     },
     {
       num: "06", impacto: "MÉDIO",
@@ -562,7 +559,7 @@ export default async function PlanejamentoPage() {
                 { e: "Segmentação: líder cristão, educador, jovem, família, empreendedor",      s: "existe",  o: "CollaboratorProfile completo: PASTOR · LIDER_RELIGIOSO · EDUCADOR · JOVEM · FAMILIA · EMPRESARIO · VEREADOR + mais" },
                 { e: "Relatórios de performance mensais",                                       s: "existe",  o: "XLSX 4 abas: Resumo, Cobertura, Colaboradores, Análise Política + CSV" },
                 { e: "Funil de conversão",                                                      s: "existe",  o: "FunnelPanel em tempo real no dashboard + Análise Política no XLSX" },
-                { e: "Ranking de mobilização",                                                  s: "existe",  o: "/ranking em produção + mobilizationScore por colaborador (recalculável em /configuracoes)" },
+                { e: "Ranking de mobilização",                                                  s: "existe",  o: "/ranking em produção — score de mobilização por colaborador foi descontinuado por não ter função real" },
                 { e: "Células por território",                                                  s: "existe",  o: "/celulas e /minha-celula com tiers automáticos (APOIADOR→ATIVISTA→LIDER→COORDENADOR)" },
                 { e: "Comunicados segmentados",                                                 s: "existe",  o: "/comunicados com filtro por audiência e contagem em tempo real" },
                 { e: "Política de Privacidade / LGPD",                                         s: "existe",  o: "/privacidade (LGPD Art. 9) — linkada no termo do cadastro público" },
@@ -570,7 +567,7 @@ export default async function PlanejamentoPage() {
                 { e: "Análise neural preditiva contínua",                                       s: "externo", o: "Core da oferta STRIDE — este relatório é a análise; não é infraestrutura recorrente" },
                 { e: "Gestão de tráfego pago (Meta/Google Ads)",                               s: "externo", o: "Serviço de agência de mídia paga — não é sistema de CRM" },
                 { e: "Copywriting político mensal",                                             s: "externo", o: "Produção criativa externa — não é infraestrutura de CRM" },
-                { e: "Estrutura de mobilização digital",                                        s: "existe",  o: "= Este sistema. CRM, células, grupos WA, ranking, mapa, metas, score — em produção" },
+                { e: "Estrutura de mobilização digital",                                        s: "existe",  o: "= Este sistema. CRM, células, grupos WA, ranking, mapa, metas — em produção" },
               ].map((row) => {
                 const badge =
                   row.s === "existe"  ? { label: "Existe",  cls: "bg-green-500/15 text-green-400 border-green-500/30"  } :
@@ -727,7 +724,7 @@ export default async function PlanejamentoPage() {
               { label: "Política de Privacidade", desc: "/privacidade com LGPD Art. 9 — linkada no /cadastro" },
               { label: "Contadores reais no /cadastro", desc: "Apoiadores, municípios e grupos atualizados em tempo real" },
               { label: "Página /metas", desc: "Dashboard Meta × Realizado por município com progresso visual" },
-              { label: "Score de Mobilização", desc: "Fórmula perfil × apoio × status — recalcule em /configuracoes" },
+              { label: "Score de Mobilização", desc: "Fórmula perfil × apoio × status — descontinuado em 2026-08-09 por não ter função real" },
               { label: "Territorialização /grupos", desc: "Banner de progresso + borda âmbar nos grupos sem zona" },
             ].map((item) => (
               <div key={item.label} className="flex items-start gap-2 rounded-xl bg-green-500/[0.05] border border-green-500/15 px-3 py-2.5">

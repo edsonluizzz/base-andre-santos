@@ -7,10 +7,8 @@ import { InviteToSystem } from "@/components/collaborators/invite-to-system";
 import { EditCollaboratorButton } from "@/components/collaborators/edit-collaborator-button";
 import { WhatsappSendButton } from "@/components/collaborators/whatsapp-send-button";
 import { ContactTimeline } from "@/components/collaborators/contact-timeline";
-import { ScoreBar } from "@/components/ui/score-bar";
 import { CONTRIBUTION_OPTIONS, TIER_LABEL } from "@/lib/contribution";
 import { ROLE_LABEL, PROFILE_LABEL, STATUS_LABEL, sourceLabel } from "@/lib/labels";
-import { calcMobilizationScore } from "@/lib/mobilization";
 import { differenceInDays, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -49,13 +47,6 @@ export default async function CollaboratorProfilePage({ params }: { params: { id
   if (!collaborator) notFound();
 
   const attendanceCount = collaborator.attendances.filter((a) => a.status === "PRESENT").length;
-  const computedScore = calcMobilizationScore({
-    profile: collaborator.profile,
-    supportStatus: collaborator.supportStatus,
-    status: collaborator.status,
-    contributionTypes: collaborator.contributionTypes,
-    attendanceCount,
-  });
 
   const tier = collaborator.user?.userCampaigns?.[0]?.tier;
   const whatsappHref = collaborator.phone
@@ -239,35 +230,6 @@ export default async function CollaboratorProfilePage({ params }: { params: { id
               </div>
             </div>
           )}
-        </div>
-      )}
-
-      {/* Score de mobilização explicado */}
-      {isAdmin && (
-        <div className="glass-card rounded-2xl p-6 border border-white/[0.08]">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
-              <Zap className="w-4 h-4 text-primary" /> Score de Mobilização
-            </h2>
-            <span className={`text-2xl font-bold ${computedScore >= 70 ? "text-green-400" : computedScore >= 40 ? "text-amber-400" : computedScore > 0 ? "text-red-400" : "text-muted-foreground"}`}>
-              {computedScore}<span className="text-xs text-muted-foreground font-normal">/100</span>
-            </span>
-          </div>
-          <ScoreBar value={computedScore} size="md" showValue={false} className="mb-4" />
-          <div className="grid grid-cols-2 gap-2 text-xs">
-            {[
-              { label: "Perfil", detail: PROFILE_LABEL[collaborator.profile] },
-              { label: "Status", detail: STATUS_LABEL[collaborator.status] },
-              { label: "Apoio", detail: SUPPORT_LABEL[collaborator.supportStatus]?.label ?? collaborator.supportStatus },
-              { label: "Contribuições", detail: `${collaborator.contributionTypes.length} tipo${collaborator.contributionTypes.length !== 1 ? "s" : ""} (+${collaborator.contributionTypes.length * 3} pts)` },
-              { label: "Presenças", detail: `${attendanceCount} evento${attendanceCount !== 1 ? "s" : ""} (+${Math.min(20, attendanceCount * 2)} pts)` },
-            ].map(({ label, detail }) => (
-              <div key={label} className="flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-white/[0.03]">
-                <span className="text-muted-foreground">{label}</span>
-                <span className="text-foreground font-medium truncate ml-2">{detail}</span>
-              </div>
-            ))}
-          </div>
         </div>
       )}
 

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { getCampaignContext } from "@/lib/campaign-context";
-import { calcMobilizationScore } from "@/lib/mobilization";
 
 
 export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
@@ -71,28 +70,6 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
         }
       },
       { timeout: 30000 },
-    );
-
-    // Recalculate mobilization scores for affected collaborators
-    const collaborators = await db.collaborator.findMany({
-      where: { id: { in: collaboratorIds }, campaignId: CID },
-      select: { id: true, profile: true, supportStatus: true, status: true, contributionTypes: true },
-    });
-
-    await Promise.all(
-      collaborators.map(async (c) => {
-        const attendanceCount = await db.attendance.count({
-          where: { collaboratorId: c.id, status: "PRESENT" },
-        });
-        const score = calcMobilizationScore({
-          profile: c.profile,
-          supportStatus: c.supportStatus,
-          status: c.status,
-          contributionTypes: c.contributionTypes,
-          attendanceCount,
-        });
-        await db.collaborator.update({ where: { id: c.id }, data: { mobilizationScore: score } });
-      }),
     );
 
     return NextResponse.json({ ok: true, saved: attendances.length });

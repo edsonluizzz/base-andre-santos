@@ -217,7 +217,6 @@ model Collaborator {
   channel            CollaboratorChannel?
   profile            CollaboratorProfile @default(APOIADOR)
   supportStatus      SupportStatus       @default(NEUTRO)
-  mobilizationScore  Float?
   contributionTypes  String[]
   registeredById     String?
   lgpdConsent        Boolean   @default(false)

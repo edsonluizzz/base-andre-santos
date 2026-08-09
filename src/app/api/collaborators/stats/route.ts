@@ -13,7 +13,6 @@ import { getCampaignContext } from "@/lib/campaign-context";
  *   adversarios        — supportStatus=ADVERSARIO
  *   leads              — status=LEAD
  *   inativos           — status=INACTIVE
- *   scoreMedio         — média de mobilizationScore (ACTIVE)
  *   contactadosHoje    — count(lastContactedAt >= start_of_today_BRT)
  *
  * Deltas semanais (vs últimos 7d): retorna +/- número absoluto e % de variação
@@ -35,7 +34,6 @@ export async function GET() {
 
     const [
       matrix,
-      activeWithScore,
       contactadosHoje,
       newLast7d, newPrev7d,
       confirmados7d, confirmadosPrev7d,
@@ -45,10 +43,6 @@ export async function GET() {
         by: ["status", "supportStatus"],
         where: { campaignId },
         _count: { _all: true },
-      }),
-      db.collaborator.aggregate({
-        where: { campaignId, status: "ACTIVE", mobilizationScore: { not: null } },
-        _avg: { mobilizationScore: true },
       }),
       db.collaborator.count({ where: { campaignId, lastContactedAt: { gte: startOfTodayUTC } } }),
       db.collaborator.count({ where: { campaignId, createdAt: { gte: sevenDaysAgo } } }),
@@ -81,7 +75,6 @@ export async function GET() {
       adversarios,
       leads,
       inativos,
-      scoreMedio: Math.round(activeWithScore._avg.mobilizationScore ?? 0),
       contactadosHoje,
       delta: {
         newCollaboratorsPct: deltaPct(newLast7d, newPrev7d),

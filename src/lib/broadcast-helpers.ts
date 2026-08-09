@@ -12,8 +12,6 @@ export type BroadcastFilters = {
   city?: string;                                   // contains insensitive
   profile?: string | string[];                     // PASTOR, APOIADOR, etc
   channel?: "INSTAGRAM" | "WHATSAPP" | "EVENTO" | "LINK" | "OUTRO";
-  scoreMin?: number;
-  scoreMax?: number;
   notContactedDays?: number;                       // só leads não contatados nos últimos N dias
   hasPhone?: boolean;                              // default true
   lgpdConsent?: boolean;                           // default true (legal requirement)
@@ -72,8 +70,6 @@ export async function resolveRecipients(
       : filters.profile;
   }
   if (filters.channel) where.channel = filters.channel;
-  if (filters.scoreMin !== undefined) where.mobilizationScore = { ...(where.mobilizationScore ?? {}), gte: filters.scoreMin };
-  if (filters.scoreMax !== undefined) where.mobilizationScore = { ...(where.mobilizationScore ?? {}), lte: filters.scoreMax };
 
   if (filters.notContactedDays !== undefined && filters.notContactedDays > 0) {
     const cutoff = new Date(Date.now() - filters.notContactedDays * 24 * 60 * 60 * 1000);

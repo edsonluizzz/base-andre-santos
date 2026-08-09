@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Users, Heart, Scale, ShieldOff, Gauge, Phone, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { Users, Heart, Scale, ShieldOff, Phone, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CountUp } from "@/components/ui/count-up";
 
@@ -13,7 +13,6 @@ interface Stats {
   adversarios: number;
   leads: number;
   inativos: number;
-  scoreMedio: number;
   contactadosHoje: number;
   delta: {
     newCollaboratorsPct: number;
@@ -83,14 +82,6 @@ export function KpiCards() {
       bg: "bg-red-500/10",
     },
     {
-      label: "Score médio",
-      value: `${s.scoreMedio}`,
-      suffix: "/100",
-      icon: Gauge,
-      color: "text-primary",
-      bg: "bg-primary/10",
-    },
-    {
       label: "Contactados hoje",
       value: s.contactadosHoje,
       icon: Phone,
@@ -99,8 +90,6 @@ export function KpiCards() {
     },
   ];
 
-  // 6 visíveis padrão; Contactados hoje aparece só >= 7º (lg+ tem 7 cols quando habilitado).
-  // Mantenho 6 cards (sem Contactados Hoje) pra grid limpo.
   const VISIBLE = cards.slice(0, 6);
 
   return (
@@ -123,9 +112,8 @@ export function KpiCards() {
             </p>
             <div className="flex items-baseline gap-0.5">
               <span className={cn("text-xl lg:text-2xl font-bold leading-none", c.color)}>
-                {typeof c.value === "number" ? <CountUp value={c.value} /> : c.value}
+                <CountUp value={c.value} />
               </span>
-              {c.suffix && <span className="text-[10px] text-muted-foreground">{c.suffix}</span>}
             </div>
             {c.deltaLabel && (
               <p className="text-[9px] text-muted-foreground/70 mt-1 truncate">{c.deltaLabel}</p>

@@ -10,7 +10,7 @@ import {
 import { animate, stagger } from "animejs";
 
 const MODULES = [
-  { icon: Users,         label: "Colaboradores", desc: "Perfis completos, score de mobilização e histórico" },
+  { icon: Users,         label: "Colaboradores", desc: "Perfis completos e histórico de contato" },
   { icon: Map,           label: "Mapa PR",        desc: "Cobertura territorial choropleth por município" },
   { icon: MessageSquare, label: "Grupos WhatsApp",desc: "Gestão e territorialização de grupos" },
   { icon: CalendarDays,  label: "Agenda",         desc: "Eventos, presenças e sync Google Calendar" },

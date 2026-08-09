@@ -1,5 +1,5 @@
 import type { PrismaClient } from "@prisma/client";
-import { Trophy, Zap, AlertTriangle } from "lucide-react";
+import { Trophy, AlertTriangle } from "lucide-react";
 
 interface EngagementPanelProps {
   db: PrismaClient;
@@ -16,7 +16,7 @@ export async function EngagementPanel({ db, cid: CID }: EngagementPanelProps) {
   });
   const tenantCollabIds = tenantCollabs.map((c) => c.id);
 
-  const [topAttendance, topScores, staleActive] = await Promise.all([
+  const [topAttendance, staleActive] = await Promise.all([
     // Top 5 por presenças confirmadas — restrito aos collaborators do tenant
     tenantCollabIds.length === 0
       ? Promise.resolve([] as Array<{ collaboratorId: string | null; _count: { id: number } }>)
@@ -30,13 +30,6 @@ export async function EngagementPanel({ db, cid: CID }: EngagementPanelProps) {
           orderBy: { _count: { id: "desc" } },
           take: 5,
         }),
-    // Top 5 por score de mobilização
-    db.collaborator.findMany({
-      where: { campaignId: CID, status: "ACTIVE", mobilizationScore: { not: null } },
-      select: { id: true, name: true, city: true, mobilizationScore: true, campaignRole: true },
-      orderBy: { mobilizationScore: "desc" },
-      take: 5,
-    }),
     // Inativos: ACTIVE mas sem interação há 30d+ (sem lastContactedAt ou antigo)
     db.collaborator.findMany({
       where: {
@@ -63,12 +56,7 @@ export async function EngagementPanel({ db, cid: CID }: EngagementPanelProps) {
     : [];
   const collabMap = Object.fromEntries(collabNames.map((c) => [c.id, c]));
 
-  const ROLE_SHORT: Record<string, string> = {
-    COORD_GERAL: "C.Geral", COORD_REGIONAL: "C.Regional",
-    LIDER_MUNICIPAL: "L.Municipal", LIDER_BAIRRO: "L.Bairro", VOLUNTARIO: "Vol.",
-  };
-
-  if (topAttendance.length === 0 && topScores.length === 0) return null;
+  if (topAttendance.length === 0 && staleActive.length === 0) return null;
 
   return (
     <div className="glass-card rounded-2xl p-6 border border-white/[0.08] space-y-6">
@@ -98,32 +86,6 @@ export async function EngagementPanel({ db, cid: CID }: EngagementPanelProps) {
                   </div>
                 );
               })}
-            </div>
-          </div>
-        )}
-
-        {/* Top scores */}
-        {topScores.length > 0 && (
-          <div>
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60 mb-3 flex items-center gap-1">
-              <Zap className="w-3 h-3" /> Maior score de mobilização
-            </p>
-            <div className="space-y-2">
-              {topScores.map((c, i) => (
-                <div key={c.id} className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground/50 w-4 text-center">{i + 1}</span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-foreground truncate">{c.name}</p>
-                    <p className="text-[10px] text-muted-foreground">{ROLE_SHORT[c.campaignRole] ?? c.campaignRole}</p>
-                  </div>
-                  <div className="shrink-0 text-right">
-                    <span className="text-xs font-bold text-primary">{c.mobilizationScore}</span>
-                    <div className="w-12 h-1 bg-white/[0.06] rounded-full mt-0.5">
-                      <div className="h-full bg-primary/50 rounded-full" style={{ width: `${c.mobilizationScore!}%` }} />
-                    </div>
-                  </div>
-                </div>
-              ))}
             </div>
           </div>
         )}
