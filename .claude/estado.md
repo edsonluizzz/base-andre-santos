@@ -1,6 +1,94 @@
 # Estado — Ovile Eleitoral (Base André Santos)
 
-**Última atualização:** 2026-07-29 (sessão: recibos de pagamento + CPF + dupla opcional)
+**Última atualização:** 2026-08-06 (sessão: Agenda/Calendar, WhatsApp robusto, paleta 30777, anti-ban)
+
+---
+
+## Sessão 2026-08-03/06 — Bugs de sessão, Agenda↔Google, Eleitos 2022, WhatsApp robusto, paleta da campanha
+
+### Bug crítico: `useSession()` client nunca resolvia a sessão real — CORRIGIDO
+`src/components/session-provider.tsx` tinha `session = null` como default e sempre repassava
+esse valor pro `SessionProvider` do next-auth. No next-auth v5, passar `session` explicitamente
+(mesmo `null`) sinaliza "sessão já resolvida no servidor" e o client pula o fetch inicial em
+`/api/auth/session` — `useSession()` ficava travado em `null` pra sempre em todo componente
+client (agenda, onboarding, whatsapp, super-admin). Fix: default pra `undefined` (prop
+realmente opcional). Sidebar nunca quebrou porque recebe o cargo via prop do servidor, com o
+hook como fallback.
+**Efeitos colaterais liberados por esse fix** (comportamentos que nunca funcionaram até aqui,
+agora passam a valer): botão de WhatsApp individual vs. institucional (`whatsapp-send-button.tsx`),
+tela "admin only" de `/whatsapp`, link de indicação em `/onboarding` (nunca apareceu pra
+ninguém), badge "Proprietário" em `/super-admin`.
+
+### Agenda ↔ Google Calendar: correção unidirecional — NO AR
+`src/lib/gcal-sync.ts` (`forceSyncFromGoogle`) + `POST /api/google-calendar/force-sync` +
+botão "Corrigir com Google" em `/agenda` (só ADMIN). Trata o Google Calendar como fonte da
+verdade pra eventos futuros: sobrescreve divergências, casa eventos locais sem vínculo por
+data+título, importa o que falta, remove local o que não existe mais no Google — nunca escreve
+de volta no Google (evita contaminar a fonte da verdade com dado local errado). Usado e
+validado em produção pelo Edson.
+
+### Meu Perfil — mostra dados reais do usuário — NO AR
+Antes só mostrava nome (legenda pequena) + CPF. Agora mostra foto do Google (com fallback de
+iniciais via `Avatar`/`AvatarFallback`), e-mail, telefone, cidade/bairro e cargo na campanha.
+Nome/e-mail/foto vêm do servidor (`auth()`) como prop pro form client.
+
+### Segurança crítica: `/relatorio` vazava dados financeiros — CORRIGIDO
+Página e as 3 rotas de export (PDF/XLSX/CSV) só checavam login, não role — qualquer
+MEMBER/VOLUNTARIO acessando a URL direto via dados financeiros da campanha (pago/pendente,
+top líderes). Sidebar escondia o link mas isso nunca foi proteção real. Fix: gate
+`["ADMIN","LEADER"].includes(session.user.role)` nas 4 rotas, igual ao padrão já usado em
+`collaborators/export`. Achado pela auditoria completa pedida pelo Edson.
+
+### Eleitos PR 2022 — inclui não eleitos de Dep. Estadual/Federal — NO AR
+`dep-estaduais.json`/`dep-federais.json` regerados a partir dos dados abertos do TSE
+(`votacao_candidato_munzona_2022`, filtrado UF=PR) — antes só tinham os 54+30 eleitos, agora
+860+600 candidatos reais (eleito/não eleito/suplente, `#NULO` excluído) com voto somado por
+candidato. Números dos eleitos mudaram levemente da versão antiga (fonte mais completa/recente
+do TSE). `EleitoralPanel` ganhou filtro Eleitos/Todos (default Eleitos) + badge de situação.
+Município por candidato (`-municipios.json`) NÃO foi regerado — só existe pros eleitos antigos;
+não eleitos mostram "dados não disponíveis" no modal, sem quebrar.
+
+### WhatsApp — de "sem visibilidade" pra robusto — NO AR
+Contexto: Z-API tinha ficado desconectado do celular (sintoma real era `HTTP 400 "You need to
+be connected with whatsapp"` da própria Z-API, **não** o bug de decrypt que uma sessão anterior
+suspeitava — corrigido via reconexão manual do Edson no painel Z-API, não é fix de código).
+
+Depois de reconectado, o "sistema de disparo" já tinha um backend robusto (Broadcast +
+BroadcastDelivery com tracking por destinatário, pacing anti-ban, dailyLimit) mas **zero UI**
+pra usar isso — a única tela (`/comunicados`) era um sistema separado e mais simples de
+e-mail/Telegram. Construído nesta sessão:
+- `/comunicados/disparos` (lista) + `/comunicados/disparos/[id]` (detalhe): status,
+  progresso, breakdown por status de entrega, pausar/retomar/cancelar/reenviar falhas.
+- Agendamento real: `scheduledFor` existia no schema mas nunca era checado em
+  `/api/n8n/broadcast/next` — agora é respeitado; `DisparoForm` ganhou o campo de data/hora.
+- Ação `start` (promove DRAFT → QUEUED) e `kick` (reenvia só a notificação webhook pro n8n,
+  sem mexer em status/dados — pra quando a notificação original falhou silenciosamente).
+- **Variação automática de mensagem por destinatário** (anti-ban, sem IA):
+  `src/lib/message-variation.ts` troca saudação/fechamento por sinônimos equivalentes
+  (Olá↔Oi↔Opa, Obrigado↔Grato, etc.) + emoji sutil no final, determinístico por
+  `delivery.id`. Nunca toca o conteúdo real da mensagem. Campo `Broadcast.varyMessage`
+  (default true), checkbox + preview de 3 exemplos no `DisparoForm`.
+
+**Incidente real corrigido ao vivo:** o disparo "Agora é OFICIAL - #1" (136 destinatários,
+`CADASTRO_PUBLICO`) ficou `QUEUED` sem processar nada por ~30min — diagnosticado abrindo o
+n8n (`Ovile — WF5: Broadcast Manual`, workflow id `9UD6uQGhOtLQjbAz`) e vendo **zero
+execuções**: a notificação webhook na criação (fire-and-forget, sem retry) simplesmente não
+chegou lá naquela hora. Testado que o webhook em si funciona normal. Usado o botão "Notificar
+n8n de novo" (ação `kick`) pra reenviar — funcionou, execução rodou com sucesso, confirmado
+1/136 enviado com status "Enviando" antes do fim da sessão (conclusão dos 136 não verificada
+ao vivo — checar `/comunicados/disparos/cmsi75a57000004kvlf7ztczh` se precisar confirmar).
+
+### Paleta de cores — rebrand pra identidade oficial da campanha 30777 — NO AR
+Trocado o dourado (`#d4af37`/`#d4a817`) pela paleta oficial (arquivo do Edson em Downloads:
+"paleta de cores andre santos - campanha.jpeg"): **laranja `#ff6b04`** (principal/CTA) e
+**azul petróleo `#005578`** (orbs de fundo). Cobre `globals.css` (dark+light), token Tailwind
+`gold` (usado na landing pública), e ~15 arquivos com hex/rgba hardcoded fora do sistema de
+variáveis (telas de erro, login, cadastro público, ebook, export XLSX, ícones PWA). Nomes de
+classe/variável antigos (`.gold-glow`, chave `gold` no XLSX) mantidos por compatibilidade.
+
+### Pendência não resolvida
+- `RESEND_API_KEY` — mesma pendência de 2026-07-28, não confirmado se foi adicionado desde
+  então. Verificar antes de assumir que e-mail funciona.
 
 ---
 
