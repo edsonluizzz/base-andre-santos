@@ -32,6 +32,12 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     return NextResponse.json({ error: parsed.error.errors[0]?.message ?? "Body inválido" }, { status: 400 });
   }
 
+  // Trava de segurança: se o workflow do n8n entrar em loop e reconfirmar a mesma
+  // entrega repetidamente (já aconteceu — uma entrega chegou a 201 confirmações
+  // antes de finalmente resolver), força falha e pausa o broadcast em vez de deixar
+  // continuar batendo na mesma pessoa indefinidamente.
+  const MAX_ATTEMPTS = 5;
+
   const { status, zapiMessageId, error: errMsg, campaignId: explicitCid } = parsed.data;
   const campaignId = explicitCid ?? "andre-santos-2026";
   const validated = await validateCampaign(campaignId);
@@ -51,25 +57,36 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   if (!delivery) return NextResponse.json({ error: "Delivery não encontrada" }, { status: 404 });
 
   const now = new Date();
+  const nextAttemptCount = (delivery.attemptCount ?? 0) + 1;
+  const isFirstConfirmation = delivery.status === "PENDING" || delivery.status === "SENDING";
+  const overLimit = isFirstConfirmation && nextAttemptCount > MAX_ATTEMPTS && status !== "FAILED" && status !== "SKIPPED";
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const data: any = {
-    status,
-    attemptCount: (delivery.attemptCount ?? 0) + 1,
+    status: overLimit ? "FAILED" : status,
+    attemptCount: nextAttemptCount,
     updatedAt: now,
   };
-  if (status === "SENT") data.sentAt = now;
-  if (status === "DELIVERED") data.deliveredAt = now;
-  if (status === "READ") data.readAt = now;
-  if (zapiMessageId) data.zapiMessageId = zapiMessageId;
-  if (errMsg) data.error = errMsg;
+  if (overLimit) {
+    data.error = `Excesso de confirmações (${nextAttemptCount}x) pra mesma entrega — possível loop no workflow do n8n. Marcado como falha automaticamente.`;
+  } else {
+    if (status === "SENT") data.sentAt = now;
+    if (status === "DELIVERED") data.deliveredAt = now;
+    if (status === "READ") data.readAt = now;
+    if (zapiMessageId) data.zapiMessageId = zapiMessageId;
+    if (errMsg) data.error = errMsg;
+  }
 
   await db.broadcastDelivery.update({ where: { id: delivery.id }, data });
 
   // Só soma no contador do broadcast pai na 1ª confirmação dessa entrega — se o n8n
   // chamar esse webhook de novo pra mesma entrega (retry/timeout), não pode contar 2x.
-  const isFirstConfirmation = delivery.status === "PENDING" || delivery.status === "SENDING";
-
-  if (isFirstConfirmation && status === "SENT") {
+  if (overLimit) {
+    await db.broadcast.update({
+      where: { id: delivery.broadcastId },
+      data: { failedCount: { increment: 1 }, status: "PAUSED" },
+    }).catch(() => {});
+  } else if (isFirstConfirmation && status === "SENT") {
     await db.broadcast.update({
       where: { id: delivery.broadcastId },
       data: { sentCount: { increment: 1 } },
@@ -87,5 +104,10 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     }).catch(() => {});
   }
 
-  return NextResponse.json({ ok: true, id: delivery.id, status });
+  return NextResponse.json({
+    ok: true,
+    id: delivery.id,
+    status: overLimit ? "FAILED" : status,
+    ...(overLimit && { stopRetrying: true, broadcastPaused: true }),
+  });
 }

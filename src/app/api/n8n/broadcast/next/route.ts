@@ -113,7 +113,7 @@ export async function GET(req: NextRequest) {
 
     const claimed = await db.broadcastDelivery.updateMany({
       where: { id: candidate.id, status: candidate.status },
-      data: { status: "SENDING", attemptCount: { increment: 1 }, updatedAt: new Date() },
+      data: { status: "SENDING", updatedAt: new Date() },
     });
     if (claimed.count === 1) next = candidate;
     // Se outra chamada ganhou a corrida (count === 0), tenta a próxima da fila.
