@@ -1,8 +1,57 @@
 # Estado — Ovile Eleitoral (Base André Santos)
 
-**Última atualização:** 2026-08-06 (sessão: diagnóstico de dados + estratégia de campanha "45 Dias de Chão")
+**Última atualização:** 2026-08-11 (sessão: CNPJ/fontes pagadoras, remoção do Score de Mobilização, incidente de disparo WhatsApp)
 
 ---
+
+## Sessão 2026-08-09/11 — CNPJ da campanha, fontes pagadoras (chapa conjunta), remoção do Score de Mobilização, incidente crítico de disparo WhatsApp
+
+### CNPJ da campanha + Fontes Pagadoras (chapa conjunta) — NO AR
+Cadastro de dados do CNPJ (razão social, endereço) do comitê financeiro do André em Configurações →
+"Dados Cadastrais (CNPJ)", persistido em `Settings` e estampado nos recibos eleitorais em PDF. Como a
+campanha roda em chapa conjunta com outros candidatos que também pagam cabos eleitorais, criado o model
+`PayingEntity` (CNPJ/razão social/endereço/candidato próprios por fonte). Cada entrega (`ChurchAssignment`)
+pode ser atribuída a uma fonte pagadora específica antes do pagamento (seletor na aba Financeiro de
+/igrejas); ao pagar, o sistema agrupa automaticamente por fonte e gera um recibo por CNPJ (nunca mistura
+pagadores no mesmo documento). Relatório financeiro ganhou filtro por fonte + export XLSX com cabeçalho
+identificando o pagador. Cadastradas em produção: André (padrão), Indiara Barbosa Custódio (Deputada
+Federal) e Jeffrey Chiquini da Costa (Deputado Federal) — dados via cartões CNPJ enviados pelo Edson +
+consulta pública (receitaws.com.br) pra Indiara.
+
+### Score de Mobilização — REMOVIDO
+Analisado a pedido do Edson e confirmado que não tinha função real: não filtrava, ordenava nem priorizava
+nada em nenhuma tela, só era exibido (badge, KPI, top-5, export). Removido por completo: coluna no
+schema, lib de cálculo, endpoint/botão de recálculo, auto-recálculo em presença de evento, exibições em
+colaboradores, KPI "Score médio", painel de engajamento, coluna no export, filtro morto no broadcast,
+coluna no init SQL de tenant, e menções na landing page pública e no deck de treinamento.
+
+### Incidente crítico: disparo WhatsApp reenviando pra mesma pessoa — RESOLVIDO
+Disparo "Agora é OFICIAL - #1" (136 destinatários) ficou preso 2+ dias mostrando 100% de progresso falso
+(sentCount chegou a 201, maior que o total). Investigação em 3 camadas:
+1. **Nosso código** (`/api/n8n/broadcast/next` e `/api/n8n/broadcast/delivery/[id]`): contador não era
+   idempotente e a entrega não era reservada atomicamente — corrigido com novo status `SENDING`
+   (reserva com expiração de 10min) e contadores só somando na 1ª confirmação.
+2. **Circuit breaker**: limite de 5 confirmações por entrega — acima disso força FAILED e pausa o
+   broadcast automaticamente, contendo qualquer dano mesmo que a causa externa não esteja corrigida.
+3. **Causa raiz real, no workflow do n8n** (`Ovile — WF5: Manual de Transmissão`,
+   `andresantos.app.n8n.cloud/workflow/9UD6uQGhOtLQjbAz`): o loop usava dois nós HTTP separados pra
+   "buscar próxima entrega" (um pro início, outro pro retorno do loop), e os nós de envio/confirmação
+   referenciavam os dados pelo NOME do primeiro nó (`$('Buscar próxima delivery')`) em vez de relativo
+   (`$json`) — em loop manual (sem Split-in-Batches), isso sempre resolve pro dado da 1ª execução da
+   run, não da volta atual. Resultado: cada volta do loop reenviava pra MESMA pessoa capturada no
+   início, enquanto o nó duplicado reservava (sem mensageiar) o resto da fila. Também havia 2 nós IF
+   comparando booleano como string, derrubando a execução toda vez que a condição virava verdadeira —
+   por isso rodava 15h–25h e só parava por erro. Corrigido consolidando o loop num nó só, religando as
+   confirmações de volta pra ele, e trocando as comparações pro tipo Boolean nativo — tudo aplicado via
+   `GET`/`PUT /api/v1/workflows/{id}` da API REST do n8n (criei chave temporária, editei o JSON em
+   Python, mandei de volta, revoguei a chave — muito mais confiável que arrastar conexão no canvas via
+   automação de navegador). Ver [[andre_santos_broadcast_stuck_incident]] na memória pra detalhe completo.
+   **Broadcast ficou pausado manualmente em produção** — retomar clicando "Notificar n8n de novo" na
+   tela do disparo quando o Edson quiser reenviar pros 135 restantes.
+
+### Próximos passos
+Módulo financeiro restrito (fornecedores, despesas/receitas ligadas a `PayingEntity`, acesso via flag
+`isFinanceAdmin` separado do role ADMIN) — planejamento já alinhado com o Edson, implementação pendente.
 
 ## Sessão 2026-08-06 (tarde) — Diagnóstico de dados + estratégia "45 Dias de Chão" (sem alteração de código)
 
