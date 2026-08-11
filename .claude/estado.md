@@ -1,8 +1,27 @@
 # Estado — Ovile Eleitoral (Base André Santos)
 
-**Última atualização:** 2026-08-11 (sessão: CNPJ/fontes pagadoras, remoção do Score de Mobilização, incidente de disparo WhatsApp)
+**Última atualização:** 2026-08-11 (sessão: módulo financeiro restrito)
 
 ---
+
+## Sessão 2026-08-11 (cont.) — Módulo Financeiro restrito — NO AR
+
+Novo módulo `/financeiro` (visão geral, lançamentos, fornecedores) pra cadastrar fornecedores e lançar
+despesas/receitas da campanha. Acesso restrito por e-mail via `isFinanceAdmin` (env var
+`FINANCE_ADMIN_EMAILS`, hoje só `edsonluizz.silva@gmail.com`, configurada em Production e Preview na
+Vercel) — separado do role `ADMIN` (compartilhado por 5 pessoas: Edson, André, Marcel, Everton, Fernando)
+e de `isSuperAdmin`. Protegido em 3 camadas: middleware (`auth.config.ts` → redireciona se
+`!isFinanceAdmin`, proteção de rota real que `/super-admin` ainda não tem hoje), todas as rotas
+`/api/financeiro/**` (403 se não autorizado), e guarda client-side.
+
+Models novos: `Supplier` (fornecedor) e `FinancialEntry` (despesa/receita), cada lançamento pode ser
+ligado a uma `PayingEntity` (fonte pagadora — mesma André/Indiara/Jeffrey Chiquini já usada pros
+pagamentos de cabos eleitorais) pra manter a prestação de contas TSE consistente em um lugar só. Suporta
+upload de comprovante (imagem ou PDF), filtros (tipo/status/fonte), export XLSX, dashboard com
+saldo/breakdown por fonte e categoria.
+
+**Pendente:** se algum dia precisar dar acesso financeiro a mais alguém, é só adicionar o e-mail em
+`FINANCE_ADMIN_EMAILS` na Vercel (Production + Preview) — não precisa mexer em código.
 
 ## Sessão 2026-08-09/11 — CNPJ da campanha, fontes pagadoras (chapa conjunta), remoção do Score de Mobilização, incidente crítico de disparo WhatsApp
 
