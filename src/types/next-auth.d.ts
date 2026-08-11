@@ -11,6 +11,7 @@ declare module "next-auth" {
       campaignId?: string;       // Ovile Eleitoral: identificador da campanha
       dbUrl?: string;            // Ovile Eleitoral: DATABASE_URL da campanha
       isSuperAdmin?: boolean;
+      isFinanceAdmin?: boolean;   // Ovile Eleitoral: acesso ao módulo financeiro, restrito por e-mail
       suspended?: boolean;
       isImpersonating?: boolean;
     };
@@ -24,6 +25,7 @@ declare module "next-auth/jwt" {
     campaignId?: string;
     dbUrl?: string;              // Ovile Eleitoral: DATABASE_URL da campanha
     isSuperAdmin?: boolean;
+    isFinanceAdmin?: boolean;
     isImpersonating?: boolean;
     impersonationExpiry?: number; // timestamp ms — TTL 2h
     selectedCampaignId?: string; // super-admin: troca de campanha ativa

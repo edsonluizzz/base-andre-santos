@@ -24,6 +24,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       try {
         const superAdminEmails = (process.env.SUPER_ADMIN_EMAILS ?? "")
           .split(",").map((e) => e.trim()).filter(Boolean);
+        const financeAdminEmails = (process.env.FINANCE_ADMIN_EMAILS ?? "")
+          .split(",").map((e) => e.trim()).filter(Boolean);
 
         if (user?.email && user.id) {
           // user.id aqui é o sub do OAuth (Google), não o UUID do banco — buscar pelo email
@@ -34,6 +36,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           token.name = user.name ?? token.name;
           token.image = user.image ?? token.image;
           token.isSuperAdmin = superAdminEmails.includes(user.email);
+          // Financeiro é restrito por e-mail, separado do role ADMIN (compartilhado por 5 pessoas)
+          // e de isSuperAdmin (acesso de plataforma) — só quem estiver em FINANCE_ADMIN_EMAILS entra.
+          token.isFinanceAdmin = financeAdminEmails.includes(user.email);
 
           // A) Vincula Collaborators existentes por email PRIMEIRO (evita criação de duplicata)
           let linkedCollabId: string | null = null;
@@ -177,11 +182,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         if (token.image) session.user.image = token.image as string;
         session.user.campaignId = (token.campaignId as string) ?? CAMPAIGN_ID;
         session.user.dbUrl = token.dbUrl as string | undefined;
-        // Re-avalia isSuperAdmin em toda sessão — garante tokens criados antes do campo funcionem
+        // Re-avalia isSuperAdmin/isFinanceAdmin em toda sessão — garante tokens criados antes do campo funcionem
         const superAdminEmails = (process.env.SUPER_ADMIN_EMAILS ?? "")
+          .split(",").map((e) => e.trim()).filter(Boolean);
+        const financeAdminEmails = (process.env.FINANCE_ADMIN_EMAILS ?? "")
           .split(",").map((e) => e.trim()).filter(Boolean);
         session.user.isSuperAdmin = Boolean(token.isSuperAdmin) ||
           (!!session.user.email && superAdminEmails.includes(session.user.email));
+        session.user.isFinanceAdmin = Boolean(token.isFinanceAdmin) ||
+          (!!session.user.email && financeAdminEmails.includes(session.user.email));
         session.user.suspended = false;
         session.user.isImpersonating = Boolean(token.isImpersonating);
       }

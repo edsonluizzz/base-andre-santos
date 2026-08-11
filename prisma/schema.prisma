@@ -42,6 +42,8 @@ model Campaign {
   userCampaigns  UserCampaign[]
   churches       Church[]
   payingEntities PayingEntity[]
+  suppliers      Supplier[]
+  financialEntries FinancialEntry[]
 }
 
 /// Fonte pagadora de cabos eleitorais — usada quando a campanha roda em chapa
@@ -72,8 +74,79 @@ model PayingEntity {
   campaign    Campaign           @relation(fields: [campaignId], references: [id], onDelete: Cascade)
   assignments ChurchAssignment[]
   receipts    PaymentReceipt[]
+  financialEntries FinancialEntry[]
 
   @@index([campaignId])
+}
+
+/// Fornecedor cadastrado no módulo financeiro (restrito a isFinanceAdmin).
+model Supplier {
+  id          String   @id @default(cuid())
+  campaignId  String   @default("andre-santos-2026")
+  name        String
+  document    String? // CNPJ ou CPF
+  category    String?
+  contactName String?
+  phone       String?
+  email       String?
+  notes       String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  campaign Campaign         @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  entries  FinancialEntry[]
+
+  @@index([campaignId])
+}
+
+enum FinancialEntryType {
+  DESPESA
+  RECEITA
+}
+
+enum FinancialEntryStatus {
+  PAGO
+  PENDENTE
+  AGENDADO
+}
+
+enum PaymentMethod {
+  PIX
+  DINHEIRO
+  TRANSFERENCIA
+  BOLETO
+  CARTAO
+  OUTRO
+}
+
+/// Lançamento financeiro (despesa/receita) da campanha, restrito a isFinanceAdmin.
+model FinancialEntry {
+  id             String               @id @default(cuid())
+  campaignId     String               @default("andre-santos-2026")
+  type           FinancialEntryType
+  amount         Float
+  description    String
+  category       String?
+  date           DateTime
+  paymentMethod  PaymentMethod?
+  status         FinancialEntryStatus @default(PENDENTE)
+  supplierId     String?
+  payingEntityId String? // null = fonte padrão (candidato da própria campanha, CNPJ em Settings)
+  receiptUrl     String?              @db.Text
+  notes          String?
+  createdById    String
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+
+  campaign     Campaign      @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  supplier     Supplier?     @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  payingEntity PayingEntity? @relation(fields: [payingEntityId], references: [id], onDelete: SetNull)
+  createdBy    User          @relation(fields: [createdById], references: [id])
+
+  @@index([campaignId])
+  @@index([supplierId])
+  @@index([payingEntityId])
 }
 
 model Account {
@@ -116,6 +189,7 @@ model User {
   collaborator  Collaborator?
   userCampaigns UserCampaign[]
   registeredCollaborators Collaborator[] @relation("RegisteredCollaborators")
+  financialEntries FinancialEntry[]
   @@index([campaignId])
 }
 

@@ -10,6 +10,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   const role = (session.user.role ?? "MEMBER") as string;
   const isSuperAdmin = Boolean((session.user as { isSuperAdmin?: boolean }).isSuperAdmin);
+  const isFinanceAdmin = Boolean((session.user as { isFinanceAdmin?: boolean }).isFinanceAdmin);
   const serverName  = session.user.name  ?? "";
   const serverImage = session.user.image ?? "";
 
@@ -19,7 +20,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           sólido neste wrapper tapava os orbs e matava o efeito de vidro. */}
       <div className="flex min-h-screen">
         <div className="hidden-print">
-          <Sidebar serverRole={role} serverIsSuperAdmin={isSuperAdmin} serverName={serverName} serverImage={serverImage} />
+          <Sidebar serverRole={role} serverIsSuperAdmin={isSuperAdmin} serverIsFinanceAdmin={isFinanceAdmin} serverName={serverName} serverImage={serverImage} />
         </div>
         <SidebarMainWrapper>{children}</SidebarMainWrapper>
       </div>

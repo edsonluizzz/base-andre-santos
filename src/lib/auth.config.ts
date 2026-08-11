@@ -70,6 +70,7 @@ export const authConfig: NextAuthConfig = {
         session.user.role = (token.role as string) ?? "MEMBER";
         session.user.campaignId = (token.campaignId as string) ?? "andre-santos-2026";
         session.user.isSuperAdmin = Boolean(token.isSuperAdmin);
+        session.user.isFinanceAdmin = Boolean(token.isFinanceAdmin);
         session.user.suspended = false;
         session.user.isImpersonating = Boolean(token.isImpersonating);
       }
@@ -112,6 +113,12 @@ export const authConfig: NextAuthConfig = {
         if (pathname.startsWith(prefix) && rank < minRank) {
           return Response.redirect(new URL("/dashboard", nextUrl));
         }
+      }
+
+      // Financeiro é restrito por e-mail (isFinanceAdmin), não pelo role ADMIN
+      // compartilhado — barra aqui, não só esconder o link na sidebar.
+      if (pathname.startsWith("/financeiro") && !(auth as Session | null)?.user?.isFinanceAdmin) {
+        return Response.redirect(new URL("/dashboard", nextUrl));
       }
 
       return true;

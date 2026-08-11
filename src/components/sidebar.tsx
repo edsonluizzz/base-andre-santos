@@ -7,7 +7,7 @@ import { signOut, useSession } from "next-auth/react";
 import {
   LayoutDashboard, Users, Calendar,
   Megaphone, Settings, LogOut, Shield, Star, Map, BarChart2, Network, Target, ClipboardList, Award, Building2, Plus, UserPlus, Link2, Church,
-  ChevronLeft, ChevronRight, Sun, Moon, GraduationCap, Send, IdCard,
+  ChevronLeft, ChevronRight, Sun, Moon, GraduationCap, Send, IdCard, Wallet,
 } from "lucide-react";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { useTheme } from "next-themes";
@@ -19,27 +19,28 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 const ROLE_RANK: Record<string, number> = { MEMBER: 0, LEADER: 1, ADMIN: 2 };
 
 const navItems = [
-  { href: "/dashboard",      icon: LayoutDashboard, label: "Dashboard",       minRole: "MEMBER", superAdminOnly: false },
-  { href: "/meu-perfil",     icon: IdCard,          label: "Meu Perfil",      minRole: "MEMBER", superAdminOnly: false },
-  { href: "/treinamento",    icon: GraduationCap,    label: "Treinamento",     minRole: "MEMBER", superAdminOnly: false },
-  { href: "/colaboradores",  icon: Users,            label: "Colaboradores",   minRole: "MEMBER", superAdminOnly: false },
-  { href: "/rua",            icon: UserPlus,         label: "Cadastro na Rua", minRole: "MEMBER", superAdminOnly: false },
-  { href: "/celulas",        icon: Network,          label: "Células",         minRole: "MEMBER", superAdminOnly: false },
-  { href: "/minhas-igrejas", icon: Church,          label: "Minhas Igrejas",  minRole: "MEMBER", superAdminOnly: false },
-  { href: "/mapa",           icon: Map,              label: "Mapa de Apoio",   minRole: "LEADER", superAdminOnly: false },
-  { href: "/agenda",         icon: Calendar,         label: "Agenda",          minRole: "LEADER", superAdminOnly: false },
-  { href: "/relatorio",      icon: BarChart2,        label: "Relatório",       minRole: "LEADER", superAdminOnly: false },
-  { href: "/metas",          icon: Target,           label: "Metas",           minRole: "LEADER", superAdminOnly: false },
-  { href: "/eleitos-2022",   icon: Award,            label: "Eleitos 2022",    minRole: "LEADER", superAdminOnly: false },
-  { href: "/convites",       icon: Link2,            label: "Convites",        minRole: "ADMIN",  superAdminOnly: false },
-  { href: "/igrejas",        icon: Building2,        label: "Igrejas",         minRole: "ADMIN",  superAdminOnly: false },
-  { href: "/tarefas",        icon: ClipboardList,    label: "Tarefas",         minRole: "ADMIN",  superAdminOnly: false },
-  { href: "/whatsapp",       icon: Send,             label: "WhatsApp",        minRole: "ADMIN",  superAdminOnly: false },
-  { href: "/comunicados",    icon: Megaphone,        label: "Comunicados",     minRole: "ADMIN",  superAdminOnly: false },
-  { href: "/configuracoes",  icon: Settings,         label: "Configurações",   minRole: "ADMIN",  superAdminOnly: false },
-  { href: "/super-admin",    icon: Shield,           label: "Super Admin",     minRole: "ADMIN",  superAdminOnly: true  },
-  { href: "/campanhas",      icon: Building2,        label: "Campanhas",       minRole: "ADMIN",  superAdminOnly: true  },
-  { href: "/nova-campanha",  icon: Plus,             label: "Nova Campanha",   minRole: "ADMIN",  superAdminOnly: true  },
+  { href: "/dashboard",      icon: LayoutDashboard, label: "Dashboard",       minRole: "MEMBER", superAdminOnly: false, financeAdminOnly: false },
+  { href: "/meu-perfil",     icon: IdCard,          label: "Meu Perfil",      minRole: "MEMBER", superAdminOnly: false, financeAdminOnly: false },
+  { href: "/treinamento",    icon: GraduationCap,    label: "Treinamento",     minRole: "MEMBER", superAdminOnly: false, financeAdminOnly: false },
+  { href: "/colaboradores",  icon: Users,            label: "Colaboradores",   minRole: "MEMBER", superAdminOnly: false, financeAdminOnly: false },
+  { href: "/rua",            icon: UserPlus,         label: "Cadastro na Rua", minRole: "MEMBER", superAdminOnly: false, financeAdminOnly: false },
+  { href: "/celulas",        icon: Network,          label: "Células",         minRole: "MEMBER", superAdminOnly: false, financeAdminOnly: false },
+  { href: "/minhas-igrejas", icon: Church,          label: "Minhas Igrejas",  minRole: "MEMBER", superAdminOnly: false, financeAdminOnly: false },
+  { href: "/mapa",           icon: Map,              label: "Mapa de Apoio",   minRole: "LEADER", superAdminOnly: false, financeAdminOnly: false },
+  { href: "/agenda",         icon: Calendar,         label: "Agenda",          minRole: "LEADER", superAdminOnly: false, financeAdminOnly: false },
+  { href: "/relatorio",      icon: BarChart2,        label: "Relatório",       minRole: "LEADER", superAdminOnly: false, financeAdminOnly: false },
+  { href: "/metas",          icon: Target,           label: "Metas",           minRole: "LEADER", superAdminOnly: false, financeAdminOnly: false },
+  { href: "/eleitos-2022",   icon: Award,            label: "Eleitos 2022",    minRole: "LEADER", superAdminOnly: false, financeAdminOnly: false },
+  { href: "/convites",       icon: Link2,            label: "Convites",        minRole: "ADMIN",  superAdminOnly: false, financeAdminOnly: false },
+  { href: "/igrejas",        icon: Building2,        label: "Igrejas",         minRole: "ADMIN",  superAdminOnly: false, financeAdminOnly: false },
+  { href: "/tarefas",        icon: ClipboardList,    label: "Tarefas",         minRole: "ADMIN",  superAdminOnly: false, financeAdminOnly: false },
+  { href: "/whatsapp",       icon: Send,             label: "WhatsApp",        minRole: "ADMIN",  superAdminOnly: false, financeAdminOnly: false },
+  { href: "/comunicados",    icon: Megaphone,        label: "Comunicados",     minRole: "ADMIN",  superAdminOnly: false, financeAdminOnly: false },
+  { href: "/configuracoes",  icon: Settings,         label: "Configurações",   minRole: "ADMIN",  superAdminOnly: false, financeAdminOnly: false },
+  { href: "/financeiro",     icon: Wallet,           label: "Financeiro",      minRole: "ADMIN",  superAdminOnly: false, financeAdminOnly: true  },
+  { href: "/super-admin",    icon: Shield,           label: "Super Admin",     minRole: "ADMIN",  superAdminOnly: true,  financeAdminOnly: false },
+  { href: "/campanhas",      icon: Building2,        label: "Campanhas",       minRole: "ADMIN",  superAdminOnly: true,  financeAdminOnly: false },
+  { href: "/nova-campanha",  icon: Plus,             label: "Nova Campanha",   minRole: "ADMIN",  superAdminOnly: true,  financeAdminOnly: false },
 ];
 
 // Menus ocultos temporariamente (a pedido do Edson 2026-06-10 — não usaremos
@@ -61,11 +62,13 @@ const NAV_GROUPS = [
 export function Sidebar({
   serverRole,
   serverIsSuperAdmin,
+  serverIsFinanceAdmin,
   serverName,
   serverImage,
 }: {
   serverRole?: string;
   serverIsSuperAdmin?: boolean;
+  serverIsFinanceAdmin?: boolean;
   serverName?: string;
   serverImage?: string;
 }) {
@@ -77,12 +80,15 @@ export function Sidebar({
   // Valores derivados
   const role = serverRole ?? session?.user?.role ?? "MEMBER";
   const isSuperAdmin = serverIsSuperAdmin ?? (session?.user as { isSuperAdmin?: boolean })?.isSuperAdmin ?? false;
+  const isFinanceAdmin = serverIsFinanceAdmin ?? (session?.user as { isFinanceAdmin?: boolean })?.isFinanceAdmin ?? false;
   const displayName  = serverName  || session?.user?.name  || "Usuário";
   const displayImage = serverImage || session?.user?.image || "";
   const userRank = ROLE_RANK[role] ?? 0;
   const visibleItems = navItems.filter((item) => (ROLE_RANK[item.minRole] ?? 0) <= userRank);
   const finalItems = visibleItems.filter((item) =>
-    (item.superAdminOnly ? isSuperAdmin : true) && !HIDDEN_HREFS.has(item.href)
+    (item.superAdminOnly ? isSuperAdmin : true) &&
+    (item.financeAdminOnly ? isFinanceAdmin : true) &&
+    !HIDDEN_HREFS.has(item.href)
   );
   const initials = displayName
     .split(" ").slice(0, 2).map((n: string) => n[0]).join("").toUpperCase() || "U";
