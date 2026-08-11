@@ -23,6 +23,15 @@ saldo/breakdown por fonte e categoria.
 **Pendente:** se algum dia precisar dar acesso financeiro a mais alguém, é só adicionar o e-mail em
 `FINANCE_ADMIN_EMAILS` na Vercel (Production + Preview) — não precisa mexer em código.
 
+### Ligação /igrejas ↔ /financeiro + registro manual de entrega — NO AR
+Marcar uma entrega de igreja como paga (aba Financeiro de `/igrejas`) agora cria automaticamente uma
+despesa "Cabos eleitorais" já paga no `/financeiro`, com a mesma fonte pagadora — antes os dois sistemas
+não se falavam e o saldo do financeiro ficava incompleto. Também, a pedido do Edson pra agilizar
+lançamento retroativo de várias entregas de uma vez: a fonte pagadora agora pode ser escolhida já na
+hora de "Atribuir dupla" (não só na hora de pagar), e tem um botão novo "Registrar entrega" em
+`/igrejas` que marca uma atribuição como ENTREGUE com **data escolhida pelo admin** (não trava em hoje)
+e, opcionalmente, já paga na hora — sem precisar da confirmação com foto pelo colaborador.
+
 ## Sessão 2026-08-09/11 — CNPJ da campanha, fontes pagadoras (chapa conjunta), remoção do Score de Mobilização, incidente crítico de disparo WhatsApp
 
 ### CNPJ da campanha + Fontes Pagadoras (chapa conjunta) — NO AR
