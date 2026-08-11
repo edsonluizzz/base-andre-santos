@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Users, X, AlertCircle, UserPlus } from "lucide-react";
 
 type Collab = { id: string; name: string };
+type PayingEntity = { id: string; name: string; active: boolean };
 type Props = {
   open: boolean;
   churchId: string;
@@ -143,11 +144,18 @@ function CollaboratorSearch({
 export function AssignDialog({ open, churchId, churchName, onOpenChange, onSuccess }: Props) {
   const [member1, setMember1] = useState<Collab | null>(null);
   const [member2, setMember2] = useState<Collab | null>(null);
+  const [payingEntityId, setPayingEntityId] = useState("");
+  const [payingEntities, setPayingEntities] = useState<PayingEntity[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
+  useEffect(() => {
+    if (!open) return;
+    fetch("/api/paying-entities").then((r) => r.json()).then((j) => setPayingEntities(j.data ?? [])).catch(() => {});
+  }, [open]);
+
   function handleClose(v: boolean) {
-    if (!v) { setMember1(null); setMember2(null); setError(""); }
+    if (!v) { setMember1(null); setMember2(null); setPayingEntityId(""); setError(""); }
     onOpenChange(v);
   }
 
@@ -159,7 +167,11 @@ export function AssignDialog({ open, churchId, churchName, onOpenChange, onSucce
       const res = await fetch(`/api/churches/${churchId}/assignments`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ member1Id: member1.id, ...(member2 ? { member2Id: member2.id } : {}) }),
+        body: JSON.stringify({
+          member1Id: member1.id,
+          ...(member2 ? { member2Id: member2.id } : {}),
+          payingEntityId: payingEntityId || null,
+        }),
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error ?? "Erro ao atribuir"); setSaving(false); return; }
@@ -182,6 +194,19 @@ export function AssignDialog({ open, churchId, churchName, onOpenChange, onSucce
         <div className="space-y-4">
           <CollaboratorSearch label="Primeira pessoa" selected={member1} exclude={member2?.id} onSelect={setMember1} />
           <CollaboratorSearch label="Segunda pessoa (opcional — dupla é o ideal)" selected={member2} exclude={member1?.id} onSelect={setMember2} />
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground">Fonte pagadora</label>
+            <select
+              value={payingEntityId}
+              onChange={(e) => setPayingEntityId(e.target.value)}
+              className="w-full rounded-lg px-3 py-2 text-sm bg-secondary border border-border outline-none"
+            >
+              <option value="">Padrão (candidato da campanha)</option>
+              {payingEntities.filter((e) => e.active).map((e) => (
+                <option key={e.id} value={e.id}>{e.name}</option>
+              ))}
+            </select>
+          </div>
           {error && <p className="text-xs text-destructive flex items-center gap-1"><AlertCircle className="w-3.5 h-3.5" />{error}</p>}
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => handleClose(false)}>Cancelar</Button>

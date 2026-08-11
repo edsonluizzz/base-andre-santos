@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Building2, Upload, Users, RefreshCw, Pencil, Trash2 } from "lucide-react";
+import { Building2, Upload, Users, RefreshCw, Pencil, Trash2, CalendarCheck } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { ImportChurchesDialog } from "@/components/churches/import-churches-dialog";
 import { AssignDialog } from "@/components/churches/assign-dialog";
 import { EditChurchDialog } from "@/components/churches/edit-church-dialog";
+import { RegisterDeliveryDialog } from "@/components/churches/register-delivery-dialog";
 import { FinanceiroTab } from "@/components/churches/financeiro-tab";
 
 type Assignment = {
@@ -44,6 +45,7 @@ export default function IgrejasPage() {
   const [importOpen, setImportOpen] = useState(false);
   const [assignTarget, setAssignTarget] = useState<Church | null>(null);
   const [editTarget, setEditTarget] = useState<Church | null>(null);
+  const [registerTarget, setRegisterTarget] = useState<Church | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -168,6 +170,11 @@ export default function IgrejasPage() {
                             {c.latestAssignment ? "Redistribuir" : "Atribuir dupla"}
                           </Button>
                           {c.latestAssignment && (
+                            <Button size="sm" variant="outline" onClick={() => setRegisterTarget(c)} className="gap-1.5" title="Registrar entrega manualmente, sem foto do colaborador">
+                              <CalendarCheck className="w-3.5 h-3.5" /> Registrar entrega
+                            </Button>
+                          )}
+                          {c.latestAssignment && (
                             <Button
                               size="sm"
                               variant="outline"
@@ -209,6 +216,15 @@ export default function IgrejasPage() {
         onOpenChange={(v) => !v && setEditTarget(null)}
         onSuccess={load}
       />
+      {registerTarget?.latestAssignment && (
+        <RegisterDeliveryDialog
+          open={!!registerTarget}
+          assignmentId={registerTarget.latestAssignment.id}
+          churchName={registerTarget.name}
+          onOpenChange={(v) => !v && setRegisterTarget(null)}
+          onSuccess={load}
+        />
+      )}
     </div>
   );
 }

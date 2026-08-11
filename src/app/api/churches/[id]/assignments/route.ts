@@ -7,6 +7,7 @@ import { assertDistinctMembers } from "@/lib/churches";
 const assignSchema = z.object({
   member1Id: z.string().min(1),
   member2Id: z.string().min(1).optional(),
+  payingEntityId: z.string().min(1).nullable().optional(),
 });
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
@@ -24,7 +25,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     if (!parsed.success) {
       return NextResponse.json({ error: parsed.error.errors[0]?.message ?? "Dados inválidos" }, { status: 400 });
     }
-    const { member1Id, member2Id } = parsed.data;
+    const { member1Id, member2Id, payingEntityId } = parsed.data;
 
     try {
       assertDistinctMembers(member1Id, member2Id);
@@ -49,6 +50,11 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       return NextResponse.json({ error: "Colaborador inválido" }, { status: 400 });
     }
 
+    if (payingEntityId) {
+      const entity = await db.payingEntity.findFirst({ where: { id: payingEntityId, campaignId: CID } });
+      if (!entity) return NextResponse.json({ error: "Fonte pagadora não encontrada" }, { status: 404 });
+    }
+
     const assignment = await db.churchAssignment.create({
       data: {
         churchId: church.id,
@@ -56,6 +62,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
         member2Id: member2Id ?? null,
         assignedById: session.user.id,
         status: "PENDENTE",
+        payingEntityId: payingEntityId ?? null,
       },
       select: { id: true },
     });

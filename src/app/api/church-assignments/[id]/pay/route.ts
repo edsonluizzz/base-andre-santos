@@ -37,7 +37,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       });
       const collaboratorId = parsed.data.member === "member1" ? assignment?.member1Id : assignment?.member2Id;
       if (collaboratorId) {
-        await generateAndSendReceipt(db, collaboratorId, [params.id], CID, assignment?.payingEntityId ?? null);
+        await generateAndSendReceipt(db, collaboratorId, [params.id], CID, assignment?.payingEntityId ?? null, session.user.id);
       }
     }
 

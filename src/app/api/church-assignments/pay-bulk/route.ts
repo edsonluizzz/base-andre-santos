@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
     }
 
     for (const [key, assignmentIds] of paidByEntity) {
-      await generateAndSendReceipt(db, collaboratorId, assignmentIds, CID, key === "DEFAULT" ? null : key);
+      await generateAndSendReceipt(db, collaboratorId, assignmentIds, CID, key === "DEFAULT" ? null : key, session.user.id);
     }
 
     return NextResponse.json({ ok: true, count: pending.length });

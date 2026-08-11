@@ -142,6 +142,7 @@ export async function generateAndSendReceipt(
   assignmentIds: string[],
   campaignId: string,
   payingEntityId: string | null = null,
+  createdById?: string,
 ): Promise<void> {
   if (assignmentIds.length === 0) return;
 
@@ -189,6 +190,25 @@ export async function generateAndSendReceipt(
     const receipt = await db.paymentReceipt.create({
       data: { collaboratorId, amount, rate, assignmentIds, payingEntityId },
     });
+
+    // Espelha o pagamento como despesa no módulo financeiro — sem isso o saldo/
+    // dashboard de /financeiro fica cego pro maior gasto real da campanha.
+    if (createdById) {
+      await db.financialEntry.create({
+        data: {
+          campaignId,
+          type: "DESPESA",
+          status: "PAGO",
+          amount,
+          description: `Pagamento de cabo eleitoral — ${collaborator.name}`,
+          category: "Cabos eleitorais",
+          date: new Date(),
+          payingEntityId,
+          notes: `Recibo ${receipt.id} — ${assignmentIds.length} entrega(s)`,
+          createdById,
+        },
+      }).catch((err) => console.error("[receipts] falha ao espelhar em FinancialEntry:", err));
+    }
 
     let pdfUrl: string | null = null;
     try {
