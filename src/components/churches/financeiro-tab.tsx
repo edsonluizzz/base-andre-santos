@@ -14,6 +14,10 @@ type PendingAssignment = {
   payingEntityName: string | null;
 };
 type PayingEntity = { id: string; name: string; active: boolean };
+type PaymentMethod = "PIX" | "DINHEIRO" | "TRANSFERENCIA" | "BOLETO" | "CARTAO" | "OUTRO";
+const METHOD_LABEL: Record<PaymentMethod, string> = {
+  PIX: "PIX", DINHEIRO: "Dinheiro", TRANSFERENCIA: "Transferência", BOLETO: "Boleto", CARTAO: "Cartão", OUTRO: "Outro",
+};
 type ReceiptChannelStatus = "SKIPPED" | "SENT" | "FAILED";
 type ReceiptSummary = {
   id: string;
@@ -90,6 +94,7 @@ export function FinanceiroTab() {
   const [entities, setEntities] = useState<PayingEntity[]>([]);
   const [entityFilter, setEntityFilter] = useState<string>(""); // "" = todas, "DEFAULT" = padrão, ou id
   const [payerBusyId, setPayerBusyId] = useState<string | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("PIX");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -146,7 +151,7 @@ export function FinanceiroTab() {
     const res = await fetch(`/api/church-assignments/${assignmentId}/pay`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ member }),
+      body: JSON.stringify({ member, paymentMethod }),
     });
     if (res.ok) { toast.success("Marcado como pago"); load(); }
     else { const d = await res.json().catch(() => ({})); toast.error(d.error ?? "Erro ao marcar pago"); }
@@ -158,7 +163,7 @@ export function FinanceiroTab() {
     const res = await fetch("/api/church-assignments/pay-bulk", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ collaboratorId }),
+      body: JSON.stringify({ collaboratorId, paymentMethod }),
     });
     if (res.ok) { toast.success("Pagamentos marcados"); load(); }
     else { const d = await res.json().catch(() => ({})); toast.error(d.error ?? "Erro ao marcar pagos"); }
@@ -216,6 +221,19 @@ export function FinanceiroTab() {
           <option value="DEFAULT">Padrão (candidato da campanha)</option>
           {entities.filter((e) => e.active).map((e) => (
             <option key={e.id} value={e.id}>{e.name}</option>
+          ))}
+        </select>
+      </div>
+
+      <div className="flex items-center gap-3 flex-wrap">
+        <label className="text-xs font-medium text-muted-foreground">Forma de pagamento (próximos pagamentos)</label>
+        <select
+          value={paymentMethod}
+          onChange={(e) => setPaymentMethod(e.target.value as PaymentMethod)}
+          className="rounded-lg px-3 py-1.5 text-sm bg-secondary border border-border outline-none"
+        >
+          {(Object.keys(METHOD_LABEL) as PaymentMethod[]).map((m) => (
+            <option key={m} value={m}>{METHOD_LABEL[m]}</option>
           ))}
         </select>
       </div>

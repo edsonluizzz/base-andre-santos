@@ -1,4 +1,4 @@
-import type { PrismaClient } from "@prisma/client";
+import type { PrismaClient, PaymentMethod } from "@prisma/client";
 import PDFDocument from "pdfkit";
 import { put } from "@vercel/blob";
 import { sendPaymentReceiptEmail } from "./email";
@@ -6,6 +6,11 @@ import { zapiSendDocument, toZapiPhone, ZapiNotConfiguredError } from "./zapi";
 import { valorPorExtenso } from "./valor-extenso";
 import { formatCpf } from "./cpf";
 import { formatCnpj, formatEndereco } from "./cnpj";
+
+const PAYMENT_METHOD_LABEL: Record<PaymentMethod, string> = {
+  PIX: "PIX", DINHEIRO: "Dinheiro", TRANSFERENCIA: "Transferência bancária",
+  BOLETO: "Boleto", CARTAO: "Cartão", OUTRO: "Outro",
+};
 
 /**
  * Recibo eleitoral formal (Lei nº 9.504/1997 + Resoluções TSE de prestação de
@@ -28,6 +33,7 @@ function buildReceiptPdf(opts: {
   rate: number;
   rows: { locality: string; deliveredAt: Date | null }[];
   total: number;
+  paymentMethod: PaymentMethod | null;
 }): Promise<Buffer> {
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ size: "A4", margin: 56 });
@@ -100,6 +106,9 @@ function buildReceiptPdf(opts: {
     doc.moveDown(0.6);
 
     doc.font("Helvetica").fontSize(10).text(`Valor unitário por entrega: ${fmtMoney(opts.rate)}`);
+    if (opts.paymentMethod) {
+      doc.text(`Forma de pagamento: ${PAYMENT_METHOD_LABEL[opts.paymentMethod]}`);
+    }
     doc.font("Helvetica-Bold").fontSize(12).text(`Valor total: ${fmtMoney(opts.total)}`, { align: "right" });
     doc.moveDown(1.2);
 
@@ -143,6 +152,7 @@ export async function generateAndSendReceipt(
   campaignId: string,
   payingEntityId: string | null = null,
   createdById?: string,
+  paymentMethod: PaymentMethod | null = null,
 ): Promise<void> {
   if (assignmentIds.length === 0) return;
 
@@ -188,7 +198,7 @@ export async function generateAndSendReceipt(
         });
 
     const receipt = await db.paymentReceipt.create({
-      data: { collaboratorId, amount, rate, assignmentIds, payingEntityId },
+      data: { collaboratorId, amount, rate, assignmentIds, payingEntityId, paymentMethod },
     });
 
     // Espelha o pagamento como despesa no módulo financeiro — sem isso o saldo/
@@ -204,6 +214,7 @@ export async function generateAndSendReceipt(
           category: "Cabos eleitorais",
           date: new Date(),
           payingEntityId,
+          paymentMethod,
           notes: `Recibo ${receipt.id} — ${assignmentIds.length} entrega(s)`,
           createdById,
         },
@@ -227,6 +238,7 @@ export async function generateAndSendReceipt(
         rate,
         rows: assignments.map((a) => ({ locality: a.church.regional ?? "Não informado", deliveredAt: a.deliveredAt })),
         total: amount,
+        paymentMethod,
       });
 
       if (!process.env.BLOB_READ_WRITE_TOKEN) throw new Error("BLOB_READ_WRITE_TOKEN ausente");

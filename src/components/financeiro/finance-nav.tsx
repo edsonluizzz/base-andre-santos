@@ -8,6 +8,7 @@ const TABS = [
   { href: "/financeiro", label: "Visão geral" },
   { href: "/financeiro/lancamentos", label: "Lançamentos" },
   { href: "/financeiro/fornecedores", label: "Fornecedores" },
+  { href: "/financeiro/cabos-eleitorais", label: "Cabos Eleitorais (TSE)" },
 ];
 
 export function FinanceNav() {

@@ -9,6 +9,7 @@ const bodySchema = z.object({
   deliveredAt: z.string().min(1), // ISO date
   payingEntityId: z.string().min(1).nullable().optional(),
   markPaid: z.boolean().optional(),
+  paymentMethod: z.enum(["PIX", "DINHEIRO", "TRANSFERENCIA", "BOLETO", "CARTAO", "OUTRO"]).nullable().optional(),
 });
 
 /**
@@ -30,7 +31,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     if (!parsed.success) {
       return NextResponse.json({ error: parsed.error.errors[0]?.message ?? "Dados inválidos" }, { status: 400 });
     }
-    const { deliveredAt, payingEntityId, markPaid } = parsed.data;
+    const { deliveredAt, payingEntityId, markPaid, paymentMethod } = parsed.data;
 
     const { db, cid: CID } = getCampaignContext(session);
 
@@ -58,12 +59,12 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     if (markPaid) {
       const r1 = await markAssignmentMemberPaid(db, assignment.id, "member1", CID);
       if (r1.ok && !r1.alreadyPaid) {
-        await generateAndSendReceipt(db, assignment.member1Id, [assignment.id], CID, payingEntityId ?? null, session.user.id);
+        await generateAndSendReceipt(db, assignment.member1Id, [assignment.id], CID, payingEntityId ?? null, session.user.id, paymentMethod ?? null);
       }
       if (assignment.member2Id) {
         const r2 = await markAssignmentMemberPaid(db, assignment.id, "member2", CID);
         if (r2.ok && !r2.alreadyPaid) {
-          await generateAndSendReceipt(db, assignment.member2Id, [assignment.id], CID, payingEntityId ?? null, session.user.id);
+          await generateAndSendReceipt(db, assignment.member2Id, [assignment.id], CID, payingEntityId ?? null, session.user.id, paymentMethod ?? null);
         }
       }
     }

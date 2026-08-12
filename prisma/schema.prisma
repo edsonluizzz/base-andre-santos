@@ -760,6 +760,7 @@ model PaymentReceipt {
   rate           Float // valor unitário aplicado no momento (auditoria)
   assignmentIds  String[]
   payingEntityId String? // null = fonte padrão (candidato da própria campanha)
+  paymentMethod  PaymentMethod? // forma de pagamento — exigido pra prestação de contas TSE
   pdfUrl         String?              @db.Text
   emailStatus    ReceiptChannelStatus @default(SKIPPED)
   whatsappStatus ReceiptChannelStatus @default(SKIPPED)

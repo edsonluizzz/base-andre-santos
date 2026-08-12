@@ -5,7 +5,10 @@ import { getCampaignContext } from "@/lib/campaign-context";
 import { markAssignmentMemberPaid } from "@/lib/church-payments";
 import { generateAndSendReceipt } from "@/lib/receipts";
 
-const bodySchema = z.object({ member: z.enum(["member1", "member2"]) });
+const bodySchema = z.object({
+  member: z.enum(["member1", "member2"]),
+  paymentMethod: z.enum(["PIX", "DINHEIRO", "TRANSFERENCIA", "BOLETO", "CARTAO", "OUTRO"]).nullable().optional(),
+});
 
 export const maxDuration = 60;
 
@@ -37,7 +40,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       });
       const collaboratorId = parsed.data.member === "member1" ? assignment?.member1Id : assignment?.member2Id;
       if (collaboratorId) {
-        await generateAndSendReceipt(db, collaboratorId, [params.id], CID, assignment?.payingEntityId ?? null, session.user.id);
+        await generateAndSendReceipt(db, collaboratorId, [params.id], CID, assignment?.payingEntityId ?? null, session.user.id, parsed.data.paymentMethod ?? null);
       }
     }
 

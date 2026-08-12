@@ -5,7 +5,10 @@ import { getCampaignContext } from "@/lib/campaign-context";
 import { markAssignmentMemberPaid } from "@/lib/church-payments";
 import { generateAndSendReceipt } from "@/lib/receipts";
 
-const bodySchema = z.object({ collaboratorId: z.string().min(1) });
+const bodySchema = z.object({
+  collaboratorId: z.string().min(1),
+  paymentMethod: z.enum(["PIX", "DINHEIRO", "TRANSFERENCIA", "BOLETO", "CARTAO", "OUTRO"]).nullable().optional(),
+});
 
 export const maxDuration = 60;
 
@@ -23,7 +26,7 @@ export async function POST(req: NextRequest) {
     if (!parsed.success) {
       return NextResponse.json({ error: "Dados inválidos" }, { status: 400 });
     }
-    const { collaboratorId } = parsed.data;
+    const { collaboratorId, paymentMethod } = parsed.data;
     const { db, cid: CID } = getCampaignContext(session);
 
     const pending = await db.churchAssignment.findMany({
@@ -54,7 +57,7 @@ export async function POST(req: NextRequest) {
     }
 
     for (const [key, assignmentIds] of paidByEntity) {
-      await generateAndSendReceipt(db, collaboratorId, assignmentIds, CID, key === "DEFAULT" ? null : key, session.user.id);
+      await generateAndSendReceipt(db, collaboratorId, assignmentIds, CID, key === "DEFAULT" ? null : key, session.user.id, paymentMethod ?? null);
     }
 
     return NextResponse.json({ ok: true, count: pending.length });

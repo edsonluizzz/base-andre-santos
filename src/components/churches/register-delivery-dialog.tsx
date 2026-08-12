@@ -7,6 +7,10 @@ import { Button } from "@/components/ui/button";
 import { CalendarCheck, AlertCircle } from "lucide-react";
 
 type PayingEntity = { id: string; name: string; active: boolean };
+type PaymentMethod = "PIX" | "DINHEIRO" | "TRANSFERENCIA" | "BOLETO" | "CARTAO" | "OUTRO";
+const METHOD_LABEL: Record<PaymentMethod, string> = {
+  PIX: "PIX", DINHEIRO: "Dinheiro", TRANSFERENCIA: "Transferência", BOLETO: "Boleto", CARTAO: "Cartão", OUTRO: "Outro",
+};
 type Props = {
   open: boolean;
   assignmentId: string;
@@ -29,6 +33,7 @@ export function RegisterDeliveryDialog({ open, assignmentId, churchName, onOpenC
   const [payingEntityId, setPayingEntityId] = useState("");
   const [payingEntities, setPayingEntities] = useState<PayingEntity[]>([]);
   const [markPaid, setMarkPaid] = useState(true);
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("PIX");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -37,6 +42,7 @@ export function RegisterDeliveryDialog({ open, assignmentId, churchName, onOpenC
     setDeliveredAt(todayISO());
     setPayingEntityId("");
     setMarkPaid(true);
+    setPaymentMethod("PIX");
     setError("");
     fetch("/api/paying-entities").then((r) => r.json()).then((j) => setPayingEntities(j.data ?? [])).catch(() => {});
   }, [open]);
@@ -48,7 +54,12 @@ export function RegisterDeliveryDialog({ open, assignmentId, churchName, onOpenC
       const res = await fetch(`/api/church-assignments/${assignmentId}/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ deliveredAt, payingEntityId: payingEntityId || null, markPaid }),
+        body: JSON.stringify({
+          deliveredAt,
+          payingEntityId: payingEntityId || null,
+          markPaid,
+          paymentMethod: markPaid ? paymentMethod : null,
+        }),
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error ?? "Erro ao registrar"); setSaving(false); return; }
@@ -101,6 +112,20 @@ export function RegisterDeliveryDialog({ open, assignmentId, churchName, onOpenC
             <input type="checkbox" checked={markPaid} onChange={(e) => setMarkPaid(e.target.checked)} className="w-4 h-4" />
             Marcar como pago agora (gera recibo e envia por e-mail/WhatsApp)
           </label>
+          {markPaid && (
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-muted-foreground">Forma de pagamento</label>
+              <select
+                value={paymentMethod}
+                onChange={(e) => setPaymentMethod(e.target.value as PaymentMethod)}
+                className="w-full rounded-lg px-3 py-2 text-sm bg-secondary border border-border outline-none"
+              >
+                {(Object.keys(METHOD_LABEL) as PaymentMethod[]).map((m) => (
+                  <option key={m} value={m}>{METHOD_LABEL[m]}</option>
+                ))}
+              </select>
+            </div>
+          )}
           {error && <p className="text-xs text-destructive flex items-center gap-1"><AlertCircle className="w-3.5 h-3.5" />{error}</p>}
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
