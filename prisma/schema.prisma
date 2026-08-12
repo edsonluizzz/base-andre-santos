@@ -732,6 +732,7 @@ model ChurchAssignment {
   member1PaidAt DateTime? // null = pendente de pagamento; preenchido = pago (timestamp = auditoria)
   member2PaidAt DateTime?
   payingEntityId String? // null = fonte padrão (candidato da própria campanha, CNPJ em Settings)
+  paymentValue  Float? // valor por membro nesta entrega — null = usa Settings.deliveryPaymentValue (padrão global)
   createdAt     DateTime               @default(now())
   updatedAt     DateTime               @updatedAt
 

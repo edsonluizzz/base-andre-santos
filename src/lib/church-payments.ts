@@ -9,6 +9,8 @@ export type PendingAssignment = {
   member: MemberSlot;
   payingEntityId: string | null;
   payingEntityName: string | null;
+  value: number;
+  customValue: boolean;
 };
 export type ReceiptSummary = {
   id: string;
@@ -68,6 +70,7 @@ export async function getPaymentsReport(
       member1PaidAt: true,
       member2PaidAt: true,
       payingEntityId: true,
+      paymentValue: true,
       payingEntity: { select: { name: true } },
       member1: { select: { id: true, name: true } },
       member2: { select: { id: true, name: true } },
@@ -86,6 +89,8 @@ export async function getPaymentsReport(
     member: MemberSlot,
     payingEntityId: string | null,
     payingEntityName: string | null,
+    value: number,
+    customValue: boolean,
   ) {
     let row = map.get(collaboratorId);
     if (!row) {
@@ -101,25 +106,29 @@ export async function getPaymentsReport(
     row.deliveredCount++;
     if (paidAt) {
       row.paidCount++;
-      row.amountPaid += rate;
+      row.amountPaid += value;
     } else {
       row.pendingCount++;
-      row.amountPending += rate;
+      row.amountPending += value;
       row.pendingAssignments.push({
         assignmentId, churchName,
         deliveredAt: deliveredAt ? deliveredAt.toISOString() : null,
         member,
         payingEntityId,
         payingEntityName,
+        value,
+        customValue,
       });
     }
   }
 
   for (const a of assignments) {
     const payingEntityName = a.payingEntity?.name ?? null;
-    touch(a.member1.id, a.member1.name, a.member1PaidAt, a.id, a.church.name, a.deliveredAt, "member1", a.payingEntityId, payingEntityName);
+    const value = a.paymentValue ?? rate;
+    const customValue = a.paymentValue !== null;
+    touch(a.member1.id, a.member1.name, a.member1PaidAt, a.id, a.church.name, a.deliveredAt, "member1", a.payingEntityId, payingEntityName, value, customValue);
     if (a.member2) {
-      touch(a.member2.id, a.member2.name, a.member2PaidAt, a.id, a.church.name, a.deliveredAt, "member2", a.payingEntityId, payingEntityName);
+      touch(a.member2.id, a.member2.name, a.member2PaidAt, a.id, a.church.name, a.deliveredAt, "member2", a.payingEntityId, payingEntityName, value, customValue);
     }
   }
 

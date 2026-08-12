@@ -146,21 +146,30 @@ export function AssignDialog({ open, churchId, churchName, onOpenChange, onSucce
   const [member2, setMember2] = useState<Collab | null>(null);
   const [payingEntityId, setPayingEntityId] = useState("");
   const [payingEntities, setPayingEntities] = useState<PayingEntity[]>([]);
+  const [defaultRate, setDefaultRate] = useState<number | null>(null);
+  const [paymentValue, setPaymentValue] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
     if (!open) return;
     fetch("/api/paying-entities").then((r) => r.json()).then((j) => setPayingEntities(j.data ?? [])).catch(() => {});
+    fetch("/api/settings").then((r) => r.json()).then((j) => setDefaultRate(j.deliveryPaymentValue ?? null)).catch(() => {});
   }, [open]);
 
   function handleClose(v: boolean) {
-    if (!v) { setMember1(null); setMember2(null); setPayingEntityId(""); setError(""); }
+    if (!v) { setMember1(null); setMember2(null); setPayingEntityId(""); setPaymentValue(""); setError(""); }
     onOpenChange(v);
   }
 
   async function handleSave() {
     if (!member1) { setError("Selecione ao menos a primeira pessoa."); return; }
+    const trimmedValue = paymentValue.trim();
+    let customValue: number | null = null;
+    if (trimmedValue) {
+      customValue = Number(trimmedValue.replace(",", "."));
+      if (!Number.isFinite(customValue) || customValue <= 0) { setError("Valor do pagamento inválido"); return; }
+    }
     setSaving(true);
     setError("");
     try {
@@ -171,6 +180,7 @@ export function AssignDialog({ open, churchId, churchName, onOpenChange, onSucce
           member1Id: member1.id,
           ...(member2 ? { member2Id: member2.id } : {}),
           payingEntityId: payingEntityId || null,
+          paymentValue: customValue,
         }),
       });
       const data = await res.json();
@@ -206,6 +216,22 @@ export function AssignDialog({ open, churchId, churchName, onOpenChange, onSucce
                 <option key={e.id} value={e.id}>{e.name}</option>
               ))}
             </select>
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground">
+              Valor do pagamento (por pessoa){" "}
+              <span className="font-normal">
+                {defaultRate !== null ? `— padrão: R$ ${defaultRate.toLocaleString("pt-BR")}` : ""}
+              </span>
+            </label>
+            <input
+              type="text"
+              inputMode="decimal"
+              value={paymentValue}
+              onChange={(e) => setPaymentValue(e.target.value)}
+              placeholder={defaultRate !== null ? `${defaultRate.toLocaleString("pt-BR")}` : "0,00"}
+              className="w-full rounded-lg px-3 py-2 text-sm bg-secondary border border-border outline-none"
+            />
           </div>
           {error && <p className="text-xs text-destructive flex items-center gap-1"><AlertCircle className="w-3.5 h-3.5" />{error}</p>}
           <div className="flex justify-end gap-2">

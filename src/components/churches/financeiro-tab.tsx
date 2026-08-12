@@ -12,6 +12,8 @@ type PendingAssignment = {
   member: "member1" | "member2";
   payingEntityId: string | null;
   payingEntityName: string | null;
+  value: number;
+  customValue: boolean;
 };
 type PayingEntity = { id: string; name: string; active: boolean };
 type PaymentMethod = "PIX" | "DINHEIRO" | "TRANSFERENCIA" | "BOLETO" | "CARTAO" | "OUTRO";
@@ -95,6 +97,8 @@ export function FinanceiroTab() {
   const [entityFilter, setEntityFilter] = useState<string>(""); // "" = todas, "DEFAULT" = padrão, ou id
   const [payerBusyId, setPayerBusyId] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("PIX");
+  const [valueBusyId, setValueBusyId] = useState<string | null>(null);
+  const [valueEdits, setValueEdits] = useState<Record<string, string>>({});
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -127,6 +131,35 @@ export function FinanceiroTab() {
     if (res.ok) load();
     else { const d = await res.json().catch(() => ({})); toast.error(d.error ?? "Erro ao definir fonte pagadora"); }
     setPayerBusyId(null);
+  }
+
+  async function saveAssignmentValue(assignmentId: string, current: number) {
+    const raw = valueEdits[assignmentId];
+    if (raw === undefined) return;
+    const trimmed = raw.trim();
+    const value = trimmed === "" ? null : Number(trimmed.replace(",", "."));
+    if (value !== null && (!Number.isFinite(value) || value <= 0)) {
+      toast.error("Valor inválido");
+      return;
+    }
+    if (value === current || (value === null && current === data?.rate)) {
+      setValueEdits((prev) => { const n = { ...prev }; delete n[assignmentId]; return n; });
+      return;
+    }
+    setValueBusyId(assignmentId);
+    const res = await fetch(`/api/church-assignments/${assignmentId}/value`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ paymentValue: value }),
+    });
+    if (res.ok) {
+      setValueEdits((prev) => { const n = { ...prev }; delete n[assignmentId]; return n; });
+      load();
+    } else {
+      const d = await res.json().catch(() => ({}));
+      toast.error(d.error ?? "Erro ao definir valor");
+    }
+    setValueBusyId(null);
   }
 
   async function saveRate() {
@@ -341,7 +374,18 @@ export function FinanceiroTab() {
                   {expanded === c.collaboratorId && c.pendingAssignments.map((p) => (
                     <tr key={p.assignmentId + p.member} className="bg-white/[0.015]">
                       <td className="px-4 py-2 pl-9 text-muted-foreground text-xs" colSpan={2}>{p.churchName}</td>
-                      <td className="px-4 py-2 text-muted-foreground text-xs">{fmt(data.rate)}</td>
+                      <td className="px-4 py-2">
+                        <input
+                          type="text"
+                          inputMode="decimal"
+                          value={valueEdits[p.assignmentId] ?? String(p.value)}
+                          disabled={valueBusyId === p.assignmentId}
+                          onChange={(e) => setValueEdits((prev) => ({ ...prev, [p.assignmentId]: e.target.value }))}
+                          onBlur={() => saveAssignmentValue(p.assignmentId, p.value)}
+                          title={p.customValue ? "Valor customizado nesta entrega" : "Valor padrão — edite pra customizar"}
+                          className={`w-20 rounded-lg px-2 py-1 text-xs bg-secondary border outline-none ${p.customValue ? "border-primary/40 text-primary" : "border-border text-muted-foreground"}`}
+                        />
+                      </td>
                       <td className="px-4 py-2" colSpan={2}>
                         <select
                           value={p.payingEntityId ?? ""}

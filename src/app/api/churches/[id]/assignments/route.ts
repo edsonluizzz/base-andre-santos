@@ -8,6 +8,7 @@ const assignSchema = z.object({
   member1Id: z.string().min(1),
   member2Id: z.string().min(1).optional(),
   payingEntityId: z.string().min(1).nullable().optional(),
+  paymentValue: z.number().positive().nullable().optional(),
 });
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
@@ -25,7 +26,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     if (!parsed.success) {
       return NextResponse.json({ error: parsed.error.errors[0]?.message ?? "Dados inválidos" }, { status: 400 });
     }
-    const { member1Id, member2Id, payingEntityId } = parsed.data;
+    const { member1Id, member2Id, payingEntityId, paymentValue } = parsed.data;
 
     try {
       assertDistinctMembers(member1Id, member2Id);
@@ -63,6 +64,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
         assignedById: session.user.id,
         status: "PENDENTE",
         payingEntityId: payingEntityId ?? null,
+        paymentValue: paymentValue ?? null,
       },
       select: { id: true },
     });

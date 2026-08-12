@@ -31,7 +31,7 @@ function buildReceiptPdf(opts: {
   payerAddress: string | null;
   issuedAt: Date;
   rate: number;
-  rows: { locality: string; deliveredAt: Date | null }[];
+  rows: { locality: string; deliveredAt: Date | null; value: number }[];
   total: number;
   paymentMethod: PaymentMethod | null;
 }): Promise<Buffer> {
@@ -83,12 +83,13 @@ function buildReceiptPdf(opts: {
     doc.moveDown(1);
 
     const colX = doc.page.margins.left;
-    const col1 = colX, col2 = colX + 30, col3 = colX + pageWidth - 100;
+    const col1 = colX, col2 = colX + 30, col3 = colX + pageWidth - 160, col4 = colX + pageWidth - 70;
     doc.font("Helvetica-Bold").fontSize(9);
     const headerY = doc.y;
     doc.text("Nº", col1, headerY, { width: 25 });
     doc.text("Localidade", col2, headerY);
-    doc.text("Data", col3, headerY, { width: 100 });
+    doc.text("Data", col3, headerY, { width: 80 });
+    doc.text("Valor", col4, headerY, { width: 70, align: "right" });
     doc.moveDown(0.3);
     doc.moveTo(colX, doc.y).lineTo(colX + pageWidth, doc.y).strokeColor("#ccc").stroke();
     doc.moveDown(0.3);
@@ -98,16 +99,16 @@ function buildReceiptPdf(opts: {
       const rowY = doc.y;
       doc.text(String(i + 1), col1, rowY, { width: 25 });
       doc.text(r.locality, col2, rowY, { width: col3 - col2 - 10 });
-      doc.text(fmtDate(r.deliveredAt), col3, rowY, { width: 100 });
+      doc.text(fmtDate(r.deliveredAt), col3, rowY, { width: 80 });
+      doc.text(fmtMoney(r.value), col4, rowY, { width: 70, align: "right" });
       doc.moveDown(0.4);
     });
     doc.moveDown(0.2);
     doc.moveTo(colX, doc.y).lineTo(colX + pageWidth, doc.y).strokeColor("#ccc").stroke();
     doc.moveDown(0.6);
 
-    doc.font("Helvetica").fontSize(10).text(`Valor unitário por entrega: ${fmtMoney(opts.rate)}`);
     if (opts.paymentMethod) {
-      doc.text(`Forma de pagamento: ${PAYMENT_METHOD_LABEL[opts.paymentMethod]}`);
+      doc.font("Helvetica").fontSize(10).text(`Forma de pagamento: ${PAYMENT_METHOD_LABEL[opts.paymentMethod]}`);
     }
     doc.font("Helvetica-Bold").fontSize(12).text(`Valor total: ${fmtMoney(opts.total)}`, { align: "right" });
     doc.moveDown(1.2);
@@ -178,7 +179,7 @@ export async function generateAndSendReceipt(
       }),
       db.churchAssignment.findMany({
         where: { id: { in: assignmentIds } },
-        select: { deliveredAt: true, church: { select: { regional: true } } },
+        select: { deliveredAt: true, paymentValue: true, church: { select: { regional: true } } },
       }),
       payingEntityId ? db.payingEntity.findUnique({ where: { id: payingEntityId } }) : Promise.resolve(null),
     ]);
@@ -186,7 +187,7 @@ export async function generateAndSendReceipt(
     if (!collaborator) return;
 
     const rate = settings.deliveryPaymentValue;
-    const amount = rate * assignmentIds.length;
+    const amount = assignments.reduce((sum, a) => sum + (a.paymentValue ?? rate), 0);
     const candidateName = payingEntity?.candidateName ?? payingEntity?.name ?? campaign?.candidateName ?? campaign?.name ?? "Campanha";
     const payerRazaoSocial = payingEntity?.razaoSocial ?? settings.razaoSocial ?? null;
     const payerCnpj = payingEntity?.cnpj ?? settings.cnpj ?? null;
@@ -236,7 +237,7 @@ export async function generateAndSendReceipt(
         payerAddress,
         issuedAt: new Date(),
         rate,
-        rows: assignments.map((a) => ({ locality: a.church.regional ?? "Não informado", deliveredAt: a.deliveredAt })),
+        rows: assignments.map((a) => ({ locality: a.church.regional ?? "Não informado", deliveredAt: a.deliveredAt, value: a.paymentValue ?? rate })),
         total: amount,
         paymentMethod,
       });
