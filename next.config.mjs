@@ -4,9 +4,14 @@
 const nextConfig = {
   typescript: { ignoreBuildErrors: true },
   experimental: {
-    // pdfkit lê os arquivos .afm de fonte via fs.readFileSync(__dirname, ...) em runtime —
-    // o file-tracing do Next não enxerga isso estaticamente e deixa os .afm de fora do bundle
-    // serverless, então o PDF quebra silenciosamente só em produção (funciona local com node_modules completo).
+    // pdfkit lê os arquivos .afm de fonte via fs.readFileSync(__dirname, ...) em runtime.
+    // Sem isto, o webpack empacota o pdfkit inteiro dentro do chunk da rota e reescreve
+    // __dirname pra apontar pro diretório do chunk (.next/server/chunks/), não mais pro
+    // node_modules/pdfkit/js/ real — daí o pdfkit procura os .afm no lugar errado e quebra
+    // (ENOENT em .next/server/chunks/data/*.afm) mesmo com outputFileTracingIncludes certo.
+    // Isso mantém o pdfkit como módulo externo real (require normal), preservando seu
+    // próprio __dirname; outputFileTracingIncludes abaixo garante que os .afm entrem no bundle.
+    serverComponentsExternalPackages: ["pdfkit"],
     outputFileTracingIncludes: {
       "/api/relatorio/export-pdf": ["./node_modules/pdfkit/js/data/**/*"],
       // matcher do Next usa picomatch com `contains: true` — cada chave abaixo cobre
