@@ -9,9 +9,12 @@ const nextConfig = {
     // serverless, então o PDF quebra silenciosamente só em produção (funciona local com node_modules completo).
     outputFileTracingIncludes: {
       "/api/relatorio/export-pdf": ["./node_modules/pdfkit/js/data/**/*"],
-      // matcher do Next usa picomatch com `contains: true` — cobre as 3 rotas
-      // (pay-bulk, [id]/pay, [id]/register) sem precisar escapar os colchetes de rota dinâmica.
+      // matcher do Next usa picomatch com `contains: true` — cada chave abaixo cobre
+      // todas as sub-rotas com esse prefixo (inclusive as com [id]) sem precisar
+      // escapar colchetes de rota dinâmica.
       "/api/church-assignments/": ["./node_modules/pdfkit/js/data/**/*"],
+      "/api/financeiro/": ["./node_modules/pdfkit/js/data/**/*"],
+      "/api/collaborators/export-pdf": ["./node_modules/pdfkit/js/data/**/*"],
     },
   },
   async rewrites() {

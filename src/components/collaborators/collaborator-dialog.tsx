@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2 } from "lucide-react";
 import { CONTRIBUTION_OPTIONS } from "@/lib/contribution";
+import { normalizeCpf, formatCpf, isValidCpf } from "@/lib/cpf";
 
 const ROLES = [
   { value: "COORD_GERAL",    label: "Coord. Geral"      },
@@ -49,7 +50,7 @@ const SUPPORT_STATUSES = [
 ];
 
 type Collaborator = {
-  id?: string; name?: string; email?: string; phone?: string; city?: string;
+  id?: string; name?: string; email?: string; phone?: string; cpf?: string | null; city?: string;
   neighborhood?: string; campaignRole?: string; status?: string; notes?: string;
   birthday?: string; profile?: string; supportStatus?: string; channel?: string;
   contributionTypes?: string[];
@@ -65,10 +66,11 @@ type Props = {
 
 export function CollaboratorDialog({ open, onOpenChange, collaborator, onSuccess }: Props) {
   const [form, setForm] = useState({
-    name: "", email: "", phone: "", city: "", neighborhood: "",
+    name: "", email: "", phone: "", cpf: "", city: "", neighborhood: "",
     campaignRole: "VOLUNTARIO", status: "ACTIVE", notes: "", birthday: "",
     profile: "APOIADOR", supportStatus: "NEUTRO", channel: "NONE",
   });
+  const [cpfError, setCpfError] = useState("");
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -118,6 +120,7 @@ export function CollaboratorDialog({ open, onOpenChange, collaborator, onSuccess
         name: collaborator.name ?? "",
         email: collaborator.email ?? "",
         phone: collaborator.phone ?? "",
+        cpf: collaborator.cpf ? formatCpf(collaborator.cpf) : "",
         city: collaborator.city ?? "",
         neighborhood: collaborator.neighborhood ?? "",
         campaignRole: collaborator.campaignRole ?? "VOLUNTARIO",
@@ -130,10 +133,11 @@ export function CollaboratorDialog({ open, onOpenChange, collaborator, onSuccess
       });
       setSelectedTypes(collaborator.contributionTypes ?? []);
     } else {
-      setForm({ name: "", email: "", phone: "", city: "", neighborhood: "", campaignRole: "VOLUNTARIO", status: "ACTIVE", notes: "", birthday: "", profile: "APOIADOR", supportStatus: "NEUTRO", channel: "NONE" });
+      setForm({ name: "", email: "", phone: "", cpf: "", city: "", neighborhood: "", campaignRole: "VOLUNTARIO", status: "ACTIVE", notes: "", birthday: "", profile: "APOIADOR", supportStatus: "NEUTRO", channel: "NONE" });
       setSelectedTypes([]);
     }
     setError("");
+    setCpfError("");
     setCep("");
     setCepError("");
   }, [collaborator, open]);
@@ -148,13 +152,20 @@ export function CollaboratorDialog({ open, onOpenChange, collaborator, onSuccess
 
   async function handleSave() {
     if (!form.name.trim()) { setError("Nome obrigatório"); return; }
+    if (form.cpf.trim() && !isValidCpf(form.cpf)) { setCpfError("CPF inválido"); return; }
+    setCpfError("");
     setSaving(true);
     const method = collaborator?.id ? "PUT" : "POST";
     const url = collaborator?.id ? `/api/collaborators/${collaborator.id}` : "/api/collaborators";
     const res = await fetch(url, {
       method,
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...form, channel: form.channel === "NONE" ? null : form.channel, contributionTypes: selectedTypes }),
+      body: JSON.stringify({
+        ...form,
+        cpf: form.cpf.trim() ? normalizeCpf(form.cpf) : null,
+        channel: form.channel === "NONE" ? null : form.channel,
+        contributionTypes: selectedTypes,
+      }),
     });
     setSaving(false);
     if (res.ok) { onSuccess(); }
@@ -187,6 +198,17 @@ export function CollaboratorDialog({ open, onOpenChange, collaborator, onSuccess
             <div>
               <Label>E-mail</Label>
               <Input value={form.email} onChange={(e) => set("email", e.target.value)} type="email" placeholder="email@dominio.com" />
+            </div>
+            <div>
+              <Label>CPF <span className="text-muted-foreground font-normal">(necessário pro recibo eleitoral)</span></Label>
+              <Input
+                value={form.cpf}
+                onChange={(e) => { set("cpf", formatCpf(e.target.value.replace(/\D/g, "").slice(0, 11))); setCpfError(""); }}
+                placeholder="000.000.000-00"
+                inputMode="numeric"
+                maxLength={14}
+              />
+              {cpfError && <p className="text-[11px] text-destructive mt-0.5">{cpfError}</p>}
             </div>
             <div className="col-span-2">
               <Label>CEP <span className="text-muted-foreground font-normal">(preenche cidade e bairro)</span></Label>

@@ -2,7 +2,8 @@ import { auth } from "@/lib/auth";
 import { getCampaignContext } from "@/lib/campaign-context";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Phone, MapPin, Mail, Calendar, Star, UserCheck, ShieldCheck, ShieldAlert, Monitor, Zap, Radio, PhoneCall } from "lucide-react";
+import { ArrowLeft, Phone, MapPin, Mail, Calendar, Star, UserCheck, ShieldCheck, ShieldAlert, Monitor, Zap, Radio, PhoneCall, IdCard } from "lucide-react";
+import { formatCpf } from "@/lib/cpf";
 import { InviteToSystem } from "@/components/collaborators/invite-to-system";
 import { EditCollaboratorButton } from "@/components/collaborators/edit-collaborator-button";
 import { WhatsappSendButton } from "@/components/collaborators/whatsapp-send-button";
@@ -102,6 +103,15 @@ export default async function CollaboratorProfilePage({ params }: { params: { id
             <div className="flex items-center gap-2 text-muted-foreground">
               <Calendar className="w-4 h-4 shrink-0" />
               {new Date(collaborator.birthday + "T12:00:00").toLocaleDateString("pt-BR")}
+            </div>
+          )}
+          {collaborator.cpf ? (
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <IdCard className="w-4 h-4 shrink-0" /> {formatCpf(collaborator.cpf)}
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 text-amber-400/80" title="Necessário pra gerar recibo eleitoral">
+              <IdCard className="w-4 h-4 shrink-0" /> CPF não cadastrado
             </div>
           )}
         </div>
@@ -304,6 +314,7 @@ export default async function CollaboratorProfilePage({ params }: { params: { id
             name: collaborator.name,
             email: collaborator.email,
             phone: collaborator.phone,
+            cpf: collaborator.cpf,
             city: collaborator.city,
             neighborhood: collaborator.neighborhood,
             campaignRole: collaborator.campaignRole,

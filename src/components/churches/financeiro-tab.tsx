@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, useState, useEffect, useCallback } from "react";
-import { ChevronDown, ChevronRight, Wallet, Download, FileDown, Mail, MessageCircle, RotateCw } from "lucide-react";
+import { ChevronDown, ChevronRight, Wallet, Download, FileDown, FileText, Mail, MessageCircle, RotateCw } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 
@@ -251,7 +251,12 @@ export function FinanceiroTab() {
         </div>
         <a href={`/api/church-assignments/payments/export${entityFilter ? `?payingEntityId=${entityFilter}` : ""}`} download>
           <Button size="sm" variant="outline" className="gap-1.5">
-            <FileDown className="w-3.5 h-3.5" /> Exportar XLSX
+            <FileDown className="w-3.5 h-3.5" /> XLSX
+          </Button>
+        </a>
+        <a href={`/api/church-assignments/payments/export-pdf${entityFilter ? `?payingEntityId=${entityFilter}` : ""}`} download>
+          <Button size="sm" variant="outline" className="gap-1.5">
+            <FileText className="w-3.5 h-3.5" /> PDF
           </Button>
         </a>
       </div>

@@ -10,6 +10,7 @@ import { toast } from "sonner";
 type Props = {
   collaborator: {
     id: string; name: string; email: string | null; phone: string | null;
+    cpf: string | null;
     city: string | null; neighborhood: string | null; campaignRole: string;
     status: string; notes: string | null; birthday: string | null;
     profile: string; supportStatus: string; contributionTypes: string[];

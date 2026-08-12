@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { Users, Plus, Search, Phone, MapPin, ChevronDown, Upload, UserCheck, ExternalLink, CheckSquare, Square, X, ArrowUpCircle, UserMinus, ThumbsUp, PhoneCall, AlertTriangle, SlidersHorizontal, Download, Link2, Check, Send } from "lucide-react";
+import { Users, Plus, Search, Phone, MapPin, ChevronDown, Upload, UserCheck, ExternalLink, CheckSquare, Square, X, ArrowUpCircle, UserMinus, ThumbsUp, PhoneCall, AlertTriangle, SlidersHorizontal, Download, Link2, Check, Send, FileText } from "lucide-react";
 import { differenceInDays } from "date-fns";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -273,6 +273,13 @@ export default function ColaboradoresPage() {
     window.open(`/api/collaborators/export?${params.toString()}`, "_blank");
   }
 
+  function handleExportPdf() {
+    const params = buildParams(0);
+    params.delete("limit");
+    params.delete("offset");
+    window.open(`/api/collaborators/export-pdf?${params.toString()}`, "_blank");
+  }
+
   function copyReferralLink(collaboratorId: string) {
     const url = `${window.location.origin}/cadastro?refc=${collaboratorId}`;
     navigator.clipboard.writeText(url).then(() => {
@@ -339,7 +346,10 @@ export default function ColaboradoresPage() {
         </div>
         <div className="flex gap-2 shrink-0">
           <Button onClick={handleExport} variant="outline" size="sm" className="gap-2 hidden sm:flex">
-            <Download className="w-4 h-4" /> Exportar
+            <Download className="w-4 h-4" /> XLSX
+          </Button>
+          <Button onClick={handleExportPdf} variant="outline" size="sm" className="gap-2 hidden sm:flex">
+            <FileText className="w-4 h-4" /> PDF
           </Button>
           <Button onClick={() => setImportOpen(true)} variant="outline" size="sm" className="gap-2 hidden sm:flex">
             <Upload className="w-4 h-4" /> Importar

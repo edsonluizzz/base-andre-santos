@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Wallet, Plus, Pencil, Trash2, FileDown, Paperclip, ExternalLink } from "lucide-react";
+import { Wallet, Plus, Pencil, Trash2, FileDown, FileText, Paperclip, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -149,6 +149,7 @@ function LancamentosContent() {
   if (filterStatus) exportParams.set("status", filterStatus);
   if (filterEntity) exportParams.set("payingEntityId", filterEntity);
   const exportUrl = `/api/financeiro/entries/export${exportParams.toString() ? `?${exportParams.toString()}` : ""}`;
+  const exportPdfUrl = `/api/financeiro/entries/export-pdf${exportParams.toString() ? `?${exportParams.toString()}` : ""}`;
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 pb-4">
@@ -161,7 +162,10 @@ function LancamentosContent() {
         </div>
         <div className="flex gap-2 shrink-0">
           <a href={exportUrl} download>
-            <Button size="sm" variant="outline" className="gap-1.5"><FileDown className="w-3.5 h-3.5" /> Exportar XLSX</Button>
+            <Button size="sm" variant="outline" className="gap-1.5"><FileDown className="w-3.5 h-3.5" /> XLSX</Button>
+          </a>
+          <a href={exportPdfUrl} download>
+            <Button size="sm" variant="outline" className="gap-1.5"><FileText className="w-3.5 h-3.5" /> PDF</Button>
           </a>
           <Button size="sm" onClick={openNew} className="gap-1.5 bg-primary text-primary-foreground">
             <Plus className="w-3.5 h-3.5" /> Novo lançamento

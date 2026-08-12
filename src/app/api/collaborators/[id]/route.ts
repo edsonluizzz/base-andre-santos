@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { getCampaignContext } from "@/lib/campaign-context";
 import { recalcTier } from "@/lib/tier";
 import { normalizeCity, normalizePhone } from "@/lib/utils";
+import { normalizeCpf, isValidCpf } from "@/lib/cpf";
 
 
 export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
@@ -45,7 +46,8 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     }
 
     const body = await req.json();
-    const { name, email, phone, city, neighborhood, campaignRole, status, notes, birthday, zoneIds, profile, supportStatus, channel, contributionTypes } = body;
+    const { name, email, phone, cpf, city, neighborhood, campaignRole, status, notes, birthday, zoneIds, profile, supportStatus, channel, contributionTypes } = body;
+    if (cpf && !isValidCpf(cpf)) return NextResponse.json({ error: "CPF inválido" }, { status: 400 });
 
     // Líderes de célula só podem alterar status e contributionTypes
     const data: Record<string, unknown> = {};
@@ -53,6 +55,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
       if (name) data.name = name.trim();
       if (email !== undefined) data.email = email?.trim() || null;
       if (phone !== undefined) { data.phone = phone?.trim() || null; data.phoneNormalized = normalizePhone(phone); }
+      if (cpf !== undefined) data.cpf = cpf ? normalizeCpf(cpf) : null;
       if (city !== undefined) data.city = normalizeCity(city);
       if (neighborhood !== undefined) data.neighborhood = neighborhood?.trim() || null;
       if (campaignRole) data.campaignRole = campaignRole;

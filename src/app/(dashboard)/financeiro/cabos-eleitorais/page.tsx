@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Wallet, FileDown, Download } from "lucide-react";
+import { Wallet, FileDown, FileText, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FinanceGuard } from "@/components/financeiro/finance-guard";
@@ -56,6 +56,7 @@ function CabosEleitoraisContent() {
   }, []);
 
   const exportUrl = `/api/financeiro/cabos-eleitorais/export${filterEntity ? `?payingEntityId=${filterEntity}` : ""}`;
+  const exportPdfUrl = `/api/financeiro/cabos-eleitorais/export-pdf${filterEntity ? `?payingEntityId=${filterEntity}` : ""}`;
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 pb-4">
@@ -68,9 +69,14 @@ function CabosEleitoraisContent() {
             Pagamentos a cabos eleitorais — recibo por recibo, no formato padrão pra prestação de contas ao TSE
           </p>
         </div>
-        <a href={exportUrl} download>
-          <Button size="sm" variant="outline" className="gap-1.5"><FileDown className="w-3.5 h-3.5" /> Exportar XLSX</Button>
-        </a>
+        <div className="flex gap-2">
+          <a href={exportUrl} download>
+            <Button size="sm" variant="outline" className="gap-1.5"><FileDown className="w-3.5 h-3.5" /> XLSX</Button>
+          </a>
+          <a href={exportPdfUrl} download>
+            <Button size="sm" variant="outline" className="gap-1.5"><FileText className="w-3.5 h-3.5" /> PDF</Button>
+          </a>
+        </div>
       </div>
 
       <FinanceNav />

@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { getCampaignContext } from "@/lib/campaign-context";
 import { recalcTier } from "@/lib/tier";
 import { normalizeCity, normalizePhone } from "@/lib/utils";
+import { normalizeCpf, isValidCpf } from "@/lib/cpf";
 import { ensureCityGoal } from "@/lib/municipality-goals";
 import { triggerLeadWebhook } from "@/lib/n8n";
 import { CollaboratorRole, CollaboratorStatus } from "@prisma/client";
@@ -109,8 +110,9 @@ export async function POST(req: NextRequest) {
     if (!["ADMIN", "LEADER"].includes(session.user.role ?? "")) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
     const body = await req.json();
-    const { name, email, phone, city, neighborhood, campaignRole, status, notes, birthday, zoneIds, profile, supportStatus, channel, contributionTypes } = body;
+    const { name, email, phone, cpf, city, neighborhood, campaignRole, status, notes, birthday, zoneIds, profile, supportStatus, channel, contributionTypes } = body;
     if (!name?.trim()) return NextResponse.json({ error: "Nome obrigatório" }, { status: 400 });
+    if (cpf && !isValidCpf(cpf)) return NextResponse.json({ error: "CPF inválido" }, { status: 400 });
 
     const collaborator = await db.collaborator.create({
       data: {
@@ -119,6 +121,7 @@ export async function POST(req: NextRequest) {
         email: email?.trim() || null,
         phone: phone?.trim() || null,
         phoneNormalized: normalizePhone(phone),
+        cpf: cpf ? normalizeCpf(cpf) : null,
         city: normalizeCity(city),
         neighborhood: neighborhood?.trim() || null,
         campaignRole: campaignRole ?? "VOLUNTARIO",
