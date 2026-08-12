@@ -3,6 +3,17 @@
 // ESLint segue ativo. Quando tivermos build local funcional, reativar TS.
 const nextConfig = {
   typescript: { ignoreBuildErrors: true },
+  experimental: {
+    // pdfkit lê os arquivos .afm de fonte via fs.readFileSync(__dirname, ...) em runtime —
+    // o file-tracing do Next não enxerga isso estaticamente e deixa os .afm de fora do bundle
+    // serverless, então o PDF quebra silenciosamente só em produção (funciona local com node_modules completo).
+    outputFileTracingIncludes: {
+      "/api/relatorio/export-pdf": ["./node_modules/pdfkit/js/data/**/*"],
+      // matcher do Next usa picomatch com `contains: true` — cobre as 3 rotas
+      // (pay-bulk, [id]/pay, [id]/register) sem precisar escapar os colchetes de rota dinâmica.
+      "/api/church-assignments/": ["./node_modules/pdfkit/js/data/**/*"],
+    },
+  },
   async rewrites() {
     return {
       beforeFiles: [
