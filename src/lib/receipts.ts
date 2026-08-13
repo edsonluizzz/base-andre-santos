@@ -106,11 +106,16 @@ function buildReceiptPdf(opts: {
     doc.moveDown(0.2);
     doc.moveTo(colX, doc.y).lineTo(colX + pageWidth, doc.y).strokeColor("#ccc").stroke();
     doc.moveDown(0.6);
+    // as chamadas de .text() com x explícito dentro do loop acima deixam o cursor
+    // doc.x preso na coluna "Valor" (col4) — sem resetar, todo texto seguinte sem x
+    // explícito herda essa posição e "espreme"/corta o texto na margem direita.
+    doc.x = colX;
 
     if (opts.paymentMethod) {
-      doc.font("Helvetica").fontSize(10).text(`Forma de pagamento: ${PAYMENT_METHOD_LABEL[opts.paymentMethod]}`);
+      doc.font("Helvetica").fontSize(10).text(`Forma de pagamento: ${PAYMENT_METHOD_LABEL[opts.paymentMethod]}`, colX, doc.y, { width: pageWidth });
     }
-    doc.font("Helvetica-Bold").fontSize(12).text(`Valor total: ${fmtMoney(opts.total)}`, { align: "right" });
+    doc.font("Helvetica-Bold").fontSize(12).text(`Valor total: ${fmtMoney(opts.total)}`, colX, doc.y, { width: pageWidth, align: "right" });
+    doc.x = colX;
     doc.moveDown(1.2);
 
     doc.font("Helvetica").fontSize(10.5).text(
@@ -319,7 +324,7 @@ export async function generateAndSendReceipt(
 export async function regenerateReceiptPdf(db: PrismaClient, receiptId: string, campaignId: string): Promise<string> {
   const receipt = await db.paymentReceipt.findUnique({
     where: { id: receiptId },
-    select: { id: true, collaboratorId: true, amount: true, rate: true, assignmentIds: true, payingEntityId: true },
+    select: { id: true, collaboratorId: true, amount: true, rate: true, assignmentIds: true, payingEntityId: true, paymentMethod: true },
   });
   if (!receipt) throw new Error("Recibo não encontrado");
 
@@ -366,7 +371,7 @@ export async function regenerateReceiptPdf(db: PrismaClient, receiptId: string, 
     rate: receipt.rate,
     rows: assignments.map((a) => ({ locality: a.church.regional ?? "Não informado", deliveredAt: a.deliveredAt, value: a.paymentValue ?? receipt.rate })),
     total: receipt.amount,
-    paymentMethod: null,
+    paymentMethod: receipt.paymentMethod,
   });
 
   if (!process.env.BLOB_READ_WRITE_TOKEN) throw new Error("BLOB_READ_WRITE_TOKEN ausente");
