@@ -189,27 +189,44 @@ export function toZapiPhone(raw: string): string | null {
 
 export type ZapiSendResult = { zaapId?: string; messageId?: string; [k: string]: unknown };
 
+/**
+ * A Z-API retorna HTTP 200 mesmo quando aceita a chamada mas não enfileira a
+ * mensagem de verdade (ex: sessão do WhatsApp desconectada do celular) — sem
+ * isso, o app marcava "enviado" com sucesso mesmo quando nada saiu.
+ */
+function assertQueued(result: ZapiSendResult, endpoint: string): ZapiSendResult {
+  if (!result.messageId && !result.zaapId) {
+    throw new Error(`Z-API aceitou ${endpoint} mas não confirmou o envio (sessão do WhatsApp desconectada?)`);
+  }
+  return result;
+}
+
 export async function zapiSendText(cid: string, to: string, message: string): Promise<ZapiSendResult> {
-  return zapiFetch<ZapiSendResult>(cid, "send-text", { method: "POST", body: { phone: to, message } });
+  const result = await zapiFetch<ZapiSendResult>(cid, "send-text", { method: "POST", body: { phone: to, message } });
+  return assertQueued(result, "send-text");
 }
 
 export async function zapiSendImage(cid: string, to: string, url: string, caption?: string): Promise<ZapiSendResult> {
-  return zapiFetch<ZapiSendResult>(cid, "send-image", { method: "POST", body: { phone: to, image: url, ...(caption ? { caption } : {}) } });
+  const result = await zapiFetch<ZapiSendResult>(cid, "send-image", { method: "POST", body: { phone: to, image: url, ...(caption ? { caption } : {}) } });
+  return assertQueued(result, "send-image");
 }
 
 export async function zapiSendVideo(cid: string, to: string, url: string, caption?: string): Promise<ZapiSendResult> {
-  return zapiFetch<ZapiSendResult>(cid, "send-video", { method: "POST", body: { phone: to, video: url, ...(caption ? { caption } : {}) } });
+  const result = await zapiFetch<ZapiSendResult>(cid, "send-video", { method: "POST", body: { phone: to, video: url, ...(caption ? { caption } : {}) } });
+  return assertQueued(result, "send-video");
 }
 
 export async function zapiSendAudio(cid: string, to: string, url: string): Promise<ZapiSendResult> {
-  return zapiFetch<ZapiSendResult>(cid, "send-audio", { method: "POST", body: { phone: to, audio: url } });
+  const result = await zapiFetch<ZapiSendResult>(cid, "send-audio", { method: "POST", body: { phone: to, audio: url } });
+  return assertQueued(result, "send-audio");
 }
 
 export async function zapiSendDocument(cid: string, to: string, url: string, fileName: string): Promise<ZapiSendResult> {
-  return zapiFetch<ZapiSendResult>(cid, "send-document/pdf", {
+  const result = await zapiFetch<ZapiSendResult>(cid, "send-document/pdf", {
     method: "POST",
     body: { phone: to, document: url, fileName },
   });
+  return assertQueued(result, "send-document/pdf");
 }
 
 // ─── Histórico de conversa (Fase 2 — inbox no painel) ───────────────────────
