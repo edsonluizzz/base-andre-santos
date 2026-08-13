@@ -57,16 +57,26 @@ function ChannelIndicator({
 }) {
   if (status === "SKIPPED") {
     return (
-      <span className="inline-flex items-center gap-1 text-muted-foreground/50" title="Sem contato cadastrado">
+      <button
+        onClick={onResend}
+        disabled={busy}
+        className="inline-flex items-center gap-1 text-muted-foreground/50 hover:text-foreground disabled:opacity-50"
+        title="Sem contato cadastrado — clique pra tentar enviar mesmo assim"
+      >
         <Icon className="w-3.5 h-3.5" /> —
-      </span>
+      </button>
     );
   }
   if (status === "SENT") {
     return (
-      <span className="inline-flex items-center gap-1 text-emerald-500" title="Enviado">
+      <button
+        onClick={onResend}
+        disabled={busy}
+        className="inline-flex items-center gap-1 text-emerald-500 hover:text-emerald-400 disabled:opacity-50"
+        title="Enviado — clique pra reenviar"
+      >
         <Icon className="w-3.5 h-3.5" /> ✓
-      </span>
+      </button>
     );
   }
   return (
@@ -343,16 +353,16 @@ export function FinanceiroTab() {
                             busy={resendBusyKey === `${c.latestReceipt.id}:whatsapp`}
                             onResend={() => resendChannel(c.latestReceipt!.id, "whatsapp")}
                           />
-                          {c.latestReceipt.pdfUrl && (
-                            <a
-                              href={c.latestReceipt.pdfUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-muted-foreground hover:text-foreground"
-                              title="Baixar PDF"
-                            >
-                              <Download className="w-3.5 h-3.5" />
+                          {c.latestReceipt.pdfUrl ? (
+                            <a href={c.latestReceipt.pdfUrl} target="_blank" rel="noopener noreferrer" title="Ver / baixar PDF do recibo">
+                              <Button size="sm" variant="outline" className="h-6 px-2 gap-1 text-xs">
+                                <Download className="w-3 h-3" /> PDF
+                              </Button>
                             </a>
+                          ) : (
+                            <span className="text-muted-foreground/40" title="Recibo sem PDF gerado">
+                              <Download className="w-3.5 h-3.5" />
+                            </span>
                           )}
                         </div>
                       ) : (

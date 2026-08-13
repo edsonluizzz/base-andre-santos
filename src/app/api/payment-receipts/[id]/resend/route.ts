@@ -38,9 +38,6 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     }
 
     if (channel === "email") {
-      if (receipt.emailStatus === "SENT") {
-        return NextResponse.json({ error: "Email já foi enviado" }, { status: 400 });
-      }
       if (!receipt.collaborator.email) {
         return NextResponse.json({ error: "Colaborador sem email cadastrado" }, { status: 400 });
       }
@@ -69,9 +66,6 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     }
 
     // channel === "whatsapp"
-    if (receipt.whatsappStatus === "SENT") {
-      return NextResponse.json({ error: "WhatsApp já foi enviado" }, { status: 400 });
-    }
     if (!receipt.collaborator.phone) {
       return NextResponse.json({ error: "Colaborador sem telefone cadastrado" }, { status: 400 });
     }
