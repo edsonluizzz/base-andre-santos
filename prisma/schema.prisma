@@ -18,6 +18,7 @@ model Campaign {
   // Personalização do candidato (Sprint 3)
   candidateName   String?
   candidatePhoto  String?  @db.Text
+  office          String? // cargo pretendido (ex: "Deputado Estadual") — usado no recibo eleitoral
   party           String?
   district        String?
   electionYear    Int?

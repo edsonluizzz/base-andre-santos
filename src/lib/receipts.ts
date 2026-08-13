@@ -165,7 +165,7 @@ export async function generateAndSendReceipt(
       }),
       db.campaign.findUnique({
         where: { id: campaignId },
-        select: { candidateName: true, name: true, party: true, electionYear: true },
+        select: { candidateName: true, name: true, office: true, party: true, electionYear: true },
       }),
       db.settings.upsert({
         where: { id: "singleton" },
@@ -229,7 +229,7 @@ export async function generateAndSendReceipt(
         collaboratorName: collaborator.name,
         collaboratorCpf: collaborator.cpf,
         candidateName,
-        office: payingEntity?.office ?? null,
+        office: payingEntity?.office ?? campaign?.office ?? null,
         party: payingEntity?.party ?? campaign?.party ?? null,
         electionYear: payingEntity?.electionYear ?? campaign?.electionYear ?? null,
         payerRazaoSocial,
@@ -325,7 +325,7 @@ export async function regenerateReceiptPdf(db: PrismaClient, receiptId: string, 
 
   const [collaborator, campaign, settings, assignments, payingEntity] = await Promise.all([
     db.collaborator.findUnique({ where: { id: receipt.collaboratorId }, select: { name: true, cpf: true } }),
-    db.campaign.findUnique({ where: { id: campaignId }, select: { candidateName: true, name: true, party: true, electionYear: true } }),
+    db.campaign.findUnique({ where: { id: campaignId }, select: { candidateName: true, name: true, office: true, party: true, electionYear: true } }),
     db.settings.findUnique({
       where: { id: "singleton" },
       select: {
@@ -356,7 +356,7 @@ export async function regenerateReceiptPdf(db: PrismaClient, receiptId: string, 
     collaboratorName: collaborator.name,
     collaboratorCpf: collaborator.cpf,
     candidateName,
-    office: payingEntity?.office ?? null,
+    office: payingEntity?.office ?? campaign?.office ?? null,
     party: payingEntity?.party ?? campaign?.party ?? null,
     electionYear: payingEntity?.electionYear ?? campaign?.electionYear ?? null,
     payerRazaoSocial,
