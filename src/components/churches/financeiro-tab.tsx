@@ -103,6 +103,7 @@ export function FinanceiroTab() {
   const [expanded, setExpanded] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [resendBusyKey, setResendBusyKey] = useState<string | null>(null);
+  const [regenBusyId, setRegenBusyId] = useState<string | null>(null);
   const [entities, setEntities] = useState<PayingEntity[]>([]);
   const [entityFilter, setEntityFilter] = useState<string>(""); // "" = todas, "DEFAULT" = padrão, ou id
   const [payerBusyId, setPayerBusyId] = useState<string | null>(null);
@@ -211,6 +212,15 @@ export function FinanceiroTab() {
     if (res.ok) { toast.success("Pagamentos marcados"); load(); }
     else { const d = await res.json().catch(() => ({})); toast.error(d.error ?? "Erro ao marcar pagos"); }
     setBusyId(null);
+  }
+
+  async function regeneratePdf(receiptId: string) {
+    setRegenBusyId(receiptId);
+    const res = await fetch(`/api/payment-receipts/${receiptId}/regenerate-pdf`, { method: "POST" });
+    const d = await res.json().catch(() => ({}));
+    if (res.ok) { toast.success("PDF gerado"); load(); }
+    else toast.error(d.error ?? "Erro ao gerar PDF");
+    setRegenBusyId(null);
   }
 
   async function resendChannel(receiptId: string, channel: "email" | "whatsapp") {
@@ -360,9 +370,14 @@ export function FinanceiroTab() {
                               </Button>
                             </a>
                           ) : (
-                            <span className="text-muted-foreground/40" title="Recibo sem PDF gerado">
-                              <Download className="w-3.5 h-3.5" />
-                            </span>
+                            <Button
+                              size="sm" variant="outline" className="h-6 px-2 gap-1 text-xs"
+                              disabled={regenBusyId === c.latestReceipt.id}
+                              onClick={() => regeneratePdf(c.latestReceipt!.id)}
+                              title="Recibo sem PDF — clique para gerar"
+                            >
+                              <Download className="w-3 h-3" /> {regenBusyId === c.latestReceipt.id ? "Gerando..." : "Gerar PDF"}
+                            </Button>
                           )}
                         </div>
                       ) : (

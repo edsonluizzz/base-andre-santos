@@ -309,3 +309,74 @@ export async function generateAndSendReceipt(
     console.error("[receipts] generateAndSendReceipt erro:", err);
   }
 }
+
+/**
+ * Regenera o PDF de um recibo já existente (ex: recibos gerados enquanto o bug
+ * de bundling do pdfkit em serverless estava ativo, com pdfUrl null). Não
+ * reenvia email/WhatsApp — isso fica a cargo do botão de reenvio, que já
+ * funciona assim que o pdfUrl estiver preenchido.
+ */
+export async function regenerateReceiptPdf(db: PrismaClient, receiptId: string, campaignId: string): Promise<string> {
+  const receipt = await db.paymentReceipt.findUnique({
+    where: { id: receiptId },
+    select: { id: true, collaboratorId: true, amount: true, rate: true, assignmentIds: true, payingEntityId: true },
+  });
+  if (!receipt) throw new Error("Recibo não encontrado");
+
+  const [collaborator, campaign, settings, assignments, payingEntity] = await Promise.all([
+    db.collaborator.findUnique({ where: { id: receipt.collaboratorId }, select: { name: true, cpf: true } }),
+    db.campaign.findUnique({ where: { id: campaignId }, select: { candidateName: true, name: true, party: true, electionYear: true } }),
+    db.settings.findUnique({
+      where: { id: "singleton" },
+      select: {
+        cnpj: true, razaoSocial: true, cnpjLogradouro: true, cnpjNumero: true,
+        cnpjComplemento: true, cnpjBairro: true, cnpjCep: true, cnpjMunicipio: true, cnpjUf: true,
+      },
+    }),
+    db.churchAssignment.findMany({
+      where: { id: { in: receipt.assignmentIds } },
+      select: { deliveredAt: true, paymentValue: true, church: { select: { regional: true } } },
+    }),
+    receipt.payingEntityId ? db.payingEntity.findUnique({ where: { id: receipt.payingEntityId } }) : Promise.resolve(null),
+  ]);
+  if (!collaborator) throw new Error("Colaborador não encontrado");
+
+  const candidateName = payingEntity?.candidateName ?? payingEntity?.name ?? campaign?.candidateName ?? campaign?.name ?? "Campanha";
+  const payerRazaoSocial = payingEntity?.razaoSocial ?? settings?.razaoSocial ?? null;
+  const payerCnpj = payingEntity?.cnpj ?? settings?.cnpj ?? null;
+  const payerAddress = payingEntity
+    ? formatEndereco(payingEntity)
+    : formatEndereco({
+        logradouro: settings?.cnpjLogradouro, numero: settings?.cnpjNumero, complemento: settings?.cnpjComplemento,
+        bairro: settings?.cnpjBairro, cep: settings?.cnpjCep, municipio: settings?.cnpjMunicipio, uf: settings?.cnpjUf,
+      });
+
+  const pdfBuffer = await buildReceiptPdf({
+    receiptNumber: receipt.id.slice(-8).toUpperCase(),
+    collaboratorName: collaborator.name,
+    collaboratorCpf: collaborator.cpf,
+    candidateName,
+    office: payingEntity?.office ?? null,
+    party: payingEntity?.party ?? campaign?.party ?? null,
+    electionYear: payingEntity?.electionYear ?? campaign?.electionYear ?? null,
+    payerRazaoSocial,
+    payerCnpj,
+    payerAddress,
+    issuedAt: new Date(),
+    rate: receipt.rate,
+    rows: assignments.map((a) => ({ locality: a.church.regional ?? "Não informado", deliveredAt: a.deliveredAt, value: a.paymentValue ?? receipt.rate })),
+    total: receipt.amount,
+    paymentMethod: null,
+  });
+
+  if (!process.env.BLOB_READ_WRITE_TOKEN) throw new Error("BLOB_READ_WRITE_TOKEN ausente");
+  const safeName = collaborator.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+  const blob = await put(`payment-receipts/${safeName}-${receipt.id}.pdf`, pdfBuffer, {
+    access: "public",
+    token: process.env.BLOB_READ_WRITE_TOKEN,
+    addRandomSuffix: true,
+    contentType: "application/pdf",
+  });
+  await db.paymentReceipt.update({ where: { id: receipt.id }, data: { pdfUrl: blob.url } });
+  return blob.url;
+}
