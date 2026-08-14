@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { EbookConfig } from "@/lib/ebooks";
+import { CampaignFooterNote } from "@/components/campaign-footer-note";
 
 type FormState = "idle" | "loading" | "success" | "error";
 
@@ -403,9 +404,12 @@ export function EbookForm({ ebook }: { ebook: EbookConfig }) {
       </main>
 
       <footer className="relative z-10 py-5 text-center">
-        <p className="text-xs" style={{ color: "rgba(255,255,255,0.2)" }}>
-          © {new Date().getFullYear()} {ebook.footerNote ?? "André Santos · Pré-candidato a Deputado Estadual PR 2026"}
-        </p>
+        <CampaignFooterNote className="space-y-0.5" lineClassName="text-xs text-white/20" />
+        {ebook.footerNote && (
+          <p className="mt-1 text-[10px]" style={{ color: "rgba(255,255,255,0.15)" }}>
+            {ebook.footerNote}
+          </p>
+        )}
       </footer>
     </div>
   );
