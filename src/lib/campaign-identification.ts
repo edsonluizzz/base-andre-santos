@@ -37,12 +37,19 @@ export function candidateFullLabel(official: boolean = isOfficialCampaignPeriod(
     : "André Santos — Pré-candidato a Deputado Estadual PR 2026";
 }
 
+// Até 16/08 o snapshot de servidor ficava fixo em "pré-campanha" por
+// segurança (nunca afirmar "Candidato" antes da hora); passada a data
+// oficial, não há mais risco de antecipar nada — os dois snapshots
+// reavaliam a data real, então todo novo build já congela o HTML
+// estático como "Candidato" (sem isso, o HTML servido a quem não roda JS
+// — crawlers, prévia de link — ficaria preso em "Pré-candidato" pra
+// sempre, mesmo em builds pós-16/08).
 export function subscribeCampaignPeriod(): () => void {
   return () => {};
 }
 
 export function getCampaignPeriodServerSnapshot(): boolean {
-  return false;
+  return isOfficialCampaignPeriod();
 }
 
 export function getCampaignPeriodClientSnapshot(): boolean {
