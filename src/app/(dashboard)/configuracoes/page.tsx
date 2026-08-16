@@ -209,7 +209,7 @@ function ConfiguracoesContent() {
               <h2 className="text-sm font-semibold">Dados Cadastrais (CNPJ)</h2>
             </div>
             <p className="text-[11px] text-muted-foreground -mt-2">
-              Dados do comitê financeiro eleitoral, conforme cartão CNPJ emitido pela Receita Federal.
+              Dados cadastrais da campanha, conforme cartão CNPJ emitido pela Receita Federal.
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>

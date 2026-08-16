@@ -3,7 +3,7 @@
 import { useSyncExternalStore } from "react";
 import {
   candidateStatusLabel,
-  COMITE_FINANCEIRO,
+  CAMPAIGN_ENTITY,
   subscribeCampaignPeriod,
   getCampaignPeriodServerSnapshot,
   getCampaignPeriodClientSnapshot,
@@ -29,7 +29,7 @@ export function CampaignFooterNote({ className, lineClassName }: Props) {
       </p>
       {official && (
         <p className={lineClassName}>
-          Material de campanha eleitoral · Comitê financeiro: {COMITE_FINANCEIRO.razaoSocial} · CNPJ {COMITE_FINANCEIRO.cnpj}
+          Material de campanha eleitoral · {CAMPAIGN_ENTITY.razaoSocial} · CNPJ {CAMPAIGN_ENTITY.cnpj}
         </p>
       )}
     </div>

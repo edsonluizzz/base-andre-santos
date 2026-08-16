@@ -1,7 +1,7 @@
 /**
  * Identificação de campanha exigida a partir do início oficial da propaganda
  * eleitoral (Lei 9.504/97 + Resolução TSE 23.610/2019, alterada pela 23.755/2026).
- * A troca de "Pré-candidato" pra "Candidato" e a exibição do comitê financeiro
+ * A troca de "Pré-candidato" pra "Candidato" e a exibição da razão social/CNPJ
  * é automática pela data — não precisa de deploy manual no dia 16/08.
  *
  * Usado nas páginas públicas de /ebook (force-static — congeladas no HTML do
@@ -16,7 +16,7 @@ export function isOfficialCampaignPeriod(date: Date = new Date()): boolean {
   return date >= OFFICIAL_CAMPAIGN_START;
 }
 
-export const COMITE_FINANCEIRO = {
+export const CAMPAIGN_ENTITY = {
   razaoSocial: "ELEICAO 2026 ANDRE LUIS DO NASCIMENTO SANTOS DEPUTADO ESTADUAL",
   cnpj: "68.464.730/0001-87",
 };

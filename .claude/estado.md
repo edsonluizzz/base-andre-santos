@@ -35,7 +35,7 @@ e, opcionalmente, já paga na hora — sem precisar da confirmação com foto pe
 ## Sessão 2026-08-09/11 — CNPJ da campanha, fontes pagadoras (chapa conjunta), remoção do Score de Mobilização, incidente crítico de disparo WhatsApp
 
 ### CNPJ da campanha + Fontes Pagadoras (chapa conjunta) — NO AR
-Cadastro de dados do CNPJ (razão social, endereço) do comitê financeiro do André em Configurações →
+Cadastro de dados do CNPJ (razão social, endereço) da campanha do André em Configurações →
 "Dados Cadastrais (CNPJ)", persistido em `Settings` e estampado nos recibos eleitorais em PDF. Como a
 campanha roda em chapa conjunta com outros candidatos que também pagam cabos eleitorais, criado o model
 `PayingEntity` (CNPJ/razão social/endereço/candidato próprios por fonte). Cada entrega (`ChurchAssignment`)

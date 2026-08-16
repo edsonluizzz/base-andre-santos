@@ -550,7 +550,7 @@ model Settings {
   googleRefreshToken   String?  @db.Text
   whatsappGroupLink    String?  // Link de convite do grupo WhatsApp de apoiadores
   deliveryPaymentValue Float    @default(10) // R$ por entrega confirmada (ChurchAssignment ENTREGUE), por membro da dupla
-  // Dados cadastrais do CNPJ da campanha (comitê financeiro eleitoral)
+  // Dados cadastrais do CNPJ da campanha
   cnpj                 String?
   razaoSocial          String?
   cnpjLogradouro       String?

@@ -67,7 +67,7 @@ function buildReceiptPdf(opts: {
     if (opts.payerRazaoSocial || opts.payerCnpj) {
       doc.moveDown(0.3);
       doc.fontSize(9).fillColor("#333");
-      if (opts.payerRazaoSocial) doc.text(`Comitê financeiro: ${opts.payerRazaoSocial}`);
+      if (opts.payerRazaoSocial) doc.text(opts.payerRazaoSocial);
       if (opts.payerCnpj) doc.text(`CNPJ: ${formatCnpj(opts.payerCnpj)}`);
       if (opts.payerAddress) doc.text(opts.payerAddress);
       doc.fillColor("#000").fontSize(10);
