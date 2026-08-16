@@ -31,7 +31,7 @@ export const EBOOKS: Record<string, EbookConfig> = {
     ctaDownloadLabel: "Baixar Quem Sou Eu",
     metaTitle: "Quem Sou Eu — Ebook Gratuito | André Santos",
     metaDescription:
-      "Uma jornada para descobrir o meu propósito. Baixe agora o ebook gratuito de André Santos, pré-candidato a Deputado Estadual pelo Paraná.",
+      "Uma jornada para descobrir o meu propósito. Baixe agora o ebook gratuito de André Santos, candidato a Deputado Estadual pelo Paraná (nº 30777).",
     whatsappGroupUrl: WHATSAPP_GROUP_URL,
     postRedirectUrl: POST_REDIRECT_URL,
   },

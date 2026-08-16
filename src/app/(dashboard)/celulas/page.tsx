@@ -306,7 +306,7 @@ function MinhaCelula() {
                     </button>
                   </div>
                   <a
-                    href={`https://wa.me/?text=${encodeURIComponent(`Olá! Faça parte da base de apoio do André Santos 2026, pré-candidato a Deputado Estadual pelo PR. Cadastre-se por este link: ${referralLink}`)}`}
+                    href={`https://wa.me/?text=${encodeURIComponent(`Olá! Faça parte da base de apoio do André Santos 2026, candidato a Deputado Estadual pelo PR (nº 30777). Cadastre-se por este link: ${referralLink}`)}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center justify-center gap-2 w-full rounded-xl py-2.5 text-sm font-medium bg-green-500/15 text-green-400 border border-green-500/30 hover:bg-green-500/25 transition-colors"

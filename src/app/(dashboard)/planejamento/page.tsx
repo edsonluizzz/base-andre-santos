@@ -281,7 +281,7 @@ export default async function PlanejamentoPage() {
       {/* ── KPIs estáticos ──────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[
-          { label: "Score Atual",    value: "68/100",  sub: "Pré-candidato em construção",        color: "text-yellow-400", icon: BarChart2  },
+          { label: "Score Atual",    value: "68/100",  sub: "Candidato em construção",        color: "text-yellow-400", icon: BarChart2  },
           { label: "Score Projetado",value: "76–82",   sub: "Com operação completa",              color: "text-green-400",  icon: TrendingUp },
           { label: "Sentimento +",   value: "91,4%",   sub: "Dos 336 comentários analisados",     color: "text-primary",    icon: Heart      },
           { label: "Engajamento",    value: "1,96%",   sub: "Posts próprios (50 analisados)",     color: "text-blue-400",   icon: Activity   },

@@ -21,10 +21,20 @@ export const CAMPAIGN_ENTITY = {
   cnpj: "68.464.730/0001-87",
 };
 
+export const CANDIDATE_NUMBER = "30777";
+
+/** Rótulo curto — pra usar depois de "André Santos —" (não repete o nome). */
 export function candidateStatusLabel(official: boolean = isOfficialCampaignPeriod()): string {
   return official
-    ? "Candidato a Deputado Estadual PR 2026 — NOVO"
+    ? `${CANDIDATE_NUMBER} — Candidato a Deputado Estadual PR`
     : "Pré-candidato a Deputado Estadual PR 2026";
+}
+
+/** Rótulo completo autocontido — pra usar sozinho (título de página, meta tags). */
+export function candidateFullLabel(official: boolean = isOfficialCampaignPeriod()): string {
+  return official
+    ? `${CANDIDATE_NUMBER} — André Santos — Candidato a Deputado Estadual PR`
+    : "André Santos — Pré-candidato a Deputado Estadual PR 2026";
 }
 
 export function subscribeCampaignPeriod(): () => void {

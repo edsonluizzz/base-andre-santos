@@ -299,7 +299,7 @@ export function CadastroForm() {
           <div>
             <p className="text-xs tracking-[3px] uppercase" style={{ color: "rgba(255,107,4,0.7)" }}>Base de Apoio 2026</p>
             <h1 className="text-2xl font-bold text-white mt-1">André Santos</h1>
-            <p className="text-slate-400 text-sm mt-1">Pré-candidato a Deputado Estadual · PR</p>
+            <p className="text-slate-400 text-sm mt-1">30777 · Candidato a Deputado Estadual · PR</p>
           </div>
           {sourceParam === "EVENTO" ? (
             <div className="rounded-2xl px-4 py-3" style={{ background: "rgba(255,107,4,0.08)", border: "1px solid rgba(255,107,4,0.15)" }}>

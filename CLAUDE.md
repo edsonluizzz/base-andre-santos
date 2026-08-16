@@ -22,7 +22,7 @@
 
 ## Domínio do Produto
 
-Sistema interno de gestão da campanha do pré-candidato André Santos a Deputado Estadual PR 2026.
+Sistema interno de gestão da campanha do candidato André Santos (nº 30777) a Deputado Estadual PR 2026.
 
 ### Hierarquia de Cargos (CollaboratorRole)
 ```
