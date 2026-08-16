@@ -1,8 +1,86 @@
 # Estado — Ovile Eleitoral (Base André Santos)
 
-**Última atualização:** 2026-08-11 (sessão: módulo financeiro restrito)
+**Última atualização:** 2026-08-16 (sessão: recibos/pdfkit, valor editável, início oficial da campanha)
 
 ---
+
+## Sessão 2026-08-12/16 — pdfkit em produção, recibos, valor editável, início oficial da campanha (16/08)
+
+### Bug crítico: recibos (PDF/email/WhatsApp) não saíam em produção — RESOLVIDO
+`PaymentReceipt.pdfUrl` ficava `null` e `emailStatus`/`whatsappStatus` travados em `SKIPPED`. Causa raiz
+em duas camadas, achada via `vercel logs` (não dava pra reproduzir só local):
+1. O webpack do Next **embutia o pdfkit inteiro no chunk da rota** e reescrevia `__dirname`, fazendo o
+   pdfkit procurar seus `.afm` de fonte em `.next/server/chunks/data/` (que não existe) em vez de
+   `node_modules/pdfkit/js/data/` real — `ENOENT` silencioso.
+2. Corrigido com **duas configs juntas** em `next.config.mjs`: `outputFileTracingIncludes` (garante que
+   os `.afm` entrem no bundle) **+** `experimental.serverComponentsExternalPackages: ["pdfkit"]` (impede
+   o webpack de embutir o módulo, preservando seu `__dirname`) — a primeira sozinha **não bastava**.
+3. `RESEND_API_KEY` também estava ausente em produção (só `RESEND_FROM` configurada) — adicionada via
+   `vercel env add`.
+4. Bug relacionado no `zapi.ts`: as funções `zapiSend*` não validavam se a resposta da Z-API trazia
+   `messageId`/`zaapId` — um HTTP 200 "vazio" (típico quando a sessão do WhatsApp cai) fazia o app marcar
+   `SENT` mesmo sem nada ter saído de fato. Corrigido com `assertQueued()`.
+5. Bug de layout no PDF do recibo: `doc.x` do pdfkit ficava preso na coluna "Valor" da tabela depois do
+   loop de linhas — todo texto seguinte sem `x` explícito ("Forma de pagamento", parágrafo de
+   declaração) saía espremido/cortado na margem direita. Corrigido resetando `doc.x` e passando
+   `x`/`width` explícitos.
+6. Recibos antigos gerados durante o bug (pdfUrl null) recuperados com `regenerateReceiptPdf()` (nova
+   função em `receipts.ts`) + botão "Gerar PDF" na aba Financeiro de `/igrejas`.
+7. `Campaign.office` não existia — recibo da fonte pagadora padrão (André, sem `PayingEntity`) sempre
+   caía no fallback genérico "candidato(a)" em vez de "Deputado Estadual". Campo adicionado, populado em
+   produção.
+
+### Exports XLSX + PDF em todos os relatórios financeiros — NO AR
+Helper genérico `src/lib/pdf-table.ts` (paginação/cabeçalho repetido) reaproveitado em: colaboradores,
+lançamentos (`/financeiro/lancamentos`), pagamentos de cabos eleitorais (Financeiro de `/igrejas`) e o
+novo relatório **Cabos Eleitorais / TSE** (`/financeiro/cabos-eleitorais`) — uma linha por recibo (data,
+nome, CPF, valor, forma de pagamento, fonte pagadora, nº do recibo), com filtro por fonte pagadora,
+pronto pra digitar no SPCE. PDF de colaboradores limitado a 3000 linhas (acima disso, só XLSX).
+
+### CPF do colaborador editável — NO AR
+Campo `cpf` (já existia no schema) agora tem UI: formulário de novo/editar colaborador (com máscara +
+validação de dígito verificador) e exibido no perfil individual.
+
+### Valor de pagamento editável por dupla — NO AR
+`ChurchAssignment.paymentValue` (null = usa `Settings.deliveryPaymentValue` padrão) — editável ao
+atribuir a dupla e depois, na aba Financeiro de Igrejas, antes de pagar (trava após qualquer membro já
+pago). `getPaymentsReport` e `generateAndSendReceipt` somam o valor real de cada entrega em vez de um
+rate fixo × contagem; o PDF do recibo ganhou coluna de valor por linha.
+
+### Ícones de email/WhatsApp do recibo viram botões de disparo — NO AR
+Clicáveis em qualquer estado (não só quando falhou) — permite reenviar mesmo já tendo sido enviado
+antes. Link de PDF virou botão "PDF" explícito.
+
+### Início oficial da campanha (16/08) — identificação de candidato — NO AR (nos dois repos)
+"Pré-candidato" → "Candidato" + número **30777** em todo lugar público, nos dois repositórios
+(`base-andre-santos` e `andre-santos`, que serve `prandresantos.com.br`). Módulo compartilhado
+`src/lib/campaign-identification.ts` (mesmo padrão nos dois repos) com `isOfficialCampaignPeriod()`
+(data de corte 16/08 00:00 BRT) — troca automática, sem precisar de deploy manual no dia.
+
+**Bug achado e corrigido durante a virada:** como as páginas são estáticas (`force-static`/prerendered),
+o "snapshot de servidor" do `useSyncExternalStore` estava fixo em `false` por design (nunca afirmar
+"Candidato" antes da hora num build pré-16/08) — mas isso significava que **todo build, mesmo depois de
+16/08, continuava congelando o HTML estático em "Pré-candidato"** pra quem não roda JS (crawlers, prévia
+de link do WhatsApp — confirmado por print real do Edson). Corrigido: servidor e cliente agora reavaliam
+a mesma `isOfficialCampaignPeriod()`, já que não há mais risco de antecipar nada.
+
+Termo "comitê financeiro" removido de todo lugar (rodapé público, PDF do recibo, Configurações, schema)
+a pedido do Edson — mantido só razão social + CNPJ.
+
+No repo `andre-santos`: favicon.ico e `app/icon.svg` trocados (triângulo "A" → monograma "AS"); moldura
+de `/fotoperfil` atualizada pro tema novo (`tema-as.png`, Edson) com número eleitoral 30777 (antes 30321).
+
+### Descoberta: integração Instagram/Metricool foi removida silenciosamente
+`Campaign.metricoolToken`/`metricoolBlogId` ainda existem no schema, mas a página `/instagram` e as
+rotas `/api/metricool/*` (documentadas como "✅ concluído" em `.claude/estado.md` maio/2026) não existem
+mais no HEAD atual — sumiram num commit (`ae36261`) cuja mensagem não menciona isso. Campos órfãos no
+banco; não investigado a fundo (fora do escopo da sessão).
+
+### Pendente / decisões do Edson
+- Monitoramento de notícias/menções (Google + Instagram + Facebook) sobre o André — pesquisado e
+  explicado a viabilidade (Google é fácil via Alerts ou n8n; Instagram/Facebook não têm API pública pra
+  monitorar menções de terceiros, só ferramenta paga tipo Brand24/Mention.com) — **Edson recusou as
+  opções apresentadas, feature não construída, fica em aberto pra retomar de outro jeito no futuro.**
 
 ## Sessão 2026-08-11 (cont.) — Módulo Financeiro restrito — NO AR
 
