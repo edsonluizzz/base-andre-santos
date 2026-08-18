@@ -18,12 +18,13 @@ type PaymentMethod = "PIX" | "DINHEIRO" | "TRANSFERENCIA" | "BOLETO" | "CARTAO" 
 type Entry = {
   id: string; type: EntryType; amount: number; description: string; category: string | null;
   date: string; paymentMethod: PaymentMethod | null; status: EntryStatus;
-  supplierId: string | null; payingEntityId: string | null; receiptUrl: string | null; notes: string | null;
+  supplierId: string | null; payingEntityId: string | null; contractId: string | null; receiptUrl: string | null; notes: string | null;
   supplier: { id: string; name: string } | null;
   payingEntity: { id: string; name: string } | null;
 };
 type Supplier = { id: string; name: string; active: boolean };
 type PayingEntity = { id: string; name: string; active: boolean };
+type ContractOption = { id: string; code: string; counterpartyName: string };
 
 const STATUS_LABEL: Record<EntryStatus, string> = { PAGO: "Pago", PENDENTE: "Pendente", AGENDADO: "Agendado" };
 const STATUS_STYLE: Record<EntryStatus, string> = {
@@ -45,13 +46,14 @@ const emptyForm = {
   date: new Date().toISOString().slice(0, 10),
   paymentMethod: "" as PaymentMethod | "",
   status: "PENDENTE" as EntryStatus,
-  supplierId: "", payingEntityId: "", receiptUrl: "", notes: "",
+  supplierId: "", payingEntityId: "", contractId: "", receiptUrl: "", notes: "",
 };
 
 function LancamentosContent() {
   const [entries, setEntries] = useState<Entry[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [payingEntities, setPayingEntities] = useState<PayingEntity[]>([]);
+  const [contractOptions, setContractOptions] = useState<ContractOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -80,6 +82,7 @@ function LancamentosContent() {
   useEffect(() => {
     fetch("/api/financeiro/suppliers").then((r) => r.json()).then((j) => setSuppliers(j.data ?? [])).catch(() => {});
     fetch("/api/paying-entities").then((r) => r.json()).then((j) => setPayingEntities(j.data ?? [])).catch(() => {});
+    fetch("/api/financeiro/contratos").then((r) => r.json()).then((j) => setContractOptions(j.data ?? [])).catch(() => {});
   }, []);
 
   function openNew() {
@@ -93,7 +96,7 @@ function LancamentosContent() {
     setForm({
       type: e.type, amount: String(e.amount), description: e.description, category: e.category ?? "",
       date: e.date.slice(0, 10), paymentMethod: e.paymentMethod ?? "", status: e.status,
-      supplierId: e.supplierId ?? "", payingEntityId: e.payingEntityId ?? "",
+      supplierId: e.supplierId ?? "", payingEntityId: e.payingEntityId ?? "", contractId: e.contractId ?? "",
       receiptUrl: e.receiptUrl ?? "", notes: e.notes ?? "",
     });
     setOpen(true);
@@ -127,6 +130,7 @@ function LancamentosContent() {
       status: form.status,
       supplierId: form.supplierId || undefined,
       payingEntityId: form.payingEntityId || null,
+      contractId: form.contractId || null,
       receiptUrl: form.receiptUrl || undefined,
       notes: form.notes || undefined,
     };
@@ -326,6 +330,18 @@ function LancamentosContent() {
                   <SelectItem value="NONE">Nenhum</SelectItem>
                   {suppliers.filter((s) => s.active).map((s) => (
                     <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Contrato vinculado</Label>
+              <Select value={form.contractId || "NONE"} onValueChange={(v) => setForm({ ...form, contractId: v === "NONE" ? "" : (v ?? "") })}>
+                <SelectTrigger><SelectValue placeholder="Nenhum" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="NONE">Nenhum</SelectItem>
+                  {contractOptions.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>{c.code} — {c.counterpartyName}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>

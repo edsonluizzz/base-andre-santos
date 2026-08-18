@@ -12,6 +12,7 @@ const updateSchema = z.object({
   status: z.enum(["PAGO", "PENDENTE", "AGENDADO"]).optional(),
   supplierId: z.string().nullable().optional(),
   payingEntityId: z.string().nullable().optional(),
+  contractId: z.string().nullable().optional(),
   receiptUrl: z.string().nullable().optional(),
   notes: z.string().nullable().optional(),
 });

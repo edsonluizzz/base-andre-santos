@@ -12,6 +12,7 @@ const createSchema = z.object({
   status: z.enum(["PAGO", "PENDENTE", "AGENDADO"]).optional(),
   supplierId: z.string().optional(),
   payingEntityId: z.string().nullable().optional(),
+  contractId: z.string().nullable().optional(),
   receiptUrl: z.string().optional(),
   notes: z.string().optional(),
 });

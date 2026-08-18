@@ -46,6 +46,7 @@ model Campaign {
   suppliers      Supplier[]
   financialEntries FinancialEntry[]
   materialRequests MaterialRequest[]
+  contracts      Contract[]
 }
 
 /// Fonte pagadora de cabos eleitorais — usada quando a campanha roda em chapa
@@ -77,6 +78,7 @@ model PayingEntity {
   assignments ChurchAssignment[]
   receipts    PaymentReceipt[]
   financialEntries FinancialEntry[]
+  contracts   Contract[]
 
   @@index([campaignId])
 }
@@ -96,8 +98,9 @@ model Supplier {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  campaign Campaign         @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-  entries  FinancialEntry[]
+  campaign  Campaign         @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  entries   FinancialEntry[]
+  contracts Contract[]
 
   @@index([campaignId])
 }
@@ -135,6 +138,7 @@ model FinancialEntry {
   status         FinancialEntryStatus @default(PENDENTE)
   supplierId     String?
   payingEntityId String? // null = fonte padrão (candidato da própria campanha, CNPJ em Settings)
+  contractId     String? // vincula o lançamento ao contrato que o originou (ex.: parcela de um contrato de prestação de serviços)
   receiptUrl     String?              @db.Text
   notes          String?
   createdById    String
@@ -144,11 +148,80 @@ model FinancialEntry {
   campaign     Campaign      @relation(fields: [campaignId], references: [id], onDelete: Cascade)
   supplier     Supplier?     @relation(fields: [supplierId], references: [id], onDelete: SetNull)
   payingEntity PayingEntity? @relation(fields: [payingEntityId], references: [id], onDelete: SetNull)
+  contract     Contract?     @relation(fields: [contractId], references: [id], onDelete: SetNull)
   createdBy    User          @relation(fields: [createdById], references: [id])
 
   @@index([campaignId])
   @@index([supplierId])
   @@index([payingEntityId])
+  @@index([contractId])
+}
+
+enum ContractTemplateType {
+  PRESTACAO_SERVICOS_PJ
+  PRESTACAO_SERVICOS_PF
+  MILITANCIA
+  TERMO_DOACAO
+  TERMO_CESSAO
+}
+
+enum ContractStatus {
+  GERADO
+  ASSINADO
+  CANCELADO
+}
+
+/// Contrato/termo eleitoral emitido pelo módulo financeiro (restrito a isFinanceAdmin).
+/// O PDF é gerado a partir de um dos modelos padronizados da campanha (ver
+/// src/lib/contracts.ts) — código sequencial por campanha (CT-001, CT-002...).
+model Contract {
+  id           String               @id @default(cuid())
+  campaignId   String               @default("andre-santos-2026")
+  code         String
+  templateType ContractTemplateType
+  status       ContractStatus       @default(GERADO)
+
+  // Contraparte (Contratado/Doador/Cedente conforme templateType)
+  counterpartyName      String
+  counterpartyDocument  String // CNPJ ou CPF conforme templateType
+  counterpartyAddress   String?
+  counterpartyCity      String?
+  counterpartyUf        String?
+  counterpartyPhone     String?
+  counterpartyEmail     String?
+  representativeName    String? // sócio/representante — só templates PJ
+  representativeCpf     String?
+  representativeAddress String?
+
+  objectDescription  String    @db.Text
+  eventAddress       String? // local/horário de prestação — rótulo varia por templateType
+  startDate          DateTime?
+  endDate            DateTime?
+  totalValue         Float?
+  priceJustification String?   @db.Text
+  paymentTerms       String?   @db.Text // texto livre — permite parcelamento (ex.: "entrada X + saldo Y")
+  signatureDate      DateTime  @default(now())
+  forumCity          String?
+  forumUf            String?
+
+  supplierId     String?
+  payingEntityId String?
+  pdfUrl         String? @db.Text
+  notes          String? @db.Text
+  createdById    String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  campaign         Campaign         @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  supplier         Supplier?        @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  payingEntity     PayingEntity?    @relation(fields: [payingEntityId], references: [id], onDelete: SetNull)
+  createdBy        User             @relation(fields: [createdById], references: [id])
+  financialEntries FinancialEntry[]
+
+  @@unique([campaignId, code])
+  @@index([campaignId])
+  @@index([supplierId])
 }
 
 model Account {
@@ -194,6 +267,7 @@ model User {
   financialEntries FinancialEntry[]
   approvedMaterialRequests MaterialRequest[] @relation("ApprovedMaterialRequests")
   deliveredMaterialRequests MaterialRequest[] @relation("DeliveredMaterialRequests")
+  contracts Contract[]
   @@index([campaignId])
 }
 
@@ -811,6 +885,16 @@ model MaterialRequest {
   termAcceptedAt   DateTime
   termIp           String?
   termUserAgent    String?               @db.Text
+
+  // Endereço completo de entrega — snapshot no momento do pedido (a pessoa
+  // pode se mudar depois; a entrega física precisa do endereço de então).
+  deliveryCep          String?
+  deliveryLogradouro   String?
+  deliveryNumero       String?
+  deliveryComplemento  String?
+  deliveryBairro       String?
+  deliveryMunicipio    String?
+  deliveryUf           String?
 
   pdfUrl           String?               @db.Text
   emailStatus      ReceiptChannelStatus  @default(SKIPPED)
