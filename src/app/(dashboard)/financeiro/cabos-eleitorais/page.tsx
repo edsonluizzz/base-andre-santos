@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Wallet, FileDown, FileText, Download } from "lucide-react";
+import { Wallet, FileDown, FileText, Download, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FinanceGuard } from "@/components/financeiro/finance-guard";
@@ -54,6 +55,13 @@ function CabosEleitoraisContent() {
   useEffect(() => {
     fetch("/api/paying-entities").then((r) => r.json()).then((j) => setPayingEntities(j.data ?? [])).catch(() => {});
   }, []);
+
+  async function remove(r: Row) {
+    if (!confirm(`Excluir o recibo de ${r.collaboratorName} (${fmt(r.amount)})? Esta ação não pode ser desfeita.`)) return;
+    const res = await fetch(`/api/payment-receipts/${r.id}`, { method: "DELETE" });
+    if (res.ok) { toast.success("Recibo excluído"); load(); }
+    else { const d = await res.json().catch(() => ({})); toast.error(d.error ?? "Erro ao excluir recibo"); }
+  }
 
   const exportUrl = `/api/financeiro/cabos-eleitorais/export${filterEntity ? `?payingEntityId=${filterEntity}` : ""}`;
   const exportPdfUrl = `/api/financeiro/cabos-eleitorais/export-pdf${filterEntity ? `?payingEntityId=${filterEntity}` : ""}`;
@@ -116,13 +124,14 @@ function CabosEleitoraisContent() {
               <th className="px-4 py-2.5 text-left text-muted-foreground font-medium">Fonte pagadora</th>
               <th className="px-4 py-2.5 text-right text-muted-foreground font-medium">Valor</th>
               <th className="px-4 py-2.5 text-right text-muted-foreground font-medium">Recibo</th>
+              <th className="px-4 py-2.5 text-right text-muted-foreground font-medium">Ação</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-white/[0.04]">
             {loading ? (
-              <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">Carregando...</td></tr>
+              <tr><td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">Carregando...</td></tr>
             ) : rows.length === 0 ? (
-              <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">Nenhum pagamento a cabo eleitoral ainda.</td></tr>
+              <tr><td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">Nenhum pagamento a cabo eleitoral ainda.</td></tr>
             ) : (
               rows.map((r) => (
                 <tr key={r.id} className="hover:bg-white/[0.02]">
@@ -138,6 +147,11 @@ function CabosEleitoraisContent() {
                         <Download className="w-3.5 h-3.5" />
                       </a>
                     )}
+                  </td>
+                  <td className="px-4 py-2.5 text-right">
+                    <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => remove(r)} title="Excluir recibo">
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </Button>
                   </td>
                 </tr>
               ))
