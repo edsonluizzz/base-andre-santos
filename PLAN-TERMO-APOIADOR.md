@@ -1,6 +1,24 @@
 > **Status:** Passos 1–7 implementados (2026-08-18). Falta: Passo 2 (revisão
 > jurídica do texto do termo — bloqueio real antes de publicar), Passo 8
 > (opcional, ligar ao financeiro) e Passo 9 (testes em produção).
+>
+> **Ajuste 2026-08-18 (pós-deploy):** catálogo trocado para Santinho, Adesivo,
+> Perfurado M, Perfurado P (era um catálogo genérico de 6 itens). Endereço de
+> entrega passou a ser coletado completo (CEP + rua + número + complemento +
+> bairro + cidade + UF, com autopreenchimento via `/api/cep`) e gravado em
+> campos `delivery*` no `MaterialRequest` — antes só tinha cidade/bairro do
+> `Collaborator`. E-mail passou de opcional para obrigatório, já que o e-mail
+> de confirmação de recebimento depende dele. `TERM_VERSION` foi incrementada
+> pra `v2-rascunho-2026-08-18` (o texto do termo agora cita o endereço
+> completo, não só a cidade) — ainda pendente da mesma revisão jurídica.
+>
+> **Ajuste 2026-08-18 (relatório):** `/materiais` ganhou export em PDF
+> (`/api/materiais/export-pdf`, reaproveitando `buildSimpleTablePdf`) e Excel
+> (`/api/materiais/export`, reaproveitando ExcelJS — mesmo padrão de
+> `/api/collaborators/export`), respeitando o filtro de status ativo na tela.
+> O botão "Marcar como entregue" virou um checkbox "Enviado" nas linhas
+> Aprovado/Enviado — continua chamando a mesma ação `ENTREGAR` (sem mudança de
+> schema), só mudou o rótulo/UX pra bater com a linguagem da campanha.
 
 # PLAN — Termo de Apoiador (solicitação de material com assinatura)
 

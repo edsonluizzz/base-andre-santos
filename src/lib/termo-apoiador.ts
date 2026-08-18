@@ -11,12 +11,12 @@ import type { MaterialRequestItem } from "./material-catalog";
  * exigem incrementar TERM_VERSION — cada MaterialRequest grava a versão
  * aceita no momento (auditoria).
  */
-export const TERM_VERSION = "v1-rascunho-2026-08-18";
+export const TERM_VERSION = "v2-rascunho-2026-08-18";
 
 export interface TermoApoiadorData {
   supporterName: string;
   supporterCpf: string;
-  city: string | null;
+  deliveryAddress: string | null;
   items: MaterialRequestItem[];
   acceptedAt: Date;
   ip: string | null;
@@ -42,7 +42,7 @@ export function buildTermoText(d: TermoApoiadorData): {
 
   const paragraphs = [
     `Eu, ${d.supporterName}, portador(a) do CPF ${formatCpf(d.supporterCpf)}` +
-      (d.city ? `, residente em ${d.city}` : "") +
+      (d.deliveryAddress ? `, residente em ${d.deliveryAddress}` : "") +
       `, declaro para os devidos fins que recebi, na condição de apoiador(a) voluntário(a) da campanha de ` +
       `${d.candidateName} ao cargo de ${officeLabel}${d.electionYear ? ` (${d.electionYear})` : ""}` +
       (d.party ? `, pelo partido ${d.party}` : "") +
@@ -87,6 +87,26 @@ export function committeeFromSettings(settings: {
       uf: settings.cnpjUf,
     }),
   };
+}
+
+export function formatDeliveryAddress(mr: {
+  deliveryLogradouro: string | null;
+  deliveryNumero: string | null;
+  deliveryComplemento: string | null;
+  deliveryBairro: string | null;
+  deliveryCep: string | null;
+  deliveryMunicipio: string | null;
+  deliveryUf: string | null;
+}): string | null {
+  return formatEndereco({
+    logradouro: mr.deliveryLogradouro,
+    numero: mr.deliveryNumero,
+    complemento: mr.deliveryComplemento,
+    bairro: mr.deliveryBairro,
+    cep: mr.deliveryCep,
+    municipio: mr.deliveryMunicipio,
+    uf: mr.deliveryUf,
+  });
 }
 
 export { formatCnpj };

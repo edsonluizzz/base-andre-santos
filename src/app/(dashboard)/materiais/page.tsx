@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Package, Check, X, Truck, FileText, MapPin, Mail, MessageCircle } from "lucide-react";
+import { Package, Check, X, FileText, MapPin, Mail, MessageCircle, FileSpreadsheet } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -17,19 +17,26 @@ type MaterialRequestRow = {
   termAcceptedAt: string;
   emailStatus: "SKIPPED" | "SENT" | "FAILED";
   whatsappStatus: "SKIPPED" | "SENT" | "FAILED";
+  deliveryCep: string | null;
+  deliveryLogradouro: string | null;
+  deliveryNumero: string | null;
+  deliveryComplemento: string | null;
+  deliveryBairro: string | null;
+  deliveryMunicipio: string | null;
+  deliveryUf: string | null;
   approvedAt: string | null;
   deliveredAt: string | null;
   notes: string | null;
   createdAt: string;
-  collaborator: { id: string; name: string; phone: string | null; email: string | null; city: string | null; neighborhood: string | null };
+  collaborator: { id: string; name: string; phone: string | null; email: string | null };
   approvedBy: { name: string | null; email: string | null } | null;
   deliveredBy: { name: string | null; email: string | null } | null;
 };
 
 const STATUS_LABEL: Record<string, string> = {
   PENDENTE_APROVACAO: "Pendente de aprovação",
-  APROVADO: "Aprovado — aguardando entrega",
-  ENTREGUE: "Entregue",
+  APROVADO: "Aprovado — aguardando envio",
+  ENTREGUE: "Enviado",
   RECUSADO: "Recusado",
 };
 const STATUS_COLOR: Record<string, string> = {
@@ -38,6 +45,13 @@ const STATUS_COLOR: Record<string, string> = {
   ENTREGUE: "bg-green-500/15 text-green-400 border-green-500/30",
   RECUSADO: "bg-red-500/15 text-red-400 border-red-500/30",
 };
+
+function fmtAddress(r: MaterialRequestRow): string | null {
+  const linha1 = [r.deliveryLogradouro, r.deliveryNumero && `nº ${r.deliveryNumero}`, r.deliveryComplemento].filter(Boolean).join(", ");
+  const linha2 = [r.deliveryBairro, [r.deliveryMunicipio, r.deliveryUf].filter(Boolean).join("/"), r.deliveryCep].filter(Boolean).join(" — ");
+  const linhas = [linha1, linha2].filter(Boolean);
+  return linhas.length > 0 ? linhas.join(" — ") : null;
+}
 
 function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString("pt-BR", {
@@ -81,7 +95,7 @@ export default function MateriaisPage() {
       if (res.ok) {
         toast.success(
           action === "APROVAR" ? "Solicitação aprovada!" :
-          action === "ENTREGAR" ? "Marcado como entregue!" : "Solicitação recusada",
+          action === "ENTREGAR" ? "Marcado como enviado!" : "Solicitação recusada",
         );
         fetchRows();
       } else {
@@ -104,16 +118,26 @@ export default function MateriaisPage() {
             Solicitações de material com Termo de Apoiador já assinado — aprove ou recuse antes da entrega.
           </p>
         </div>
-        <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v ?? "PENDENTE_APROVACAO")}>
-          <SelectTrigger className="w-56"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="PENDENTE_APROVACAO">Pendentes de aprovação</SelectItem>
-            <SelectItem value="APROVADO">Aprovados (aguardando entrega)</SelectItem>
-            <SelectItem value="ENTREGUE">Entregues</SelectItem>
-            <SelectItem value="RECUSADO">Recusados</SelectItem>
-            <SelectItem value="ALL">Todos</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex items-center gap-2 flex-wrap">
+          <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v ?? "PENDENTE_APROVACAO")}>
+            <SelectTrigger className="w-56"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="PENDENTE_APROVACAO">Pendentes de aprovação</SelectItem>
+              <SelectItem value="APROVADO">Aprovados (aguardando envio)</SelectItem>
+              <SelectItem value="ENTREGUE">Enviados</SelectItem>
+              <SelectItem value="RECUSADO">Recusados</SelectItem>
+              <SelectItem value="ALL">Todos</SelectItem>
+            </SelectContent>
+          </Select>
+          <a href={`/api/materiais/export-pdf${statusFilter && statusFilter !== "ALL" ? `?status=${statusFilter}` : ""}`}
+            className="inline-flex items-center gap-1.5 h-9 px-3 rounded-md text-xs font-medium border border-white/[0.08] text-muted-foreground hover:text-foreground hover:bg-white/[0.04] transition-colors">
+            <FileText className="w-3.5 h-3.5" /> PDF
+          </a>
+          <a href={`/api/materiais/export${statusFilter && statusFilter !== "ALL" ? `?status=${statusFilter}` : ""}`}
+            className="inline-flex items-center gap-1.5 h-9 px-3 rounded-md text-xs font-medium border border-white/[0.08] text-muted-foreground hover:text-foreground hover:bg-white/[0.04] transition-colors">
+            <FileSpreadsheet className="w-3.5 h-3.5" /> Excel
+          </a>
+        </div>
       </div>
 
       {loading ? (
@@ -138,10 +162,13 @@ export default function MateriaisPage() {
                   <p className="text-[11px] text-muted-foreground/70 mt-0.5">
                     CPF {r.termSnapshotCpf} · assinado em {fmtDate(r.termAcceptedAt)}
                   </p>
-                  {(r.collaborator.city || r.collaborator.neighborhood) && (
+                  {fmtAddress(r) && (
                     <p className="text-[11px] text-muted-foreground/70 flex items-center gap-1 mt-0.5">
-                      <MapPin className="w-3 h-3" /> {[r.collaborator.neighborhood, r.collaborator.city].filter(Boolean).join(", ")}
+                      <MapPin className="w-3 h-3" /> {fmtAddress(r)}
                     </p>
+                  )}
+                  {r.collaborator.email && (
+                    <p className="text-[11px] text-muted-foreground/70 mt-0.5">{r.collaborator.email}</p>
                   )}
                 </div>
                 {r.pdfUrl && (
@@ -179,13 +206,17 @@ export default function MateriaisPage() {
                   </Button>
                 </div>
               )}
-              {r.status === "APROVADO" && (
-                <div className="flex gap-2 pt-1">
-                  <Button size="sm" disabled={actingId === r.id} onClick={() => act(r.id, "ENTREGAR")}
-                    className="gap-1.5 bg-primary text-primary-foreground">
-                    <Truck className="w-3.5 h-3.5" /> Marcar como entregue
-                  </Button>
-                </div>
+              {(r.status === "APROVADO" || r.status === "ENTREGUE") && (
+                <label className="flex items-center gap-2 pt-1 cursor-pointer w-fit select-none">
+                  <input
+                    type="checkbox"
+                    checked={r.status === "ENTREGUE"}
+                    disabled={actingId === r.id || r.status === "ENTREGUE"}
+                    onChange={() => act(r.id, "ENTREGAR")}
+                    className="w-4 h-4 rounded accent-primary cursor-pointer disabled:cursor-default"
+                  />
+                  <span className="text-xs font-medium text-foreground">Enviado</span>
+                </label>
               )}
             </div>
           ))}

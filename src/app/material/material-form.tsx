@@ -19,10 +19,22 @@ export function MaterialForm() {
   const [cpf, setCpf] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
+  const [cep, setCep] = useState("");
+  const [cepLoading, setCepLoading] = useState(false);
+  const [cepError, setCepError] = useState("");
+  const [logradouro, setLogradouro] = useState("");
+  const [numero, setNumero] = useState("");
+  const [complemento, setComplemento] = useState("");
   const [city, setCity] = useState("");
   const [neighborhood, setNeighborhood] = useState("");
+  const [uf, setUf] = useState("");
   const [qty, setQty] = useState<Record<string, number>>({});
   const [termAccepted, setTermAccepted] = useState(false);
+
+  const fullAddress = [
+    [logradouro, numero && `nº ${numero}`, complemento].filter(Boolean).join(", "),
+    [neighborhood, [city, uf].filter(Boolean).join("/")].filter(Boolean).join(" — "),
+  ].filter(Boolean).join(" — ");
 
   useEffect(() => {
     fetch("/api/public/stats")
@@ -46,6 +58,31 @@ export function MaterialForm() {
     return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
   }
 
+  function formatCep(val: string) {
+    const d = val.replace(/\D/g, "").slice(0, 8);
+    return d.length > 5 ? `${d.slice(0, 5)}-${d.slice(5)}` : d;
+  }
+
+  async function lookupCep(rawCep: string) {
+    const digits = rawCep.replace(/\D/g, "");
+    if (digits.length !== 8) return;
+    setCepLoading(true);
+    setCepError("");
+    try {
+      const res = await fetch(`/api/cep/${digits}`);
+      if (!res.ok) { setCepError("CEP não encontrado"); return; }
+      const d = await res.json();
+      if (d.city) setCity(d.city);
+      if (d.neighborhood) setNeighborhood(d.neighborhood);
+      if (d.street) setLogradouro(d.street);
+      if (d.state) setUf(d.state);
+    } catch {
+      setCepError("Erro ao consultar CEP");
+    } finally {
+      setCepLoading(false);
+    }
+  }
+
   function toggleItem(id: string) {
     setQty((q) => {
       const next = { ...q };
@@ -65,6 +102,13 @@ export function MaterialForm() {
     if (!name.trim() || name.trim().length < 2) return "Informe seu nome completo";
     if (cpf.replace(/\D/g, "").length !== 11) return "Informe um CPF válido";
     if (phone.replace(/\D/g, "").length < 10) return "Informe um WhatsApp válido";
+    if (!email.trim() || !email.includes("@")) return "Informe um e-mail válido — usamos ele pra avisar que recebemos seu pedido";
+    if (cep.replace(/\D/g, "").length !== 8) return "Informe um CEP válido";
+    if (!logradouro.trim()) return "Informe a rua/logradouro";
+    if (!numero.trim()) return "Informe o número";
+    if (!neighborhood.trim()) return "Informe o bairro";
+    if (!city.trim()) return "Informe a cidade";
+    if (uf.trim().length !== 2) return "Informe a UF";
     if (selectedItems.length === 0) return "Selecione ao menos um material";
     return null;
   }
@@ -86,7 +130,7 @@ export function MaterialForm() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name, cpf, phone, email, city, neighborhood,
+          name, cpf, phone, email, cep, logradouro, numero, complemento, city, neighborhood, uf,
           items: selectedItems,
           termAccepted: true,
         }),
@@ -175,22 +219,70 @@ export function MaterialForm() {
                 <input type="tel" value={phone} onChange={(e) => setPhone(formatPhone(e.target.value))} placeholder="(41) 99999-9999" autoComplete="tel" inputMode="numeric"
                   className="w-full rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 outline-none" style={inputStyle} />
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-slate-300">Cidade</label>
-                  <input type="text" value={city} onChange={(e) => setCity(e.target.value)} placeholder="Ex: Curitiba"
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-slate-300">E-mail <span style={{ color: "#ff6b04" }}>*</span> <span className="text-slate-500">(avisamos que recebemos seu pedido)</span></label>
+                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="seu@email.com" autoComplete="email"
+                  className="w-full rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 outline-none" style={inputStyle} />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-slate-300">CEP <span style={{ color: "#ff6b04" }}>*</span> <span className="text-slate-500">(preenche o resto)</span></label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={cep}
+                    onChange={(e) => {
+                      const v = formatCep(e.target.value);
+                      setCep(v);
+                      if (v.replace(/\D/g, "").length === 8) lookupCep(v);
+                    }}
+                    placeholder="00000-000"
+                    inputMode="numeric"
+                    maxLength={9}
+                    className="w-full rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 outline-none pr-10"
+                    style={inputStyle}
+                  />
+                  {cepLoading && (
+                    <svg className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-slate-400" viewBox="0 0 24 24" fill="none">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                  )}
+                </div>
+                {cepError && <p className="text-[11px]" style={{ color: "#ef4444" }}>{cepError}</p>}
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="col-span-2 space-y-1.5">
+                  <label className="text-xs font-medium text-slate-300">Rua <span style={{ color: "#ff6b04" }}>*</span></label>
+                  <input type="text" value={logradouro} onChange={(e) => setLogradouro(e.target.value)} placeholder="Nome da rua"
                     className="w-full rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 outline-none" style={inputStyle} />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-slate-300">Bairro</label>
-                  <input type="text" value={neighborhood} onChange={(e) => setNeighborhood(e.target.value)} placeholder="Seu bairro"
+                  <label className="text-xs font-medium text-slate-300">Nº <span style={{ color: "#ff6b04" }}>*</span></label>
+                  <input type="text" value={numero} onChange={(e) => setNumero(e.target.value)} placeholder="123"
                     className="w-full rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 outline-none" style={inputStyle} />
                 </div>
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-slate-300">E-mail <span className="text-slate-500">(opcional)</span></label>
-                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="seu@email.com" autoComplete="email"
+                <label className="text-xs font-medium text-slate-300">Complemento <span className="text-slate-500">(opcional)</span></label>
+                <input type="text" value={complemento} onChange={(e) => setComplemento(e.target.value)} placeholder="Apto, bloco, referência..."
                   className="w-full rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 outline-none" style={inputStyle} />
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-slate-300">Bairro <span style={{ color: "#ff6b04" }}>*</span></label>
+                  <input type="text" value={neighborhood} onChange={(e) => setNeighborhood(e.target.value)} placeholder="Seu bairro"
+                    className="w-full rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 outline-none" style={inputStyle} />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-slate-300">Cidade <span style={{ color: "#ff6b04" }}>*</span></label>
+                  <input type="text" value={city} onChange={(e) => setCity(e.target.value)} placeholder="Ex: Curitiba"
+                    className="w-full rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 outline-none" style={inputStyle} />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-slate-300">UF <span style={{ color: "#ff6b04" }}>*</span></label>
+                  <input type="text" value={uf} onChange={(e) => setUf(e.target.value.toUpperCase().slice(0, 2))} placeholder="PR" maxLength={2}
+                    className="w-full rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 outline-none" style={inputStyle} />
+                </div>
               </div>
             </div>
 
@@ -246,7 +338,7 @@ export function MaterialForm() {
               <p className="font-bold text-white text-base">Termo de Apoiador — Recebimento de Material de Campanha</p>
               <p>
                 Eu, <strong className="text-white">{name}</strong>, portador(a) do CPF <strong className="text-white">{cpf}</strong>
-                {city ? `, residente em ${city}` : ""}, declaro para os devidos fins que recebo, na condição de apoiador(a)
+                {fullAddress ? `, residente em ${fullAddress}` : ""}, declaro para os devidos fins que recebo, na condição de apoiador(a)
                 voluntário(a) da campanha de <strong className="text-white">{campaignName}</strong>, o seguinte material de campanha:
               </p>
               <ul className="list-disc list-inside space-y-0.5">

@@ -41,9 +41,14 @@ const materialRequestSchema = z.object({
   name: z.string().min(2).max(255),
   cpf: z.string().min(11).max(14),
   phone: z.string().min(10).max(20),
-  email: z.string().email().optional().or(z.literal("")).or(z.null()),
-  city: z.string().max(100).optional().or(z.literal("")),
-  neighborhood: z.string().max(100).optional().or(z.literal("")),
+  email: z.string().email("Informe um e-mail válido"),
+  cep: z.string().min(8).max(9),
+  logradouro: z.string().min(2).max(200),
+  numero: z.string().min(1).max(20),
+  complemento: z.string().max(100).optional().or(z.literal("")),
+  neighborhood: z.string().min(2).max(100),
+  city: z.string().min(2).max(100),
+  uf: z.string().length(2),
   items: z.array(itemSchema).min(1).max(20),
   termAccepted: z.literal(true),
 });
@@ -57,7 +62,7 @@ export async function POST(req: NextRequest) {
       const msg = parsed.error.errors[0]?.message ?? "Dados inválidos";
       return NextResponse.json({ error: msg }, { status: 400, headers: cors });
     }
-    const { name, cpf, phone, email, city, neighborhood, items } = parsed.data;
+    const { name, cpf, phone, email, cep, logradouro, numero, complemento, city, neighborhood, uf, items } = parsed.data;
 
     const cleanCpf = normalizeCpf(cpf);
     if (!isValidCpf(cleanCpf)) {
@@ -98,9 +103,9 @@ export async function POST(req: NextRequest) {
         where: { id: collaboratorId },
         data: {
           cpf: cleanCpf,
-          email: email?.trim() || undefined,
-          city: city?.trim() || undefined,
-          neighborhood: neighborhood?.trim() || undefined,
+          email: email.trim(),
+          city: city.trim(),
+          neighborhood: neighborhood.trim(),
         },
       }).catch(() => {});
     } else {
@@ -111,9 +116,9 @@ export async function POST(req: NextRequest) {
           cpf: cleanCpf,
           phone: cleanPhone,
           phoneNormalized: pNorm,
-          email: email?.trim() || null,
-          city: city?.trim() || null,
-          neighborhood: neighborhood?.trim() || null,
+          email: email.trim(),
+          city: city.trim(),
+          neighborhood: neighborhood.trim(),
           campaignRole: "VOLUNTARIO",
           status: "LEAD",
           source: "MATERIAL",
@@ -135,6 +140,13 @@ export async function POST(req: NextRequest) {
         termAcceptedAt: new Date(),
         termIp: ip,
         termUserAgent: req.headers.get("user-agent") ?? null,
+        deliveryCep: cep.replace(/\D/g, ""),
+        deliveryLogradouro: logradouro.trim(),
+        deliveryNumero: numero.trim(),
+        deliveryComplemento: complemento?.trim() || null,
+        deliveryBairro: neighborhood.trim(),
+        deliveryMunicipio: city.trim(),
+        deliveryUf: uf.toUpperCase(),
       },
     });
 

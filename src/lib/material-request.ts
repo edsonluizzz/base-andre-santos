@@ -1,7 +1,7 @@
 import type { PrismaClient } from "@prisma/client";
 import { put } from "@vercel/blob";
 import { buildTermoApoiadorPdf } from "./termo-apoiador-pdf";
-import { committeeFromSettings, TERM_VERSION } from "./termo-apoiador";
+import { committeeFromSettings, formatDeliveryAddress, TERM_VERSION } from "./termo-apoiador";
 import { sendMaterialRequestEmail } from "./email";
 import { zapiSendDocument, toZapiPhone, ZapiNotConfiguredError } from "./zapi";
 import type { MaterialRequestItem } from "./material-catalog";
@@ -15,7 +15,9 @@ async function loadTermoData(db: PrismaClient, materialRequestId: string, campai
       termSnapshotCpf: true,
       termAcceptedAt: true,
       termIp: true,
-      collaborator: { select: { email: true, phone: true, city: true } },
+      deliveryCep: true, deliveryLogradouro: true, deliveryNumero: true,
+      deliveryComplemento: true, deliveryBairro: true, deliveryMunicipio: true, deliveryUf: true,
+      collaborator: { select: { email: true, phone: true } },
     },
   });
   if (!mr) return null;
@@ -59,7 +61,7 @@ export async function generateTermoApoiadorPdf(
     const pdfBuffer = await buildTermoApoiadorPdf({
       supporterName: mr.termSnapshotName,
       supporterCpf: mr.termSnapshotCpf,
-      city: mr.collaborator.city,
+      deliveryAddress: formatDeliveryAddress(mr),
       items: mr.items as unknown as MaterialRequestItem[],
       acceptedAt: mr.termAcceptedAt,
       ip: mr.termIp,
