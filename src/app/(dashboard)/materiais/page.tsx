@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Package, Check, X, FileText, MapPin, Mail, MessageCircle, FileSpreadsheet } from "lucide-react";
+import { Package, Check, X, FileText, MapPin, Mail, MessageCircle, FileSpreadsheet, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -82,6 +82,23 @@ export default function MateriaisPage() {
   }, [statusFilter]);
 
   useEffect(() => { fetchRows(); }, [fetchRows]);
+
+  async function deleteRequest(id: string, name: string) {
+    if (!confirm(`Excluir a solicitação de material de "${name}"? Essa ação não pode ser desfeita.`)) return;
+    setActingId(id);
+    try {
+      const res = await fetch(`/api/materiais/${id}`, { method: "DELETE" });
+      if (res.ok) {
+        toast.success("Solicitação excluída");
+        setRows((prev) => prev.filter((r) => r.id !== id));
+      } else {
+        const d = await res.json().catch(() => ({}));
+        toast.error(d.error ?? "Erro ao excluir solicitação");
+      }
+    } finally {
+      setActingId(null);
+    }
+  }
 
   async function act(id: string, action: "APROVAR" | "RECUSAR" | "ENTREGAR") {
     if (action === "RECUSAR" && !confirm("Recusar esta solicitação de material?")) return;
@@ -171,12 +188,19 @@ export default function MateriaisPage() {
                     <p className="text-[11px] text-muted-foreground/70 mt-0.5">{r.collaborator.email}</p>
                   )}
                 </div>
-                {r.pdfUrl && (
-                  <a href={r.pdfUrl} target="_blank" rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 text-xs text-primary hover:underline shrink-0">
-                    <FileText className="w-3.5 h-3.5" /> Ver termo assinado
-                  </a>
-                )}
+                <div className="flex items-center gap-3 shrink-0">
+                  {r.pdfUrl && (
+                    <a href={r.pdfUrl} target="_blank" rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 text-xs text-primary hover:underline">
+                      <FileText className="w-3.5 h-3.5" /> Ver termo assinado
+                    </a>
+                  )}
+                  <Button size="sm" variant="ghost" disabled={actingId === r.id}
+                    onClick={() => deleteRequest(r.id, r.termSnapshotName)}
+                    className="h-7 px-2 text-destructive hover:bg-destructive/10" title="Excluir solicitação">
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
               </div>
 
               <div className="flex flex-wrap gap-1.5">
