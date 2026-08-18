@@ -20,6 +20,8 @@ const nextConfig = {
       "/api/church-assignments/": ["./node_modules/pdfkit/js/data/**/*"],
       "/api/financeiro/": ["./node_modules/pdfkit/js/data/**/*"],
       "/api/collaborators/export-pdf": ["./node_modules/pdfkit/js/data/**/*"],
+      "/api/public/material-request": ["./node_modules/pdfkit/js/data/**/*"],
+      "/api/materiais/": ["./node_modules/pdfkit/js/data/**/*"],
     },
   },
   async rewrites() {

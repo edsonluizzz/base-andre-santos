@@ -7,7 +7,7 @@ import { signOut, useSession } from "next-auth/react";
 import {
   LayoutDashboard, Users, Calendar,
   Megaphone, Settings, LogOut, Shield, Star, Map, BarChart2, Network, Target, ClipboardList, Award, Building2, Plus, UserPlus, Link2, Church,
-  ChevronLeft, ChevronRight, Sun, Moon, GraduationCap, Send, IdCard, Wallet,
+  ChevronLeft, ChevronRight, Sun, Moon, GraduationCap, Send, IdCard, Wallet, Package,
 } from "lucide-react";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { useTheme } from "next-themes";
@@ -31,6 +31,7 @@ const navItems = [
   { href: "/relatorio",      icon: BarChart2,        label: "Relatório",       minRole: "LEADER", superAdminOnly: false, financeAdminOnly: false },
   { href: "/metas",          icon: Target,           label: "Metas",           minRole: "LEADER", superAdminOnly: false, financeAdminOnly: false },
   { href: "/eleitos-2022",   icon: Award,            label: "Eleitos 2022",    minRole: "LEADER", superAdminOnly: false, financeAdminOnly: false },
+  { href: "/materiais",      icon: Package,          label: "Material",        minRole: "LEADER", superAdminOnly: false, financeAdminOnly: false },
   { href: "/convites",       icon: Link2,            label: "Convites",        minRole: "ADMIN",  superAdminOnly: false, financeAdminOnly: false },
   { href: "/igrejas",        icon: Building2,        label: "Igrejas",         minRole: "ADMIN",  superAdminOnly: false, financeAdminOnly: false },
   { href: "/tarefas",        icon: ClipboardList,    label: "Tarefas",         minRole: "ADMIN",  superAdminOnly: false, financeAdminOnly: false },

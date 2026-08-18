@@ -184,6 +184,55 @@ export async function sendPaymentReceiptEmail({
   if (result.error) throw new Error(result.error.message ?? "Falha ao enviar email via Resend");
 }
 
+// ─── Termo de Apoiador (solicitação de material) ──────────────────────────────
+
+export async function sendMaterialRequestEmail({
+  to,
+  supporterName,
+  pdfBuffer,
+  fileName,
+  campaignName,
+}: {
+  to: string;
+  supporterName: string;
+  pdfBuffer: Buffer;
+  fileName: string;
+  campaignName?: string;
+}): Promise<void> {
+  const resend = getResend();
+  if (!resend) throw new Error("Resend não configurado (RESEND_API_KEY ausente)");
+  const label = campaignLabel(campaignName);
+
+  const result = await resend.emails.send({
+    from: FROM,
+    to,
+    subject: `Seu Termo de Apoiador — ${label}`,
+    html: `
+      <div style="${baseStyle}">
+        <p style="${tagStyle}">${label}</p>
+        <h1 style="font-size:22px;font-weight:700;color:#fff;margin:0 0 16px;">
+          Solicitação recebida!
+        </h1>
+        <p style="color:#94a3b8;line-height:1.6;">
+          Olá, <strong style="color:#fff">${supporterName}</strong>! Recebemos sua solicitação de material
+          de campanha. Em anexo está o seu <strong style="color:#ff6b04">Termo de Apoiador</strong>, já
+          preenchido e assinado eletronicamente com seus dados.
+        </p>
+        <p style="color:#94a3b8;line-height:1.6;">
+          Nossa equipe vai confirmar a disponibilidade do material e avisar quando estiver liberado para
+          retirada/entrega.
+        </p>
+        <p style="color:#475569;font-size:12px;margin-top:32px;">
+          ${label} — comunicação interna da base de apoio.
+        </p>
+      </div>
+    `,
+    attachments: [{ filename: fileName, content: pdfBuffer }],
+  });
+
+  if (result.error) throw new Error(result.error.message ?? "Falha ao enviar email via Resend");
+}
+
 // ─── Notificação de novo lead via link de convite ─────────────────────────────
 
 export async function sendNewLeadNotificationEmail({

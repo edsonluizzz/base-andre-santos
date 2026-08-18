@@ -45,6 +45,7 @@ model Campaign {
   payingEntities PayingEntity[]
   suppliers      Supplier[]
   financialEntries FinancialEntry[]
+  materialRequests MaterialRequest[]
 }
 
 /// Fonte pagadora de cabos eleitorais — usada quando a campanha roda em chapa
@@ -191,6 +192,8 @@ model User {
   userCampaigns UserCampaign[]
   registeredCollaborators Collaborator[] @relation("RegisteredCollaborators")
   financialEntries FinancialEntry[]
+  approvedMaterialRequests MaterialRequest[] @relation("ApprovedMaterialRequests")
+  deliveredMaterialRequests MaterialRequest[] @relation("DeliveredMaterialRequests")
   @@index([campaignId])
 }
 
@@ -311,6 +314,7 @@ model Collaborator {
   pastorOfChurches Church[] @relation("ChurchPastor")
   contactLogs    ContactLog[]
   paymentReceipts PaymentReceipt[]
+  materialRequests MaterialRequest[]
   @@index([campaignId])
   @@index([email])
   @@index([city])
@@ -781,4 +785,53 @@ enum ReceiptChannelStatus {
   SKIPPED
   SENT
   FAILED
+}
+
+enum MaterialRequestStatus {
+  PENDENTE_APROVACAO
+  APROVADO
+  ENTREGUE
+  RECUSADO
+}
+
+/// Solicitação de material de campanha + Termo de Apoiador (aceite clickwrap).
+/// O termo já sai assinado (PDF) na criação — o que fica pendente de aprovação
+/// é a ENTREGA física do material, não a assinatura. termSnapshot* preserva o
+/// que foi de fato aceito mesmo se o Collaborator for editado depois.
+model MaterialRequest {
+  id               String                @id @default(cuid())
+  campaignId       String
+  collaboratorId   String
+  items            Json                  // [{ item: "Santinho", qty: 200 }, ...]
+  status           MaterialRequestStatus @default(PENDENTE_APROVACAO)
+
+  termSnapshotName String
+  termSnapshotCpf  String
+  termVersion      String                // versão do texto legal aceito (auditoria)
+  termAcceptedAt   DateTime
+  termIp           String?
+  termUserAgent    String?               @db.Text
+
+  pdfUrl           String?               @db.Text
+  emailStatus      ReceiptChannelStatus  @default(SKIPPED)
+  whatsappStatus   ReceiptChannelStatus  @default(SKIPPED)
+  emailError       String?               @db.Text
+  whatsappError    String?               @db.Text
+
+  approvedById     String?
+  approvedAt       DateTime?
+  deliveredById    String?
+  deliveredAt      DateTime?
+  notes            String?               @db.Text
+
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
+
+  campaign     Campaign     @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  collaborator Collaborator @relation(fields: [collaboratorId], references: [id], onDelete: Cascade)
+  approvedBy   User?        @relation("ApprovedMaterialRequests", fields: [approvedById], references: [id], onDelete: SetNull)
+  deliveredBy  User?        @relation("DeliveredMaterialRequests", fields: [deliveredById], references: [id], onDelete: SetNull)
+
+  @@index([campaignId, status])
+  @@index([collaboratorId])
 }
