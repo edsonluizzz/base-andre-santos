@@ -1,8 +1,22 @@
 # Estado — Ovile Eleitoral (Base André Santos)
 
-**Última atualização:** 2026-08-16 (sessão: recibos/pdfkit, valor editável, início oficial da campanha)
+**Última atualização:** 2026-08-18 (sessão: CTA WhatsApp em /fotoperfil, repo andre-santos)
 
 ---
+
+## Sessão 2026-08-17/18 — CTA de WhatsApp em /fotoperfil (repo `andre-santos`)
+
+Depois de baixar (ou compartilhar via Web Share API no celular) a foto com moldura em
+`prandresantos.com.br/fotoperfil`, aparece um card "Foto salva! 🎉" com botão pra entrar no grupo do
+WhatsApp da base de apoio — antes o fluxo terminava no download sem próximo passo. Link usado:
+`https://chat.whatsapp.com/GbrqkfHopOEDlgx0Rt0mCp?s=cl&p=i&ilr=2` (passado pelo Edson). Reseta ao trocar
+de foto. Testado local (upload + download real confirmado) antes do deploy. Commit `43c1ff9`.
+
+**Pendência aberta (Edson não respondeu ainda):** o resto do site `andre-santos` (`casamento`,
+`Improvaveis`, botão flutuante de WhatsApp) usa um link de grupo **diferente**
+(`https://chat.whatsapp.com/EsuR5rzuYnM6v6nn6RmbVE`) do que foi passado agora pro /fotoperfil. Pode ser
+intencional (grupos separados por funil de conteúdo) ou estar desatualizado — perguntei, Edson ainda não
+decidiu. **Não mexer nesses outros links sem confirmação.**
 
 ## Sessão 2026-08-12/16 — pdfkit em produção, recibos, valor editável, início oficial da campanha (16/08)
 
