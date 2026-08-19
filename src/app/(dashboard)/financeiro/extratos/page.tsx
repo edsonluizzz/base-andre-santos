@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FinanceGuard } from "@/components/financeiro/finance-guard";
 import { FinanceNav } from "@/components/financeiro/finance-nav";
+import { acctLabel } from "@/lib/ofx";
 
 type TxStatus = "UNMATCHED" | "MATCHED" | "IGNORED";
 
@@ -37,16 +38,6 @@ function fmt(n: number) {
 }
 function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString("pt-BR", { timeZone: "UTC" });
-}
-// Contas correntes BB (agência 1443) segregadas por origem de recurso, conforme TSE.
-const ACCOUNT_LABEL: Record<string, string> = {
-  "57508": "Doações",
-  "57509": "Fundo Partidário",
-  "57510": "FEFC",
-};
-function acctLabel(acctId: string) {
-  const label = ACCOUNT_LABEL[acctId];
-  return label ? `${label} (...${acctId.slice(-4)})` : `Conta ...${acctId.slice(-4)}`;
 }
 
 function ExtratosContent() {

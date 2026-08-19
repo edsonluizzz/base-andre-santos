@@ -48,6 +48,7 @@ model Campaign {
   materialRequests MaterialRequest[]
   contracts      Contract[]
   bankTransactions BankTransaction[]
+  bankAccountBalances BankAccountBalance[]
 }
 
 /// Fonte pagadora de cabos eleitorais — usada quando a campanha roda em chapa
@@ -953,4 +954,23 @@ model BankTransaction {
   @@unique([campaignId, acctId, fitid])
   @@index([campaignId])
   @@index([status])
+}
+
+/// Saldo real da conta, direto do <LEDGERBAL> do OFX (não uma soma derivada das
+/// transações importadas — o banco informa esse valor, é mais confiável do que
+/// recalcular localmente). Atualizado (upsert) a cada nova importação de extrato.
+model BankAccountBalance {
+  id         String   @id @default(cuid())
+  campaignId String   @default("andre-santos-2026")
+  bankId     String
+  branchId   String
+  acctId     String
+  balance    Float
+  asOf       DateTime
+  updatedAt  DateTime @updatedAt
+
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@unique([campaignId, acctId])
+  @@index([campaignId])
 }

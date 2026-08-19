@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Wallet, TrendingUp, TrendingDown, Clock, CalendarClock } from "lucide-react";
+import { Wallet, TrendingUp, TrendingDown, Clock, CalendarClock, Landmark, AlertTriangle } from "lucide-react";
 import { FinanceGuard } from "@/components/financeiro/finance-guard";
 import { FinanceNav } from "@/components/financeiro/finance-nav";
+import { acctLabel } from "@/lib/ofx";
 
 type Summary = {
   saldo: number;
@@ -15,6 +16,9 @@ type Summary = {
   totalLancamentos: number;
   byPayingEntity: { payingEntityId: string | null; name: string; despesas: number; receitas: number }[];
   byCategory: { category: string; despesas: number; receitas: number }[];
+  bankAccounts: { acctId: string; balance: number; asOf: string }[];
+  saldoContas: number;
+  extratoNaoConciliado: number;
 };
 
 function fmt(n: number) {
@@ -87,6 +91,40 @@ function DashboardContent() {
                 </div>
               );
             })}
+          </div>
+
+          <div className="glass-card rounded-2xl p-5 border border-white/[0.08] space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold flex items-center gap-2">
+                <Landmark className="w-4 h-4 text-primary" /> Saldo em conta (extrato bancário)
+              </h2>
+              {summary.extratoNaoConciliado > 0 && (
+                <Link href="/financeiro/extratos" className="flex items-center gap-1.5 text-[11px] text-amber-400 hover:underline">
+                  <AlertTriangle className="w-3.5 h-3.5" /> {summary.extratoNaoConciliado} transação(ões) do extrato aguardando conciliação
+                </Link>
+              )}
+            </div>
+            {summary.bankAccounts.length === 0 ? (
+              <p className="text-xs text-muted-foreground">
+                Nenhum extrato importado ainda. <Link href="/financeiro/extratos" className="text-primary hover:underline">Importar OFX →</Link>
+              </p>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {summary.bankAccounts.map((b) => (
+                  <div key={b.acctId} className="rounded-xl border border-white/[0.06] p-3">
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">{acctLabel(b.acctId)}</p>
+                    <p className={`text-base font-bold ${b.balance >= 0 ? "text-foreground" : "text-red-400"}`}>{fmt(b.balance)}</p>
+                    <p className="text-[10px] text-muted-foreground/60 mt-0.5">
+                      saldo em {new Date(b.asOf).toLocaleDateString("pt-BR", { timeZone: "UTC" })}
+                    </p>
+                  </div>
+                ))}
+                <div className="rounded-xl border border-primary/30 bg-primary/5 p-3">
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Total em conta</p>
+                  <p className="text-base font-bold text-primary">{fmt(summary.saldoContas)}</p>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">

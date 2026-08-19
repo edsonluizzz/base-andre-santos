@@ -38,11 +38,28 @@ export async function POST(request: Request): Promise<NextResponse> {
       }
 
       const parsed = parseOfx(text);
-      if (parsed.length === 0) {
+
+      // Saldo real da conta (LEDGERBAL) — grava mesmo se não houver transação
+      // nova no arquivo, e só sobrescreve se for mais recente que o que já tem.
+      if (parsed.ledgerBalance) {
+        const lb = parsed.ledgerBalance;
+        const existingBalance = await gate.db.bankAccountBalance.findUnique({
+          where: { campaignId_acctId: { campaignId: gate.cid, acctId: lb.acctId } },
+        });
+        if (!existingBalance || lb.asOf >= existingBalance.asOf) {
+          await gate.db.bankAccountBalance.upsert({
+            where: { campaignId_acctId: { campaignId: gate.cid, acctId: lb.acctId } },
+            create: { campaignId: gate.cid, bankId: lb.bankId, branchId: lb.branchId, acctId: lb.acctId, balance: lb.balance, asOf: lb.asOf },
+            update: { balance: lb.balance, asOf: lb.asOf },
+          });
+        }
+      }
+
+      if (parsed.transactions.length === 0) {
         continue; // extrato sem transações reais (só linhas de saldo) — não é erro
       }
 
-      for (const tx of parsed) {
+      for (const tx of parsed.transactions) {
         const existing = await gate.db.bankTransaction.findUnique({
           where: { campaignId_acctId_fitid: { campaignId: gate.cid, acctId: tx.acctId, fitid: tx.fitid } },
         });

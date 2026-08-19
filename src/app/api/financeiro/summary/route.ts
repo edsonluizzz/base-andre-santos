@@ -45,6 +45,11 @@ export async function GET() {
       byMonth.set(monthKey, monthRow);
     }
 
+    const [bankAccounts, unmatchedCount] = await Promise.all([
+      gate.db.bankAccountBalance.findMany({ where: { campaignId: gate.cid }, orderBy: { acctId: "asc" } }),
+      gate.db.bankTransaction.count({ where: { campaignId: gate.cid, status: "UNMATCHED" } }),
+    ]);
+
     return NextResponse.json({
       saldo: totalReceitasPago - totalDespesasPago,
       totalReceitasPago,
@@ -55,6 +60,9 @@ export async function GET() {
       byPayingEntity: Array.from(byPayingEntity.entries()).map(([id, v]) => ({ payingEntityId: id === "DEFAULT" ? null : id, ...v })),
       byCategory: Array.from(byCategory.entries()).map(([category, v]) => ({ category, ...v })),
       byMonth: Array.from(byMonth.entries()).sort(([a], [b]) => a.localeCompare(b)).map(([month, v]) => ({ month, ...v })),
+      bankAccounts: bankAccounts.map((b) => ({ acctId: b.acctId, balance: b.balance, asOf: b.asOf })),
+      saldoContas: bankAccounts.reduce((sum, b) => sum + b.balance, 0),
+      extratoNaoConciliado: unmatchedCount,
     });
   } catch (err) {
     console.error("[api/financeiro/summary] erro:", err);
