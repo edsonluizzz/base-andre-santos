@@ -3,7 +3,7 @@ import { z } from "zod";
 import { put } from "@vercel/blob";
 import { requireFinanceAdmin } from "@/lib/finance-auth";
 import { buildContractPdf, nextContractCode, type ContractPdfData } from "@/lib/contracts";
-import { formatEndereco } from "@/lib/cnpj";
+import { formatCnpj, formatEnderecoLinha1 } from "@/lib/cnpj";
 
 const createSchema = z.object({
   templateType: z.enum(["PRESTACAO_SERVICOS_PJ", "PRESTACAO_SERVICOS_PF", "MILITANCIA", "TERMO_DOACAO", "TERMO_CESSAO"]),
@@ -87,13 +87,14 @@ export async function POST(req: NextRequest) {
 
     const candidateName = payingEntity?.candidateName ?? payingEntity?.name ?? campaign?.candidateName ?? campaign?.name ?? "Candidato";
     const office = payingEntity?.office ?? campaign?.office ?? "";
-    const contratanteNome = `ELEIÇÕES 2026 ${candidateName} ${office}`.trim();
-    const contratanteCnpj = payingEntity?.cnpj ?? settings.cnpj ?? "—";
+    const contratanteNome = payingEntity?.razaoSocial ?? settings.razaoSocial ?? `ELEIÇÕES 2026 ${candidateName} ${office}`.trim();
+    const rawContratanteCnpj = payingEntity?.cnpj ?? settings.cnpj;
+    const contratanteCnpj = rawContratanteCnpj ? formatCnpj(rawContratanteCnpj) : "—";
     const contratanteEndereco = payingEntity
-      ? formatEndereco(payingEntity)
-      : formatEndereco({
-          logradouro: settings.cnpjLogradouro, numero: settings.cnpjNumero, complemento: settings.cnpjComplemento,
-          bairro: settings.cnpjBairro, cep: settings.cnpjCep, municipio: settings.cnpjMunicipio, uf: settings.cnpjUf,
+      ? formatEnderecoLinha1(payingEntity)
+      : formatEnderecoLinha1({
+          logradouro: settings.cnpjLogradouro, numero: settings.cnpjNumero,
+          complemento: settings.cnpjComplemento, bairro: settings.cnpjBairro,
         });
     const contratanteCidade = payingEntity?.municipio ?? settings.cnpjMunicipio ?? null;
     const contratanteUf = payingEntity?.uf ?? settings.cnpjUf ?? null;

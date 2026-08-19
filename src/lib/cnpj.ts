@@ -29,3 +29,22 @@ export function formatEndereco(opts: {
   const linhas = [linha1, linha2].filter(Boolean);
   return linhas.length > 0 ? linhas.join(" — ") : null;
 }
+
+/**
+ * Só a primeira linha do endereço (logradouro, número, complemento, bairro) —
+ * sem município/UF/CEP. Uso: blocos de qualificação de parte em contratos, onde
+ * a cidade/UF já é interpolada separadamente pelo próprio texto do contrato
+ * (ex.: "...endereço sito à {aqui}, em {Cidade}/{UF}") — usar formatEndereco()
+ * ali duplicaria a cidade/UF.
+ */
+export function formatEnderecoLinha1(opts: {
+  logradouro?: string | null;
+  numero?: string | null;
+  complemento?: string | null;
+  bairro?: string | null;
+}): string | null {
+  const linha = [opts.logradouro, opts.numero && `nº ${opts.numero}`, opts.complemento, opts.bairro]
+    .filter(Boolean)
+    .join(", ");
+  return linha || null;
+}

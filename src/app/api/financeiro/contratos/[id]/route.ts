@@ -125,16 +125,17 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
         gate.db.campaign.findUnique({ where: { id: gate.cid }, select: { candidateName: true, name: true, office: true } }),
         merged.payingEntityId ? gate.db.payingEntity.findUnique({ where: { id: merged.payingEntityId } }) : Promise.resolve(null),
       ]);
-      const { formatEndereco } = await import("@/lib/cnpj");
+      const { formatCnpj, formatEnderecoLinha1 } = await import("@/lib/cnpj");
       const candidateName = payingEntity?.candidateName ?? payingEntity?.name ?? campaign?.candidateName ?? campaign?.name ?? "Candidato";
       const office = payingEntity?.office ?? campaign?.office ?? "";
-      pdfData.contratanteNome = `ELEIÇÕES 2026 ${candidateName} ${office}`.trim();
-      pdfData.contratanteCnpj = payingEntity?.cnpj ?? settings?.cnpj ?? "—";
+      pdfData.contratanteNome = payingEntity?.razaoSocial ?? settings?.razaoSocial ?? `ELEIÇÕES 2026 ${candidateName} ${office}`.trim();
+      const rawContratanteCnpj = payingEntity?.cnpj ?? settings?.cnpj;
+      pdfData.contratanteCnpj = rawContratanteCnpj ? formatCnpj(rawContratanteCnpj) : "—";
       pdfData.contratanteEndereco = payingEntity
-        ? formatEndereco(payingEntity)
-        : formatEndereco({
-            logradouro: settings?.cnpjLogradouro, numero: settings?.cnpjNumero, complemento: settings?.cnpjComplemento,
-            bairro: settings?.cnpjBairro, cep: settings?.cnpjCep, municipio: settings?.cnpjMunicipio, uf: settings?.cnpjUf,
+        ? formatEnderecoLinha1(payingEntity)
+        : formatEnderecoLinha1({
+            logradouro: settings?.cnpjLogradouro, numero: settings?.cnpjNumero,
+            complemento: settings?.cnpjComplemento, bairro: settings?.cnpjBairro,
           });
       pdfData.contratanteCidade = payingEntity?.municipio ?? settings?.cnpjMunicipio ?? null;
       pdfData.contratanteUf = payingEntity?.uf ?? settings?.cnpjUf ?? null;

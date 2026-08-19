@@ -1,9 +1,11 @@
-import { normalizeCnpj, formatEndereco } from "./cnpj";
+import { normalizeCnpj, formatCnpj, formatEnderecoLinha1 } from "./cnpj";
 
 export type CnpjLookupResult = {
   razaoSocial: string;
   document: string;
   address: string | null;
+  municipio: string | null;
+  uf: string | null;
   phone: string | null;
   email: string | null;
   situacao: string | null;
@@ -26,20 +28,19 @@ export async function lookupCnpj(rawCnpj: string): Promise<CnpjLookupResult | nu
   const data = await res.json();
   if (data?.status === "ERROR") return null;
 
-  const address = formatEndereco({
+  const address = formatEnderecoLinha1({
     logradouro: data.logradouro,
     numero: data.numero,
     complemento: data.complemento,
     bairro: data.bairro,
-    cep: data.cep,
-    municipio: data.municipio,
-    uf: data.uf,
   });
 
   return {
     razaoSocial: data.nome ?? "",
-    document: digits,
+    document: formatCnpj(digits),
     address,
+    municipio: data.municipio || null,
+    uf: data.uf || null,
     phone: data.telefone || null,
     email: data.email || null,
     situacao: data.situacao || null,

@@ -183,6 +183,8 @@ function ContratosContent() {
         counterpartyName: j.razaoSocial || f.counterpartyName,
         counterpartyDocument: j.document || f.counterpartyDocument,
         counterpartyAddress: j.address || f.counterpartyAddress,
+        counterpartyCity: j.municipio || f.counterpartyCity,
+        counterpartyUf: j.uf || f.counterpartyUf,
         counterpartyPhone: j.phone || f.counterpartyPhone,
         counterpartyEmail: j.email || f.counterpartyEmail,
       }));
