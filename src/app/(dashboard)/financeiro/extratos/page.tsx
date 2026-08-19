@@ -82,7 +82,7 @@ function ExtratosContent() {
     if (fileRef.current) fileRef.current.value = "";
     if (res.ok) {
       const j = await res.json();
-      toast.success(`Importado: ${j.imported} novas, ${j.skipped} já existiam, ${j.suggested} com sugestão de vínculo`);
+      toast.success(`Importado: ${j.imported} novas, ${j.skipped} já existiam, ${j.autoMatched} conciliadas automaticamente`);
       load();
     } else {
       const d = await res.json().catch(() => ({}));

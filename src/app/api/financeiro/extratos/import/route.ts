@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireFinanceAdmin } from "@/lib/finance-auth";
-import { parseOfx } from "@/lib/ofx";
+import { parseOfx, inferPaymentMethod } from "@/lib/ofx";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -25,7 +25,7 @@ export async function POST(request: Request): Promise<NextResponse> {
 
     let imported = 0;
     let skipped = 0;
-    let suggested = 0;
+    let autoMatched = 0;
     const errors: string[] = [];
 
     for (const file of files) {
@@ -84,8 +84,10 @@ export async function POST(request: Request): Promise<NextResponse> {
         });
         imported++;
 
-        // Sugestão de conciliação: só grava matchedEntryId quando há exatamente 1
-        // candidato — nunca muda status sozinho, fica UNMATCHED até confirmação manual.
+        // Conciliação automática: quando há exatamente 1 candidato (mesmo tipo,
+        // valor exato, dentro da janela de dias), já vincula e marca como pago —
+        // decisão explícita do usuário (revertendo o "só sugerir" inicial).
+        // Zero ou mais de 1 candidato: fica UNMATCHED pra vínculo manual.
         const windowStart = new Date(tx.postedAt.getTime() - MATCH_WINDOW_DAYS * 86400000);
         const windowEnd = new Date(tx.postedAt.getTime() + MATCH_WINDOW_DAYS * 86400000);
         const candidates = await gate.db.financialEntry.findMany({
@@ -100,16 +102,27 @@ export async function POST(request: Request): Promise<NextResponse> {
         });
 
         if (candidates.length === 1) {
-          await gate.db.bankTransaction.update({
-            where: { id: created.id },
-            data: { matchedEntryId: candidates[0].id },
-          });
-          suggested++;
+          const entry = candidates[0];
+          await gate.db.$transaction(async (t) => {
+            await t.bankTransaction.update({
+              where: { id: created.id },
+              data: { status: "MATCHED", matchedEntryId: entry.id },
+            });
+            await t.financialEntry.update({
+              where: { id: entry.id },
+              data: {
+                status: "PAGO",
+                date: tx.postedAt,
+                paymentMethod: entry.paymentMethod ?? inferPaymentMethod(tx.name),
+              },
+            });
+          }, { timeout: 30000 });
+          autoMatched++;
         }
       }
     }
 
-    return NextResponse.json({ imported, skipped, suggested, errors: errors.length > 0 ? errors : undefined });
+    return NextResponse.json({ imported, skipped, autoMatched, errors: errors.length > 0 ? errors : undefined });
   } catch (err) {
     console.error("[api/financeiro/extratos/import POST] erro:", err);
     return NextResponse.json({ error: "Erro ao importar extrato" }, { status: 500 });
