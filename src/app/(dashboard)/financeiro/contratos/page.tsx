@@ -24,10 +24,25 @@ type Contract = {
   status: ContractStatusType;
   counterpartyName: string;
   counterpartyDocument: string;
+  counterpartyAddress: string | null;
+  counterpartyCity: string | null;
+  counterpartyUf: string | null;
   counterpartyEmail: string | null;
   counterpartyPhone: string | null;
+  representativeName: string | null;
+  representativeCpf: string | null;
+  representativeAddress: string | null;
+  objectDescription: string;
+  eventAddress: string | null;
+  startDate: string | null;
+  endDate: string | null;
   totalValue: number | null;
+  priceJustification: string | null;
+  paymentTerms: string | null;
   signatureDate: string;
+  forumCity: string | null;
+  forumUf: string | null;
+  notes: string | null;
   pdfUrl: string | null;
   supplier: { id: string; name: string } | null;
   payingEntity: { id: string; name: string } | null;
@@ -191,13 +206,29 @@ function ContratosContent() {
   function openEdit(c: Contract) {
     setEditingId(c.id);
     setForm({
-      ...emptyForm,
       templateType: c.templateType,
       counterpartyName: c.counterpartyName,
       counterpartyDocument: c.counterpartyDocument,
+      counterpartyAddress: c.counterpartyAddress ?? "",
+      counterpartyCity: c.counterpartyCity ?? "",
+      counterpartyUf: c.counterpartyUf ?? "",
+      counterpartyPhone: c.counterpartyPhone ?? "",
+      counterpartyEmail: c.counterpartyEmail ?? "",
+      representativeName: c.representativeName ?? "",
+      representativeCpf: c.representativeCpf ?? "",
+      representativeAddress: c.representativeAddress ?? "",
+      objectDescription: c.objectDescription,
+      eventAddress: c.eventAddress ?? "",
+      startDate: c.startDate ? c.startDate.slice(0, 10) : "",
+      endDate: c.endDate ? c.endDate.slice(0, 10) : "",
       totalValue: c.totalValue != null ? String(c.totalValue) : "",
+      priceJustification: c.priceJustification ?? "",
+      paymentTerms: c.paymentTerms ?? "",
+      forumCity: c.forumCity ?? "",
+      forumUf: c.forumUf ?? "",
       supplierId: c.supplier?.id ?? "",
       payingEntityId: c.payingEntity?.id ?? "",
+      notes: c.notes ?? "",
       status: c.status,
     });
     setOpen(true);
