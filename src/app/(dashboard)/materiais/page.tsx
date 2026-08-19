@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Package, Check, X, FileText, MapPin, Mail, MessageCircle, FileSpreadsheet, Trash2 } from "lucide-react";
+import { Package, Check, X, FileText, MapPin, Mail, MessageCircle, FileSpreadsheet, Trash2, ClipboardList, Tags } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -154,6 +154,25 @@ export default function MateriaisPage() {
             className="inline-flex items-center gap-1.5 h-9 px-3 rounded-md text-xs font-medium border border-white/[0.08] text-muted-foreground hover:text-foreground hover:bg-white/[0.04] transition-colors">
             <FileSpreadsheet className="w-3.5 h-3.5" /> Excel
           </a>
+          {statusFilter === "APROVADO" && (
+            <>
+              <a href="/api/materiais/export-separacao"
+                title="Quanto separar de cada material (soma de todos os aprovados)"
+                className="inline-flex items-center gap-1.5 h-9 px-3 rounded-md text-xs font-medium border border-primary/30 text-primary hover:bg-primary/10 transition-colors">
+                <ClipboardList className="w-3.5 h-3.5" /> Separação
+              </a>
+              <a href="/api/materiais/export-etiquetas"
+                title="Planilha pronta pra Etiqueta Fácil dos Correios ou mala direta"
+                className="inline-flex items-center gap-1.5 h-9 px-3 rounded-md text-xs font-medium border border-primary/30 text-primary hover:bg-primary/10 transition-colors">
+                <Tags className="w-3.5 h-3.5" /> Etiquetas (Excel)
+              </a>
+              <a href="/api/materiais/export-etiquetas-pdf"
+                title="Etiquetas prontas pra imprimir e recortar"
+                className="inline-flex items-center gap-1.5 h-9 px-3 rounded-md text-xs font-medium border border-primary/30 text-primary hover:bg-primary/10 transition-colors">
+                <Tags className="w-3.5 h-3.5" /> Etiquetas (PDF)
+              </a>
+            </>
+          )}
         </div>
       </div>
 
