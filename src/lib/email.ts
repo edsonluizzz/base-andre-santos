@@ -220,9 +220,9 @@ export async function sendContractEmail({
           <strong style="color:#ff6b04">Contrato ${contractCode}</strong> para sua assinatura.
         </p>
         <p style="color:#94a3b8;line-height:1.6;">
-          Para assinar eletronicamente, acesse
-          <a href="https://assinador.iti.gov.br" style="color:#ff6b04;">assinador.iti.gov.br</a>,
-          faça login com sua conta gov.br, envie este PDF e assine. Depois é só nos devolver o
+          Para assinar eletronicamente, acesse o
+          <a href="https://sso.acesso.gov.br/login?client_id=assinador.iti.br" style="color:#ff6b04;">assinador.iti.gov.br</a>
+          fazendo login com sua conta gov.br, envie este PDF e assine. Depois é só nos devolver o
           arquivo assinado por este mesmo e-mail ou pelo WhatsApp.
         </p>
         <p style="color:#475569;font-size:12px;margin-top:32px;">

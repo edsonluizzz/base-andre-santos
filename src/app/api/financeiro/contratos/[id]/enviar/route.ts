@@ -57,8 +57,8 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
         gate.cid,
         phone,
         `Olá, ${contract.counterpartyName}! Segue o Contrato ${contract.code} para assinatura. ` +
-          `Para assinar eletronicamente, acesse assinador.iti.gov.br, faça login com sua conta gov.br, ` +
-          `envie o PDF abaixo e assine. Depois nos devolva o arquivo assinado por aqui mesmo ou por e-mail.`,
+          `Para assinar eletronicamente, acesse https://sso.acesso.gov.br/login?client_id=assinador.iti.br, ` +
+          `faça login com sua conta gov.br, envie o PDF abaixo e assine. Depois nos devolva o arquivo assinado por aqui mesmo ou por e-mail.`,
       );
       await zapiSendDocument(gate.cid, phone, contract.pdfUrl, fileName);
     } catch (err) {
