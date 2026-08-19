@@ -2,10 +2,12 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Wallet, TrendingUp, TrendingDown, Clock, CalendarClock, Landmark, AlertTriangle } from "lucide-react";
+import { Wallet, TrendingUp, TrendingDown, Clock, CalendarClock, Landmark, AlertTriangle, ShieldCheck } from "lucide-react";
 import { FinanceGuard } from "@/components/financeiro/finance-guard";
 import { FinanceNav } from "@/components/financeiro/finance-nav";
 import { acctLabel } from "@/lib/ofx";
+
+type FinanceAdmin = { email: string; name: string | null; image: string | null; hasAccount: boolean };
 
 type Summary = {
   saldo: number;
@@ -43,6 +45,7 @@ function Bar({ label, value, max, color }: { label: string; value: number; max: 
 function DashboardContent() {
   const [summary, setSummary] = useState<Summary | null>(null);
   const [loading, setLoading] = useState(true);
+  const [admins, setAdmins] = useState<FinanceAdmin[]>([]);
 
   useEffect(() => {
     fetch("/api/financeiro/summary")
@@ -50,6 +53,10 @@ function DashboardContent() {
       .then(setSummary)
       .catch(() => {})
       .finally(() => setLoading(false));
+    fetch("/api/financeiro/admins")
+      .then((r) => r.json())
+      .then((j) => setAdmins(j.data ?? []))
+      .catch(() => {});
   }, []);
 
   const cards = summary ? [
@@ -126,6 +133,37 @@ function DashboardContent() {
               </div>
             )}
           </div>
+
+          {admins.length > 0 && (
+            <div className="glass-card rounded-2xl p-5 border border-white/[0.08] space-y-3">
+              <h2 className="text-sm font-semibold flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-primary" /> Quem tem acesso ao Financeiro
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                {admins.map((a) => (
+                  <div key={a.email} className="flex items-center gap-2 rounded-xl border border-white/[0.06] p-2.5">
+                    {a.image ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={a.image} alt="" className="w-7 h-7 rounded-full shrink-0" />
+                    ) : (
+                      <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0 text-[10px] font-medium text-primary">
+                        {(a.name ?? a.email)[0]?.toUpperCase()}
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <p className="text-xs font-medium truncate">{a.name ?? a.email}</p>
+                      <p className="text-[10px] text-muted-foreground truncate">
+                        {a.name ? a.email : a.hasAccount ? "" : "nunca fez login"}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <p className="text-[10px] text-muted-foreground/70">
+                Controlado por FINANCE_ADMIN_EMAILS na Vercel — separado do role Administrador da campanha.
+              </p>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
             <div className="glass-card rounded-2xl p-5 border border-white/[0.08] space-y-3">
