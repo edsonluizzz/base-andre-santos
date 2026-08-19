@@ -184,6 +184,58 @@ export async function sendPaymentReceiptEmail({
   if (result.error) throw new Error(result.error.message ?? "Falha ao enviar email via Resend");
 }
 
+// ─── Contratos (envio para assinatura) ───────────────────────────────────────
+
+export async function sendContractEmail({
+  to,
+  counterpartyName,
+  contractCode,
+  pdfBuffer,
+  fileName,
+  campaignName,
+}: {
+  to: string;
+  counterpartyName: string;
+  contractCode: string;
+  pdfBuffer: Buffer;
+  fileName: string;
+  campaignName?: string;
+}): Promise<void> {
+  const resend = getResend();
+  if (!resend) throw new Error("Resend não configurado (RESEND_API_KEY ausente)");
+  const label = campaignLabel(campaignName);
+
+  const result = await resend.emails.send({
+    from: FROM,
+    to,
+    subject: `Contrato ${contractCode} para assinatura — ${label}`,
+    html: `
+      <div style="${baseStyle}">
+        <p style="${tagStyle}">${label}</p>
+        <h1 style="font-size:22px;font-weight:700;color:#fff;margin:0 0 16px;">
+          Contrato para assinatura
+        </h1>
+        <p style="color:#94a3b8;line-height:1.6;">
+          Olá, <strong style="color:#fff">${counterpartyName}</strong>! Segue em anexo o
+          <strong style="color:#ff6b04">Contrato ${contractCode}</strong> para sua assinatura.
+        </p>
+        <p style="color:#94a3b8;line-height:1.6;">
+          Para assinar eletronicamente, acesse
+          <a href="https://assinador.iti.gov.br" style="color:#ff6b04;">assinador.iti.gov.br</a>,
+          faça login com sua conta gov.br, envie este PDF e assine. Depois é só nos devolver o
+          arquivo assinado por este mesmo e-mail ou pelo WhatsApp.
+        </p>
+        <p style="color:#475569;font-size:12px;margin-top:32px;">
+          ${label} — comunicação interna da campanha.
+        </p>
+      </div>
+    `,
+    attachments: [{ filename: fileName, content: pdfBuffer }],
+  });
+
+  if (result.error) throw new Error(result.error.message ?? "Falha ao enviar email via Resend");
+}
+
 // ─── Termo de Apoiador (solicitação de material) ──────────────────────────────
 
 export async function sendMaterialRequestEmail({

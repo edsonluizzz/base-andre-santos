@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Wallet, Plus, Pencil, FileText, Search, ExternalLink, CircleDollarSign } from "lucide-react";
+import { Wallet, Plus, Pencil, FileText, Search, ExternalLink, CircleDollarSign, Send } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,6 +24,8 @@ type Contract = {
   status: ContractStatusType;
   counterpartyName: string;
   counterpartyDocument: string;
+  counterpartyEmail: string | null;
+  counterpartyPhone: string | null;
   totalValue: number | null;
   signatureDate: string;
   pdfUrl: string | null;
@@ -157,6 +159,11 @@ function ContratosContent() {
   const [paymentDialogContract, setPaymentDialogContract] = useState<Contract | null>(null);
   const [extraPaymentForm, setExtraPaymentForm] = useState(emptyPaymentForm);
   const [savingPayment, setSavingPayment] = useState(false);
+
+  const [sendDialogContract, setSendDialogContract] = useState<Contract | null>(null);
+  const [sendChannel, setSendChannel] = useState<"email" | "whatsapp">("whatsapp");
+  const [sendTo, setSendTo] = useState("");
+  const [sending, setSending] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -308,6 +315,32 @@ function ContratosContent() {
     }
   }
 
+  function openSendDialog(c: Contract) {
+    setSendDialogContract(c);
+    const channel = c.counterpartyPhone ? "whatsapp" : "email";
+    setSendChannel(channel);
+    setSendTo((channel === "whatsapp" ? c.counterpartyPhone : c.counterpartyEmail) ?? "");
+  }
+
+  async function doSend() {
+    if (!sendDialogContract) return;
+    if (!sendTo.trim()) { toast.error(sendChannel === "email" ? "Informe o e-mail" : "Informe o telefone"); return; }
+    setSending(true);
+    const res = await fetch(`/api/financeiro/contratos/${sendDialogContract.id}/enviar`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ channel: sendChannel, to: sendTo }),
+    });
+    setSending(false);
+    if (res.ok) {
+      toast.success(sendChannel === "email" ? "Contrato enviado por e-mail" : "Contrato enviado por WhatsApp");
+      setSendDialogContract(null);
+    } else {
+      const d = await res.json().catch(() => ({}));
+      toast.error(d.error ?? "Erro ao enviar contrato");
+    }
+  }
+
   const showDates = SHOW_DATES[form.templateType];
   const eventAddressLabel = EVENT_ADDRESS_LABEL[form.templateType];
 
@@ -392,6 +425,11 @@ function ContratosContent() {
                         <Button size="sm" variant="ghost" onClick={() => openPaymentDialog(c)} title="Registrar pagamento">
                           <CircleDollarSign className="w-3.5 h-3.5" />
                         </Button>
+                        {c.pdfUrl && (
+                          <Button size="sm" variant="ghost" onClick={() => openSendDialog(c)} title="Enviar para assinatura">
+                            <Send className="w-3.5 h-3.5" />
+                          </Button>
+                        )}
                         <Button size="sm" variant="ghost" onClick={() => openEdit(c)}><Pencil className="w-3.5 h-3.5" /></Button>
                       </div>
                     </td>
@@ -702,6 +740,49 @@ function ContratosContent() {
                 <Button variant="outline" onClick={() => setPaymentDialogContract(null)}>Cancelar</Button>
                 <Button onClick={savePayment} disabled={savingPayment} className="bg-primary text-primary-foreground">
                   {savingPayment ? "Salvando..." : "Registrar pagamento"}
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!sendDialogContract} onOpenChange={(v) => !v && setSendDialogContract(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Enviar contrato — {sendDialogContract?.code}</DialogTitle>
+          </DialogHeader>
+          {sendDialogContract && (
+            <div className="space-y-4 pt-2">
+              <p className="text-xs text-muted-foreground">
+                Envia o PDF do contrato para {sendDialogContract.counterpartyName} assinar via
+                assinador.iti.gov.br (conta gov.br) e devolver assinado.
+              </p>
+              <div>
+                <Label>Canal</Label>
+                <Select
+                  value={sendChannel}
+                  onValueChange={(v) => {
+                    const channel = (v as "email" | "whatsapp") ?? "whatsapp";
+                    setSendChannel(channel);
+                    setSendTo((channel === "whatsapp" ? sendDialogContract.counterpartyPhone : sendDialogContract.counterpartyEmail) ?? "");
+                  }}
+                >
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="whatsapp">WhatsApp</SelectItem>
+                    <SelectItem value="email">E-mail</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>{sendChannel === "email" ? "E-mail" : "Telefone (com DDD)"}</Label>
+                <Input value={sendTo} onChange={(e) => setSendTo(e.target.value)} placeholder={sendChannel === "email" ? "nome@exemplo.com" : "41999999999"} />
+              </div>
+              <div className="flex justify-end gap-2 pt-2">
+                <Button variant="outline" onClick={() => setSendDialogContract(null)}>Cancelar</Button>
+                <Button onClick={doSend} disabled={sending} className="bg-primary text-primary-foreground gap-1.5">
+                  {sending ? "Enviando..." : <><Send className="w-3.5 h-3.5" /> Enviar</>}
                 </Button>
               </div>
             </div>
