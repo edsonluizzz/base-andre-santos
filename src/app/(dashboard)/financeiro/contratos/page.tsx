@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Wallet, Plus, Pencil, FileText, Search, ExternalLink } from "lucide-react";
+import { Wallet, Plus, Pencil, FileText, Search, ExternalLink, CircleDollarSign } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,8 @@ import { FinanceNav } from "@/components/financeiro/finance-nav";
 
 type TemplateType = "PRESTACAO_SERVICOS_PJ" | "PRESTACAO_SERVICOS_PF" | "MILITANCIA" | "TERMO_DOACAO" | "TERMO_CESSAO";
 type ContractStatusType = "GERADO" | "ASSINADO" | "CANCELADO";
+type PaymentMethod = "PIX" | "DINHEIRO" | "TRANSFERENCIA" | "BOLETO" | "CARTAO" | "OUTRO";
+type EntryStatus = "PAGO" | "PENDENTE" | "AGENDADO";
 
 type Contract = {
   id: string;
@@ -27,6 +29,18 @@ type Contract = {
   pdfUrl: string | null;
   supplier: { id: string; name: string } | null;
   payingEntity: { id: string; name: string } | null;
+  paidAmount: number;
+  pendingAmount: number;
+  paymentCount: number;
+};
+
+const METHOD_LABEL: Record<PaymentMethod, string> = {
+  PIX: "PIX", DINHEIRO: "Dinheiro", TRANSFERENCIA: "Transferência", BOLETO: "Boleto", CARTAO: "Cartão", OUTRO: "Outro",
+};
+
+const emptyPaymentForm = {
+  amount: "", paymentMethod: "PIX" as PaymentMethod, status: "PAGO" as EntryStatus,
+  date: new Date().toISOString().slice(0, 10), label: "",
 };
 
 type Supplier = { id: string; name: string; active: boolean };
@@ -137,6 +151,13 @@ function ContratosContent() {
   const [saving, setSaving] = useState(false);
   const [lookingUp, setLookingUp] = useState(false);
 
+  const [registerPayment, setRegisterPayment] = useState(false);
+  const [paymentForm, setPaymentForm] = useState(emptyPaymentForm);
+
+  const [paymentDialogContract, setPaymentDialogContract] = useState<Contract | null>(null);
+  const [extraPaymentForm, setExtraPaymentForm] = useState(emptyPaymentForm);
+  const [savingPayment, setSavingPayment] = useState(false);
+
   const load = useCallback(async () => {
     setLoading(true);
     const res = await fetch("/api/financeiro/contratos");
@@ -154,6 +175,8 @@ function ContratosContent() {
   function openNew() {
     setEditingId(null);
     setForm(emptyForm);
+    setRegisterPayment(false);
+    setPaymentForm(emptyPaymentForm);
     setOpen(true);
   }
 
@@ -225,6 +248,15 @@ function ContratosContent() {
       supplierId: form.supplierId || undefined,
       payingEntityId: form.payingEntityId || null,
       notes: form.notes || undefined,
+      payment: (!editingId && registerPayment && paymentForm.amount)
+        ? {
+            amount: Number(paymentForm.amount.replace(",", ".")),
+            paymentMethod: paymentForm.paymentMethod,
+            status: paymentForm.status,
+            date: new Date(paymentForm.date).toISOString(),
+            label: paymentForm.label || undefined,
+          }
+        : undefined,
     };
 
     const res = editingId
@@ -240,6 +272,39 @@ function ContratosContent() {
     } else {
       const d = await res.json().catch(() => ({}));
       toast.error(d.error ?? "Erro ao salvar contrato");
+    }
+  }
+
+  function openPaymentDialog(c: Contract) {
+    setPaymentDialogContract(c);
+    const remaining = c.totalValue != null ? Math.max(c.totalValue - c.paidAmount - c.pendingAmount, 0) : 0;
+    setExtraPaymentForm({ ...emptyPaymentForm, amount: remaining ? String(remaining) : "" });
+  }
+
+  async function savePayment() {
+    if (!paymentDialogContract) return;
+    const amount = Number(extraPaymentForm.amount.replace(",", "."));
+    if (!Number.isFinite(amount) || amount <= 0) { toast.error("Valor inválido"); return; }
+    setSavingPayment(true);
+    const res = await fetch(`/api/financeiro/contratos/${paymentDialogContract.id}/pagamentos`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        amount,
+        paymentMethod: extraPaymentForm.paymentMethod,
+        status: extraPaymentForm.status,
+        date: new Date(extraPaymentForm.date).toISOString(),
+        label: extraPaymentForm.label || undefined,
+      }),
+    });
+    setSavingPayment(false);
+    if (res.ok) {
+      toast.success("Pagamento registrado");
+      setPaymentDialogContract(null);
+      load();
+    } else {
+      const d = await res.json().catch(() => ({}));
+      toast.error(d.error ?? "Erro ao registrar pagamento");
     }
   }
 
@@ -277,14 +342,15 @@ function ContratosContent() {
                 <th className="px-4 py-2.5 text-left text-muted-foreground font-medium">Contraparte</th>
                 <th className="px-4 py-2.5 text-left text-muted-foreground font-medium">Status</th>
                 <th className="px-4 py-2.5 text-right text-muted-foreground font-medium">Valor</th>
+                <th className="px-4 py-2.5 text-left text-muted-foreground font-medium">Pagamento</th>
                 <th className="px-4 py-2.5 text-right text-muted-foreground font-medium">Ação</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/[0.04]">
               {loading ? (
-                <tr><td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">Carregando...</td></tr>
+                <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">Carregando...</td></tr>
               ) : contracts.length === 0 ? (
-                <tr><td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">Nenhum contrato gerado ainda.</td></tr>
+                <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">Nenhum contrato gerado ainda.</td></tr>
               ) : (
                 contracts.map((c) => (
                   <tr key={c.id} className="hover:bg-white/[0.02]">
@@ -298,6 +364,24 @@ function ContratosContent() {
                       <span className={`text-[10px] px-2 py-0.5 rounded-full border ${STATUS_STYLE[c.status]}`}>{STATUS_LABEL[c.status]}</span>
                     </td>
                     <td className="px-4 py-2.5 text-right font-medium">{fmt(c.totalValue)}</td>
+                    <td className="px-4 py-2.5">
+                      {c.paymentCount === 0 ? (
+                        <span className="text-[11px] text-muted-foreground">Sem pagamento</span>
+                      ) : (
+                        <div>
+                          <span className={`text-[10px] px-2 py-0.5 rounded-full border ${
+                            c.totalValue != null && c.paidAmount >= c.totalValue
+                              ? "bg-green-500/15 text-green-400 border-green-500/30"
+                              : "bg-amber-500/15 text-amber-400 border-amber-500/30"
+                          }`}>
+                            {fmt(c.paidAmount)}{c.totalValue != null ? ` / ${fmt(c.totalValue)}` : ""}
+                          </span>
+                          {c.pendingAmount > 0 && (
+                            <p className="text-[10px] text-muted-foreground mt-0.5">+{fmt(c.pendingAmount)} pendente</p>
+                          )}
+                        </div>
+                      )}
+                    </td>
                     <td className="px-4 py-2.5 text-right">
                       <div className="flex items-center justify-end gap-1">
                         {c.pdfUrl && (
@@ -305,6 +389,9 @@ function ContratosContent() {
                             <Button size="sm" variant="ghost"><ExternalLink className="w-3.5 h-3.5" /></Button>
                           </a>
                         )}
+                        <Button size="sm" variant="ghost" onClick={() => openPaymentDialog(c)} title="Registrar pagamento">
+                          <CircleDollarSign className="w-3.5 h-3.5" />
+                        </Button>
                         <Button size="sm" variant="ghost" onClick={() => openEdit(c)}><Pencil className="w-3.5 h-3.5" /></Button>
                       </div>
                     </td>
@@ -495,6 +582,61 @@ function ContratosContent() {
               <Input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
             </div>
 
+            {!editingId && (
+              <div className="rounded-lg border border-white/[0.08] p-3 space-y-3">
+                <label className="flex items-center gap-2 text-xs font-medium text-muted-foreground cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={registerPayment}
+                    onChange={(e) => setRegisterPayment(e.target.checked)}
+                  />
+                  Já registrar um pagamento (entrada, à vista, etc.)
+                </label>
+                {registerPayment && (
+                  <>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label>Valor pago (R$)</Label>
+                        <Input value={paymentForm.amount} onChange={(e) => setPaymentForm({ ...paymentForm, amount: e.target.value })} inputMode="decimal" placeholder="0,00" />
+                      </div>
+                      <div>
+                        <Label>Data</Label>
+                        <Input type="date" value={paymentForm.date} onChange={(e) => setPaymentForm({ ...paymentForm, date: e.target.value })} />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label>Forma de pagamento</Label>
+                        <Select value={paymentForm.paymentMethod} onValueChange={(v) => setPaymentForm({ ...paymentForm, paymentMethod: (v as PaymentMethod) ?? "PIX" })}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {(Object.keys(METHOD_LABEL) as PaymentMethod[]).map((m) => (
+                              <SelectItem key={m} value={m}>{METHOD_LABEL[m]}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label>Status</Label>
+                        <Select value={paymentForm.status} onValueChange={(v) => setPaymentForm({ ...paymentForm, status: (v as EntryStatus) ?? "PAGO" })}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="PAGO">Pago</SelectItem>
+                            <SelectItem value="PENDENTE">Pendente</SelectItem>
+                            <SelectItem value="AGENDADO">Agendado</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <div>
+                      <Label>Rótulo (opcional)</Label>
+                      <Input value={paymentForm.label} onChange={(e) => setPaymentForm({ ...paymentForm, label: e.target.value })} placeholder="Ex: Entrada, Pagamento integral..." />
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
             <div className="flex justify-end gap-2 pt-2">
               <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
               <Button onClick={save} disabled={saving} className="bg-primary text-primary-foreground">
@@ -502,6 +644,68 @@ function ContratosContent() {
               </Button>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!paymentDialogContract} onOpenChange={(v) => !v && setPaymentDialogContract(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Registrar pagamento — {paymentDialogContract?.code}</DialogTitle>
+          </DialogHeader>
+          {paymentDialogContract && (
+            <div className="space-y-4 pt-2">
+              <p className="text-xs text-muted-foreground">
+                {paymentDialogContract.counterpartyName} · Total do contrato: {fmt(paymentDialogContract.totalValue)}
+                {paymentDialogContract.paymentCount > 0 && (
+                  <> · Já pago: {fmt(paymentDialogContract.paidAmount)}</>
+                )}
+              </p>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Valor (R$)</Label>
+                  <Input value={extraPaymentForm.amount} onChange={(e) => setExtraPaymentForm({ ...extraPaymentForm, amount: e.target.value })} inputMode="decimal" placeholder="0,00" />
+                </div>
+                <div>
+                  <Label>Data</Label>
+                  <Input type="date" value={extraPaymentForm.date} onChange={(e) => setExtraPaymentForm({ ...extraPaymentForm, date: e.target.value })} />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Forma de pagamento</Label>
+                  <Select value={extraPaymentForm.paymentMethod} onValueChange={(v) => setExtraPaymentForm({ ...extraPaymentForm, paymentMethod: (v as PaymentMethod) ?? "PIX" })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {(Object.keys(METHOD_LABEL) as PaymentMethod[]).map((m) => (
+                        <SelectItem key={m} value={m}>{METHOD_LABEL[m]}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Status</Label>
+                  <Select value={extraPaymentForm.status} onValueChange={(v) => setExtraPaymentForm({ ...extraPaymentForm, status: (v as EntryStatus) ?? "PAGO" })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="PAGO">Pago</SelectItem>
+                      <SelectItem value="PENDENTE">Pendente</SelectItem>
+                      <SelectItem value="AGENDADO">Agendado</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div>
+                <Label>Rótulo (opcional)</Label>
+                <Input value={extraPaymentForm.label} onChange={(e) => setExtraPaymentForm({ ...extraPaymentForm, label: e.target.value })} placeholder="Ex: Entrada, Saldo, Pagamento integral..." />
+              </div>
+              <div className="flex justify-end gap-2 pt-2">
+                <Button variant="outline" onClick={() => setPaymentDialogContract(null)}>Cancelar</Button>
+                <Button onClick={savePayment} disabled={savingPayment} className="bg-primary text-primary-foreground">
+                  {savingPayment ? "Salvando..." : "Registrar pagamento"}
+                </Button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>

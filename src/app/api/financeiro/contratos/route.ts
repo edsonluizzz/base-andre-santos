@@ -30,6 +30,14 @@ const createSchema = z.object({
   supplierId: z.string().nullable().optional(),
   payingEntityId: z.string().nullable().optional(),
   notes: z.string().optional(),
+  // Pagamento inicial opcional — registrado como FinancialEntry vinculado assim que o contrato é criado.
+  payment: z.object({
+    amount: z.number().positive(),
+    paymentMethod: z.enum(["PIX", "DINHEIRO", "TRANSFERENCIA", "BOLETO", "CARTAO", "OUTRO"]).optional(),
+    status: z.enum(["PAGO", "PENDENTE", "AGENDADO"]).default("PAGO"),
+    date: z.string(),
+    label: z.string().optional(),
+  }).optional(),
 });
 
 export async function GET(req: NextRequest) {
@@ -52,9 +60,16 @@ export async function GET(req: NextRequest) {
         supplier: { select: { id: true, name: true } },
         payingEntity: { select: { id: true, name: true } },
         createdBy: { select: { id: true, name: true } },
+        financialEntries: { select: { amount: true, status: true } },
       },
     });
-    return NextResponse.json({ data: contracts });
+    const data = contracts.map(({ financialEntries, ...c }) => ({
+      ...c,
+      paidAmount: financialEntries.filter((e) => e.status === "PAGO").reduce((sum, e) => sum + e.amount, 0),
+      pendingAmount: financialEntries.filter((e) => e.status !== "PAGO").reduce((sum, e) => sum + e.amount, 0),
+      paymentCount: financialEntries.length,
+    }));
+    return NextResponse.json({ data });
   } catch (err) {
     console.error("[api/financeiro/contratos GET] erro:", err);
     return NextResponse.json({ error: "Erro ao listar contratos" }, { status: 500 });
@@ -186,6 +201,30 @@ export async function POST(req: NextRequest) {
           continue;
         }
         throw err;
+      }
+    }
+
+    if (contract && body.payment) {
+      try {
+        const description = `${contract.code} — ${body.payment.label?.trim() || "Pagamento"}: ${body.objectDescription.slice(0, 80)}`;
+        await gate.db.financialEntry.create({
+          data: {
+            campaignId: gate.cid,
+            type: "DESPESA",
+            amount: body.payment.amount,
+            description,
+            category: "Contratos",
+            date: new Date(body.payment.date),
+            paymentMethod: body.payment.paymentMethod,
+            status: body.payment.status,
+            supplierId: contract.supplierId,
+            payingEntityId: contract.payingEntityId,
+            contractId: contract.id,
+            createdById: gate.session.user.id,
+          },
+        });
+      } catch (err) {
+        console.error("[api/financeiro/contratos POST] falha ao registrar pagamento inicial:", err);
       }
     }
 
