@@ -47,6 +47,7 @@ model Campaign {
   financialEntries FinancialEntry[]
   materialRequests MaterialRequest[]
   contracts      Contract[]
+  bankTransactions BankTransaction[]
 }
 
 /// Fonte pagadora de cabos eleitorais — usada quando a campanha roda em chapa
@@ -150,6 +151,7 @@ model FinancialEntry {
   payingEntity PayingEntity? @relation(fields: [payingEntityId], references: [id], onDelete: SetNull)
   contract     Contract?     @relation(fields: [contractId], references: [id], onDelete: SetNull)
   createdBy    User          @relation(fields: [createdById], references: [id])
+  bankTransaction BankTransaction?
 
   @@index([campaignId])
   @@index([supplierId])
@@ -918,4 +920,37 @@ model MaterialRequest {
 
   @@index([campaignId, status])
   @@index([collaboratorId])
+}
+
+enum BankTransactionStatus {
+  UNMATCHED
+  MATCHED
+  IGNORED
+}
+
+/// Transação de extrato bancário (OFX) importada — conciliação com FinancialEntry.
+/// A constraint única (campaignId, acctId, fitid) deduplica reimportações de um
+/// mesmo extrato com datas sobrepostas.
+model BankTransaction {
+  id             String                @id @default(cuid())
+  campaignId     String                @default("andre-santos-2026")
+  bankId         String
+  branchId       String
+  acctId         String
+  fitid          String
+  trnType        String // CREDIT | DEBIT
+  amount         Float // valor com sinal, como veio do OFX
+  postedAt       DateTime
+  name           String
+  memo           String?               @db.Text
+  status         BankTransactionStatus @default(UNMATCHED)
+  matchedEntryId String?               @unique
+  importedAt     DateTime              @default(now())
+
+  campaign     Campaign        @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  matchedEntry FinancialEntry? @relation(fields: [matchedEntryId], references: [id], onDelete: SetNull)
+
+  @@unique([campaignId, acctId, fitid])
+  @@index([campaignId])
+  @@index([status])
 }
