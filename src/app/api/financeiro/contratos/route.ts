@@ -27,8 +27,8 @@ const createSchema = z.object({
   signatureDate: z.string().optional(),
   forumCity: z.string().optional(),
   forumUf: z.string().optional(),
-  supplierId: z.string().optional(),
-  payingEntityId: z.string().optional(),
+  supplierId: z.string().nullable().optional(),
+  payingEntityId: z.string().nullable().optional(),
   notes: z.string().optional(),
 });
 
