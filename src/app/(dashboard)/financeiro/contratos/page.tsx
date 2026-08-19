@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Wallet, Plus, Pencil, FileText, Search, ExternalLink, CircleDollarSign, Send } from "lucide-react";
+import { Wallet, Plus, Pencil, FileText, Search, ExternalLink, CircleDollarSign, Send, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -140,6 +140,7 @@ const emptyForm = {
   supplierId: "",
   payingEntityId: "",
   notes: "",
+  status: "GERADO" as ContractStatusType,
 };
 
 function ContratosContent() {
@@ -197,8 +198,16 @@ function ContratosContent() {
       totalValue: c.totalValue != null ? String(c.totalValue) : "",
       supplierId: c.supplier?.id ?? "",
       payingEntityId: c.payingEntity?.id ?? "",
+      status: c.status,
     });
     setOpen(true);
+  }
+
+  async function remove(c: Contract) {
+    if (!window.confirm(`Excluir o contrato ${c.code} (${c.counterpartyName})? Essa ação não pode ser desfeita.`)) return;
+    const res = await fetch(`/api/financeiro/contratos/${c.id}`, { method: "DELETE" });
+    if (res.ok) { toast.success(`Contrato ${c.code} excluído`); load(); }
+    else { const d = await res.json().catch(() => ({})); toast.error(d.error ?? "Erro ao excluir contrato"); }
   }
 
   async function lookupCnpj() {
@@ -255,6 +264,7 @@ function ContratosContent() {
       supplierId: form.supplierId || undefined,
       payingEntityId: form.payingEntityId || null,
       notes: form.notes || undefined,
+      status: editingId ? form.status : undefined,
       payment: (!editingId && registerPayment && paymentForm.amount)
         ? {
             amount: Number(paymentForm.amount.replace(",", ".")),
@@ -431,6 +441,9 @@ function ContratosContent() {
                           </Button>
                         )}
                         <Button size="sm" variant="ghost" onClick={() => openEdit(c)}><Pencil className="w-3.5 h-3.5" /></Button>
+                        <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => remove(c)} title="Excluir contrato">
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
                       </div>
                     </td>
                   </tr>
@@ -445,6 +458,19 @@ function ContratosContent() {
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader><DialogTitle>{editingId ? "Editar contrato" : "Novo contrato"}</DialogTitle></DialogHeader>
           <div className="space-y-4 pt-2">
+            {editingId && (
+              <div>
+                <Label>Status</Label>
+                <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: (v as ContractStatusType) ?? "GERADO" })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {(Object.keys(STATUS_LABEL) as ContractStatusType[]).map((s) => (
+                      <SelectItem key={s} value={s}>{STATUS_LABEL[s]}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <div>
               <Label>Modelo</Label>
               <Select

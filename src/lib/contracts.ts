@@ -312,8 +312,18 @@ export function buildContractPdf(templateType: ContractTemplateType, data: Contr
   });
 }
 
-/** Próximo código sequencial (CT-001, CT-002...) por campanha. */
+/** Próximo código sequencial (CT-001, CT-002...) por campanha — preenche buracos deixados por exclusões antes de avançar. */
 export async function nextContractCode(db: PrismaClient, campaignId: string): Promise<string> {
-  const count = await db.contract.count({ where: { campaignId } });
-  return `CT-${String(count + 1).padStart(3, "0")}`;
+  const contracts = await db.contract.findMany({ where: { campaignId }, select: { code: true } });
+  const used = new Set(
+    contracts
+      .map((c) => {
+        const m = c.code.match(/^CT-(\d+)$/);
+        return m ? Number(m[1]) : null;
+      })
+      .filter((n): n is number => n !== null),
+  );
+  let n = 1;
+  while (used.has(n)) n++;
+  return `CT-${String(n).padStart(3, "0")}`;
 }

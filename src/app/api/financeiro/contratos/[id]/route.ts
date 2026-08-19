@@ -59,6 +59,20 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
   }
 }
 
+export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
+  const gate = await requireFinanceAdmin();
+  if (!gate.ok) return gate.response;
+  try {
+    const existing = await gate.db.contract.findFirst({ where: { id: params.id, campaignId: gate.cid } });
+    if (!existing) return NextResponse.json({ error: "Contrato não encontrado" }, { status: 404 });
+    await gate.db.contract.delete({ where: { id: params.id } });
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    console.error("[api/financeiro/contratos/:id DELETE] erro:", err);
+    return NextResponse.json({ error: "Erro ao excluir contrato" }, { status: 500 });
+  }
+}
+
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   const gate = await requireFinanceAdmin();
   if (!gate.ok) return gate.response;
