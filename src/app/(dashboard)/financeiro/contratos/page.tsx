@@ -166,6 +166,7 @@ function ContratosContent() {
   const [payingEntities, setPayingEntities] = useState<PayingEntity[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
+  const [wizardStage, setWizardStage] = useState<"root" | "servico" | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
@@ -202,6 +203,17 @@ function ContratosContent() {
     setForm(emptyForm);
     setRegisterPayment(false);
     setPaymentForm(emptyPaymentForm);
+    setWizardStage("root");
+  }
+
+  function pickTemplate(t: TemplateType) {
+    setForm((f) => ({ ...f, templateType: t }));
+    setWizardStage(null);
+    setOpen(true);
+  }
+
+  function skipWizard() {
+    setWizardStage(null);
     setOpen(true);
   }
 
@@ -488,6 +500,46 @@ function ContratosContent() {
           </table>
         </div>
       </div>
+
+      <Dialog open={wizardStage !== null} onOpenChange={(v) => !v && setWizardStage(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle>Novo contrato</DialogTitle></DialogHeader>
+          {wizardStage === "root" && (
+            <div className="space-y-2 pt-2">
+              <p className="text-xs text-muted-foreground mb-1">O que você precisa registrar?</p>
+              <Button variant="outline" className="w-full justify-start text-left h-auto py-3 whitespace-normal" onClick={() => setWizardStage("servico")}>
+                Vou pagar por um serviço prestado (produção, design, consultoria, etc.)
+              </Button>
+              <Button variant="outline" className="w-full justify-start text-left h-auto py-3 whitespace-normal" onClick={() => pickTemplate("MILITANCIA")}>
+                Vou pagar um cabo eleitoral (militância)
+              </Button>
+              <Button variant="outline" className="w-full justify-start text-left h-auto py-3 whitespace-normal" onClick={() => pickTemplate("TERMO_DOACAO")}>
+                Alguém vai doar um bem ou serviço pra campanha
+              </Button>
+              <Button variant="outline" className="w-full justify-start text-left h-auto py-3 whitespace-normal" onClick={() => pickTemplate("TERMO_CESSAO")}>
+                Vou usar um bem cedido temporariamente (carro de som, espaço, equipamento)
+              </Button>
+              <button type="button" onClick={skipWizard} className="text-xs text-muted-foreground hover:underline pt-1 block">
+                Prefiro escolher o modelo manualmente
+              </button>
+            </div>
+          )}
+          {wizardStage === "servico" && (
+            <div className="space-y-2 pt-2">
+              <p className="text-xs text-muted-foreground mb-1">Quem vai prestar o serviço tem CNPJ ou é pessoa física?</p>
+              <Button variant="outline" className="w-full justify-start text-left h-auto py-3 whitespace-normal" onClick={() => pickTemplate("PRESTACAO_SERVICOS_PJ")}>
+                Empresa (CNPJ)
+              </Button>
+              <Button variant="outline" className="w-full justify-start text-left h-auto py-3 whitespace-normal" onClick={() => pickTemplate("PRESTACAO_SERVICOS_PF")}>
+                Pessoa física (CPF)
+              </Button>
+              <button type="button" onClick={() => setWizardStage("root")} className="text-xs text-muted-foreground hover:underline pt-1 block">
+                ← Voltar
+              </button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
