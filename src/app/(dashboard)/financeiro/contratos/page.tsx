@@ -39,6 +39,7 @@ type Contract = {
   totalValue: number | null;
   priceJustification: string | null;
   paymentTerms: string | null;
+  additionalClauses: string | null;
   signatureDate: string;
   forumCity: string | null;
   forumUf: string | null;
@@ -150,6 +151,7 @@ const emptyForm = {
   totalValue: "",
   priceJustification: "",
   paymentTerms: "",
+  additionalClauses: "",
   forumCity: "",
   forumUf: "",
   supplierId: "",
@@ -224,6 +226,7 @@ function ContratosContent() {
       totalValue: c.totalValue != null ? String(c.totalValue) : "",
       priceJustification: c.priceJustification ?? "",
       paymentTerms: c.paymentTerms ?? "",
+      additionalClauses: c.additionalClauses ?? "",
       forumCity: c.forumCity ?? "",
       forumUf: c.forumUf ?? "",
       supplierId: c.supplier?.id ?? "",
@@ -290,6 +293,7 @@ function ContratosContent() {
       totalValue: form.totalValue ? Number(form.totalValue.replace(",", ".")) : undefined,
       priceJustification: form.priceJustification || undefined,
       paymentTerms: form.paymentTerms || undefined,
+      additionalClauses: form.additionalClauses || undefined,
       forumCity: form.forumCity || undefined,
       forumUf: form.forumUf || undefined,
       supplierId: form.supplierId || undefined,
@@ -634,6 +638,16 @@ function ContratosContent() {
                 />
               </div>
             )}
+
+            <div>
+              <Label>Cláusulas adicionais (opcional)</Label>
+              <Textarea
+                value={form.additionalClauses}
+                onChange={(e) => setForm({ ...form, additionalClauses: e.target.value })}
+                rows={3}
+                placeholder="Ex: direitos de uso do material entregue, política de revisões, produto final a ser entregue..."
+              />
+            </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>

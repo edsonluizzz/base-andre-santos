@@ -8,7 +8,7 @@ const CONTENT_FIELDS = [
   "counterpartyName", "counterpartyDocument", "counterpartyAddress", "counterpartyCity", "counterpartyUf",
   "counterpartyPhone", "counterpartyEmail", "representativeName", "representativeCpf", "representativeAddress",
   "objectDescription", "eventAddress", "startDate", "endDate", "totalValue", "priceJustification",
-  "paymentTerms", "signatureDate", "forumCity", "forumUf",
+  "paymentTerms", "additionalClauses", "signatureDate", "forumCity", "forumUf",
 ] as const;
 
 const updateSchema = z.object({
@@ -29,6 +29,7 @@ const updateSchema = z.object({
   totalValue: z.number().nullable().optional(),
   priceJustification: z.string().nullable().optional(),
   paymentTerms: z.string().nullable().optional(),
+  additionalClauses: z.string().nullable().optional(),
   signatureDate: z.string().optional(),
   forumCity: z.string().nullable().optional(),
   forumUf: z.string().nullable().optional(),
@@ -122,6 +123,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
         totalValue: merged.totalValue,
         priceJustification: merged.priceJustification,
         paymentTerms: merged.paymentTerms,
+        additionalClauses: merged.additionalClauses,
         signatureDate: merged.signatureDate,
         forumCity: merged.forumCity,
         forumUf: merged.forumUf,

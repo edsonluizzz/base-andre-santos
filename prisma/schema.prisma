@@ -203,6 +203,7 @@ model Contract {
   totalValue         Float?
   priceJustification String?   @db.Text
   paymentTerms       String?   @db.Text // texto livre — permite parcelamento (ex.: "entrada X + saldo Y")
+  additionalClauses  String?   @db.Text // cláusula extra opcional (ex.: direitos de uso de material, política de revisões)
   signatureDate      DateTime  @default(now())
   forumCity          String?
   forumUf            String?

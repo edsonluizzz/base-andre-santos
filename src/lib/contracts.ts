@@ -29,6 +29,7 @@ export type ContractPdfData = {
   totalValue: number | null;
   priceJustification: string | null;
   paymentTerms: string | null;
+  additionalClauses: string | null;
   signatureDate: Date;
   forumCity: string | null;
   forumUf: string | null;
@@ -111,10 +112,10 @@ function buildClausesPJ(d: ContractPdfData): string[] {
     `III - A solicitação de reembolso seja feita por escrito e acompanhada da necessária comprovação.`,
     `CLÁUSULA 3ª – DAS OBRIGAÇÕES DO CONTRATADO: São obrigações do Contratado(a):`,
     `a) Cumprir o estipulado nos termos do presente instrumento contratual.`,
-    `b) Obedecer as instruções da contratante.`,
+    `b) Atender às solicitações e orientações do Contratante relacionadas ao objeto deste contrato.`,
     `c) Prestar informações ao Contratante, sempre que solicitado, acerca da execução de seus serviços e demais detalhes sobre a execução de suas atividades.`,
     `d) Conservar os documentos comprobatórios do serviço, em especial, de sua efetiva execução (materialidade), por 05 (cinco) anos, sob pena de responder por eventual prejuízo suportado pelo Contratante decorrente da falta de tais documentos;`,
-    `e) Realizar o registro de suas atividades através dos meios cabíveis (fotos, vídeos, etc.), com a finalidade de comprovar a materialidade do objeto do presente contrato.`,
+    `e) Realizar o registro de suas atividades através dos meios cabíveis (fotos, vídeos, arquivos digitais, comprovantes de envio, e-mails, documentos fiscais, etc.), com a finalidade de comprovar a materialidade do objeto do presente contrato.`,
     `Parágrafo Único: O descumprimento da presente Cláusula pelo(a) Contratado(a) implica na responsabilização exclusiva do mesmo por eventual prejuízo que venha a ser suportado pelo Contratante em decorrência do descumprimento.`,
     `CLÁUSULA 4ª – DAS CAUSAS DE RESCISÃO: São motivos para a rescisão do presente instrumento:`,
     `a) O não pagamento, pelo Contratante, da remuneração do(a) Contratado(a);`,
@@ -124,6 +125,7 @@ function buildClausesPJ(d: ContractPdfData): string[] {
     `e) O silêncio ou a impossibilidade injustificada de contato por parte do(a) Contratado(a), por período superior a 48 horas.`,
     `f) O compartilhamento, por parte do(a) Contratado(a), de informações relacionadas à Candidatura do Contratante, em especial, acerca de estratégias de campanha, ressalvada determinação legal ou de autoridade competente para tanto.`,
     `Parágrafo Único: A comunicação da rescisão contratual poderá ser comunicada à parte adversa por qualquer meio adequado, seja ele formal ou informal (por aplicativo de troca instantânea de mensagens, e-mail, etc.), mas desde que por escrito.`,
+    ...(d.additionalClauses ? [`CLÁUSULA ADICIONAL – DISPOSIÇÕES ESPECÍFICAS: ${d.additionalClauses}`] : []),
     `CLÁUSULA 5ª – DO FORO: As partes elegem o foro da Cidade de ${d.forumCity ?? "—"}/${d.forumUf ?? "—"}, para dirimir as questões resultantes da execução do presente contrato.`,
   ];
 }
@@ -146,10 +148,10 @@ function buildClausesPF(d: ContractPdfData): string[] {
     `III - A solicitação de reembolso seja feita por escrito e acompanhada da necessária comprovação.`,
     `CLÁUSULA 4ª – DAS OBRIGAÇÕES DO CONTRATADO: São obrigações do Contratado(a):`,
     `a) Cumprir o estipulado nos termos do presente instrumento contratual.`,
-    `b) Obedecer às instruções do Contratante.`,
+    `b) Atender às solicitações e orientações do Contratante relacionadas ao objeto deste contrato.`,
     `c) Prestar informações ao Contratante, sempre que solicitado, acerca da execução de seus serviços e demais detalhes sobre a execução de suas atividades.`,
     `d) Conservar os documentos comprobatórios do serviço, em especial, de sua efetiva execução (materialidade), por 05 (cinco) anos, sob pena de responder por eventual prejuízo suportado pelo Contratante decorrente da falta de tais documentos;`,
-    `e) Realizar o registro de suas atividades através dos meios cabíveis (fotos, vídeos, etc.), com a finalidade de comprovar a materialidade do objeto do presente contrato.`,
+    `e) Realizar o registro de suas atividades através dos meios cabíveis (fotos, vídeos, arquivos digitais, comprovantes de envio, e-mails, documentos fiscais, etc.), com a finalidade de comprovar a materialidade do objeto do presente contrato.`,
     `Parágrafo Único: O descumprimento da presente Cláusula pelo(a) Contratado(a) implica na responsabilização exclusiva do mesmo por eventual prejuízo que venha a ser suportado pelo Contratante em decorrência do descumprimento.`,
     `CLÁUSULA 5ª – DA PROTEÇÃO DE DADOS: Os dados da pessoa natural do Contratado, sejam eles sensíveis ou não, à que o Contratante tiver acesso, serão utilizados exclusivamente para identificação do primeiro junto à autoridades competentes e para cumprimento de exigências decorrentes de Leis, Resoluções ou de autoridades competentes, em especial, para fins de prestação de contas junto à Justiça Eleitoral, sendo de responsabilidade do(a) Contratante o processamento das solicitações do Contratado relacionadas aos seus dados.`,
     `CLÁUSULA 6ª – DA RESCISÃO: São motivos para a rescisão do presente instrumento, independentemente de notificação judicial ou extrajudicial e de aviso prévio:`,
@@ -162,6 +164,7 @@ function buildClausesPF(d: ContractPdfData): string[] {
     `Parágrafo Primeiro: O presente contrato poderá ser rescindido por qualquer das partes e a qualquer tempo, sem necessidade de aviso prévio e sem prejuízo à remuneração proporcional ao serviço prestado.`,
     `Parágrafo Segundo: A rescisão será comunicada por escrito, por e-mail, aplicativo de mensagens, plataforma de gestão da campanha ou outro meio adequado.`,
     `CLÁUSULA 7ª - DA ASSINATURA ELETRÔNICA OU DIGITAL: Com fundamento no art. 10, caput e §§ 1º e 2º, da MP nº 2.200-2/2001, e no art. 4º, II e III, da Lei nº 14.063/2020, as Partes reconhecem a validade da assinatura deste Contrato por meio eletrônico ou digital, inclusive por certificado ICP-Brasil ou por outro meio equivalente, desde já admitidas pelas Partes como válidos, que permitam comprovar autoria, integridade e manifestação de vontade dos signatários, produzindo os mesmos efeitos da assinatura manuscrita.`,
+    ...(d.additionalClauses ? [`CLÁUSULA ADICIONAL – DISPOSIÇÕES ESPECÍFICAS: ${d.additionalClauses}`] : []),
     `CLÁUSULA 8ª – DO FORO: As partes elegem o foro da Cidade de ${d.forumCity ?? "—"}/${d.forumUf ?? "—"}, para dirimir as questões resultantes da execução do presente contrato.`,
   ];
 }
@@ -183,10 +186,10 @@ function buildClausesMilitancia(d: ContractPdfData): string[] {
     `III - A solicitação de reembolso seja feita por escrito e acompanhada da necessária comprovação.`,
     `CLÁUSULA 4ª – DAS OBRIGAÇÕES DO CONTRATADO: São obrigações do Contratado(a):`,
     `a) Cumprir o estipulado nos termos do presente instrumento contratual.`,
-    `b) Obedecer às instruções escritas e verbais do Contratante.`,
+    `b) Atender às solicitações e orientações escritas e verbais do Contratante relacionadas ao objeto deste contrato.`,
     `c) Prestar informações ao Contratante, sempre que solicitado, acerca da execução de seus serviços e demais detalhes sobre a execução de suas atividades.`,
     `d) Conservar os documentos comprobatórios do serviço, em especial, de sua efetiva execução (materialidade), por 05 (cinco) anos, sob pena de responder por eventual prejuízo suportado pelo Contratante decorrente da falta de tais documentos.`,
-    `e) Realizar o registro de suas atividades através dos meios cabíveis (fotos, vídeos, etc.), com a finalidade de comprovar a materialidade do objeto do presente contrato.`,
+    `e) Realizar o registro de suas atividades através dos meios cabíveis (fotos, vídeos, arquivos digitais, comprovantes de envio, e-mails, documentos fiscais, etc.), com a finalidade de comprovar a materialidade do objeto do presente contrato.`,
     `Parágrafo Único: O descumprimento da presente Cláusula pelo(a) Contratado(a) implica na responsabilização exclusiva do mesmo por eventual prejuízo que venha a ser suportado pelo Contratante em decorrência do descumprimento.`,
     `CLÁUSULA 5ª – DA PROTEÇÃO DE DADOS: Os dados da pessoa natural do Contratado, sejam eles sensíveis ou não, à que o Contratante tiver acesso, serão utilizados exclusivamente para identificação do primeiro junto à autoridades competentes e para cumprimento de exigências decorrentes de Leis, Resoluções ou de autoridades competentes, em especial, para fins de prestação de contas junto à Justiça Eleitoral, sendo de responsabilidade do(a) Contratante o processamento das solicitações do Contratado relacionadas aos seus dados.`,
     `CLÁUSULA 6ª – DA RESCISÃO: São motivos para a rescisão do presente instrumento, independentemente de notificação judicial ou extrajudicial e de aviso prévio:`,
@@ -200,6 +203,7 @@ function buildClausesMilitancia(d: ContractPdfData): string[] {
     `Parágrafo Primeiro: O presente contrato poderá ser rescindido por qualquer das partes e a qualquer tempo, sem necessidade de aviso prévio e sem prejuízo à remuneração proporcional ao serviço prestado.`,
     `Parágrafo Segundo: A rescisão será comunicada por escrito, por e-mail, aplicativo de mensagens, plataforma de gestão da campanha ou outro meio adequado.`,
     `CLÁUSULA 7ª - DA ASSINATURA ELETRÔNICA OU DIGITAL: Com fundamento no art. 10, caput e §§ 1º e 2º, da MP nº 2.200-2/2001, e no art. 4º, II e III, da Lei nº 14.063/2020, as Partes reconhecem a validade da assinatura deste Contrato por meio eletrônico ou digital, inclusive por certificado ICP-Brasil ou por outro meio equivalente, desde já admitidas pelas Partes como válidos, que permitam comprovar autoria, integridade e manifestação de vontade dos signatários, produzindo os mesmos efeitos da assinatura manuscrita.`,
+    ...(d.additionalClauses ? [`CLÁUSULA ADICIONAL – DISPOSIÇÕES ESPECÍFICAS: ${d.additionalClauses}`] : []),
     `CLÁUSULA 8ª - DO FORO: As partes elegem o foro da Cidade de ${d.forumCity ?? "—"}/${d.forumUf ?? "—"}, para dirimir as questões resultantes da execução do presente contrato.`,
   ];
 }
@@ -208,6 +212,7 @@ function buildClausesDoacao(d: ContractPdfData): string[] {
   return [
     `CLÁUSULA 1ª – OBJETO: O presente instrumento tem como objeto a Doação Estimável do(a) ${d.objectDescription} ao donatário, de propriedade ou atividade econômica do Doador(a).`,
     `CLÁUSULA 2ª – DA GRATUIDADE: A presente Doação é feita à título gratuito e não oneroso, cujo valor se estima em ${fmtMoneyExtenso(d.totalValue)}, em conformidade com os preços praticados no mercado.`,
+    ...(d.additionalClauses ? [`CLÁUSULA ADICIONAL – DISPOSIÇÕES ESPECÍFICAS: ${d.additionalClauses}`] : []),
     `CLÁUSULA 3ª – DO FORO: As partes elegem o foro de ${d.forumCity ?? "—"}/${d.forumUf ?? "—"}, para dirimir as questões decorrentes do presente termo.`,
   ];
 }
@@ -218,6 +223,7 @@ function buildClausesCessao(d: ContractPdfData): string[] {
     `Parágrafo Único: É dever do Cessionário devolver o bem cedido em boas condições de uso e fruição ao Cedente.`,
     `CLÁUSULA 2ª – DA VIGÊNCIA: O presente instrumento entra em vigor na data de ${fmtDateShort(d.startDate)} e permanece em vigor até o término da campanha do Cessionário.`,
     `CLÁUSULA 3ª – DA GRATUIDADE DA CESSÃO: A presente Cessão é feita à título gratuito e não oneroso, cujo valor se estima em ${fmtMoneyExtenso(d.totalValue)}.`,
+    ...(d.additionalClauses ? [`CLÁUSULA ADICIONAL – DISPOSIÇÕES ESPECÍFICAS: ${d.additionalClauses}`] : []),
     `CLÁUSULA 4ª – DO FORO: As partes elegem o foro de ${d.forumCity ?? "—"}/${d.forumUf ?? "—"}, para dirimir as questões decorrentes do presente termo.`,
   ];
 }
