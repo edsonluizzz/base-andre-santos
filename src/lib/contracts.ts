@@ -137,9 +137,8 @@ function buildClausesPF(d: ContractPdfData): string[] {
   return [
     `CLÁUSULA 1ª – OBJETO: O presente instrumento tem como objeto a prestação, pelo(a) Contratado(a) ao Contratante, dos serviços de ${d.objectDescription}.`,
     `Parágrafo Primeiro: O presente contrato terá vigência a partir de ${fmtDateShort(d.startDate)} até ${fmtDateShort(d.endDate)}.`,
-    `Parágrafo Segundo: O(s) serviço(s) será(ão) prestado(s) de acordo com a necessidade do Contratante e preferencialmente em horário comercial${d.eventAddress ? `, na Cidade de ${d.eventAddress}` : ""}.`,
-    `Parágrafo Terceiro: Os serviços poderão ser prestados em horários, locais e duração diversas, mediante prévio alinhamento e, se necessário, ajuste de remuneração, hipótese em que as condições complementares ou modificadas serão levadas a termo.`,
-    `Parágrafo Quarto: O Contratado(a) declara, ao firmar o presente Contrato, que cumpre todos os requisitos legais para o desempenho das atividades contratadas.`,
+    `Parágrafo Segundo: Os serviços serão executados conforme cronograma e disponibilidade ajustados entre as partes, observada a vigência contratual${d.eventAddress ? `, na Cidade de ${d.eventAddress}` : ""}.`,
+    `Parágrafo Terceiro: O Contratado(a) declara, ao firmar o presente Contrato, que cumpre todos os requisitos legais para o desempenho das atividades contratadas.`,
     `CLÁUSULA 2ª – DA REMUNERAÇÃO: É obrigação do Contratante o pagamento, ao Contratado, do valor de ${fmtMoneyExtenso(d.totalValue)}, ${paymentTerms}.`,
     `Parágrafo Primeiro: O valor da remuneração do(a) Contratado(a) é fixado de acordo com ${d.priceJustification ?? "orçamento apresentado pelo prestador"}.`,
     `CLÁUSULA 3ª - DAS DESPESAS ACESSÓRIAS: Eventuais despesas acessórias, necessárias à execução do serviço contratado, poderão ser reembolsadas, desde que:`,
