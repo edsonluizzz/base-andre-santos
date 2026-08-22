@@ -60,11 +60,11 @@ function DashboardContent() {
   }, []);
 
   const cards = summary ? [
-    { label: "Saldo", value: summary.saldo, icon: Wallet, color: summary.saldo >= 0 ? "text-green-400" : "text-red-400", bg: "bg-primary/10" },
-    { label: "Receitas pagas", value: summary.totalReceitasPago, icon: TrendingUp, color: "text-green-400", bg: "bg-green-500/10" },
-    { label: "Despesas pagas", value: summary.totalDespesasPago, icon: TrendingDown, color: "text-foreground", bg: "bg-red-500/10" },
-    { label: "Pendente", value: summary.totalPendente, icon: Clock, color: "text-amber-400", bg: "bg-amber-500/10" },
-    { label: "Agendado", value: summary.totalAgendado, icon: CalendarClock, color: "text-blue-400", bg: "bg-blue-500/10" },
+    { label: "Saldo", value: summary.saldo, icon: Wallet, color: summary.saldo >= 0 ? "text-green-400" : "text-red-400", bg: "bg-primary/10", href: "/financeiro/lancamentos" },
+    { label: "Receitas pagas", value: summary.totalReceitasPago, icon: TrendingUp, color: "text-green-400", bg: "bg-green-500/10", href: "/financeiro/lancamentos?type=RECEITA&status=PAGO" },
+    { label: "Despesas pagas", value: summary.totalDespesasPago, icon: TrendingDown, color: "text-foreground", bg: "bg-red-500/10", href: "/financeiro/lancamentos?type=DESPESA&status=PAGO" },
+    { label: "Pendente", value: summary.totalPendente, icon: Clock, color: "text-amber-400", bg: "bg-amber-500/10", href: "/financeiro/lancamentos?status=PENDENTE" },
+    { label: "Agendado", value: summary.totalAgendado, icon: CalendarClock, color: "text-blue-400", bg: "bg-blue-500/10", href: "/financeiro/lancamentos?status=AGENDADO" },
   ] : [];
 
   const maxEntity = summary ? Math.max(1, ...summary.byPayingEntity.map((e) => e.despesas + e.receitas)) : 1;
@@ -89,13 +89,17 @@ function DashboardContent() {
             {cards.map((c) => {
               const Icon = c.icon;
               return (
-                <div key={c.label} className="glass-card rounded-2xl p-4 border border-white/[0.06]">
+                <Link
+                  key={c.label}
+                  href={c.href}
+                  className="glass-card rounded-2xl p-4 border border-white/[0.06] transition-colors hover:border-primary/40 hover:bg-white/[0.03]"
+                >
                   <div className={`w-8 h-8 rounded-lg flex items-center justify-center mb-2 ${c.bg}`}>
                     <Icon className={`w-4 h-4 ${c.color}`} />
                   </div>
                   <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">{c.label}</p>
                   <p className={`text-lg font-bold ${c.color}`}>{fmt(c.value)}</p>
-                </div>
+                </Link>
               );
             })}
           </div>

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { Wallet, Plus, Pencil, Trash2, FileDown, FileText, Paperclip, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -50,6 +51,7 @@ const emptyForm = {
 };
 
 function LancamentosContent() {
+  const searchParams = useSearchParams();
   const [entries, setEntries] = useState<Entry[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [payingEntities, setPayingEntities] = useState<PayingEntity[]>([]);
@@ -62,8 +64,8 @@ function LancamentosContent() {
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const [filterType, setFilterType] = useState<string>("");
-  const [filterStatus, setFilterStatus] = useState<string>("");
+  const [filterType, setFilterType] = useState<string>(() => searchParams.get("type") ?? "");
+  const [filterStatus, setFilterStatus] = useState<string>(() => searchParams.get("status") ?? "");
   const [filterEntity, setFilterEntity] = useState<string>("");
 
   const load = useCallback(async () => {
@@ -392,7 +394,9 @@ function LancamentosContent() {
 export default function LancamentosPage() {
   return (
     <FinanceGuard>
-      <LancamentosContent />
+      <Suspense fallback={null}>
+        <LancamentosContent />
+      </Suspense>
     </FinanceGuard>
   );
 }
