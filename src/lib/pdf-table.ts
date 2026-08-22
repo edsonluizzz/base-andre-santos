@@ -42,11 +42,17 @@ export function buildSimpleTablePdf(opts: {
     }
 
     function drawRow(cells: string[], i: number, bold = false) {
-      const rowHeight = 16;
+      doc.font(bold ? "Helvetica-Bold" : "Helvetica").fontSize(8.5);
+      const cellHeights = opts.columns.map((c, ci) =>
+        doc.heightOfString(cells[ci] ?? "", { width: c.width - 8, align: c.align ?? "left" }),
+      );
+      const rowHeight = Math.max(16, Math.max(...cellHeights) + 8);
+
       if (doc.y + rowHeight > bottom) {
         doc.addPage();
         doc.y = doc.page.margins.top;
         drawHeader();
+        doc.font(bold ? "Helvetica-Bold" : "Helvetica").fontSize(8.5);
       }
       let x = colX;
       const y = doc.y;
