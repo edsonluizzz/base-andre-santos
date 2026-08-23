@@ -11,6 +11,7 @@ const TABS = [
   { href: "/financeiro/extratos", label: "Extratos" },
   { href: "/financeiro/fornecedores", label: "Fornecedores" },
   { href: "/financeiro/cabos-eleitorais", label: "Cabos Eleitorais (TSE)" },
+  { href: "/financeiro/tse-comparativo", label: "Comparativo TSE" },
 ];
 
 export function FinanceNav() {
