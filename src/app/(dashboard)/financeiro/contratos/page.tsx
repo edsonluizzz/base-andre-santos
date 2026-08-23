@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { Wallet, Plus, Pencil, FileText, Search, ExternalLink, CircleDollarSign, Send, Trash2 } from "lucide-react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { Wallet, Plus, Pencil, FileText, Search, ExternalLink, CircleDollarSign, Send, Trash2, Paperclip, FileCheck } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,6 +45,10 @@ type Contract = {
   forumUf: string | null;
   notes: string | null;
   pdfUrl: string | null;
+  sentAt: string | null;
+  sentChannel: string | null;
+  signedPdfUrl: string | null;
+  signedAt: string | null;
   supplier: { id: string; name: string } | null;
   payingEntity: { id: string; name: string } | null;
   paidAmount: number;
@@ -183,6 +187,30 @@ function ContratosContent() {
   const [sendChannel, setSendChannel] = useState<"email" | "whatsapp">("whatsapp");
   const [sendTo, setSendTo] = useState("");
   const [sending, setSending] = useState(false);
+
+  const signedFileRef = useRef<HTMLInputElement>(null);
+  const [signedUploadId, setSignedUploadId] = useState<string | null>(null);
+  const [uploadingSigned, setUploadingSigned] = useState(false);
+
+  function openSignedUpload(contractId: string) {
+    setSignedUploadId(contractId);
+    signedFileRef.current?.click();
+  }
+
+  async function handleSignedUpload(ev: React.ChangeEvent<HTMLInputElement>) {
+    const file = ev.target.files?.[0];
+    const contractId = signedUploadId;
+    if (signedFileRef.current) signedFileRef.current.value = "";
+    if (!file || !contractId) return;
+    setUploadingSigned(true);
+    const fd = new FormData();
+    fd.append("file", file);
+    const res = await fetch(`/api/financeiro/contratos/${contractId}/signed-pdf`, { method: "POST", body: fd });
+    setUploadingSigned(false);
+    setSignedUploadId(null);
+    if (res.ok) { toast.success("Documento assinado anexado"); load(); }
+    else { const d = await res.json().catch(() => ({})); toast.error(d.error ?? "Erro ao anexar documento"); }
+  }
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -345,12 +373,13 @@ function ContratosContent() {
     setExtraPaymentForm({ ...emptyPaymentForm, amount: remaining ? String(remaining) : "" });
   }
 
-  async function savePayment() {
+  async function savePayment(confirmOverride = false) {
     if (!paymentDialogContract) return;
     const amount = Number(extraPaymentForm.amount.replace(",", "."));
     if (!Number.isFinite(amount) || amount <= 0) { toast.error("Valor inválido"); return; }
     setSavingPayment(true);
-    const res = await fetch(`/api/financeiro/contratos/${paymentDialogContract.id}/pagamentos`, {
+    const qs = confirmOverride ? "?confirm=true" : "";
+    const res = await fetch(`/api/financeiro/contratos/${paymentDialogContract.id}/pagamentos${qs}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -368,6 +397,10 @@ function ContratosContent() {
       load();
     } else {
       const d = await res.json().catch(() => ({}));
+      if (d.code === "EXCEEDS_TOTAL" && !confirmOverride) {
+        if (window.confirm(`${d.error}\n\nLançar mesmo assim?`)) savePayment(true);
+        return;
+      }
       toast.error(d.error ?? "Erro ao registrar pagamento");
     }
   }
@@ -412,6 +445,8 @@ function ContratosContent() {
 
       <FinanceNav />
 
+      <input ref={signedFileRef} type="file" accept=".pdf,image/*" className="hidden" onChange={handleSignedUpload} />
+
       <div className="glass-card rounded-2xl p-5 border border-white/[0.08] space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -452,6 +487,16 @@ function ContratosContent() {
                     </td>
                     <td className="px-4 py-2.5">
                       <span className={`text-[10px] px-2 py-0.5 rounded-full border ${STATUS_STYLE[c.status]}`}>{STATUS_LABEL[c.status]}</span>
+                      {c.sentAt && (
+                        <p className="text-[10px] text-muted-foreground mt-1">
+                          Enviado {new Date(c.sentAt).toLocaleDateString("pt-BR")} ({c.sentChannel === "email" ? "e-mail" : "WhatsApp"})
+                        </p>
+                      )}
+                      {c.signedPdfUrl && (
+                        <a href={c.signedPdfUrl} target="_blank" rel="noopener noreferrer" className="text-[10px] text-green-400 hover:underline mt-0.5 flex items-center gap-1">
+                          <FileCheck className="w-3 h-3" /> Assinado anexado {c.signedAt ? new Date(c.signedAt).toLocaleDateString("pt-BR") : ""}
+                        </a>
+                      )}
                     </td>
                     <td className="px-4 py-2.5 text-right font-medium">{fmt(c.totalValue)}</td>
                     <td className="px-4 py-2.5">
@@ -487,6 +532,13 @@ function ContratosContent() {
                             <Send className="w-3.5 h-3.5" />
                           </Button>
                         )}
+                        <Button
+                          size="sm" variant="ghost" title="Anexar documento assinado"
+                          disabled={uploadingSigned && signedUploadId === c.id}
+                          onClick={() => openSignedUpload(c.id)}
+                        >
+                          <Paperclip className="w-3.5 h-3.5" />
+                        </Button>
                         <Button size="sm" variant="ghost" onClick={() => openEdit(c)}><Pencil className="w-3.5 h-3.5" /></Button>
                         <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => remove(c)} title="Excluir contrato">
                           <Trash2 className="w-3.5 h-3.5" />
@@ -861,7 +913,7 @@ function ContratosContent() {
               </div>
               <div className="flex justify-end gap-2 pt-2">
                 <Button variant="outline" onClick={() => setPaymentDialogContract(null)}>Cancelar</Button>
-                <Button onClick={savePayment} disabled={savingPayment} className="bg-primary text-primary-foreground">
+                <Button onClick={() => savePayment()} disabled={savingPayment} className="bg-primary text-primary-foreground">
                   {savingPayment ? "Salvando..." : "Registrar pagamento"}
                 </Button>
               </div>

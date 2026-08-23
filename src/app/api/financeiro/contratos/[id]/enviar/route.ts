@@ -43,6 +43,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
         fileName,
         campaignName,
       });
+      await gate.db.contract.update({ where: { id: contract.id }, data: { sentAt: new Date(), sentChannel: "email" } });
       return NextResponse.json({ ok: true, channel: "email", to });
     }
 
@@ -66,6 +67,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       return NextResponse.json({ error: message }, { status: 502 });
     }
 
+    await gate.db.contract.update({ where: { id: contract.id }, data: { sentAt: new Date(), sentChannel: "whatsapp" } });
     return NextResponse.json({ ok: true, channel: "whatsapp", to: phone });
   } catch (err) {
     console.error("[api/financeiro/contratos/:id/enviar POST] erro:", err);

@@ -42,6 +42,30 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     const contract = await gate.db.contract.findFirst({ where: { id: params.id, campaignId: gate.cid } });
     if (!contract) return NextResponse.json({ error: "Contrato não encontrado" }, { status: 404 });
 
+    // Trava contra pagamento duplicado (ex.: registrar de novo um pagamento que já
+    // tinha sido lançado, ou dois cliques no mesmo valor) — some os lançamentos já
+    // vinculados a este contrato e barra se o novo valor ultrapassar o total do
+    // contrato, a menos que ?confirm=true seja explicitamente enviado.
+    const confirmOverride = new URL(req.url).searchParams.get("confirm") === "true";
+    if (contract.totalValue != null && !confirmOverride) {
+      const existing = await gate.db.financialEntry.findMany({
+        where: { contractId: contract.id },
+        select: { amount: true },
+      });
+      const alreadyRegistered = existing.reduce((sum, e) => sum + e.amount, 0);
+      if (alreadyRegistered + body.amount > contract.totalValue) {
+        return NextResponse.json(
+          {
+            error: `Isso ultrapassa o valor do contrato: R$ ${alreadyRegistered.toFixed(2)} já registrado(s) de R$ ${contract.totalValue.toFixed(2)}. Confirme se quer mesmo lançar mais R$ ${body.amount.toFixed(2)}.`,
+            code: "EXCEEDS_TOTAL",
+            alreadyRegistered,
+            totalValue: contract.totalValue,
+          },
+          { status: 409 },
+        );
+      }
+    }
+
     const description = `${contract.code} — ${body.label?.trim() || "Pagamento"}: ${contract.objectDescription.slice(0, 80)}`;
 
     const entry = await gate.db.financialEntry.create({

@@ -95,6 +95,13 @@ model Supplier {
   contactName String?
   phone       String?
   email       String?
+  cep         String?
+  logradouro  String?
+  numero      String?
+  complemento String?
+  bairro      String?
+  municipio   String?
+  uf          String?
   notes       String?
   active      Boolean  @default(true)
   createdAt   DateTime @default(now())
@@ -213,6 +220,14 @@ model Contract {
   pdfUrl         String? @db.Text
   notes          String? @db.Text
   createdById    String
+
+  // Rastreio de envio/assinatura — preenchidos automaticamente pelo fluxo de
+  // envio (sentAt/sentChannel) e pelo upload manual do documento assinado
+  // (signedPdfUrl/signedAt) que volta do Contratado(a).
+  sentAt        DateTime?
+  sentChannel   String? // "email" | "whatsapp"
+  signedPdfUrl  String?   @db.Text
+  signedAt      DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

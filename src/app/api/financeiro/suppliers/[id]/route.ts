@@ -9,6 +9,13 @@ const updateSchema = z.object({
   contactName: z.string().nullable().optional(),
   phone: z.string().nullable().optional(),
   email: z.string().nullable().optional(),
+  cep: z.string().nullable().optional(),
+  logradouro: z.string().nullable().optional(),
+  numero: z.string().nullable().optional(),
+  complemento: z.string().nullable().optional(),
+  bairro: z.string().nullable().optional(),
+  municipio: z.string().nullable().optional(),
+  uf: z.string().nullable().optional(),
   notes: z.string().nullable().optional(),
   active: z.boolean().optional(),
 });

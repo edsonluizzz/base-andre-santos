@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Wallet, Plus, Pencil, Archive, ArchiveRestore, Truck } from "lucide-react";
+import { Wallet, Plus, Pencil, Archive, ArchiveRestore, Truck, Search } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,11 +18,22 @@ type Supplier = {
   contactName: string | null;
   phone: string | null;
   email: string | null;
+  cep: string | null;
+  logradouro: string | null;
+  numero: string | null;
+  complemento: string | null;
+  bairro: string | null;
+  municipio: string | null;
+  uf: string | null;
   notes: string | null;
   active: boolean;
 };
 
-const emptyForm = { name: "", document: "", category: "", contactName: "", phone: "", email: "", notes: "" };
+const emptyForm = {
+  name: "", document: "", category: "", contactName: "", phone: "", email: "",
+  cep: "", logradouro: "", numero: "", complemento: "", bairro: "", municipio: "", uf: "",
+  notes: "",
+};
 
 function FornecedoresContent() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
@@ -31,6 +42,30 @@ function FornecedoresContent() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
+  const [lookingUpCep, setLookingUpCep] = useState(false);
+
+  async function lookupCep() {
+    const digits = form.cep.replace(/\D/g, "");
+    if (digits.length !== 8) { toast.error("CEP inválido"); return; }
+    setLookingUpCep(true);
+    try {
+      const res = await fetch(`https://viacep.com.br/ws/${digits}/json/`);
+      const j = await res.json();
+      if (j.erro) { toast.error("CEP não encontrado"); return; }
+      setForm((f) => ({
+        ...f,
+        logradouro: j.logradouro || f.logradouro,
+        bairro: j.bairro || f.bairro,
+        municipio: j.localidade || f.municipio,
+        uf: j.uf || f.uf,
+      }));
+      toast.success("Endereço preenchido");
+    } catch {
+      toast.error("Falha ao consultar CEP");
+    } finally {
+      setLookingUpCep(false);
+    }
+  }
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -51,7 +86,10 @@ function FornecedoresContent() {
     setEditingId(s.id);
     setForm({
       name: s.name, document: s.document ?? "", category: s.category ?? "",
-      contactName: s.contactName ?? "", phone: s.phone ?? "", email: s.email ?? "", notes: s.notes ?? "",
+      contactName: s.contactName ?? "", phone: s.phone ?? "", email: s.email ?? "",
+      cep: s.cep ?? "", logradouro: s.logradouro ?? "", numero: s.numero ?? "", complemento: s.complemento ?? "",
+      bairro: s.bairro ?? "", municipio: s.municipio ?? "", uf: s.uf ?? "",
+      notes: s.notes ?? "",
     });
     setOpen(true);
   }
@@ -165,6 +203,42 @@ function FornecedoresContent() {
             <div>
               <Label>E-mail</Label>
               <Input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-2 items-end">
+              <div>
+                <Label>CEP</Label>
+                <Input value={form.cep} onChange={(e) => setForm({ ...form, cep: e.target.value })} className="font-mono text-xs" placeholder="00000-000" />
+              </div>
+              <Button type="button" variant="outline" size="sm" disabled={lookingUpCep} onClick={lookupCep} className="gap-1.5 text-xs">
+                <Search className="w-3.5 h-3.5" /> {lookingUpCep ? "Buscando..." : "Buscar"}
+              </Button>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-4">
+              <div>
+                <Label>Logradouro</Label>
+                <Input value={form.logradouro} onChange={(e) => setForm({ ...form, logradouro: e.target.value })} />
+              </div>
+              <div>
+                <Label>Número</Label>
+                <Input value={form.numero} onChange={(e) => setForm({ ...form, numero: e.target.value })} className="w-24" />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <Label>Complemento</Label>
+                <Input value={form.complemento} onChange={(e) => setForm({ ...form, complemento: e.target.value })} />
+              </div>
+              <div>
+                <Label>Bairro</Label>
+                <Input value={form.bairro} onChange={(e) => setForm({ ...form, bairro: e.target.value })} />
+              </div>
+              <div>
+                <Label>Cidade / UF</Label>
+                <div className="flex gap-2">
+                  <Input value={form.municipio} onChange={(e) => setForm({ ...form, municipio: e.target.value })} />
+                  <Input value={form.uf} onChange={(e) => setForm({ ...form, uf: e.target.value })} maxLength={2} className="w-14" />
+                </div>
+              </div>
             </div>
             <div>
               <Label>Notas</Label>

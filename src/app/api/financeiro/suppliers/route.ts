@@ -9,6 +9,13 @@ const createSchema = z.object({
   contactName: z.string().optional(),
   phone: z.string().optional(),
   email: z.string().optional(),
+  cep: z.string().optional(),
+  logradouro: z.string().optional(),
+  numero: z.string().optional(),
+  complemento: z.string().optional(),
+  bairro: z.string().optional(),
+  municipio: z.string().optional(),
+  uf: z.string().optional(),
   notes: z.string().optional(),
 });
 
