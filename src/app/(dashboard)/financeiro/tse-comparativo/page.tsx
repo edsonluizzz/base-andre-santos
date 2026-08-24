@@ -5,7 +5,10 @@ import { Wallet, TrendingUp, ExternalLink } from "lucide-react";
 import { FinanceGuard } from "@/components/financeiro/finance-guard";
 import { FinanceNav } from "@/components/financeiro/finance-nav";
 
-const ANDRE_NUMERO = 30777;
+const CARGOS = [
+  { cargo: 7, label: "Deputado Estadual", destaque: [30777] },
+  { cargo: 6, label: "Deputado Federal", destaque: [3003, 3000] },
+] as const;
 
 type Row = {
   numero: number;
@@ -24,29 +27,33 @@ function fmt(n: number) {
 }
 
 function ComparativoContent() {
+  const [cargoIdx, setCargoIdx] = useState(0);
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [fetchedAt, setFetchedAt] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const load = useCallback(async () => {
+  const { cargo, label, destaque: destaqueNumeros } = CARGOS[cargoIdx];
+
+  const load = useCallback(async (cargoCodigo: number) => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/financeiro/tse-comparativo?uf=PR&cargo=7&partido=30");
+      const res = await fetch(`/api/financeiro/tse-comparativo?uf=PR&cargo=${cargoCodigo}&partido=30`);
       const j = await res.json();
       if (!res.ok) throw new Error(j.error ?? "Erro ao consultar");
       const sorted = [...(j.data as Row[])].sort((a, b) => (b.totalRecebido ?? 0) - (a.totalRecebido ?? 0));
       setRows(sorted);
       setFetchedAt(j.fetchedAt);
     } catch (e) {
+      setRows([]);
       setError(e instanceof Error ? e.message : "Erro ao consultar");
     } finally {
       setLoading(false);
     }
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { load(cargo); }, [load, cargo]);
 
   const maxRecebido = Math.max(1, ...rows.map((r) => r.totalRecebido ?? 0));
 
@@ -57,7 +64,7 @@ function ComparativoContent() {
           <Wallet className="w-6 h-6 text-primary" /> Financeiro
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Comparativo de receitas declaradas ao TSE — Deputado Estadual PR, Partido NOVO
+          Comparativo de receitas declaradas ao TSE — {label} PR, Partido NOVO
         </p>
       </div>
 
@@ -76,6 +83,22 @@ function ComparativoContent() {
           >
             Ver no site do TSE <ExternalLink className="w-3 h-3" />
           </a>
+        </div>
+
+        <div className="flex gap-1.5">
+          {CARGOS.map((c, i) => (
+            <button
+              key={c.cargo}
+              onClick={() => setCargoIdx(i)}
+              className={`text-xs font-medium px-3 py-1.5 rounded-lg border transition-colors ${
+                i === cargoIdx
+                  ? "border-primary/40 bg-primary/10 text-primary"
+                  : "border-white/[0.08] text-muted-foreground hover:bg-white/[0.04]"
+              }`}
+            >
+              {c.label}
+            </button>
+          ))}
         </div>
 
         <p className="text-[11px] text-muted-foreground bg-white/[0.03] border border-white/[0.06] rounded-lg p-2.5">
@@ -99,7 +122,7 @@ function ComparativoContent() {
             {rows.map((r, i) => {
               const total = r.totalRecebido ?? 0;
               const pct = Math.round((total / maxRecebido) * 100);
-              const destaque = r.numero === ANDRE_NUMERO;
+              const destaque = (destaqueNumeros as readonly number[]).includes(r.numero);
               return (
                 <div
                   key={r.numero}
