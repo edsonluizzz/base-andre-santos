@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { Send, Users, RefreshCcw } from "lucide-react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { Send, Users, RefreshCcw, Image as ImageIcon, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -56,9 +56,28 @@ export function DisparoForm() {
   const [previewLoading, setPreviewLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
+  // Imagem anexada (opcional) — enviada como legenda junto com a mensagem no WhatsApp.
+  const [image, setImage] = useState<{ file: File; previewUrl: string } | null>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+
   function patch(k: keyof FormState, v: FormState[keyof FormState]) {
     setForm((f) => ({ ...f, [k]: v }));
   }
+
+  function pickImage(file: File | undefined) {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) { toast.error("Selecione um arquivo de imagem"); return; }
+    if (file.size > 16 * 1024 * 1024) { toast.error("Imagem acima de 16MB (limite do WhatsApp)"); return; }
+    if (image) URL.revokeObjectURL(image.previewUrl);
+    setImage({ file, previewUrl: URL.createObjectURL(file) });
+  }
+
+  function discardImage() {
+    if (image) URL.revokeObjectURL(image.previewUrl);
+    setImage(null);
+  }
+
+  useEffect(() => () => { if (image) URL.revokeObjectURL(image.previewUrl); }, [image]);
 
   // Carrega sources
   useEffect(() => {
@@ -150,6 +169,23 @@ export function DisparoForm() {
 
     setSubmitting(true);
     try {
+      let attachmentUrl: string | undefined;
+      if (image) {
+        const fd = new FormData();
+        fd.append("file", image.file);
+        const upRes = await fetch("/api/zapi/upload", {
+          method: "POST",
+          body: fd,
+          signal: AbortSignal.timeout(60_000),
+        });
+        const upData = await upRes.json().catch(() => ({}));
+        if (!upRes.ok) {
+          toast.error(upData.error ?? "Falha ao subir a imagem");
+          return;
+        }
+        attachmentUrl = upData.url;
+      }
+
       const res = await fetch("/api/admin/whatsapp/broadcast", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -159,6 +195,8 @@ export function DisparoForm() {
           audience: form.audience || form.source || "Filtro customizado",
           type: form.type,
           groupId: form.type === "GROUP" ? form.groupId : undefined,
+          attachmentUrl,
+          attachmentType: attachmentUrl ? "image" : undefined,
           delaySecondsMin: form.delayMin,
           delaySecondsMax: form.delayMax,
           dailyLimit: form.dailyLimit,
@@ -297,6 +335,36 @@ export function DisparoForm() {
           <p className="text-xs text-muted-foreground">
             Placeholders: <code>{"{nome}"}</code>, <code>{"{primeironome}"}</code>, <code>{"{cidade}"}</code>
           </p>
+
+          <div className="space-y-2">
+            <input
+              ref={imageInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => { pickImage(e.target.files?.[0]); e.target.value = ""; }}
+            />
+            {image ? (
+              <div className="rounded-lg p-3 flex items-start gap-3" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={image.previewUrl} alt="Prévia da imagem anexada" className="w-20 h-20 object-cover rounded-md shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs text-foreground truncate">{image.file.name}</p>
+                  <p className="text-xs text-muted-foreground">{(image.file.size / 1024 / 1024).toFixed(1)}MB · enviada como legenda junto com a mensagem</p>
+                </div>
+                <button type="button" onClick={discardImage} aria-label="Remover imagem"
+                  className="p-1.5 rounded-lg hover:bg-red-500/10 text-muted-foreground hover:text-red-400 transition-colors shrink-0">
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ) : (
+              <button type="button" onClick={() => imageInputRef.current?.click()}
+                className="flex items-center gap-2 text-xs px-3 py-2 rounded-lg bg-white/[0.04] border border-white/[0.08] text-muted-foreground hover:text-primary hover:border-primary/30 transition-colors">
+                <ImageIcon className="w-4 h-4" /> Anexar imagem (opcional)
+              </button>
+            )}
+          </div>
+
           {form.message && (
             <div className="rounded-lg p-3 mt-2" style={{ background: "rgba(37,211,102,0.06)", border: "1px solid rgba(37,211,102,0.25)" }}>
               <p className="text-xs font-semibold mb-1" style={{ color: "#25d366" }}>Preview ({previewSample[0]?.name ?? "exemplo"}):</p>
