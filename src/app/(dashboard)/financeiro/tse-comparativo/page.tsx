@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { Wallet, TrendingUp, ExternalLink } from "lucide-react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { Wallet, TrendingUp, ExternalLink, RefreshCw } from "lucide-react";
 import { FinanceGuard } from "@/components/financeiro/finance-guard";
 import { FinanceNav } from "@/components/financeiro/finance-nav";
+import { TSE_BOOKMARKLET_HREF, TSE_SNAPSHOT_MARKER } from "@/lib/tse-bookmarklet";
 
 const CARGOS = [
   { cargo: 7, label: "Deputado Estadual", destaque: [30777] },
@@ -32,6 +33,9 @@ function ComparativoContent() {
   const [loading, setLoading] = useState(true);
   const [fetchedAt, setFetchedAt] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [applyingBookmarklet, setApplyingBookmarklet] = useState(false);
+  const [bookmarkletMsg, setBookmarkletMsg] = useState<string | null>(null);
+  const appliedBookmarklet = useRef(false);
 
   const { cargo, label, destaque: destaqueNumeros } = CARGOS[cargoIdx];
 
@@ -51,6 +55,43 @@ function ComparativoContent() {
     } finally {
       setLoading(false);
     }
+  }, []);
+
+  // Recebe o resultado do bookmarklet "Atualizar TSE" (rodado na aba da própria TSE, que grava o
+  // payload em window.name antes de navegar de volta pra cá — window.name sobrevive a navegação
+  // cross-origin same-tab, o que dá pra usar como transporte já que fetch direto pra TSE é bloqueado
+  // por CORS a partir desse domínio).
+  useEffect(() => {
+    if (appliedBookmarklet.current) return;
+    const raw = window.name;
+    if (!raw.startsWith(TSE_SNAPSHOT_MARKER)) return;
+    appliedBookmarklet.current = true;
+    window.name = "";
+    (async () => {
+      setApplyingBookmarklet(true);
+      setBookmarkletMsg(null);
+      try {
+        const payload = JSON.parse(raw.slice(TSE_SNAPSHOT_MARKER.length)) as Record<string, Row[]>;
+        const entries = Object.entries(payload).filter(([, data]) => Array.isArray(data) && data.length > 0);
+        if (entries.length === 0) throw new Error("O favorito não trouxe nenhum candidato.");
+        for (const [cargoStr, data] of entries) {
+          const res = await fetch("/api/financeiro/tse-comparativo", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ uf: "PR", cargo: Number(cargoStr), partido: 30, data }),
+          });
+          const j = await res.json();
+          if (!res.ok) throw new Error(j.error ?? `Erro ao salvar cargo ${cargoStr}`);
+        }
+        setBookmarkletMsg(`Snapshot atualizado agora (${entries.length} cargo(s)).`);
+        load(cargo);
+      } catch (e) {
+        setBookmarkletMsg(e instanceof Error ? `Erro ao aplicar atualização: ${e.message}` : "Erro ao aplicar atualização.");
+      } finally {
+        setApplyingBookmarklet(false);
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => { load(cargo); }, [load, cargo]);
@@ -102,10 +143,44 @@ function ComparativoContent() {
         </div>
 
         <p className="text-[11px] text-muted-foreground bg-white/[0.03] border border-white/[0.06] rounded-lg p-2.5">
-          A API pública da TSE bloqueia consultas automáticas de servidor, então esses dados não são
-          ao vivo — são um retrato de quando alguém buscou manualmente e salvou. Peça uma atualização
-          quando quiser um número mais recente.
+          A API pública da TSE bloqueia consultas automáticas de servidor (e também bloqueia chamada
+          direta daqui por CORS), então esses dados não são ao vivo — são um retrato de quando alguém
+          buscou manualmente e salvou.
         </p>
+
+        <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3 space-y-2">
+          <div className="flex items-center gap-1.5">
+            <RefreshCw className="w-3.5 h-3.5 text-primary" />
+            <p className="text-[11px] font-semibold">Atualizar os dados (uma vez só, depois é 1 clique)</p>
+          </div>
+          <ol className="text-[11px] text-muted-foreground list-decimal list-inside space-y-0.5">
+            <li>
+              Arraste o botão{" "}
+              <a
+                href={TSE_BOOKMARKLET_HREF}
+                className="inline-block text-[11px] font-semibold px-2 py-0.5 rounded-md bg-primary/15 border border-primary/30 text-primary align-middle cursor-grab select-none"
+                onClick={(e) => e.preventDefault()}
+              >
+                🔄 Atualizar TSE
+              </a>{" "}
+              pra barra de favoritos do navegador (isso só precisa ser feito uma vez).
+            </li>
+            <li>
+              Sempre que quiser atualizar: abra{" "}
+              <a
+                href="https://divulgacandcontas.tse.jus.br/divulga/#/candidato/regiao/SUL/20322002026"
+                target="_blank" rel="noopener noreferrer"
+                className="text-primary hover:underline"
+              >
+                o site do TSE
+              </a>{" "}
+              e clique no favorito. Ele busca os candidatos de Estadual e Federal e volta sozinho pra cá
+              já salvo.
+            </li>
+          </ol>
+          {applyingBookmarklet && <p className="text-[11px] text-primary">Salvando snapshot novo…</p>}
+          {bookmarkletMsg && <p className="text-[11px] text-muted-foreground">{bookmarkletMsg}</p>}
+        </div>
 
         {error && (
           <p className="text-xs text-amber-400">
