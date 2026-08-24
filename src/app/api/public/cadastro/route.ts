@@ -15,8 +15,8 @@ const ALLOWED_ORIGINS = new Set([
   "https://leads.prandresantos.com.br",
   "https://ovile.com.br",
   "https://www.ovile.com.br",
-  "https://chiquini.com.br",
-  "https://www.chiquini.com.br",
+  "https://chiquini3000.com.br",
+  "https://www.chiquini3000.com.br",
 ]);
 
 function corsHeaders(req: NextRequest): Record<string, string> {
