@@ -1,8 +1,99 @@
 # Estado — Ovile Eleitoral (Base André Santos)
 
-**Última atualização:** 2026-08-18 (sessão: CTA WhatsApp em /fotoperfil, repo andre-santos)
+**Última atualização:** 2026-08-24 (sessão: módulo Financeiro — extratos, contratos, TSE)
 
 ---
+
+## Sessão 2026-08-19/24 — Financeiro: extratos, contratos, agenda WhatsApp, comparativo TSE
+
+Sessão longa e contínua cobrindo o módulo Financeiro de ponta a ponta. Resumo por área:
+
+### Extratos bancários (OFX) — NO AR
+- Conciliação automática ligada a pedido do Edson (`0bad650`): 1 candidato pendente exato → vincula e
+  marca PAGO sozinho; 0 ou +1 candidatos fica pra vínculo manual.
+- Importados e conciliados vários extratos ao longo da sessão (contas 57508 Doações, 57509 Fundo
+  Partidário, 57510 FEFC — rotuladas por origem de recurso, `4398ab1`). Primeira movimentação da conta
+  FEFC (57510): R$70.000 em repasses do partido em 21/08.
+- **Bug de duplicidade encontrado e corrigido**: lançamento do CT-004 (Thalles) apareceu duplicado
+  (R$1.800 duas vezes) — uma cópia manual + uma vinda da conciliação bancária. Corrigido pontualmente e
+  depois travado estruturalmente (ver Contratos abaixo).
+- Cards da Visão Geral agora são links pra Lançamentos já filtrados por tipo/status (`ce269ba`).
+
+### Contratos — módulo bastante reforçado
+- Bugs corrigidos: campo Objeto (e outros) voltava em branco ao editar (`9badd72`); numeração de
+  contrato agora preenche buracos deixados por exclusão em vez de colidir (`8327ac4`).
+- Novo: excluir contrato, marcar "Assinado" pela tela, campo Status no formulário (`8327ac4`).
+- Assistente de perguntas ao criar contrato (PJ/PF/Militância/Doação/Cessão escolhido por 1-2 perguntas
+  em vez de dropdown direto) — `bacc5c8`.
+- Modelo de contrato PF/PJ/Militância revisado com base em análise jurídica externa sobre o CT-004
+  (jingle): cláusula de "obedecer instruções" trocada por redação que reduz risco de vínculo
+  empregatício; materialidade ampliada pra além de fotos/vídeos; novo campo livre `additionalClauses`
+  (direitos de uso, política de revisão etc.); horários do PF simplificados (`ff75414`, `7fc8c51`).
+- Link de assinatura eletrônica trocado pro deep-link de login SSO do gov.br (`acff759`).
+- **Rastreio de envio/assinatura** (`00d94c1`): `sentAt`/`sentChannel` gravados automaticamente ao
+  clicar "Enviar"; botão novo pra anexar o PDF assinado que volta (`signedPdfUrl`/`signedAt`).
+- **Trava contra pagamento duplicado** (`00d94c1`): registrar pagamento que ultrapasse o total do
+  contrato agora exige confirmação explícita (409 + `window.confirm`).
+- Card "Quem tem acesso ao Financeiro" na Visão Geral, cruzando `FINANCE_ADMIN_EMAILS` com contas
+  existentes (`5c43aec`) — a env var é sensível na Vercel, não dava pra conferir de outro jeito.
+
+### Fornecedores
+- Endereço estruturado (CEP/logradouro/número/complemento/bairro/UF) com busca automática via ViaCEP
+  (`00d94c1`) — antes só dava pra jogar tudo solto no campo de notas.
+
+### Infra / bugs de plataforma
+- **Agenda diária do WhatsApp parada desde 30/07**: causa raiz era `CRON_SECRET` nunca criada na Vercel
+  depois que uma auditoria de segurança passou os 4 crons (`agenda-telegram`, `gcal-sync`, `tse-sync`,
+  `purge-old-receipts`) pra fail-closed — todos tomavam 401 da própria Vercel. Corrigido criando a env
+  var + redeploy. Validado ponta a ponta via Z-API direto no grupo "Agendas".
+- No meio da validação, achado um crash separado: campanha órfã `miriam-ferreira` (banco Neon dela
+  100% vazio, tenant de teste abandonado) travava o loop dos crons ao tentar conectar num banco com
+  driver quebrado. **Removida do banco principal** (autorizado pelo Edson) — Neon dela + ~15 env vars
+  `miriamferreira_*` ainda existem órfãos na Vercel, não removidos (precisa confirmar no painel qual
+  dos 2 recursos Neon é o dela antes de excluir, pra não arriscar o banco do André).
+- Bug de sobreposição de texto nos PDFs de exportação (`pdf-table.ts`, usado por lançamentos,
+  colaboradores, cabos eleitorais, pagamentos de igrejas): altura de linha era fixa, texto longo
+  vazava por cima da linha seguinte. Corrigido medindo a altura real de cada célula (`936ec7f`).
+
+### Comparativo de receitas TSE (novo)
+- Aba "Comparativo TSE" (`/financeiro/tse-comparativo`): ranking de receitas declaradas ao TSE pelos
+  candidatos do NOVO a Deputado Estadual no PR, com o André destacado.
+- **Limitação técnica confirmada**: a API do DivulgaCandContas (não-oficial, mas real — endpoints
+  capturados navegando de verdade no site) bloqueia qualquer chamada de servidor/datacenter — a própria
+  Vercel toma 403, igual daqui. Não dá pra deixar "ao vivo" dentro do app.
+  - Endpoints reais: `/candidatura/listar/{ano}/{uf}/{eleicao}/{cargo}/candidatos?partido={x}` e
+    `/prestador/consulta/{eleicao}/{ano}/{uf}/{cargo}/{partido}/{numero}/{idCandidato}`
+    (base `https://divulgacandcontas.tse.jus.br/divulga/rest/v1`, eleição 2026 = `20322002026`).
+  - Solução: model `TseComparativoSnapshot` guarda o último resultado (JSON) por uf/cargo/partido. Só
+    dá pra atualizar buscando manualmente (Claude navegando de verdade no site da TSE via browser
+    automation) e gravando via POST — não existe cron possível pra isso.
+  - Snapshot inicial salvo em 2026-08-24: André em **20º de 42** candidatos, R$21.534 (mediana da
+    chapa R$20.250, média R$34.323 puxada pelos 3 primeiros — R$170k/150k/100k).
+
+### Financeiro — dados cadastrados na sessão
+- Fornecedores novos: Ponto Zero Ltda (material gráfico), Gustavo Pego Aciole Barbosa (vídeo maker),
+  Robson Silverio Dopp (organização de eventos), Gilberto Carlos da Silva.
+- Contratos novos: CT-003 (Gustavo, vídeo, R$4.000), CT-005 (Robson, evento, R$250, já pago).
+- Pedido de material com a Ponto Zero: conferências de produção parcial AND-006 (R$9.397,50) e AND-007
+  (R$27.682,50, inclui 2 itens novos "Perfurado André"/"Perfurado André+Deltan" fora do saldo original)
+  — documentos em `~/Campanha Andre Santos/Cotacao Andre/Pedidos/`. Despesa de R$37.080 (AND-006+007)
+  agendada no Financeiro pra 24/08, junto com CT-003 (R$4.000, mesma data).
+
+### Fora do Financeiro
+- Roteiros de gravação com Jeffrey Chiquini (10 vídeos em dupla) + 10 solo do André, mesmo modelo do
+  documento anterior com o Deltan — `~/Downloads/Roteiros-Andre-Chiquini.pdf`. Número eleitoral do
+  Chiquini ainda é placeholder `[NÚMERO OFICIAL]`.
+- Relatórios de separação de material/etiquetas de correio gerados pra 3 envios aprovados (Edson x2,
+  Luiz Ferreira Da Costa Junior). Tiago Joaquim e Abraão Nery seguem pendentes de aprovação em
+  `/materiais`.
+
+### Pendências operacionais (Edson)
+- CT-002 (Adriel) sem e-mail/telefone — não dá pra enviar pra assinatura.
+- Nenhum contrato tem confirmação real de assinatura devolvida ainda (CT-001, CT-002, CT-003, CT-004,
+  CT-005 todos "Gerado").
+- Limpar recurso Neon órfão da Miriam + env vars `miriamferreira_*` (precisa decisão manual no painel
+  Vercel, ver acima).
+- Número eleitoral do Jeffrey Chiquini pendente pra atualizar nos roteiros/CTAs.
 
 ## Sessão 2026-08-17/18 — CTA de WhatsApp em /fotoperfil (repo `andre-santos`)
 
