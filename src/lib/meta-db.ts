@@ -20,6 +20,22 @@ export async function getCampaignDbUrl(campaignId: string): Promise<string | nul
 }
 
 /**
+ * Escopo de módulos visíveis no menu para a campanha — controla o que a
+ * Sidebar mostra (ver sidebar.tsx). "full" (padrão) ou "leads_only".
+ */
+export async function getCampaignModuleScope(campaignId: string): Promise<string> {
+  try {
+    const campaign = await db.campaign.findUnique({
+      where: { id: campaignId },
+      select: { moduleScope: true },
+    });
+    return campaign?.moduleScope ?? "full";
+  } catch {
+    return "full";
+  }
+}
+
+/**
  * Configurações de integração por tenant — sempre lidas do banco global (Campaign).
  * Retorna null para qualquer campo não configurado para o tenant.
  */

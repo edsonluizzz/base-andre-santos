@@ -1,7 +1,7 @@
 import NextAuth from "next-auth";
 import { db } from "./db";
 import { authConfig } from "./auth.config";
-import { getCampaignDbUrl } from "./meta-db";
+import { getCampaignDbUrl, getCampaignModuleScope } from "./meta-db";
 
 const CAMPAIGN_ID = "andre-santos-2026";
 
@@ -102,6 +102,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               token.role = "ADMIN";
               token.campaignId = CAMPAIGN_ID;
               token.dbUrl = (await getCampaignDbUrl(CAMPAIGN_ID)) ?? process.env.DATABASE_URL;
+              token.moduleScope = await getCampaignModuleScope(CAMPAIGN_ID);
             }
             // Não-admin sem campanha: token fica sem campaignId (signIn já bloqueou — safety net)
           } else {
@@ -115,6 +116,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             token.role = effectiveRole;
             token.campaignId = uc.campaignId;
             token.dbUrl = (await getCampaignDbUrl(uc.campaignId)) ?? process.env.DATABASE_URL;
+            token.moduleScope = await getCampaignModuleScope(uc.campaignId);
             await db.user.update({ where: { id: userId }, data: { role: effectiveRole, campaignId: uc.campaignId } }).catch(() => {});
           }
         }
@@ -159,6 +161,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           if (cid) {
             token.campaignId = cid;
             token.dbUrl = (await getCampaignDbUrl(cid)) ?? process.env.DATABASE_URL;
+            token.moduleScope = await getCampaignModuleScope(cid);
             await db.auditLog.create({ data: { action: "CAMPAIGN_SWITCH", actorId: token.id as string, targetId: cid } }).catch(() => {});
           }
           return token;
@@ -182,6 +185,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         if (token.image) session.user.image = token.image as string;
         session.user.campaignId = (token.campaignId as string) ?? CAMPAIGN_ID;
         session.user.dbUrl = token.dbUrl as string | undefined;
+        session.user.moduleScope = (token.moduleScope as string) ?? "full";
         // Re-avalia isSuperAdmin/isFinanceAdmin em toda sessão — garante tokens criados antes do campo funcionem
         const superAdminEmails = (process.env.SUPER_ADMIN_EMAILS ?? "")
           .split(",").map((e) => e.trim()).filter(Boolean);

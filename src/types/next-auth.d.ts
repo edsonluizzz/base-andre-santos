@@ -10,6 +10,7 @@ declare module "next-auth" {
       role?: string;
       campaignId?: string;       // Ovile Eleitoral: identificador da campanha
       dbUrl?: string;            // Ovile Eleitoral: DATABASE_URL da campanha
+      moduleScope?: string;      // Ovile Eleitoral: "full" | "leads_only" — controla o menu (Sidebar)
       isSuperAdmin?: boolean;
       isFinanceAdmin?: boolean;   // Ovile Eleitoral: acesso ao módulo financeiro, restrito por e-mail
       suspended?: boolean;
@@ -24,6 +25,7 @@ declare module "next-auth/jwt" {
     role?: string;
     campaignId?: string;
     dbUrl?: string;              // Ovile Eleitoral: DATABASE_URL da campanha
+    moduleScope?: string;        // Ovile Eleitoral: "full" | "leads_only" — controla o menu (Sidebar)
     isSuperAdmin?: boolean;
     isFinanceAdmin?: boolean;
     isImpersonating?: boolean;

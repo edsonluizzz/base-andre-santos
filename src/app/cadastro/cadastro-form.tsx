@@ -4,21 +4,28 @@ import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { Star, CheckCircle2, ChevronRight, Users, MapPin, Smartphone, Copy, Check, Share2, UserPlus } from "lucide-react";
 
-// Short do André no YouTube (@AndreSantos777) — lançamento da pré-candidatura.
-// Toca em autoplay mutado (mute=1) para não ser bloqueado pelos navegadores.
-const YT_VIDEO_ID = "z_9zver8iN0";
-// Página /cadastro é exclusiva da campanha André Santos — link fixo (não vem do Settings).
-const WA_GROUP_URL = "https://chat.whatsapp.com/GbrqkfHopOEDlgx0Rt0mCp?s=cl&p=a&ilr=1";
-
 type Step = "form" | "success";
 
 interface PublicStats {
   apoiadores: number;
   municipios: number;
   grupos: number;
-  whatsappGroupLink?: string | null;
   campaignName?: string | null;
+  candidateName?: string | null;
+  office?: string | null;
+  candidateNumber?: number | null;
+  district?: string | null;
+  whatsappGroupLink?: string | null;
+  youtubeVideoId?: string | null;
 }
+
+// Valores exibidos até a chamada a /api/public/stats resolver o tenant pelo
+// domínio — mantém o layout idêntico ao já validado em produção (André Santos)
+// enquanto a página é estática (force-static) e a personalização chega client-side.
+const DEFAULT_CANDIDATE_NAME = "André Santos";
+const DEFAULT_OFFICE = "Deputado Estadual";
+const DEFAULT_NUMBER = 30777;
+const DEFAULT_DISTRICT = "PR";
 
 export function CadastroForm() {
   const searchParams = useSearchParams();
@@ -41,8 +48,15 @@ export function CadastroForm() {
     ? `${typeof window !== "undefined" ? window.location.origin : ""}/cadastro?refc=${collaboratorId}`
     : "";
 
-  // Link do grupo fixo — página /cadastro é exclusiva do André
-  const waGroupUrl = WA_GROUP_URL;
+  // Personalização por tenant (resolvida pelo domínio em /api/public/stats)
+  const candidateName = stats.candidateName ?? DEFAULT_CANDIDATE_NAME;
+  const office = stats.office ?? DEFAULT_OFFICE;
+  const candidateNumber = stats.candidateNumber ?? DEFAULT_NUMBER;
+  const district = stats.district ?? DEFAULT_DISTRICT;
+  const youtubeVideoId = stats.youtubeVideoId ?? null;
+  // Sem grupo configurado para o tenant → card "Grupo de Apoiadores" e
+  // redirecionamento automático somem da tela de sucesso.
+  const waGroupUrl = stats.whatsappGroupLink || "";
 
   // Modo evento: cadastro presencial em sequência (tablet/totem) — não redireciona
   // automaticamente pro grupo, para permitir cadastrar a próxima pessoa.
@@ -63,9 +77,9 @@ export function CadastroForm() {
       .catch(() => {});
   }, [step, shareUrl]);
 
-  // Contagem regressiva para o grupo WhatsApp
+  // Contagem regressiva para o grupo WhatsApp (só quando há grupo configurado)
   useEffect(() => {
-    if (step !== "success" || redirectCancelled || isEventMode) return;
+    if (step !== "success" || redirectCancelled || isEventMode || !waGroupUrl) return;
     if (countdown <= 0) { window.location.href = waGroupUrl; return; }
     const t = setTimeout(() => setCountdown((c) => c - 1), 1000);
     return () => clearTimeout(t);
@@ -157,7 +171,7 @@ export function CadastroForm() {
   }
 
   const waShareUrl = shareUrl
-    ? `https://wa.me/?text=${encodeURIComponent(`Apoiei André Santos para Deputado Estadual! Faça seu cadastro também: ${shareUrl}`)}`
+    ? `https://wa.me/?text=${encodeURIComponent(`Apoiei ${candidateName} para ${office}! Faça seu cadastro também: ${shareUrl}`)}`
     : "";
 
   if (step === "success") {
@@ -175,7 +189,7 @@ export function CadastroForm() {
             <div>
               <h1 className="text-2xl font-bold text-white">Cadastro realizado!</h1>
               <p className="text-slate-400 mt-2 leading-relaxed text-sm">
-                Obrigado por apoiar André Santos.<br />
+                Obrigado por apoiar {candidateName}.<br />
                 Nossa equipe entrará em contato pelo WhatsApp em breve.
               </p>
             </div>
@@ -190,7 +204,8 @@ export function CadastroForm() {
             <UserPlus className="w-4 h-4" /> Cadastrar próxima pessoa
           </button>
 
-          {/* Grupo WhatsApp — redirecionamento automático */}
+          {/* Grupo WhatsApp — redirecionamento automático (só quando o tenant tem grupo configurado) */}
+          {waGroupUrl && (
           <div className="rounded-2xl p-4 space-y-3" style={{ background: "rgba(37,211,102,0.08)", border: "1px solid rgba(37,211,102,0.3)" }}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -228,16 +243,17 @@ export function CadastroForm() {
               </a>
             )}
           </div>
+          )}
 
-          {/* Vídeo do André */}
-          {YT_VIDEO_ID && (
+          {/* Vídeo do candidato */}
+          {youtubeVideoId && (
             <div className="flex justify-center rounded-2xl overflow-hidden" style={{ border: "1px solid rgba(255,107,4,0.2)" }}>
               <iframe
-                src={`https://www.youtube-nocookie.com/embed/${YT_VIDEO_ID}?autoplay=1&mute=1&playsinline=1&rel=0&modestbranding=1`}
+                src={`https://www.youtube-nocookie.com/embed/${youtubeVideoId}?autoplay=1&mute=1&playsinline=1&rel=0&modestbranding=1`}
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
                 className="w-full max-w-xs aspect-[9/16]"
-                title="André Santos — Mensagem"
+                title={`${candidateName} — Mensagem`}
               />
             </div>
           )}
@@ -298,8 +314,8 @@ export function CadastroForm() {
           </div>
           <div>
             <p className="text-xs tracking-[3px] uppercase" style={{ color: "rgba(255,107,4,0.7)" }}>Base de Apoio 2026</p>
-            <h1 className="text-2xl font-bold text-white mt-1">André Santos</h1>
-            <p className="text-slate-400 text-sm mt-1">30777 · Candidato a Deputado Estadual · PR</p>
+            <h1 className="text-2xl font-bold text-white mt-1">{candidateName}</h1>
+            <p className="text-slate-400 text-sm mt-1">{candidateNumber} · Candidato a {office} · {district}</p>
           </div>
           {sourceParam === "EVENTO" ? (
             <div className="rounded-2xl px-4 py-3" style={{ background: "rgba(255,107,4,0.08)", border: "1px solid rgba(255,107,4,0.15)" }}>
@@ -444,7 +460,7 @@ export function CadastroForm() {
               </div>
             </div>
             <p className="text-xs leading-relaxed" style={{ color: lgpdConsent ? "rgba(255,107,4,0.9)" : "#94a3b8" }}>
-              Autorizo o uso dos meus dados pessoais (nome, WhatsApp, cidade) pela Base de Apoio André Santos 2026
+              Autorizo o uso dos meus dados pessoais (nome, WhatsApp, cidade) pela Base de Apoio {candidateName} 2026
               para fins de comunicação política, conforme a{" "}
               <a href="/privacidade" target="_blank" rel="noopener noreferrer"
                 style={{ color: lgpdConsent ? "#ff6b04" : "#64748b", textDecoration: "underline" }}>

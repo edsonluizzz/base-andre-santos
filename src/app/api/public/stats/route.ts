@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { resolvePublicTenant } from "@/lib/tenant-resolver";
+import { db as globalDb } from "@/lib/db";
 
 export async function GET(req: NextRequest) {
   try {
     const { db, cid: CID } = await resolvePublicTenant(req);
 
-    const [apoiadores, cityRows, grupos, settings] = await Promise.all([
+    const [apoiadores, cityRows, grupos, campaign, settings] = await Promise.all([
       db.collaborator.count({ where: { campaignId: CID, status: { not: "INACTIVE" } } }),
       db.collaborator.findMany({
         where: { campaignId: CID, status: { not: "INACTIVE" }, city: { not: null } },
@@ -13,7 +14,18 @@ export async function GET(req: NextRequest) {
         distinct: ["city"],
       }),
       db.whatsAppGroup.count({ where: { campaignId: CID } }),
-      db.settings.findUnique({ where: { id: "singleton" }, select: { whatsappGroupLink: true, campaignName: true } }),
+      // Campaign é sempre lida do meta-db global — dados de personalização por
+      // tenant (nome, número, cor, grupo WA) nunca vivem no banco isolado.
+      globalDb.campaign.findUnique({
+        where: { id: CID },
+        select: {
+          candidateName: true, office: true, candidateNumber: true, party: true, district: true,
+          primaryColor: true, secondaryColor: true, whatsappGroupLink: true, youtubeVideoId: true,
+        },
+      }),
+      // Settings é singleton legado (pré multi-tenant) — mantido só para não quebrar
+      // /material, que ainda lê campaignName daqui.
+      db.settings.findUnique({ where: { id: "singleton" }, select: { campaignName: true } }),
     ]);
 
     return NextResponse.json(
@@ -21,8 +33,16 @@ export async function GET(req: NextRequest) {
         apoiadores,
         municipios: cityRows.length,
         grupos,
-        whatsappGroupLink: settings?.whatsappGroupLink ?? null,
         campaignName: settings?.campaignName ?? null,
+        candidateName: campaign?.candidateName ?? null,
+        office: campaign?.office ?? null,
+        candidateNumber: campaign?.candidateNumber ?? null,
+        party: campaign?.party ?? null,
+        district: campaign?.district ?? null,
+        primaryColor: campaign?.primaryColor ?? "#ff6b04",
+        secondaryColor: campaign?.secondaryColor ?? "#0a1220",
+        whatsappGroupLink: campaign?.whatsappGroupLink ?? null,
+        youtubeVideoId: campaign?.youtubeVideoId ?? null,
       },
       {
         // Contadores sociais toleram 5min de atraso — em burst de evento o CDN
@@ -32,6 +52,11 @@ export async function GET(req: NextRequest) {
     );
   } catch (err) {
     console.error("[public/stats]", err);
-    return NextResponse.json({ apoiadores: 0, municipios: 0, grupos: 0, whatsappGroupLink: null, campaignName: null });
+    return NextResponse.json({
+      apoiadores: 0, municipios: 0, grupos: 0,
+      campaignName: null, candidateName: null, office: null, candidateNumber: null, party: null, district: null,
+      primaryColor: "#ff6b04", secondaryColor: "#0a1220",
+      whatsappGroupLink: null, youtubeVideoId: null,
+    });
   }
 }

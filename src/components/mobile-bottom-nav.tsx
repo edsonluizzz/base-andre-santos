@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Users, Calendar, Network, Menu } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { LayoutDashboard, Users, Calendar, Network, BarChart2, Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface NavItem {
@@ -18,12 +19,21 @@ const PRIMARY_ITEMS: NavItem[] = [
   { href: "/celulas",       icon: Network,         label: "Células" },
 ];
 
+// Campanhas com moduleScope "leads_only" (ver sidebar.tsx) não têm Dashboard/Agenda/Células
+const LEADS_ONLY_ITEMS: NavItem[] = [
+  { href: "/colaboradores", icon: Users,      label: "Leads" },
+  { href: "/relatorio",     icon: BarChart2,  label: "Relatório" },
+];
+
 interface MobileBottomNavProps {
   onOpenMenu: () => void;
 }
 
 export function MobileBottomNav({ onOpenMenu }: MobileBottomNavProps) {
   const pathname = usePathname();
+  const { data: session } = useSession();
+  const isLeadsOnly = (session?.user as { moduleScope?: string })?.moduleScope === "leads_only";
+  const items = isLeadsOnly ? LEADS_ONLY_ITEMS : PRIMARY_ITEMS;
 
   return (
     <nav
@@ -31,7 +41,7 @@ export function MobileBottomNav({ onOpenMenu }: MobileBottomNavProps) {
       aria-label="Navegação principal"
     >
       <div className="flex items-stretch justify-around h-14">
-        {PRIMARY_ITEMS.map((item) => {
+        {items.map((item) => {
           const active = pathname === item.href || pathname.startsWith(item.href + "/");
           const Icon = item.icon;
           return (

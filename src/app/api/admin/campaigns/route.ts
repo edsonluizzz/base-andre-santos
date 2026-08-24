@@ -38,6 +38,7 @@ export async function POST(req: NextRequest) {
       id, name, slug, dbUrl, plan, adminEmail,
       candidateName, party, district, electionYear,
       primaryColor, secondaryColor,
+      domain, candidateNumber, whatsappGroupLink, youtubeVideoId, moduleScope,
     } = body;
 
     if (!id || !name || !dbUrl) {
@@ -113,6 +114,11 @@ export async function POST(req: NextRequest) {
         electionYear: electionYear ? parseInt(electionYear) : null,
         primaryColor: primaryColor || null,
         secondaryColor: secondaryColor || null,
+        domain: domain || null,
+        candidateNumber: candidateNumber ? parseInt(candidateNumber) : null,
+        whatsappGroupLink: whatsappGroupLink || null,
+        youtubeVideoId: youtubeVideoId || null,
+        moduleScope: moduleScope || "full",
       },
     });
 

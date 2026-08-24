@@ -1,9 +1,38 @@
 import Link from "next/link";
 import { Star } from "lucide-react";
+import { headers } from "next/headers";
+import { db } from "@/lib/db";
 
 export const metadata = { title: "Política de Privacidade — Ovile Eleitoral" };
 
-export default function PrivacidadePage() {
+const DEFAULT_CANDIDATE_NAME = "André Santos";
+const DEFAULT_OFFICE = "Deputado Estadual";
+const DEFAULT_DISTRICT = "PR";
+
+// Campaign.district guarda a sigla (ex: "PR") — o texto legal abaixo lê melhor
+// por extenso ("pelo Paraná"). Mapa pequeno, só para os estados já em uso.
+const UF_FULL_NAME: Record<string, string> = { PR: "Paraná" };
+
+async function getCandidateDisplay() {
+  const h = await headers();
+  const host = (h.get("host") ?? h.get("x-forwarded-host") ?? "").toLowerCase().split(":")[0].replace(/^www\./, "");
+  const campaign = host
+    ? await db.campaign.findFirst({
+        where: { domain: host, active: true },
+        select: { candidateName: true, office: true, district: true },
+      }).catch(() => null)
+    : null;
+  const district = campaign?.district ?? DEFAULT_DISTRICT;
+  return {
+    candidateName: campaign?.candidateName ?? DEFAULT_CANDIDATE_NAME,
+    office: campaign?.office ?? DEFAULT_OFFICE,
+    district,
+    districtFull: UF_FULL_NAME[district] ?? district,
+  };
+}
+
+export default async function PrivacidadePage() {
+  const { candidateName, office, district, districtFull } = await getCandidateDisplay();
   return (
     <div className="min-h-screen p-6 pb-16" style={{ background: "#0a1220" }}>
       <div className="max-w-2xl mx-auto">
@@ -16,7 +45,7 @@ export default function PrivacidadePage() {
           </div>
           <div>
             <p className="text-[10px] tracking-[3px] uppercase" style={{ color: "rgba(255,107,4,0.7)" }}>Base de Apoio 2026</p>
-            <p className="text-sm font-bold text-white">André Santos · Deputado Estadual PR</p>
+            <p className="text-sm font-bold text-white">{candidateName} · {office} {district}</p>
           </div>
         </div>
 
@@ -27,7 +56,7 @@ export default function PrivacidadePage() {
 
           <section>
             <h2 className="text-base font-semibold text-white mb-2">1. Quem somos</h2>
-            <p>A <strong className="text-white">Base de Apoio André Santos 2026</strong> é o sistema interno de gestão de colaboradores e apoiadores da pré-candidatura de André Santos a Deputado Estadual pelo Paraná nas eleições de 2026. As informações coletadas são tratadas pela equipe responsável pela campanha.</p>
+            <p>A <strong className="text-white">Base de Apoio {candidateName} 2026</strong> é o sistema interno de gestão de colaboradores e apoiadores da pré-candidatura de {candidateName} a {office} pelo {districtFull} nas eleições de 2026. As informações coletadas são tratadas pela equipe responsável pela campanha.</p>
           </section>
 
           <section>
@@ -82,7 +111,7 @@ export default function PrivacidadePage() {
 
           <section>
             <h2 className="text-base font-semibold text-white mb-2">8. Contato</h2>
-            <p className="text-slate-400">Dúvidas, solicitações de exclusão ou exercício de direitos: entre em contato com a equipe de campanha pelo WhatsApp ou pelos canais oficiais de André Santos.</p>
+            <p className="text-slate-400">Dúvidas, solicitações de exclusão ou exercício de direitos: entre em contato com a equipe de campanha pelo WhatsApp ou pelos canais oficiais de {candidateName}.</p>
           </section>
 
         </div>
