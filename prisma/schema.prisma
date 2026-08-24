@@ -49,6 +49,7 @@ model Campaign {
   contracts      Contract[]
   bankTransactions BankTransaction[]
   bankAccountBalances BankAccountBalance[]
+  tseComparativoSnapshots TseComparativoSnapshot[]
 }
 
 /// Fonte pagadora de cabos eleitorais — usada quando a campanha roda em chapa
@@ -988,5 +989,26 @@ model BankAccountBalance {
   campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
 
   @@unique([campaignId, acctId])
+  @@index([campaignId])
+}
+
+/// Snapshot salvo do comparativo de receitas do DivulgaCandContas (TSE) — a API
+/// pública deles bloqueia chamadas de servidor/datacenter (Vercel incluído), então
+/// não dá pra consultar ao vivo. Em vez disso, alguém busca os dados navegando de
+/// verdade no site da TSE (ex.: Claude via browser automation) e grava aqui; a tela
+/// só lê o último snapshot salvo, mostrando a data da consulta.
+model TseComparativoSnapshot {
+  id         String   @id @default(cuid())
+  campaignId String   @default("andre-santos-2026")
+  uf         String
+  cargo      Int
+  partido    Int
+  data       Json // array de { numero, nome, situacao, totalRecebido, qtdRecebido, totalReceitaPF, totalReceitaPJ, totalPartidos, dataUltimaAtualizacaoContas }
+  fetchedAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@unique([campaignId, uf, cargo, partido])
   @@index([campaignId])
 }
