@@ -30,7 +30,6 @@ interface PublicStats {
 const DEFAULT_CANDIDATE_NAME = "André Santos";
 const DEFAULT_OFFICE = "Deputado Estadual";
 const DEFAULT_NUMBER = 30777;
-const DEFAULT_DISTRICT = "PR";
 
 export function CadastroForm() {
   const searchParams = useSearchParams();
@@ -57,7 +56,6 @@ export function CadastroForm() {
   const candidateName = stats.candidateName ?? DEFAULT_CANDIDATE_NAME;
   const office = stats.office ?? DEFAULT_OFFICE;
   const candidateNumber = stats.candidateNumber ?? DEFAULT_NUMBER;
-  const district = stats.district ?? DEFAULT_DISTRICT;
   const youtubeVideoId = stats.youtubeVideoId ?? null;
   // Sem grupo configurado para o tenant → card "Grupo de Apoiadores" e
   // redirecionamento automático somem da tela de sucesso.
@@ -329,20 +327,20 @@ export function CadastroForm() {
             </div>
           </div>
           <div>
-            <p className="text-xs tracking-[3px] uppercase" style={{ color: "rgba(var(--accent-rgb),0.7)" }}>Base de Apoio 2026</p>
+            <p className="text-xs tracking-[3px] uppercase" style={{ color: "rgba(var(--accent-rgb),0.7)" }}>
+              {isChapa ? `Nº ${candidateNumber} · ${partnerNumber}` : `Nº ${candidateNumber}`}
+            </p>
             <h1 className="text-2xl font-bold text-white mt-1">{headerTitle}</h1>
             {isChapa ? (
-              <p className="text-slate-400 text-sm mt-1">
-                {candidateNumber} · {office} — {partnerNumber} · {partnerOffice} · {district}
-              </p>
+              <p className="text-slate-400 text-sm mt-1">{office} — {partnerOffice}</p>
             ) : (
-              <p className="text-slate-400 text-sm mt-1">{candidateNumber} · Candidato a {office} · {district}</p>
+              <p className="text-slate-400 text-sm mt-1">Candidato a {office}</p>
             )}
           </div>
           {sourceParam === "EVENTO" ? (
             <div className="rounded-2xl px-4 py-3" style={{ background: "rgba(var(--accent-rgb),0.08)", border: "1px solid rgba(var(--accent-rgb),0.15)" }}>
               <p className="text-sm font-medium" style={{ color: "var(--accent)" }}>📍 Cadastro presencial</p>
-              <p className="text-xs text-slate-400 mt-0.5">Você está em um evento da Base de Apoio</p>
+              <p className="text-xs text-slate-400 mt-0.5">Você está em um evento de campanha</p>
             </div>
           ) : (
             <div className="rounded-2xl px-4 py-3" style={{ background: "rgba(var(--accent-rgb),0.08)", border: "1px solid rgba(var(--accent-rgb),0.15)" }}>
@@ -482,7 +480,7 @@ export function CadastroForm() {
               </div>
             </div>
             <p className="text-xs leading-relaxed" style={{ color: lgpdConsent ? "rgba(var(--accent-rgb),0.9)" : "#94a3b8" }}>
-              Autorizo o uso dos meus dados pessoais (nome, WhatsApp, cidade) pela Base de Apoio {supportersLabel} 2026
+              Autorizo o uso dos meus dados pessoais (nome, WhatsApp, cidade) pela campanha de {supportersLabel}
               para fins de comunicação política, conforme a{" "}
               <a href="/privacidade" target="_blank" rel="noopener noreferrer"
                 style={{ color: lgpdConsent ? "var(--accent)" : "#64748b", textDecoration: "underline" }}>

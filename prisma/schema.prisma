@@ -35,6 +35,7 @@ model Campaign {
   partnerCandidateName   String?
   partnerCandidateNumber Int?
   partnerOffice          String?
+  partnerBadgeUrl        String?  @db.Text // moldura do parceiro de chapa, usada no /fotoperfil ao selecioná-lo
   // Escopo de módulos visíveis no menu para esta campanha: "full" (padrão) ou "leads_only"
   // (esconde Dashboard/Zonas/Agenda/Financeiro/etc, deixando só Colaboradores + Relatório)
   moduleScope     String   @default("full")

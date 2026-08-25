@@ -13,7 +13,6 @@ const BAND_HEIGHT = 190; // faixa inferior com nome/número, desenhada no canvas
 const DEFAULT_CANDIDATE_NAME = "André Santos";
 const DEFAULT_OFFICE = "Deputado Estadual";
 const DEFAULT_NUMBER = 30777;
-const DEFAULT_DISTRICT = "PR";
 
 type Pan = { x: number; y: number };
 
@@ -29,6 +28,7 @@ interface PublicStats {
   partnerCandidateName?: string | null;
   partnerCandidateNumber?: number | null;
   partnerOffice?: string | null;
+  partnerBadgeUrl?: string | null;
 }
 
 // Cor padrão usada pro parceiro de chapa quando ele não tem uma moldura
@@ -72,7 +72,6 @@ export function FotoPerfilForm() {
   const selfNumber = stats.candidateNumber ?? DEFAULT_NUMBER;
   const selfAccent = stats.primaryColor || "#ff6b04";
   const selfBadgeUrl = stats.profileBadgeUrl || null;
-  const district = stats.district ?? DEFAULT_DISTRICT;
   const waGroupUrl = stats.whatsappGroupLink || "";
 
   // Chapa conjunta: quando há candidato parceiro, o apoiador escolhe pra
@@ -84,7 +83,7 @@ export function FotoPerfilForm() {
   const office = isPartnerSelected ? (stats.partnerOffice ?? selfOffice) : selfOffice;
   const candidateNumber = isPartnerSelected ? (stats.partnerCandidateNumber ?? selfNumber) : selfNumber;
   const accent = isPartnerSelected ? PARTNER_DEFAULT_ACCENT : selfAccent;
-  const badgeUrl = isPartnerSelected ? null : selfBadgeUrl;
+  const badgeUrl = isPartnerSelected ? (stats.partnerBadgeUrl ?? null) : selfBadgeUrl;
   const theme = tenantThemeVars(accent);
 
   // Moldura própria do tenant (PNG com transparência) — carrega assim que a
@@ -134,8 +133,8 @@ export function FotoPerfilForm() {
     ctx.font = "700 58px system-ui, -apple-system, sans-serif";
     ctx.fillText(candidateName.toUpperCase(), CANVAS_SIZE / 2, bandY + 78);
     ctx.font = "600 34px system-ui, -apple-system, sans-serif";
-    ctx.fillText(`${candidateNumber} · ${office.toUpperCase()} · ${district}`, CANVAS_SIZE / 2, bandY + 138);
-  }, [photo, zoom, pan, accent, candidateName, candidateNumber, office, district, badgeUrl, badgeReady]);
+    ctx.fillText(`${candidateNumber} · ${office.toUpperCase()}`, CANVAS_SIZE / 2, bandY + 138);
+  }, [photo, zoom, pan, accent, candidateName, candidateNumber, office, badgeUrl, badgeReady]);
 
   function loadFile(file: File | null | undefined) {
     if (!file || !file.type.startsWith("image/")) return;
@@ -245,10 +244,10 @@ export function FotoPerfilForm() {
           </div>
           <div className="text-left">
             <p className="text-[10px] tracking-[3px] uppercase" style={{ color: "rgba(var(--accent-rgb),0.7)" }}>
-              Base de Apoio 2026
+              Nº {candidateNumber}
             </p>
             <p className="text-sm font-bold text-white">
-              {candidateName} · {office} {district}
+              {candidateName} · {office}
             </p>
           </div>
         </div>

@@ -7,11 +7,7 @@ export const metadata = { title: "Política de Privacidade — Ovile Eleitoral" 
 
 const DEFAULT_CANDIDATE_NAME = "André Santos";
 const DEFAULT_OFFICE = "Deputado Estadual";
-const DEFAULT_DISTRICT = "PR";
-
-// Campaign.district guarda a sigla (ex: "PR") — o texto legal abaixo lê melhor
-// por extenso ("pelo Paraná"). Mapa pequeno, só para os estados já em uso.
-const UF_FULL_NAME: Record<string, string> = { PR: "Paraná" };
+const DEFAULT_NUMBER = 30777;
 
 async function getCandidateDisplay() {
   const h = await headers();
@@ -19,20 +15,18 @@ async function getCandidateDisplay() {
   const campaign = host
     ? await db.campaign.findFirst({
         where: { domain: host, active: true },
-        select: { candidateName: true, office: true, district: true },
+        select: { candidateName: true, office: true, candidateNumber: true },
       }).catch(() => null)
     : null;
-  const district = campaign?.district ?? DEFAULT_DISTRICT;
   return {
     candidateName: campaign?.candidateName ?? DEFAULT_CANDIDATE_NAME,
     office: campaign?.office ?? DEFAULT_OFFICE,
-    district,
-    districtFull: UF_FULL_NAME[district] ?? district,
+    candidateNumber: campaign?.candidateNumber ?? DEFAULT_NUMBER,
   };
 }
 
 export default async function PrivacidadePage() {
-  const { candidateName, office, district, districtFull } = await getCandidateDisplay();
+  const { candidateName, office, candidateNumber } = await getCandidateDisplay();
   return (
     <div className="min-h-screen p-6 pb-16" style={{ background: "#0a1220" }}>
       <div className="max-w-2xl mx-auto">
@@ -44,8 +38,8 @@ export default async function PrivacidadePage() {
             <Star className="w-4 h-4" style={{ color: "#ff6b04" }} />
           </div>
           <div>
-            <p className="text-[10px] tracking-[3px] uppercase" style={{ color: "rgba(255,107,4,0.7)" }}>Base de Apoio 2026</p>
-            <p className="text-sm font-bold text-white">{candidateName} · {office} {district}</p>
+            <p className="text-[10px] tracking-[3px] uppercase" style={{ color: "rgba(255,107,4,0.7)" }}>Nº {candidateNumber}</p>
+            <p className="text-sm font-bold text-white">{candidateName} · {office}</p>
           </div>
         </div>
 
@@ -56,7 +50,7 @@ export default async function PrivacidadePage() {
 
           <section>
             <h2 className="text-base font-semibold text-white mb-2">1. Quem somos</h2>
-            <p>A <strong className="text-white">Base de Apoio {candidateName} 2026</strong> é o sistema interno de gestão de colaboradores e apoiadores da pré-candidatura de {candidateName} a {office} pelo {districtFull} nas eleições de 2026. As informações coletadas são tratadas pela equipe responsável pela campanha.</p>
+            <p>A <strong className="text-white">campanha de {candidateName}</strong> mantém este sistema interno de gestão de colaboradores e apoiadores da pré-candidatura de {candidateName} a {office} nas eleições de 2026. As informações coletadas são tratadas pela equipe responsável pela campanha.</p>
           </section>
 
           <section>

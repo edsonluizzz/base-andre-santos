@@ -13,7 +13,7 @@ export function MaterialForm() {
   const [step, setStep] = useState<Step>("dados");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [campaignName, setCampaignName] = useState("Base de Apoio");
+  const [campaignName, setCampaignName] = useState("");
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [accent, setAccent] = useState("#ff6b04");
   const theme = tenantThemeVars(accent);

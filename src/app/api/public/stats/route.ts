@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
           candidateName: true, office: true, candidateNumber: true, party: true, district: true,
           primaryColor: true, secondaryColor: true, whatsappGroupLink: true, youtubeVideoId: true,
           profileBadgeUrl: true,
-          partnerCandidateName: true, partnerCandidateNumber: true, partnerOffice: true,
+          partnerCandidateName: true, partnerCandidateNumber: true, partnerOffice: true, partnerBadgeUrl: true,
         },
       }),
       // Settings é singleton legado (pré multi-tenant) — mantido só para não quebrar
@@ -49,6 +49,7 @@ export async function GET(req: NextRequest) {
         partnerCandidateName: campaign?.partnerCandidateName ?? null,
         partnerCandidateNumber: campaign?.partnerCandidateNumber ?? null,
         partnerOffice: campaign?.partnerOffice ?? null,
+        partnerBadgeUrl: campaign?.partnerBadgeUrl ?? null,
       },
       {
         // Contadores sociais toleram 5min de atraso — em burst de evento o CDN
@@ -63,7 +64,7 @@ export async function GET(req: NextRequest) {
       campaignName: null, candidateName: null, office: null, candidateNumber: null, party: null, district: null,
       primaryColor: "#ff6b04", secondaryColor: "#0a1220",
       whatsappGroupLink: null, youtubeVideoId: null, profileBadgeUrl: null,
-      partnerCandidateName: null, partnerCandidateNumber: null, partnerOffice: null,
+      partnerCandidateName: null, partnerCandidateNumber: null, partnerOffice: null, partnerBadgeUrl: null,
     });
   }
 }
