@@ -1,6 +1,86 @@
 # Estado — Ovile Eleitoral (Base André Santos)
 
-**Última atualização:** 2026-08-24 (sessão: módulo Financeiro — extratos, contratos, TSE)
+**Última atualização:** 2026-08-25 (sessão: onboarding do Jeffrey Chiquini como segundo tenant)
+
+---
+
+## Sessão 2026-08-25 — Jeffrey Chiquini: segundo tenant, banco isolado, moduleScope leads_only
+
+Onboarding completo do segundo candidato no Ovile Eleitoral: Jeffrey Chiquini, Deputado Federal PR
+2026, nº **3000**, partido **NOVO** (dados confirmados via snapshot TSE já salvo). Comitê CNPJ
+68.464.708/0001-37, endereço público **esquina R. XV de Novembro com R. 21 de Abril, 1887, Térreo,
+Alto da XV, Curitiba/PR, 80045-125** (dado passado pelo Edson, salvo no Settings do banco isolado
+dele).
+
+### Arquitetura final (mesmo padrão do André/Miriam — projeto único)
+- **Não** virou projeto Vercel separado. Tentamos isso primeiro (`base-jeffrey-chiquini`, com cópia de
+  ~73 env vars) mas travou num erro `invalid_client` do Google OAuth que não resolveu nem recopiando as
+  credenciais — abandonado e **projeto deletado** (autorizado pelo Edson) depois de entender que
+  `andre.ovile.com.br`/`miriam.ovile.com.br` já provam que o padrão certo é: mesmo projeto Vercel,
+  domínio próprio, banco isolado.
+- Domínio: **`chiquini.ovile.com.br`** — subdomínio de `ovile.com.br`, cujo DNS já é gerenciado pelo
+  Vercel, então `vercel domains add` bastou, sem precisar mexer em nada externo. (Domínio
+  `chiquini3000.com.br` também foi registrado no Vercel numa tentativa anterior — ainda existe lá mas
+  sem DNS apontado, decidir depois se mantém ou libera.)
+- Banco: **Neon isolado de verdade** (não o do André), provisionado via
+  `vercel integration add neon --prefix CHIQUINI_` — isso é o jeito certo de criar bancos Neon hoje
+  (as tentativas via API direta do Neon/Vercel Storage retornaram 401/404). `Campaign.dbUrl` no
+  meta-db do André aponta pra esse banco.
+- **Detalhe importante do schema**: `Collaborator.campaignId` tem FK pra `Campaign.id` *dentro do
+  próprio banco*. Isso significa que todo tenant isolado precisa de uma linha `Campaign` duplicada:
+  uma no meta-db (usada pra resolver domínio → tenant) e outra idêntica dentro do banco isolado dele
+  (só pra satisfazer a FK local). Sem a segunda, cadastro/material quebravam com
+  `Foreign key constraint violated on Collaborator_campaignId_fkey`.
+
+### Bug real encontrado e corrigido (não era específico do Chiquini)
+`src/lib/tenant-db.ts` construía o adapter Neon errado — `new Pool(...)` do
+`@neondatabase/serverless` embrulhado em `new PrismaNeon(pool)` — e isso quebra em runtime
+(`TypeError [ERR_INVALID_ARG_TYPE]` dentro do `addCString` do protocolo Postgres, derrubando a função
+inteira, exit 129). Reproduzi com **qualquer** dbUrl Neon, inclusive o do André — não era corrupção de
+dado nem coisa do Chiquini, era a forma de chamar o construtor. `db.ts` (o client global) já usava a
+forma certa (`new PrismaNeon({ connectionString })`, sem Pool manual) e funciona em produção há tempo;
+`tenant-db.ts` agora espelha isso. **Isso provavelmente é a causa raiz de por que o tenant de teste da
+Miriam nunca funcionou** (banco isolado dela ficou vazio "porque ninguém usou" — na real, qualquer
+tentativa de gravar collaborator nela ia crashar).
+
+### moduleScope "leads_only" — menu incremental
+Campo novo em `Campaign` que a Sidebar usa pra filtrar o menu por tenant (`leadsOnly: true/false` em
+cada item de `sidebar.tsx`). Foi ajustado várias vezes ao longo da sessão conforme o Edson foi pedindo
+— hoje o Chiquini tem habilitado: **Dashboard, Colaboradores, Células, Mapa de Apoio, Materiais,
+Relatório**. Ainda ocultos: Zonas, Grupos WA, Agenda, Igrejas/Financeiro, Metas, Ranking, Convites,
+Comunicados, WhatsApp, Configurações. Painéis que linkavam pra página oculta (Resumo Executivo do
+Relatório: Metas/Financeiro/Ranking; KPIs de Zonas/Grupos/Agenda e "Próximos Eventos" do Dashboard)
+foram escondidos condicionalmente (`session.user.moduleScope === "leads_only"`) em vez de deletados —
+reaparecem sozinhos se o Edson pedir pra habilitar o módulo correspondente depois (foi o caso de
+"Minha Célula", escondida e depois reexibida quando Células foi liberado).
+
+### Identidade visual própria (sem mexer no layout)
+- Cores reais extraídas do site de campanha dele (`chiquini3000.com.br`, navegando de verdade e lendo
+  `getComputedStyle`): verde **#71C652** (accent) e verde bem escuro **#182214** (guardado em
+  `Campaign.secondaryColor`, mas ainda não usado em nenhum lugar — só o accent foi ligado).
+- Criado `src/lib/color-utils.ts` (`tenantThemeVars(primaryColor)`) — gera `--accent`/`--accent-rgb`
+  como CSS custom properties. Aplicado em `/cadastro`, `/material` e `/fotoperfil` (troquei todo
+  `#ff6b04`/`rgba(255,107,4,x)` fixo por `var(--accent)`/`rgba(var(--accent-rgb),x)`). O "chrome"
+  escuro do app (fundo navy, cards, inputs) ficou **fixo** — só o acento muda por tenant — decisão
+  deliberada pra não arriscar regressão visual no André, já que reproduzir exatamente a mesma família
+  de navy a partir de uma `secondaryColor` qualquer não dava pra fazer com uma fórmula simples e segura.
+- **`/fotoperfil` é novo dentro do `base-andre-santos`** — antes só existia hardcoded pro André no repo
+  separado `andre-santos` (moldura fixa em PNG, grupo de WhatsApp e cores dele). A versão nova desenha
+  a moldura no canvas dinamicamente (nome/número/cargo/cor vêm de `/api/public/stats`), sem precisar de
+  imagem pronta — funciona pra qualquer tenant. Precisou excluir `fotoperfil` do matcher do
+  `src/middleware.ts` (senão redirecionava visitante anônimo pro `/login`, já que por padrão qualquer
+  rota nova é protegida).
+
+### Pendências
+- **Convidar o admin do time do Chiquini via `/super-admin`** — ninguém logado gerenciando ainda, só
+  apoiadores se cadastrando sozinhos pelo `/cadastro` público.
+- Decidir o que fazer com `chiquini3000.com.br` (registrado no Vercel, DNS externo nunca configurado).
+- `Campaign.secondaryColor` do Chiquini guardado mas não aplicado em lugar nenhum — se quiser o fundo
+  também "esverdeado" no futuro, precisa de uma decisão de design (a tentativa de derivar os tons de
+  card/input a partir de uma cor qualquer não reproduzia bem os tons de navy atuais do André).
+- Um Google refresh token do André (Calendar) apareceu nos meus logs de debug locais em um momento
+  desta sessão — nunca foi exposto pra fora, só ficou visível nesta sessão; mencionar caso o Edson
+  prefira rotacionar por precaução.
 
 ---
 
