@@ -162,8 +162,7 @@ export default async function DashboardPage() {
           </div>
         </div>
 
-        {/* Minha Célula — conceito de tier/célula não se aplica a campanhas leads_only */}
-        {!isLeadsOnly && (
+        {/* Minha Célula */}
         <div className="glass-card rounded-2xl p-4 lg:p-6 border border-border lg:col-span-1 overflow-hidden min-w-0">
           <div className="flex items-center gap-2 mb-5">
             <Star className="w-4 h-4 text-primary" />
@@ -209,7 +208,6 @@ export default async function DashboardPage() {
             )}
           </div>
         </div>
-        )}
 
         {/* Próximos eventos — Agenda não existe em campanhas leads_only */}
         {!isLeadsOnly && (
