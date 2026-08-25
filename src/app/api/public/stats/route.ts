@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
         where: { id: CID },
         select: {
           candidateName: true, office: true, candidateNumber: true, party: true, district: true,
-          primaryColor: true, secondaryColor: true, whatsappGroupLink: true, youtubeVideoId: true,
+          primaryColor: true, secondaryColor: true, whatsappGroupLink: true, materialWhatsappGroupLink: true, youtubeVideoId: true,
           profileBadgeUrl: true,
           partnerCandidateName: true, partnerCandidateNumber: true, partnerOffice: true, partnerBadgeUrl: true,
         },
@@ -44,6 +44,7 @@ export async function GET(req: NextRequest) {
         primaryColor: campaign?.primaryColor ?? "#ff6b04",
         secondaryColor: campaign?.secondaryColor ?? "#0a1220",
         whatsappGroupLink: campaign?.whatsappGroupLink ?? null,
+        materialWhatsappGroupLink: campaign?.materialWhatsappGroupLink ?? null,
         youtubeVideoId: campaign?.youtubeVideoId ?? null,
         profileBadgeUrl: campaign?.profileBadgeUrl ?? null,
         partnerCandidateName: campaign?.partnerCandidateName ?? null,
@@ -63,7 +64,7 @@ export async function GET(req: NextRequest) {
       apoiadores: 0, municipios: 0, grupos: 0,
       campaignName: null, candidateName: null, office: null, candidateNumber: null, party: null, district: null,
       primaryColor: "#ff6b04", secondaryColor: "#0a1220",
-      whatsappGroupLink: null, youtubeVideoId: null, profileBadgeUrl: null,
+      whatsappGroupLink: null, materialWhatsappGroupLink: null, youtubeVideoId: null, profileBadgeUrl: null,
       partnerCandidateName: null, partnerCandidateNumber: null, partnerOffice: null, partnerBadgeUrl: null,
     });
   }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { CheckCircle2, ChevronRight, ChevronLeft, Package, Download } from "lucide-react";
+import { CheckCircle2, ChevronRight, ChevronLeft, Package, Download, MessageCircle } from "lucide-react";
 import { MATERIAL_CATALOG } from "@/lib/material-catalog";
 import { tenantThemeVars } from "@/lib/color-utils";
 
@@ -16,6 +16,7 @@ export function MaterialForm() {
   const [campaignName, setCampaignName] = useState("");
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [accent, setAccent] = useState("#ff6b04");
+  const [waGroupUrl, setWaGroupUrl] = useState("");
   const theme = tenantThemeVars(accent);
 
   const [name, setName] = useState("");
@@ -45,6 +46,7 @@ export function MaterialForm() {
       .then((d) => {
         if (d?.campaignName) setCampaignName(d.campaignName);
         if (d?.primaryColor) setAccent(d.primaryColor);
+        if (d?.materialWhatsappGroupLink) setWaGroupUrl(d.materialWhatsappGroupLink);
       })
       .catch(() => {});
   }, []);
@@ -183,6 +185,17 @@ export function MaterialForm() {
               style={{ background: "rgba(var(--accent-rgb),0.12)", border: "1px solid rgba(var(--accent-rgb),0.3)", color: "var(--accent)" }}
             >
               <Download className="w-4 h-4" /> Baixar meu Termo assinado
+            </a>
+          )}
+          {waGroupUrl && (
+            <a
+              href={waGroupUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full flex items-center justify-center gap-2 rounded-xl py-3 text-sm font-semibold transition-opacity hover:opacity-90"
+              style={{ background: "var(--accent)", color: "#0a1220" }}
+            >
+              <MessageCircle className="w-4 h-4" /> Entrar no grupo do WhatsApp
             </a>
           )}
         </div>

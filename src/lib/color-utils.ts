@@ -36,3 +36,38 @@ export function tenantThemeVars(primaryColor: string): TenantThemeVars {
     "--accent-rgb": rgbToTriplet(hexToRgb(primaryColor)),
   };
 }
+
+function mix(rgb: [number, number, number], target: [number, number, number], amount: number): string {
+  const [r, g, b] = rgb;
+  const [tr, tg, tb] = target;
+  const mixed = [r, g, b].map((c, i) => Math.round(c + ([tr, tg, tb][i] - c) * amount));
+  return `#${mixed.map((c) => c.toString(16).padStart(2, "0")).join("")}`;
+}
+
+/**
+ * CSS custom properties consumidas pelas classes Tailwind do dashboard
+ * autenticado (bg-primary, bg-sidebar-primary, ring, etc — ver globals.css).
+ * Sobrescrever essas variáveis num wrapper do layout tinge todo o CRM sem
+ * tocar nos componentes individuais. Efeitos decorativos hardcoded (orbs,
+ * scrollbar) permanecem fixos — fora do escopo desta 1ª passada de theming.
+ */
+export function dashboardThemeVars(primaryColor: string): Record<string, string> {
+  const rgb = hexToRgb(primaryColor);
+  const rgbStr = rgbToTriplet(rgb);
+  const foreground = mix(rgb, [255, 255, 255], 0.45); // tint claro p/ texto sobre fundo escuro
+
+  return {
+    "--primary": primaryColor,
+    "--primary-foreground": "#0a1220",
+    "--accent": `rgba(${rgbStr},0.12)`,
+    "--accent-foreground": foreground,
+    "--ring": `rgba(${rgbStr},0.50)`,
+    "--cta": primaryColor,
+    "--cta-muted": `rgba(${rgbStr},0.15)`,
+    "--sidebar-primary": primaryColor,
+    "--sidebar-primary-foreground": "#0a1220",
+    "--sidebar-accent": `rgba(${rgbStr},0.12)`,
+    "--sidebar-accent-foreground": foreground,
+    "--sidebar-ring": `rgba(${rgbStr},0.50)`,
+  };
+}

@@ -27,6 +27,7 @@ model Campaign {
   adminEmail      String?
   candidateNumber Int?     // número de urna (DivulgaCandContas)
   whatsappGroupLink String? @db.Text // grupo de apoiadores exibido na tela de sucesso do /cadastro
+  materialWhatsappGroupLink String? @db.Text // grupo específico exibido na tela de sucesso do /material (pode diferir do grupo geral)
   youtubeVideoId  String?  // vídeo institucional exibido na tela de sucesso do /cadastro
   profileBadgeUrl String?  @db.Text // moldura PNG (com alpha) usada no /fotoperfil deste tenant
   // Chapa conjunta (ex: André Santos + Jeffrey Chiquini) — quando preenchido, o

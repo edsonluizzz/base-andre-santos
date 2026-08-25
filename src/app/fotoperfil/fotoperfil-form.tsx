@@ -235,20 +235,12 @@ export function FotoPerfilForm() {
         className="w-full max-w-sm rounded-2xl p-7 text-center"
         style={{ background: "rgba(13,27,42,0.7)", border: "1px solid rgba(var(--accent-rgb),0.2)" }}
       >
-        <div className="flex items-center gap-3 mb-6 justify-center">
+        <div className="flex items-center justify-center mb-6">
           <div
             className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
             style={{ background: "rgba(var(--accent-rgb),0.12)", border: "1px solid rgba(var(--accent-rgb),0.25)" }}
           >
             <Star className="w-4 h-4" style={{ color: "var(--accent)" }} />
-          </div>
-          <div className="text-left">
-            <p className="text-[10px] tracking-[3px] uppercase" style={{ color: "rgba(var(--accent-rgb),0.7)" }}>
-              Nº {candidateNumber}
-            </p>
-            <p className="text-sm font-bold text-white">
-              {candidateName} · {office}
-            </p>
           </div>
         </div>
 

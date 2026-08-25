@@ -319,6 +319,11 @@ export function CadastroForm() {
     <div className="min-h-screen p-4 pb-10" style={{ background: "#0a1220", backgroundImage: "radial-gradient(ellipse 80% 50% at 50% -10%, #1a2f4e 0%, #0a1220 65%)", ...theme } as React.CSSProperties}>
       <div className="max-w-md mx-auto pt-8 space-y-6">
 
+        {isChapa && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src="/chapa-banner.png" alt={headerTitle} className="w-full rounded-2xl" />
+        )}
+
         {/* Header */}
         <div className="text-center space-y-3">
           <div className="flex justify-center">
