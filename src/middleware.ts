@@ -10,6 +10,6 @@ export const config = {
   // direto do CDN e cada request economiza uma invocação edge — essencial
   // para aguentar burst de evento dentro do plano Hobby.
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|manifest.json|sw.js|icons|ebooks|robots.txt|sitemap.xml|cadastro|material$|material/|ebook|privacidade|r$|r/|api/public|api/cep).*)",
+    "/((?!_next/static|_next/image|favicon.ico|manifest.json|sw.js|icons|ebooks|robots.txt|sitemap.xml|cadastro|material$|material/|ebook|privacidade|fotoperfil|r$|r/|api/public|api/cep).*)",
   ],
 };
