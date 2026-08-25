@@ -67,6 +67,10 @@ export default async function RelatorioPage({
   if (!session?.user) return null;
   if (!["ADMIN", "LEADER"].includes(session.user.role ?? "")) return null;
   const { db, cid: CID } = getCampaignContext(session);
+  // Campanhas "leads_only" não têm Metas/Igrejas/Ranking no menu — o Resumo
+  // Executivo (que linka pra essas páginas) fica escondido, mostrando só os
+  // dados de colaboradores/leads que sempre são funcionais.
+  const isLeadsOnly = session.user.moduleScope === "leads_only";
   const activeCob     = searchParams.cob    ?? null;
   const activeProfile = searchParams.perfil ?? null;
   const activePeriodo = searchParams.periodo ?? "30";
@@ -160,7 +164,10 @@ export default async function RelatorioPage({
         </div>
       </div>
 
-      {/* Resumo Executivo — cruza Metas, Financeiro (Igrejas) e Ranking */}
+      {/* Resumo Executivo — cruza Metas, Financeiro (Igrejas) e Ranking.
+          Linka pra páginas que campanhas "leads_only" não têm no menu, então
+          fica escondido pra elas (ver isLeadsOnly acima). */}
+      {!isLeadsOnly && (
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="glass-card rounded-2xl p-5 border border-white/[0.08]">
           <div className="flex items-center gap-2 mb-3">
@@ -245,6 +252,7 @@ export default async function RelatorioPage({
           )}
         </div>
       </div>
+      )}
 
       {/* Barra de filtros */}
       <div className="glass-card rounded-2xl p-3 sm:p-4 border border-white/[0.07] space-y-3 no-print">
