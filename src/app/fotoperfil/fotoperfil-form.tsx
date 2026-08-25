@@ -252,6 +252,13 @@ export function FotoPerfilForm() {
           </div>
         </div>
 
+        <div
+          className="rounded-xl p-3 mb-5 text-xs leading-relaxed"
+          style={{ background: "rgba(var(--accent-rgb),0.08)", border: "1px solid rgba(var(--accent-rgb),0.2)", color: "#cbd5e1" }}
+        >
+          Mostre seu apoio nas redes sociais! Escolha a moldura do seu candidato, faça o download da sua foto e entre no grupo de apoio.
+        </div>
+
         {isChapa && (
           <div className="flex gap-2 justify-center mb-4">
             <button
