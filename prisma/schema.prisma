@@ -29,6 +29,12 @@ model Campaign {
   whatsappGroupLink String? @db.Text // grupo de apoiadores exibido na tela de sucesso do /cadastro
   youtubeVideoId  String?  // vídeo institucional exibido na tela de sucesso do /cadastro
   profileBadgeUrl String?  @db.Text // moldura PNG (com alpha) usada no /fotoperfil deste tenant
+  // Chapa conjunta (ex: André Santos + Jeffrey Chiquini) — quando preenchido, o
+  // /cadastro público mostra os dois candidatos, mas os leads continuam salvos
+  // só no banco deste tenant (não duplica/mescla dados entre campanhas).
+  partnerCandidateName   String?
+  partnerCandidateNumber Int?
+  partnerOffice          String?
   // Escopo de módulos visíveis no menu para esta campanha: "full" (padrão) ou "leads_only"
   // (esconde Dashboard/Zonas/Agenda/Financeiro/etc, deixando só Colaboradores + Relatório)
   moduleScope     String   @default("full")

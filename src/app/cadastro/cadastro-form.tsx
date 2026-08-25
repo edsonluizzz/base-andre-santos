@@ -19,6 +19,9 @@ interface PublicStats {
   primaryColor?: string | null;
   whatsappGroupLink?: string | null;
   youtubeVideoId?: string | null;
+  partnerCandidateName?: string | null;
+  partnerCandidateNumber?: number | null;
+  partnerOffice?: string | null;
 }
 
 // Valores exibidos até a chamada a /api/public/stats resolver o tenant pelo
@@ -61,6 +64,15 @@ export function CadastroForm() {
   const waGroupUrl = stats.whatsappGroupLink || "";
   const accent = stats.primaryColor ?? "#ff6b04";
   const theme = tenantThemeVars(accent);
+  // Chapa conjunta (ex: André Santos + Jeffrey Chiquini) — quando a campanha
+  // tem um "candidato parceiro" configurado, a página mostra os dois; os
+  // leads continuam sendo salvos só no tenant deste domínio.
+  const partnerName = stats.partnerCandidateName ?? null;
+  const partnerNumber = stats.partnerCandidateNumber ?? null;
+  const partnerOffice = stats.partnerOffice ?? null;
+  const isChapa = Boolean(partnerName);
+  const headerTitle = isChapa ? `${candidateName} & ${partnerName}` : candidateName;
+  const supportersLabel = isChapa ? `${candidateName} e ${partnerName}` : candidateName;
 
   // Modo evento: cadastro presencial em sequência (tablet/totem) — não redireciona
   // automaticamente pro grupo, para permitir cadastrar a próxima pessoa.
@@ -175,7 +187,7 @@ export function CadastroForm() {
   }
 
   const waShareUrl = shareUrl
-    ? `https://wa.me/?text=${encodeURIComponent(`Apoiei ${candidateName} para ${office}! Faça seu cadastro também: ${shareUrl}`)}`
+    ? `https://wa.me/?text=${encodeURIComponent(`Apoiei ${supportersLabel}! Faça seu cadastro também: ${shareUrl}`)}`
     : "";
 
   if (step === "success") {
@@ -193,7 +205,7 @@ export function CadastroForm() {
             <div>
               <h1 className="text-2xl font-bold text-white">Cadastro realizado!</h1>
               <p className="text-slate-400 mt-2 leading-relaxed text-sm">
-                Obrigado por apoiar {candidateName}.<br />
+                Obrigado por apoiar {supportersLabel}.<br />
                 Nossa equipe entrará em contato pelo WhatsApp em breve.
               </p>
             </div>
@@ -318,8 +330,14 @@ export function CadastroForm() {
           </div>
           <div>
             <p className="text-xs tracking-[3px] uppercase" style={{ color: "rgba(var(--accent-rgb),0.7)" }}>Base de Apoio 2026</p>
-            <h1 className="text-2xl font-bold text-white mt-1">{candidateName}</h1>
-            <p className="text-slate-400 text-sm mt-1">{candidateNumber} · Candidato a {office} · {district}</p>
+            <h1 className="text-2xl font-bold text-white mt-1">{headerTitle}</h1>
+            {isChapa ? (
+              <p className="text-slate-400 text-sm mt-1">
+                {candidateNumber} · {office} — {partnerNumber} · {partnerOffice} · {district}
+              </p>
+            ) : (
+              <p className="text-slate-400 text-sm mt-1">{candidateNumber} · Candidato a {office} · {district}</p>
+            )}
           </div>
           {sourceParam === "EVENTO" ? (
             <div className="rounded-2xl px-4 py-3" style={{ background: "rgba(var(--accent-rgb),0.08)", border: "1px solid rgba(var(--accent-rgb),0.15)" }}>
@@ -464,7 +482,7 @@ export function CadastroForm() {
               </div>
             </div>
             <p className="text-xs leading-relaxed" style={{ color: lgpdConsent ? "rgba(var(--accent-rgb),0.9)" : "#94a3b8" }}>
-              Autorizo o uso dos meus dados pessoais (nome, WhatsApp, cidade) pela Base de Apoio {candidateName} 2026
+              Autorizo o uso dos meus dados pessoais (nome, WhatsApp, cidade) pela Base de Apoio {supportersLabel} 2026
               para fins de comunicação política, conforme a{" "}
               <a href="/privacidade" target="_blank" rel="noopener noreferrer"
                 style={{ color: lgpdConsent ? "var(--accent)" : "#64748b", textDecoration: "underline" }}>
