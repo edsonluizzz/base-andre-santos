@@ -25,6 +25,7 @@ interface PublicStats {
   primaryColor?: string | null;
   secondaryColor?: string | null;
   whatsappGroupLink?: string | null;
+  profileBadgeUrl?: string | null;
 }
 
 function clampPan(x: number, y: number, zoom: number, img: HTMLImageElement): Pan {
@@ -41,9 +42,11 @@ export function FotoPerfilForm() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dragRef = useRef<{ startX: number; startY: number; panX: number; panY: number } | null>(null);
+  const badgeRef = useRef<HTMLImageElement | null>(null);
 
   const [stats, setStats] = useState<PublicStats>({});
   const [photo, setPhoto] = useState<HTMLImageElement | null>(null);
+  const [badgeReady, setBadgeReady] = useState(false);
   const [zoom, setZoom] = useState(MIN_ZOOM);
   const [pan, setPan] = useState<Pan>({ x: 0, y: 0 });
   const [dragOver, setDragOver] = useState(false);
@@ -62,12 +65,24 @@ export function FotoPerfilForm() {
   const district = stats.district ?? DEFAULT_DISTRICT;
   const accent = stats.primaryColor || "#ff6b04";
   const waGroupUrl = stats.whatsappGroupLink || "";
+  const badgeUrl = stats.profileBadgeUrl || null;
   const theme = tenantThemeVars(accent);
+
+  // Moldura própria do tenant (PNG com transparência) — carrega assim que a
+  // URL chega de /api/public/stats. Sem badgeUrl, cai no desenho programático.
+  useEffect(() => {
+    if (!badgeUrl) { badgeRef.current = null; setBadgeReady(false); return; }
+    setBadgeReady(false);
+    const badge = new Image();
+    badge.onload = () => { badgeRef.current = badge; setBadgeReady(true); };
+    badge.src = badgeUrl;
+  }, [badgeUrl]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");
     if (!canvas || !ctx || !photo) return;
+    if (badgeUrl && !badgeReady) return; // aguarda a moldura própria carregar
 
     ctx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
 
@@ -79,7 +94,14 @@ export function FotoPerfilForm() {
     const y = (CANVAS_SIZE - h) / 2 + pan.y;
     ctx.drawImage(photo, x, y, w, h);
 
-    // Moldura: anel de borda + faixa inferior com nome/número, na cor da campanha.
+    if (badgeUrl && badgeRef.current) {
+      // Moldura própria do tenant (arte pronta, com transparência).
+      ctx.drawImage(badgeRef.current, 0, 0, CANVAS_SIZE, CANVAS_SIZE);
+      return;
+    }
+
+    // Fallback: sem arte própria, desenha uma moldura simples com as cores
+    // da campanha (anel de borda + faixa inferior com nome/número).
     const bandY = CANVAS_SIZE - BAND_HEIGHT;
     ctx.fillStyle = accent;
     ctx.fillRect(0, bandY, CANVAS_SIZE, BAND_HEIGHT);
@@ -94,7 +116,7 @@ export function FotoPerfilForm() {
     ctx.fillText(candidateName.toUpperCase(), CANVAS_SIZE / 2, bandY + 78);
     ctx.font = "600 34px system-ui, -apple-system, sans-serif";
     ctx.fillText(`${candidateNumber} · ${office.toUpperCase()} · ${district}`, CANVAS_SIZE / 2, bandY + 138);
-  }, [photo, zoom, pan, accent, candidateName, candidateNumber, office, district]);
+  }, [photo, zoom, pan, accent, candidateName, candidateNumber, office, district, badgeUrl, badgeReady]);
 
   function loadFile(file: File | null | undefined) {
     if (!file || !file.type.startsWith("image/")) return;

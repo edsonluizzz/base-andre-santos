@@ -28,6 +28,7 @@ model Campaign {
   candidateNumber Int?     // número de urna (DivulgaCandContas)
   whatsappGroupLink String? @db.Text // grupo de apoiadores exibido na tela de sucesso do /cadastro
   youtubeVideoId  String?  // vídeo institucional exibido na tela de sucesso do /cadastro
+  profileBadgeUrl String?  @db.Text // moldura PNG (com alpha) usada no /fotoperfil deste tenant
   // Escopo de módulos visíveis no menu para esta campanha: "full" (padrão) ou "leads_only"
   // (esconde Dashboard/Zonas/Agenda/Financeiro/etc, deixando só Colaboradores + Relatório)
   moduleScope     String   @default("full")

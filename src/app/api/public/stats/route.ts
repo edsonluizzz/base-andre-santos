@@ -21,6 +21,7 @@ export async function GET(req: NextRequest) {
         select: {
           candidateName: true, office: true, candidateNumber: true, party: true, district: true,
           primaryColor: true, secondaryColor: true, whatsappGroupLink: true, youtubeVideoId: true,
+          profileBadgeUrl: true,
         },
       }),
       // Settings é singleton legado (pré multi-tenant) — mantido só para não quebrar
@@ -43,6 +44,7 @@ export async function GET(req: NextRequest) {
         secondaryColor: campaign?.secondaryColor ?? "#0a1220",
         whatsappGroupLink: campaign?.whatsappGroupLink ?? null,
         youtubeVideoId: campaign?.youtubeVideoId ?? null,
+        profileBadgeUrl: campaign?.profileBadgeUrl ?? null,
       },
       {
         // Contadores sociais toleram 5min de atraso — em burst de evento o CDN
@@ -56,7 +58,7 @@ export async function GET(req: NextRequest) {
       apoiadores: 0, municipios: 0, grupos: 0,
       campaignName: null, candidateName: null, office: null, candidateNumber: null, party: null, district: null,
       primaryColor: "#ff6b04", secondaryColor: "#0a1220",
-      whatsappGroupLink: null, youtubeVideoId: null,
+      whatsappGroupLink: null, youtubeVideoId: null, profileBadgeUrl: null,
     });
   }
 }
