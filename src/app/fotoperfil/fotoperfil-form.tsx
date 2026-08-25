@@ -26,7 +26,14 @@ interface PublicStats {
   secondaryColor?: string | null;
   whatsappGroupLink?: string | null;
   profileBadgeUrl?: string | null;
+  partnerCandidateName?: string | null;
+  partnerCandidateNumber?: number | null;
+  partnerOffice?: string | null;
 }
+
+// Cor padrão usada pro parceiro de chapa quando ele não tem uma moldura
+// própria cadastrada neste tenant (cai no desenho programático de fallback).
+const PARTNER_DEFAULT_ACCENT = "#ff6b04";
 
 function clampPan(x: number, y: number, zoom: number, img: HTMLImageElement): Pan {
   const baseScale = Math.max(CANVAS_SIZE / img.width, CANVAS_SIZE / img.height);
@@ -45,6 +52,7 @@ export function FotoPerfilForm() {
   const badgeRef = useRef<HTMLImageElement | null>(null);
 
   const [stats, setStats] = useState<PublicStats>({});
+  const [selected, setSelected] = useState<"self" | "partner">("self");
   const [photo, setPhoto] = useState<HTMLImageElement | null>(null);
   const [badgeReady, setBadgeReady] = useState(false);
   const [zoom, setZoom] = useState(MIN_ZOOM);
@@ -59,13 +67,24 @@ export function FotoPerfilForm() {
       .catch(() => {});
   }, []);
 
-  const candidateName = stats.candidateName ?? DEFAULT_CANDIDATE_NAME;
-  const office = stats.office ?? DEFAULT_OFFICE;
-  const candidateNumber = stats.candidateNumber ?? DEFAULT_NUMBER;
+  const selfName = stats.candidateName ?? DEFAULT_CANDIDATE_NAME;
+  const selfOffice = stats.office ?? DEFAULT_OFFICE;
+  const selfNumber = stats.candidateNumber ?? DEFAULT_NUMBER;
+  const selfAccent = stats.primaryColor || "#ff6b04";
+  const selfBadgeUrl = stats.profileBadgeUrl || null;
   const district = stats.district ?? DEFAULT_DISTRICT;
-  const accent = stats.primaryColor || "#ff6b04";
   const waGroupUrl = stats.whatsappGroupLink || "";
-  const badgeUrl = stats.profileBadgeUrl || null;
+
+  // Chapa conjunta: quando há candidato parceiro, o apoiador escolhe pra
+  // qual dos dois baixar a moldura — o parceiro não tem arte própria neste
+  // tenant, então cai no desenho programático (cor padrão + nome/número dele).
+  const isChapa = Boolean(stats.partnerCandidateName);
+  const isPartnerSelected = isChapa && selected === "partner";
+  const candidateName = isPartnerSelected ? stats.partnerCandidateName! : selfName;
+  const office = isPartnerSelected ? (stats.partnerOffice ?? selfOffice) : selfOffice;
+  const candidateNumber = isPartnerSelected ? (stats.partnerCandidateNumber ?? selfNumber) : selfNumber;
+  const accent = isPartnerSelected ? PARTNER_DEFAULT_ACCENT : selfAccent;
+  const badgeUrl = isPartnerSelected ? null : selfBadgeUrl;
   const theme = tenantThemeVars(accent);
 
   // Moldura própria do tenant (PNG com transparência) — carrega assim que a
@@ -202,6 +221,12 @@ export function FotoPerfilForm() {
     setDownloaded(false);
   }
 
+  function selectCandidate(which: "self" | "partner") {
+    if (which === selected) return;
+    setSelected(which);
+    handleReset(); // troca de moldura invalida o zoom/pan e a foto já enquadrada
+  }
+
   return (
     <div
       className="min-h-screen flex items-center justify-center p-6"
@@ -227,6 +252,35 @@ export function FotoPerfilForm() {
             </p>
           </div>
         </div>
+
+        {isChapa && (
+          <div className="flex gap-2 justify-center mb-4">
+            <button
+              type="button"
+              onClick={() => selectCandidate("self")}
+              className="flex-1 rounded-xl py-2 text-xs font-semibold transition-colors"
+              style={{
+                background: selected === "self" ? "rgba(var(--accent-rgb),0.15)" : "rgba(255,255,255,0.03)",
+                border: `1px solid ${selected === "self" ? "var(--accent)" : "rgba(255,255,255,0.1)"}`,
+                color: selected === "self" ? "var(--accent)" : "#94a3b8",
+              }}
+            >
+              {selfName}
+            </button>
+            <button
+              type="button"
+              onClick={() => selectCandidate("partner")}
+              className="flex-1 rounded-xl py-2 text-xs font-semibold transition-colors"
+              style={{
+                background: selected === "partner" ? "rgba(var(--accent-rgb),0.15)" : "rgba(255,255,255,0.03)",
+                border: `1px solid ${selected === "partner" ? "var(--accent)" : "rgba(255,255,255,0.1)"}`,
+                color: selected === "partner" ? "var(--accent)" : "#94a3b8",
+              }}
+            >
+              {stats.partnerCandidateName}
+            </button>
+          </div>
+        )}
 
         <h1 className="text-lg font-bold text-white mb-1">Foto de perfil com moldura</h1>
         <p className="text-sm mb-6 text-slate-400">
