@@ -19,7 +19,9 @@ import { getCampaignContext } from "./campaign-context";
 import { getCampaignByDomain } from "./meta-db";
 import type { PrismaClient } from "@prisma/client";
 
-const FALLBACK_CID = "andre-santos-2026";
+// Mesma lógica de DEFAULT_CAMPAIGN_ID de auth.ts — cada implantação (projeto
+// Vercel) tem seu próprio tenant padrão.
+const FALLBACK_CID = process.env.DEFAULT_CAMPAIGN_ID ?? "andre-santos-2026";
 
 export interface PublicTenantContext {
   db: PrismaClient;

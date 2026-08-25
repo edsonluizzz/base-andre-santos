@@ -3,7 +3,11 @@ import { db } from "./db";
 import { authConfig } from "./auth.config";
 import { getCampaignDbUrl, getCampaignModuleScope } from "./meta-db";
 
-const CAMPAIGN_ID = "andre-santos-2026";
+// Tenant/campanha padrão desta implantação. Cada projeto Vercel que roda este
+// mesmo código (ex: base-jeffrey-chiquini) define seu próprio DEFAULT_CAMPAIGN_ID
+// via env var, isolando completamente admins/fallback do André.
+const CAMPAIGN_ID = process.env.DEFAULT_CAMPAIGN_ID ?? "andre-santos-2026";
+const CAMPAIGN_NAME = process.env.DEFAULT_CAMPAIGN_NAME ?? "Base André Santos";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   ...authConfig,
@@ -206,7 +210,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         await db.campaign.upsert({
           where: { id: CAMPAIGN_ID },
           update: {},
-          create: { id: CAMPAIGN_ID, name: "Base André Santos", joinCode: process.env.CAMPAIGN_JOIN_CODE ?? "ovile2026" },
+          create: { id: CAMPAIGN_ID, name: CAMPAIGN_NAME, joinCode: process.env.CAMPAIGN_JOIN_CODE ?? "ovile2026" },
         }).catch(() => {});
 
         if (!user.email) return true;

@@ -20,7 +20,7 @@ const ROLE_RANK: Record<string, number> = { MEMBER: 0, LEADER: 1, ADMIN: 2 };
 
 const navItems = [
   { href: "/dashboard",      icon: LayoutDashboard, label: "Dashboard",       minRole: "MEMBER", superAdminOnly: false, financeAdminOnly: false, leadsOnly: false },
-  { href: "/meu-perfil",     icon: IdCard,          label: "Meu Perfil",      minRole: "MEMBER", superAdminOnly: false, financeAdminOnly: false, leadsOnly: false },
+  { href: "/meu-perfil",     icon: IdCard,          label: "Meu Perfil",      minRole: "MEMBER", superAdminOnly: false, financeAdminOnly: false, leadsOnly: true  },
   { href: "/treinamento",    icon: GraduationCap,    label: "Treinamento",     minRole: "MEMBER", superAdminOnly: false, financeAdminOnly: false, leadsOnly: false },
   { href: "/colaboradores",  icon: Users,            label: "Colaboradores",   minRole: "MEMBER", superAdminOnly: false, financeAdminOnly: false, leadsOnly: true  },
   { href: "/rua",            icon: UserPlus,         label: "Cadastro na Rua", minRole: "MEMBER", superAdminOnly: false, financeAdminOnly: false, leadsOnly: false },
@@ -28,10 +28,10 @@ const navItems = [
   { href: "/minhas-igrejas", icon: Church,          label: "Minhas Igrejas",  minRole: "MEMBER", superAdminOnly: false, financeAdminOnly: false, leadsOnly: false },
   { href: "/mapa",           icon: Map,              label: "Mapa de Apoio",   minRole: "LEADER", superAdminOnly: false, financeAdminOnly: false, leadsOnly: false },
   { href: "/agenda",         icon: Calendar,         label: "Agenda",          minRole: "LEADER", superAdminOnly: false, financeAdminOnly: false, leadsOnly: false },
-  { href: "/relatorio",      icon: BarChart2,        label: "Relatório",       minRole: "LEADER", superAdminOnly: false, financeAdminOnly: false, leadsOnly: true  },
+  { href: "/relatorio",      icon: BarChart2,        label: "Relatório",       minRole: "LEADER", superAdminOnly: false, financeAdminOnly: false, leadsOnly: false },
   { href: "/metas",          icon: Target,           label: "Metas",           minRole: "LEADER", superAdminOnly: false, financeAdminOnly: false, leadsOnly: false },
   { href: "/eleitos-2022",   icon: Award,            label: "Eleitos 2022",    minRole: "LEADER", superAdminOnly: false, financeAdminOnly: false, leadsOnly: false },
-  { href: "/materiais",      icon: Package,          label: "Material",        minRole: "LEADER", superAdminOnly: false, financeAdminOnly: false, leadsOnly: false },
+  { href: "/materiais",      icon: Package,          label: "Material",        minRole: "LEADER", superAdminOnly: false, financeAdminOnly: false, leadsOnly: true  },
   { href: "/convites",       icon: Link2,            label: "Convites",        minRole: "ADMIN",  superAdminOnly: false, financeAdminOnly: false, leadsOnly: false },
   { href: "/igrejas",        icon: Building2,        label: "Igrejas",         minRole: "ADMIN",  superAdminOnly: false, financeAdminOnly: false, leadsOnly: false },
   { href: "/tarefas",        icon: ClipboardList,    label: "Tarefas",         minRole: "ADMIN",  superAdminOnly: false, financeAdminOnly: false, leadsOnly: false },
@@ -46,7 +46,9 @@ const navItems = [
 
 // Menus ocultos temporariamente (a pedido do Edson 2026-06-10 — não usaremos
 // campanhas por agora). Reativar = remover o href daqui; o item segue definido.
-const HIDDEN_HREFS = new Set<string>(["/campanhas", "/nova-campanha"]);
+// /campanhas reativado em 2026-08-25 — passou a ser usado pra trocar de tenant
+// (múltiplas campanhas: André, Jeffrey Chiquini) via SwitchCampaignButton.
+const HIDDEN_HREFS = new Set<string>(["/nova-campanha"]);
 
 const ROLE_LABEL: Record<string, string> = {
   ADMIN: "Administrador",

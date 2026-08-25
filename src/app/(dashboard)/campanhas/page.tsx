@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Plus, Users, Database, CheckCircle2, XCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { SwitchCampaignButton } from "@/components/campanhas/switch-campaign-button";
 
 export const metadata = { title: "Campanhas — Ovile Eleitoral" };
 
@@ -75,7 +76,7 @@ export default async function CampanhasPage() {
                   </div>
                 </div>
               </div>
-              <div className="flex gap-4 text-right flex-shrink-0">
+              <div className="flex items-center gap-4 text-right flex-shrink-0">
                 <div>
                   <div className="flex items-center gap-1 text-sm font-medium justify-end">
                     <Users className="h-3.5 w-3.5 text-muted-foreground" />
@@ -90,6 +91,11 @@ export default async function CampanhasPage() {
                   </div>
                   <div className="text-xs text-muted-foreground">operadores</div>
                 </div>
+                {c.id === session.user.campaignId ? (
+                  <Badge className="bg-primary/15 text-primary border-primary/30">Ativa agora</Badge>
+                ) : (
+                  <SwitchCampaignButton campaignId={c.id} />
+                )}
               </div>
             </div>
 
