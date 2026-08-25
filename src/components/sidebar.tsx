@@ -19,7 +19,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 const ROLE_RANK: Record<string, number> = { MEMBER: 0, LEADER: 1, ADMIN: 2 };
 
 const navItems = [
-  { href: "/dashboard",      icon: LayoutDashboard, label: "Dashboard",       minRole: "MEMBER", superAdminOnly: false, financeAdminOnly: false, leadsOnly: false },
+  { href: "/dashboard",      icon: LayoutDashboard, label: "Dashboard",       minRole: "MEMBER", superAdminOnly: false, financeAdminOnly: false, leadsOnly: true  },
   { href: "/meu-perfil",     icon: IdCard,          label: "Meu Perfil",      minRole: "MEMBER", superAdminOnly: false, financeAdminOnly: false, leadsOnly: true  },
   { href: "/treinamento",    icon: GraduationCap,    label: "Treinamento",     minRole: "MEMBER", superAdminOnly: false, financeAdminOnly: false, leadsOnly: false },
   { href: "/colaboradores",  icon: Users,            label: "Colaboradores",   minRole: "MEMBER", superAdminOnly: false, financeAdminOnly: false, leadsOnly: true  },

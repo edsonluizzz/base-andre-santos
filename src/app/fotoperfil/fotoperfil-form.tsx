@@ -61,9 +61,8 @@ export function FotoPerfilForm() {
   const candidateNumber = stats.candidateNumber ?? DEFAULT_NUMBER;
   const district = stats.district ?? DEFAULT_DISTRICT;
   const accent = stats.primaryColor || "#ff6b04";
-  const bg = stats.secondaryColor || "#0a1220";
   const waGroupUrl = stats.whatsappGroupLink || "";
-  const theme = tenantThemeVars(accent, bg);
+  const theme = tenantThemeVars(accent);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -184,11 +183,11 @@ export function FotoPerfilForm() {
   return (
     <div
       className="min-h-screen flex items-center justify-center p-6"
-      style={{ background: "var(--bg)", ...theme } as React.CSSProperties}
+      style={{ background: "#0a1220", backgroundImage: "radial-gradient(ellipse 80% 50% at 50% -10%, #1a2f4e 0%, #0a1220 65%)", ...theme } as React.CSSProperties}
     >
       <div
         className="w-full max-w-sm rounded-2xl p-7 text-center"
-        style={{ background: "rgba(var(--bg-card-rgb),0.6)", border: "1px solid rgba(var(--accent-rgb),0.2)" }}
+        style={{ background: "rgba(13,27,42,0.7)", border: "1px solid rgba(var(--accent-rgb),0.2)" }}
       >
         <div className="flex items-center gap-3 mb-6 justify-center">
           <div
@@ -287,7 +286,7 @@ export function FotoPerfilForm() {
             disabled={!photo}
             onClick={handleDownload}
             className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-semibold transition-opacity disabled:opacity-40 disabled:pointer-events-none"
-            style={{ background: "var(--accent)", color: "var(--bg)" }}
+            style={{ background: "var(--accent)", color: "#0a1220" }}
           >
             <Download className="w-4 h-4" />
             Baixar imagem
@@ -310,7 +309,7 @@ export function FotoPerfilForm() {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-semibold transition-opacity hover:opacity-90"
-                  style={{ background: "var(--accent)", color: "var(--bg)" }}
+                  style={{ background: "var(--accent)", color: "#0a1220" }}
                 >
                   <MessageCircle className="w-4 h-4" />
                   Entrar no grupo do WhatsApp

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { LayoutDashboard, Users, Calendar, Network, Package, IdCard, BarChart2, Menu } from "lucide-react";
+import { LayoutDashboard, Users, Calendar, Network, Package, BarChart2, Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface NavItem {
@@ -19,13 +19,14 @@ const PRIMARY_ITEMS: NavItem[] = [
   { href: "/celulas",       icon: Network,         label: "Células" },
 ];
 
-// Campanhas com moduleScope "leads_only" (ver sidebar.tsx): apoiadores/leads,
-// materiais, relatório e perfil — sem Dashboard/Agenda/Células.
+// Campanhas com moduleScope "leads_only" (ver sidebar.tsx): dashboard,
+// apoiadores/leads, materiais e relatório — sem Agenda/Células (Meu Perfil
+// segue acessível pelo menu completo, só não entra na barra rápida).
 const LEADS_ONLY_ITEMS: NavItem[] = [
-  { href: "/colaboradores", icon: Users,      label: "Leads" },
-  { href: "/materiais",     icon: Package,    label: "Material" },
-  { href: "/relatorio",     icon: BarChart2,  label: "Relatório" },
-  { href: "/meu-perfil",    icon: IdCard,     label: "Perfil" },
+  { href: "/dashboard",     icon: LayoutDashboard, label: "Início" },
+  { href: "/colaboradores", icon: Users,           label: "Leads" },
+  { href: "/materiais",     icon: Package,         label: "Material" },
+  { href: "/relatorio",     icon: BarChart2,       label: "Relatório" },
 ];
 
 interface MobileBottomNavProps {

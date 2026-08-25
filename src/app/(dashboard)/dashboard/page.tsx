@@ -51,6 +51,9 @@ export default async function DashboardPage() {
   if (!session?.user) return null;
   const userId = session.user.id;
   const { db, cid: CID } = getCampaignContext(session);
+  // Campanhas "leads_only" não têm Zonas/Grupos/Agenda/Células no menu —
+  // os cards e painéis que linkam pra essas páginas ficam escondidos.
+  const isLeadsOnly = session.user.moduleScope === "leads_only";
 
   const [[total, byRole, cityRaw, groups, zones, upcomingEvents], [myTotal, myActive, myTier]] = await Promise.all([
     Promise.all([
@@ -120,12 +123,17 @@ export default async function DashboardPage() {
         </Link>
       )}
 
-      {/* KPI Cards — 2 cols mobile (denso), 4 lg+ */}
+      {/* KPI Cards — 2 cols mobile (denso), 4 lg+. Campanhas leads_only não
+          têm Zonas/Grupos WA/Agenda no menu, então esses cards somem. */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 lg:gap-4">
         <KpiCard icon={<Users className="w-3.5 h-3.5 text-primary" />}         label="Colaboradores"  value={total}                 href="/colaboradores" color="text-primary"     delay={0} />
-        <KpiCard icon={<MapPin className="w-3.5 h-3.5 text-blue-400" />}        label="Zonas"          value={zones}                 href="/zonas"         color="text-blue-400"    delay={1} />
-        <KpiCard icon={<MessageCircle className="w-3.5 h-3.5 text-green-400" />} label="Grupos WA"      value={groups}                href="/grupos"        color="text-green-400"   delay={2} />
-        <KpiCard icon={<Calendar className="w-3.5 h-3.5 text-purple-400" />}    label="Próx. Eventos"  value={upcomingEvents.length}  href="/agenda"        color="text-purple-400"  delay={3} />
+        {!isLeadsOnly && (
+          <>
+            <KpiCard icon={<MapPin className="w-3.5 h-3.5 text-blue-400" />}        label="Zonas"          value={zones}                 href="/zonas"         color="text-blue-400"    delay={1} />
+            <KpiCard icon={<MessageCircle className="w-3.5 h-3.5 text-green-400" />} label="Grupos WA"      value={groups}                href="/grupos"        color="text-green-400"   delay={2} />
+            <KpiCard icon={<Calendar className="w-3.5 h-3.5 text-purple-400" />}    label="Próx. Eventos"  value={upcomingEvents.length}  href="/agenda"        color="text-purple-400"  delay={3} />
+          </>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
@@ -154,7 +162,8 @@ export default async function DashboardPage() {
           </div>
         </div>
 
-        {/* Minha Célula */}
+        {/* Minha Célula — conceito de tier/célula não se aplica a campanhas leads_only */}
+        {!isLeadsOnly && (
         <div className="glass-card rounded-2xl p-4 lg:p-6 border border-border lg:col-span-1 overflow-hidden min-w-0">
           <div className="flex items-center gap-2 mb-5">
             <Star className="w-4 h-4 text-primary" />
@@ -200,8 +209,10 @@ export default async function DashboardPage() {
             )}
           </div>
         </div>
+        )}
 
-        {/* Próximos eventos */}
+        {/* Próximos eventos — Agenda não existe em campanhas leads_only */}
+        {!isLeadsOnly && (
         <div className="glass-card rounded-2xl p-4 lg:p-6 border border-border lg:col-span-1 overflow-hidden min-w-0">
           <div className="flex items-center justify-between mb-5">
             <div className="flex items-center gap-2">
@@ -245,6 +256,7 @@ export default async function DashboardPage() {
             </div>
           )}
         </div>
+        )}
       </div>
 
       {/* Funil de conversão (status agregado) */}

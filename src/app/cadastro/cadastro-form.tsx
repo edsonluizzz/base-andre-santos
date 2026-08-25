@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { Star, CheckCircle2, ChevronRight, Users, MapPin, Smartphone, Copy, Check, Share2, UserPlus } from "lucide-react";
+import { tenantThemeVars } from "@/lib/color-utils";
 
 type Step = "form" | "success";
 
@@ -15,6 +16,7 @@ interface PublicStats {
   office?: string | null;
   candidateNumber?: number | null;
   district?: string | null;
+  primaryColor?: string | null;
   whatsappGroupLink?: string | null;
   youtubeVideoId?: string | null;
 }
@@ -57,6 +59,8 @@ export function CadastroForm() {
   // Sem grupo configurado para o tenant → card "Grupo de Apoiadores" e
   // redirecionamento automático somem da tela de sucesso.
   const waGroupUrl = stats.whatsappGroupLink || "";
+  const accent = stats.primaryColor ?? "#ff6b04";
+  const theme = tenantThemeVars(accent);
 
   // Modo evento: cadastro presencial em sequência (tablet/totem) — não redireciona
   // automaticamente pro grupo, para permitir cadastrar a próxima pessoa.
@@ -176,14 +180,14 @@ export function CadastroForm() {
 
   if (step === "success") {
     return (
-      <div className="min-h-screen p-4 pb-10" style={{ background: "#0a1220", backgroundImage: "radial-gradient(ellipse 80% 50% at 50% -10%, #1a2f4e 0%, #0a1220 65%)" }}>
+      <div className="min-h-screen p-4 pb-10" style={{ background: "#0a1220", backgroundImage: "radial-gradient(ellipse 80% 50% at 50% -10%, #1a2f4e 0%, #0a1220 65%)", ...theme } as React.CSSProperties}>
         <div className="max-w-sm mx-auto pt-8 space-y-6">
 
           {/* Header de sucesso */}
           <div className="text-center space-y-3">
             <div className="flex justify-center">
-              <div className="w-20 h-20 rounded-full flex items-center justify-center" style={{ background: "rgba(255,107,4,0.15)", border: "1px solid rgba(255,107,4,0.3)" }}>
-                <CheckCircle2 className="w-10 h-10" style={{ color: "#ff6b04" }} />
+              <div className="w-20 h-20 rounded-full flex items-center justify-center" style={{ background: "rgba(var(--accent-rgb),0.15)", border: "1px solid rgba(var(--accent-rgb),0.3)" }}>
+                <CheckCircle2 className="w-10 h-10" style={{ color: "var(--accent)" }} />
               </div>
             </div>
             <div>
@@ -199,7 +203,7 @@ export function CadastroForm() {
           <button
             onClick={resetForm}
             className="w-full flex items-center justify-center gap-2 rounded-2xl py-4 text-sm font-bold transition-all active:scale-[0.98]"
-            style={{ background: "#ff6b04", color: "#0a1220" }}
+            style={{ background: "var(--accent)", color: "#0a1220" }}
           >
             <UserPlus className="w-4 h-4" /> Cadastrar próxima pessoa
           </button>
@@ -247,7 +251,7 @@ export function CadastroForm() {
 
           {/* Vídeo do candidato */}
           {youtubeVideoId && (
-            <div className="flex justify-center rounded-2xl overflow-hidden" style={{ border: "1px solid rgba(255,107,4,0.2)" }}>
+            <div className="flex justify-center rounded-2xl overflow-hidden" style={{ border: "1px solid rgba(var(--accent-rgb),0.2)" }}>
               <iframe
                 src={`https://www.youtube-nocookie.com/embed/${youtubeVideoId}?autoplay=1&mute=1&playsinline=1&rel=0&modestbranding=1`}
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -260,10 +264,10 @@ export function CadastroForm() {
 
           {/* Link compartilhável */}
           {shareUrl && (
-            <div className="rounded-2xl p-4 space-y-3" style={{ background: "rgba(255,107,4,0.06)", border: "1px solid rgba(255,107,4,0.2)" }}>
+            <div className="rounded-2xl p-4 space-y-3" style={{ background: "rgba(var(--accent-rgb),0.06)", border: "1px solid rgba(var(--accent-rgb),0.2)" }}>
               <div className="flex items-center gap-2">
-                <Share2 className="w-4 h-4 shrink-0" style={{ color: "#ff6b04" }} />
-                <p className="text-sm font-medium" style={{ color: "#ff6b04" }}>Indique para sua família!</p>
+                <Share2 className="w-4 h-4 shrink-0" style={{ color: "var(--accent)" }} />
+                <p className="text-sm font-medium" style={{ color: "var(--accent)" }}>Indique para sua família!</p>
               </div>
               <p className="text-xs text-slate-400 leading-relaxed">
                 Seu link foi copiado automaticamente. Cole no WhatsApp e indique para sua família e amigos — cada cadastro feito por ele fica vinculado a você.
@@ -275,7 +279,7 @@ export function CadastroForm() {
                 <button
                   onClick={copyLink}
                   className="flex items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-medium transition-all active:scale-95"
-                  style={{ background: copied ? "rgba(34,197,94,0.15)" : "rgba(255,107,4,0.12)", border: `1px solid ${copied ? "rgba(34,197,94,0.3)" : "rgba(255,107,4,0.3)"}`, color: copied ? "#22c55e" : "#ff6b04" }}
+                  style={{ background: copied ? "rgba(34,197,94,0.15)" : "rgba(var(--accent-rgb),0.12)", border: `1px solid ${copied ? "rgba(34,197,94,0.3)" : "rgba(var(--accent-rgb),0.3)"}`, color: copied ? "#22c55e" : "var(--accent)" }}
                 >
                   {copied ? <><Check className="w-3.5 h-3.5" /> Copiado!</> : <><Copy className="w-3.5 h-3.5" /> Copiar link</>}
                 </button>
@@ -302,29 +306,29 @@ export function CadastroForm() {
   }
 
   return (
-    <div className="min-h-screen p-4 pb-10" style={{ background: "#0a1220", backgroundImage: "radial-gradient(ellipse 80% 50% at 50% -10%, #1a2f4e 0%, #0a1220 65%)" }}>
+    <div className="min-h-screen p-4 pb-10" style={{ background: "#0a1220", backgroundImage: "radial-gradient(ellipse 80% 50% at 50% -10%, #1a2f4e 0%, #0a1220 65%)", ...theme } as React.CSSProperties}>
       <div className="max-w-md mx-auto pt-8 space-y-6">
 
         {/* Header */}
         <div className="text-center space-y-3">
           <div className="flex justify-center">
-            <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ background: "rgba(255,107,4,0.12)", border: "1px solid rgba(255,107,4,0.25)" }}>
-              <Star className="w-7 h-7 fill-yellow-500/30" style={{ color: "#ff6b04" }} />
+            <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ background: "rgba(var(--accent-rgb),0.12)", border: "1px solid rgba(var(--accent-rgb),0.25)" }}>
+              <Star className="w-7 h-7 fill-yellow-500/30" style={{ color: "var(--accent)" }} />
             </div>
           </div>
           <div>
-            <p className="text-xs tracking-[3px] uppercase" style={{ color: "rgba(255,107,4,0.7)" }}>Base de Apoio 2026</p>
+            <p className="text-xs tracking-[3px] uppercase" style={{ color: "rgba(var(--accent-rgb),0.7)" }}>Base de Apoio 2026</p>
             <h1 className="text-2xl font-bold text-white mt-1">{candidateName}</h1>
             <p className="text-slate-400 text-sm mt-1">{candidateNumber} · Candidato a {office} · {district}</p>
           </div>
           {sourceParam === "EVENTO" ? (
-            <div className="rounded-2xl px-4 py-3" style={{ background: "rgba(255,107,4,0.08)", border: "1px solid rgba(255,107,4,0.15)" }}>
-              <p className="text-sm font-medium" style={{ color: "#ff6b04" }}>📍 Cadastro presencial</p>
+            <div className="rounded-2xl px-4 py-3" style={{ background: "rgba(var(--accent-rgb),0.08)", border: "1px solid rgba(var(--accent-rgb),0.15)" }}>
+              <p className="text-sm font-medium" style={{ color: "var(--accent)" }}>📍 Cadastro presencial</p>
               <p className="text-xs text-slate-400 mt-0.5">Você está em um evento da Base de Apoio</p>
             </div>
           ) : (
-            <div className="rounded-2xl px-4 py-3" style={{ background: "rgba(255,107,4,0.08)", border: "1px solid rgba(255,107,4,0.15)" }}>
-              <p className="text-sm font-medium" style={{ color: "#ff6b04" }}>Faça parte da nossa base!</p>
+            <div className="rounded-2xl px-4 py-3" style={{ background: "rgba(var(--accent-rgb),0.08)", border: "1px solid rgba(var(--accent-rgb),0.15)" }}>
+              <p className="text-sm font-medium" style={{ color: "var(--accent)" }}>Faça parte da nossa base!</p>
               <p className="text-xs text-slate-400 mt-0.5">Cadastre-se e ajude a transformar o Paraná</p>
             </div>
           )}
@@ -340,7 +344,7 @@ export function CadastroForm() {
             <div key={label} className="rounded-xl p-3 text-center" style={{ background: "rgba(13,27,42,0.70)", border: "1px solid rgba(255,255,255,0.07)" }}>
               <Icon className="w-4 h-4 mx-auto mb-1 text-slate-500" />
               <p className="text-xs text-slate-500">{label}</p>
-              <p className="text-sm font-bold" style={{ color: "#ff6b04" }}>{value}</p>
+              <p className="text-sm font-bold" style={{ color: "var(--accent)" }}>{value}</p>
             </div>
           ))}
         </div>
@@ -350,21 +354,21 @@ export function CadastroForm() {
           <div className="rounded-2xl p-5 space-y-4" style={{ background: "rgba(13,27,42,0.70)", border: "1px solid rgba(255,255,255,0.07)" }}>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-slate-300">Nome completo <span style={{ color: "#ff6b04" }}>*</span></label>
+              <label className="text-xs font-medium text-slate-300">Nome completo <span style={{ color: "var(--accent)" }}>*</span></label>
               <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Seu nome completo" autoComplete="name"
                 className="w-full rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 outline-none transition-all"
                 style={{ background: "#1a2f4e", border: "1px solid rgba(255,255,255,0.07)" }}
-                onFocus={(e) => e.target.style.borderColor = "rgba(255,107,4,0.5)"}
+                onFocus={(e) => e.target.style.borderColor = "rgba(var(--accent-rgb),0.5)"}
                 onBlur={(e) => e.target.style.borderColor = "rgba(255,255,255,0.07)"}
               />
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-slate-300">WhatsApp <span style={{ color: "#ff6b04" }}>*</span></label>
+              <label className="text-xs font-medium text-slate-300">WhatsApp <span style={{ color: "var(--accent)" }}>*</span></label>
               <input type="tel" value={phone} onChange={(e) => setPhone(formatPhone(e.target.value))} placeholder="(41) 99999-9999" autoComplete="tel" inputMode="numeric"
                 className="w-full rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 outline-none transition-all"
                 style={{ background: "#1a2f4e", border: "1px solid rgba(255,255,255,0.07)" }}
-                onFocus={(e) => e.target.style.borderColor = "rgba(255,107,4,0.5)"}
+                onFocus={(e) => e.target.style.borderColor = "rgba(var(--accent-rgb),0.5)"}
                 onBlur={(e) => e.target.style.borderColor = "rgba(255,255,255,0.07)"}
               />
             </div>
@@ -385,7 +389,7 @@ export function CadastroForm() {
                   maxLength={9}
                   className="w-full rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 outline-none transition-all pr-10"
                   style={{ background: "#1a2f4e", border: "1px solid rgba(255,255,255,0.07)" }}
-                  onFocus={(e) => e.target.style.borderColor = "rgba(255,107,4,0.5)"}
+                  onFocus={(e) => e.target.style.borderColor = "rgba(var(--accent-rgb),0.5)"}
                   onBlur={(e) => e.target.style.borderColor = cepError ? "rgba(239,68,68,0.5)" : "rgba(255,255,255,0.07)"}
                 />
                 {cepLoading && (
@@ -404,7 +408,7 @@ export function CadastroForm() {
                 <input type="text" value={city} onChange={(e) => setCity(e.target.value)} placeholder="Ex: Curitiba"
                   className="w-full rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 outline-none transition-all"
                   style={{ background: "#1a2f4e", border: "1px solid rgba(255,255,255,0.07)" }}
-                  onFocus={(e) => e.target.style.borderColor = "rgba(255,107,4,0.5)"}
+                  onFocus={(e) => e.target.style.borderColor = "rgba(var(--accent-rgb),0.5)"}
                   onBlur={(e) => e.target.style.borderColor = "rgba(255,255,255,0.07)"}
                 />
               </div>
@@ -413,7 +417,7 @@ export function CadastroForm() {
                 <input type="text" value={neighborhood} onChange={(e) => setNeighborhood(e.target.value)} placeholder="Seu bairro"
                   className="w-full rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 outline-none transition-all"
                   style={{ background: "#1a2f4e", border: "1px solid rgba(255,255,255,0.07)" }}
-                  onFocus={(e) => e.target.style.borderColor = "rgba(255,107,4,0.5)"}
+                  onFocus={(e) => e.target.style.borderColor = "rgba(var(--accent-rgb),0.5)"}
                   onBlur={(e) => e.target.style.borderColor = "rgba(255,255,255,0.07)"}
                 />
               </div>
@@ -424,7 +428,7 @@ export function CadastroForm() {
               <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="seu@email.com" autoComplete="email"
                 className="w-full rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 outline-none transition-all"
                 style={{ background: "#1a2f4e", border: "1px solid rgba(255,255,255,0.07)" }}
-                onFocus={(e) => e.target.style.borderColor = "rgba(255,107,4,0.5)"}
+                onFocus={(e) => e.target.style.borderColor = "rgba(var(--accent-rgb),0.5)"}
                 onBlur={(e) => e.target.style.borderColor = "rgba(255,255,255,0.07)"}
               />
             </div>
@@ -434,8 +438,8 @@ export function CadastroForm() {
           <label
             className="flex items-start gap-3 cursor-pointer rounded-xl px-4 py-3 transition-all"
             style={{
-              background: lgpdConsent ? "rgba(255,107,4,0.06)" : "rgba(13,27,42,0.50)",
-              border: lgpdConsent ? "1px solid rgba(255,107,4,0.25)" : "1px solid rgba(255,255,255,0.07)",
+              background: lgpdConsent ? "rgba(var(--accent-rgb),0.06)" : "rgba(13,27,42,0.50)",
+              border: lgpdConsent ? "1px solid rgba(var(--accent-rgb),0.25)" : "1px solid rgba(255,255,255,0.07)",
             }}
           >
             <div className="mt-0.5 shrink-0 relative">
@@ -448,8 +452,8 @@ export function CadastroForm() {
               <div
                 className="w-5 h-5 rounded flex items-center justify-center transition-all"
                 style={{
-                  background: lgpdConsent ? "#ff6b04" : "transparent",
-                  border: lgpdConsent ? "1px solid #ff6b04" : "1px solid rgba(255,255,255,0.2)",
+                  background: lgpdConsent ? "var(--accent)" : "transparent",
+                  border: lgpdConsent ? "1px solid var(--accent)" : "1px solid rgba(255,255,255,0.2)",
                 }}
               >
                 {lgpdConsent && (
@@ -459,15 +463,15 @@ export function CadastroForm() {
                 )}
               </div>
             </div>
-            <p className="text-xs leading-relaxed" style={{ color: lgpdConsent ? "rgba(255,107,4,0.9)" : "#94a3b8" }}>
+            <p className="text-xs leading-relaxed" style={{ color: lgpdConsent ? "rgba(var(--accent-rgb),0.9)" : "#94a3b8" }}>
               Autorizo o uso dos meus dados pessoais (nome, WhatsApp, cidade) pela Base de Apoio {candidateName} 2026
               para fins de comunicação política, conforme a{" "}
               <a href="/privacidade" target="_blank" rel="noopener noreferrer"
-                style={{ color: lgpdConsent ? "#ff6b04" : "#64748b", textDecoration: "underline" }}>
+                style={{ color: lgpdConsent ? "var(--accent)" : "#64748b", textDecoration: "underline" }}>
                 Política de Privacidade (LGPD)
               </a>.
               Poderei solicitar a exclusão dos meus dados a qualquer momento pelo WhatsApp ou e-mail da equipe.{" "}
-              <span style={{ color: "#ff6b04" }}>*</span>
+              <span style={{ color: "var(--accent)" }}>*</span>
             </p>
           </label>
 
@@ -479,7 +483,7 @@ export function CadastroForm() {
 
           <button type="submit" disabled={loading}
             className="w-full flex items-center justify-center gap-2 rounded-xl py-4 text-sm font-bold transition-all active:scale-[0.98]"
-            style={{ background: loading ? "rgba(255,107,4,0.5)" : "#ff6b04", color: "#0a1220", opacity: loading ? 0.7 : 1 }}
+            style={{ background: loading ? "rgba(var(--accent-rgb),0.5)" : "var(--accent)", color: "#0a1220", opacity: loading ? 0.7 : 1 }}
           >
             {loading ? <span>Enviando...</span> : <><span>Quero fazer parte!</span><ChevronRight className="w-4 h-4" /></>}
           </button>
