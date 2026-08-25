@@ -28,7 +28,7 @@ const navItems = [
   { href: "/minhas-igrejas", icon: Church,          label: "Minhas Igrejas",  minRole: "MEMBER", superAdminOnly: false, financeAdminOnly: false, leadsOnly: false },
   { href: "/mapa",           icon: Map,              label: "Mapa de Apoio",   minRole: "LEADER", superAdminOnly: false, financeAdminOnly: false, leadsOnly: false },
   { href: "/agenda",         icon: Calendar,         label: "Agenda",          minRole: "LEADER", superAdminOnly: false, financeAdminOnly: false, leadsOnly: false },
-  { href: "/relatorio",      icon: BarChart2,        label: "Relatório",       minRole: "LEADER", superAdminOnly: false, financeAdminOnly: false, leadsOnly: false },
+  { href: "/relatorio",      icon: BarChart2,        label: "Relatório",       minRole: "LEADER", superAdminOnly: false, financeAdminOnly: false, leadsOnly: true  },
   { href: "/metas",          icon: Target,           label: "Metas",           minRole: "LEADER", superAdminOnly: false, financeAdminOnly: false, leadsOnly: false },
   { href: "/eleitos-2022",   icon: Award,            label: "Eleitos 2022",    minRole: "LEADER", superAdminOnly: false, financeAdminOnly: false, leadsOnly: false },
   { href: "/materiais",      icon: Package,          label: "Material",        minRole: "LEADER", superAdminOnly: false, financeAdminOnly: false, leadsOnly: true  },
