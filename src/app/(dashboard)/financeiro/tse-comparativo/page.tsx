@@ -6,9 +6,15 @@ import { FinanceGuard } from "@/components/financeiro/finance-guard";
 import { FinanceNav } from "@/components/financeiro/finance-nav";
 import { TSE_BOOKMARKLET_HREF, TSE_SNAPSHOT_MARKER } from "@/lib/tse-bookmarklet";
 
+// partido=30 → só candidatos do NOVO (proporcional: comparativo intrapartidário,
+// já que Estadual/Federal disputam vagas pelo mesmo quociente do partido).
+// partido=0 → campo inteiro (majoritário: Senador/Governador têm só 1 candidato
+// por partido, então o comparativo relevante é contra os concorrentes de fora).
 const CARGOS = [
-  { cargo: 7, label: "Deputado Estadual", destaque: [30777] },
-  { cargo: 6, label: "Deputado Federal", destaque: [3003, 3000] },
+  { cargo: 7, partido: 30, label: "Deputado Estadual", destaque: [30777] },
+  { cargo: 6, partido: 30, label: "Deputado Federal", destaque: [3003, 3000] },
+  { cargo: 5, partido: 0, label: "Senador", destaque: [300] }, // Deltan Dallagnol (NOVO)
+  { cargo: 3, partido: 0, label: "Governador", destaque: [] }, // NOVO sem candidato próprio nesta disputa
 ] as const;
 
 type Row = {
@@ -37,13 +43,13 @@ function ComparativoContent() {
   const [bookmarkletMsg, setBookmarkletMsg] = useState<string | null>(null);
   const appliedBookmarklet = useRef(false);
 
-  const { cargo, label, destaque: destaqueNumeros } = CARGOS[cargoIdx];
+  const { cargo, partido, label, destaque: destaqueNumeros } = CARGOS[cargoIdx];
 
-  const load = useCallback(async (cargoCodigo: number) => {
+  const load = useCallback(async (cargoCodigo: number, partidoCodigo: number) => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/financeiro/tse-comparativo?uf=PR&cargo=${cargoCodigo}&partido=30`);
+      const res = await fetch(`/api/financeiro/tse-comparativo?uf=PR&cargo=${cargoCodigo}&partido=${partidoCodigo}`);
       const j = await res.json();
       if (!res.ok) throw new Error(j.error ?? "Erro ao consultar");
       const sorted = [...(j.data as Row[])].sort((a, b) => (b.totalRecebido ?? 0) - (a.totalRecebido ?? 0));
@@ -71,20 +77,20 @@ function ComparativoContent() {
       setApplyingBookmarklet(true);
       setBookmarkletMsg(null);
       try {
-        const payload = JSON.parse(raw.slice(TSE_SNAPSHOT_MARKER.length)) as Record<string, Row[]>;
-        const entries = Object.entries(payload).filter(([, data]) => Array.isArray(data) && data.length > 0);
+        const payload = JSON.parse(raw.slice(TSE_SNAPSHOT_MARKER.length)) as Record<string, { partido: number; rows: Row[] }>;
+        const entries = Object.entries(payload).filter(([, v]) => Array.isArray(v?.rows) && v.rows.length > 0);
         if (entries.length === 0) throw new Error("O favorito não trouxe nenhum candidato.");
-        for (const [cargoStr, data] of entries) {
+        for (const [cargoStr, v] of entries) {
           const res = await fetch("/api/financeiro/tse-comparativo", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ uf: "PR", cargo: Number(cargoStr), partido: 30, data }),
+            body: JSON.stringify({ uf: "PR", cargo: Number(cargoStr), partido: v.partido, data: v.rows }),
           });
           const j = await res.json();
           if (!res.ok) throw new Error(j.error ?? `Erro ao salvar cargo ${cargoStr}`);
         }
         setBookmarkletMsg(`Snapshot atualizado agora (${entries.length} cargo(s)).`);
-        load(cargo);
+        load(cargo, partido);
       } catch (e) {
         setBookmarkletMsg(e instanceof Error ? `Erro ao aplicar atualização: ${e.message}` : "Erro ao aplicar atualização.");
       } finally {
@@ -94,7 +100,7 @@ function ComparativoContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => { load(cargo); }, [load, cargo]);
+  useEffect(() => { load(cargo, partido); }, [load, cargo, partido]);
 
   const maxRecebido = Math.max(1, ...rows.map((r) => r.totalRecebido ?? 0));
 
@@ -105,7 +111,7 @@ function ComparativoContent() {
           <Wallet className="w-6 h-6 text-primary" /> Financeiro
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Comparativo de receitas declaradas ao TSE — {label} PR, Partido NOVO
+          Comparativo de receitas declaradas ao TSE — {label} PR{partido === 30 ? ", Partido NOVO" : " (campo completo)"}
         </p>
       </div>
 
@@ -174,8 +180,8 @@ function ComparativoContent() {
               >
                 o site do TSE
               </a>{" "}
-              e clique no favorito. Ele busca os candidatos de Estadual e Federal e volta sozinho pra cá
-              já salvo.
+              e clique no favorito. Ele busca Estadual e Federal (só NOVO) + Senador e Governador (campo
+              completo) e volta sozinho pra cá já salvo.
             </li>
           </ol>
           {applyingBookmarklet && <p className="text-[11px] text-primary">Salvando snapshot novo…</p>}
