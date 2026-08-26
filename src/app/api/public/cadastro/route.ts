@@ -224,15 +224,25 @@ export async function POST(req: NextRequest) {
       }).catch(() => {});
     }
 
-    // Dispara n8n para contato imediato via WhatsApp
-    triggerLeadWebhook({
-      collaboratorId: created.id,
-      name: created.name,
-      phone: created.phone!,
-      campaignId: CID,
-      source,
-      city: city?.trim() || null,
-      referredByCollaboratorId: refc || null,
+    // Dispara n8n para contato imediato via WhatsApp — SOMENTE quando o tenant não
+    // tem contactWhatsapp configurado (fluxo legado). Quando configurado, a tela de
+    // sucesso do /cadastro já orienta o próprio apoiador a iniciar a conversa
+    // (anti-ban: evita a campanha mandar a primeira mensagem em massa).
+    import("@/lib/db").then(async ({ db: globalDb }) => {
+      const c = await globalDb.campaign.findUnique({ where: { id: CID }, select: { contactWhatsapp: true } }).catch(() => null);
+      if (c?.contactWhatsapp) {
+        console.log(`[cadastro] contactWhatsapp configurado — pulando triggerLeadWebhook (${created.id})`);
+        return;
+      }
+      triggerLeadWebhook({
+        collaboratorId: created.id,
+        name: created.name,
+        phone: created.phone!,
+        campaignId: CID,
+        source,
+        city: city?.trim() || null,
+        referredByCollaboratorId: refc || null,
+      }).catch(() => {});
     }).catch(() => {});
 
     // Notifica Telegram — tenant-aware

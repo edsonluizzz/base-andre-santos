@@ -27,6 +27,11 @@ model Campaign {
   adminEmail      String?
   candidateNumber Int?     // número de urna (DivulgaCandContas)
   whatsappGroupLink String? @db.Text // grupo de apoiadores exibido na tela de sucesso do /cadastro
+  // Número (dígitos com DDI, ex: 5541999999999) que aparece no CTA "Fale com a gente"
+  // da tela de sucesso do /cadastro. Fluxo anti-ban: o APOIADOR inicia a conversa
+  // (wa.me pré-preenchido) em vez da campanha mandar a primeira mensagem — quando
+  // preenchido, o disparo automático via n8n (triggerLeadWebhook) é pulado.
+  contactWhatsapp String?
   materialWhatsappGroupLink String? @db.Text // grupo específico exibido na tela de sucesso do /material (pode diferir do grupo geral)
   youtubeVideoId  String?  // vídeo institucional exibido na tela de sucesso do /cadastro
   profileBadgeUrl String?  @db.Text // moldura PNG (com alpha) usada no /fotoperfil deste tenant

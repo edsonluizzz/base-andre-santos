@@ -19,6 +19,7 @@ interface PublicStats {
   primaryColor?: string | null;
   whatsappGroupLink?: string | null;
   youtubeVideoId?: string | null;
+  contactWhatsapp?: string | null;
   partnerCandidateName?: string | null;
   partnerCandidateNumber?: number | null;
   partnerOffice?: string | null;
@@ -60,6 +61,10 @@ export function CadastroForm() {
   // Sem grupo configurado para o tenant → card "Grupo de Apoiadores" e
   // redirecionamento automático somem da tela de sucesso.
   const waGroupUrl = stats.whatsappGroupLink || "";
+  // Fluxo anti-ban: quando o tenant tem um número de contato configurado, o
+  // APOIADOR inicia a conversa (mensagem pré-preenchida) em vez da campanha
+  // mandar a primeira mensagem — evita o padrão que gerou banimentos anteriores.
+  const contactWhatsapp = stats.contactWhatsapp || "";
   const accent = stats.primaryColor ?? "#ff6b04";
   const theme = tenantThemeVars(accent);
   // Chapa conjunta (ex: André Santos + Jeffrey Chiquini) — quando a campanha
@@ -188,6 +193,12 @@ export function CadastroForm() {
     ? `https://wa.me/?text=${encodeURIComponent(`Apoiei ${supportersLabel}! Faça seu cadastro também: ${shareUrl}`)}`
     : "";
 
+  // Mensagem que o próprio apoiador envia pra iniciar a conversa (anti-ban).
+  const selfInitiateMessage = `Olá! Me chamo ${name.trim() || "—"} e acabei de me cadastrar para apoiar ${supportersLabel}. Quero fazer parte! 🙌`;
+  const selfInitiateUrl = contactWhatsapp
+    ? `https://wa.me/${contactWhatsapp}?text=${encodeURIComponent(selfInitiateMessage)}`
+    : "";
+
   if (step === "success") {
     return (
       <div className="min-h-screen p-4 pb-10" style={{ background: "#0a1220", backgroundImage: "radial-gradient(ellipse 80% 50% at 50% -10%, #1a2f4e 0%, #0a1220 65%)", ...theme } as React.CSSProperties}>
@@ -204,16 +215,35 @@ export function CadastroForm() {
               <h1 className="text-2xl font-bold text-white">Cadastro realizado!</h1>
               <p className="text-slate-400 mt-2 leading-relaxed text-sm">
                 Obrigado por apoiar {supportersLabel}.<br />
-                Nossa equipe entrará em contato pelo WhatsApp em breve.
+                {selfInitiateUrl
+                  ? "Toque no botão abaixo pra falar com a gente agora no WhatsApp."
+                  : "Nossa equipe entrará em contato pelo WhatsApp em breve."}
               </p>
             </div>
           </div>
+
+          {/* Fale com a gente — fluxo anti-ban: o apoiador inicia a conversa */}
+          {selfInitiateUrl && (
+            <a
+              href={selfInitiateUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full flex items-center justify-center gap-2 rounded-2xl py-4 text-sm font-bold transition-all active:scale-[0.98]"
+              style={{ background: "#25d366", color: "#0a1220" }}
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+                <path d="M12 0C5.373 0 0 5.373 0 12c0 2.121.553 4.112 1.52 5.843L0 24l6.335-1.482A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.006-1.37l-.36-.214-3.727.872.936-3.625-.235-.373A9.818 9.818 0 012.182 12C2.182 6.57 6.57 2.182 12 2.182S21.818 6.57 21.818 12 17.43 21.818 12 21.818z"/>
+              </svg>
+              Falar com a gente no WhatsApp
+            </a>
+          )}
 
           {/* Cadastrar próximo — CTA destacado (essencial para cadastro em eventos) */}
           <button
             onClick={resetForm}
             className="w-full flex items-center justify-center gap-2 rounded-2xl py-4 text-sm font-bold transition-all active:scale-[0.98]"
-            style={{ background: "var(--accent)", color: "#0a1220" }}
+            style={{ background: selfInitiateUrl ? "rgba(var(--accent-rgb),0.12)" : "var(--accent)", color: selfInitiateUrl ? "var(--accent)" : "#0a1220", border: selfInitiateUrl ? "1px solid rgba(var(--accent-rgb),0.3)" : "none" }}
           >
             <UserPlus className="w-4 h-4" /> Cadastrar próxima pessoa
           </button>

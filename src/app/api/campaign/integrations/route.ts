@@ -20,7 +20,7 @@ export async function GET() {
       select: {
         telegramBotToken: true, telegramChatId: true,
         zApiInstance: true, zApiToken: true, zApiClientToken: true,
-        domain: true,
+        domain: true, contactWhatsapp: true,
       },
     });
 
@@ -42,6 +42,7 @@ export async function GET() {
 
     return NextResponse.json({
       domain: c?.domain ?? null,
+      contactWhatsapp: c?.contactWhatsapp ?? null,
       telegram: {
         botTokenSet: Boolean(c?.telegramBotToken),
         chatId: c?.telegramChatId ?? null,
@@ -67,6 +68,7 @@ export async function GET() {
 
 interface IntegrationPatch {
   domain?: string | null;
+  contactWhatsapp?: string | null;
   telegramBotToken?: string | null;
   telegramChatId?: string | null;
   zApiInstance?: string | null;
@@ -95,14 +97,17 @@ export async function PATCH(req: NextRequest) {
 
     const data: IntegrationPatch = {};
     const fields: (keyof IntegrationPatch)[] = [
-      "domain",
+      "domain", "contactWhatsapp",
       "telegramBotToken", "telegramChatId",
       "zApiInstance", "zApiToken", "zApiClientToken",
     ];
     for (const f of fields) {
       if (f in body) {
         const v = body[f];
-        const normalized = typeof v === "string" && v.trim() === "" ? null : (v ?? null);
+        let normalized = typeof v === "string" && v.trim() === "" ? null : (v ?? null);
+        if (f === "contactWhatsapp" && typeof normalized === "string") {
+          normalized = normalized.replace(/\D/g, "") || null; // só dígitos (DDI+DDD+número)
+        }
         data[f] = SECRET_FIELDS.has(f) ? encrypt(normalized) : normalized;
       }
     }

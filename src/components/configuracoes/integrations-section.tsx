@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 
 interface IntegrationsStatus {
   domain: string | null;
+  contactWhatsapp: string | null;
   telegram: { botTokenSet: boolean; chatId: string | null };
   zapi: { instance: string | null; tokenSet: boolean; clientTokenSet: boolean };
   n8n?: {
@@ -23,6 +24,7 @@ interface IntegrationsStatus {
 // Helper: campos string com "" significa "limpar"; null/undefined "não mexer"
 type PatchPayload = Partial<{
   domain: string | null;
+  contactWhatsapp: string | null;
   telegramBotToken: string | null;
   telegramChatId: string | null;
   zApiInstance: string | null;
@@ -37,6 +39,7 @@ export function IntegrationsSection() {
 
   // Estados de input — null = "não tocar", string = novo valor
   const [domain, setDomain] = useState("");
+  const [contactWhatsapp, setContactWhatsapp] = useState("");
   const [telegramBotToken, setTelegramBotToken] = useState("");
   const [telegramChatId, setTelegramChatId] = useState("");
   const [zApiInstance, setZApiInstance] = useState("");
@@ -52,6 +55,7 @@ export function IntegrationsSection() {
       const d: IntegrationsStatus = await r.json();
       setStatus(d);
       setDomain(d.domain ?? "");
+      setContactWhatsapp(d.contactWhatsapp ?? "");
       setTelegramChatId(d.telegram.chatId ?? "");
       setZApiInstance(d.zapi.instance ?? "");
     } catch { /* silencioso */ }
@@ -108,6 +112,52 @@ export function IntegrationsSection() {
           >
             <Save className="w-3.5 h-3.5" /> Salvar
           </Button>
+        </div>
+      </div>
+
+      {/* Contato WhatsApp público (anti-ban) */}
+      <div className="glass-card rounded-2xl p-5 border border-white/[0.08] space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <MessageCircle className="w-4 h-4 text-green-400" />
+            <h2 className="text-sm font-semibold">Contato WhatsApp do /cadastro</h2>
+          </div>
+          <StatusBadge ok={!!status.contactWhatsapp} />
+        </div>
+        <p className="text-[11px] text-muted-foreground leading-relaxed">
+          Número exibido na tela de sucesso do cadastro público. Em vez da campanha mandar a
+          primeira mensagem (risco de banimento do número), o <strong className="text-foreground/80">apoiador</strong> abre
+          o WhatsApp com uma mensagem pré-preenchida e envia pra gente — a conversa entra na janela
+          de 24h iniciada pelo cliente e o restante do fluxo (grupo, links) segue normalmente por aí.
+        </p>
+        <div>
+          <Label className="text-[11px]">Número (com DDI, só dígitos)</Label>
+          <Input
+            value={contactWhatsapp}
+            onChange={(e) => setContactWhatsapp(e.target.value)}
+            placeholder="5541999999999"
+            className="font-mono text-xs"
+          />
+        </div>
+        <div className="flex gap-2">
+          <Button
+            size="sm"
+            disabled={loading}
+            onClick={() => save({ contactWhatsapp: contactWhatsapp.trim() || null }, "Contato WhatsApp")}
+            className="gap-1.5 text-xs"
+          >
+            <Save className="w-3.5 h-3.5" /> Salvar
+          </Button>
+          {status.contactWhatsapp && (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
+              onClick={() => save({ contactWhatsapp: null }, "Contato WhatsApp removido")}
+            >
+              Remover
+            </Button>
+          )}
         </div>
       </div>
 
