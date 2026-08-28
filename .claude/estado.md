@@ -1,6 +1,79 @@
 # Estado — Ovile Eleitoral (Base André Santos)
 
-**Última atualização:** 2026-08-25 (sessão: onboarding do Jeffrey Chiquini como segundo tenant)
+**Última atualização:** 2026-08-28 (sessão: extratos, contrato CT-006, comparativo TSE Senador/Governador, e-mail do domínio)
+
+---
+
+## Sessão 2026-08-26/28 — Extratos, contrato CT-006, comparativo TSE (Senador/Governador), e-mail do domínio
+
+### Cadastro público — fluxo anti-ban (apoiador inicia contato no WhatsApp)
+Novo campo `Campaign.contactWhatsapp` (configurável em Configurações → Integrações): quando preenchido,
+a tela de sucesso do `/cadastro` mostra um CTA "Falar com a gente no WhatsApp" com mensagem
+pré-preenchida — o **apoiador** manda a primeira mensagem em vez da campanha, evitando o padrão que já
+gerou banimento do número antes (WhatsApp trata como spam quando é a empresa que inicia em massa). Sem
+esse campo configurado, o comportamento antigo (disparo automático via n8n) continua igual, pra não
+quebrar tenants que ainda não configuraram. Commit `4c149d5`, já em produção — falta só o Edson preencher
+o número em Configurações pra ativar de fato (hoje o disparo antigo continua sendo o fallback).
+
+### Comparativo TSE — abas Senador e Governador
+- `page.tsx`/`tse-bookmarklet.ts`: 2 abas novas. Estadual/Federal continuam só-NOVO (comparação
+  intrapartidária, proporcional); Senador/Governador agora buscam **campo completo** (majoritário, só 1
+  candidato por partido) — partido do candidato derivado do próprio número de urna nessas 2 disputas
+  (`partido = numero` pra Governador, `Math.floor(numero/10)` pra Senador), confirmado contra os nomes
+  reais (Sergio Moro=PL/22, Gleisi=PT/131, Dr. Rosinha=PT/132, etc.).
+- Senador destaca Deltan Dallagnol (nº300, NOVO). **Governador sem destaque** — NOVO não tem candidato
+  próprio nessa disputa no PR (hoje mostra os 8 concorrentes sem marcação; decidir se quer destacar algum
+  aliado).
+- Commit `bd5ff0b`, em produção. Snapshot atualizado 2x na sessão (26/08 e 28/08, via bookmarklet
+  reproduzido em browser automation). André caiu do 6º pro **9º lugar** em Estadual (R$91.534 — valor
+  dele não mudou, outros candidatos avançaram).
+
+### Extratos bancários — 2 novos importados + Robson (CT-005) conciliado
+- Importados `Extrato conta corrente - 82027/82028` (Downloads, sem extensão `.ofx` — aceito pelo upload
+  mesmo assim) — contas 57509 Fundo Partidário e 57510 FEFC, movimentações de 18–26/08.
+- **Achado real de produto:** CT-005 (Robson, R$250) estava "Assinado" mas nunca teve pagamento
+  registrado, então o Pix de 24/08 ficava "Não conciliado" sem candidato no seletor "Escolher
+  lançamento...". Registrei o pagamento (PIX, 24/08 retroativo) e vinculei manualmente via API
+  (`POST /api/financeiro/extratos/:id/vincular`) — **o dropdown da tela só lista `FinancialEntry` com
+  status PENDENTE/AGENDADO** (`page.tsx:68`), então qualquer lançamento já registrado como PAGO fica
+  invisível pra vínculo manual pela UI, mesmo a API aceitando qualquer status/entryId. Vale um ajuste
+  futuro (ex: também listar PAGO sem `bankTransaction` vinculado).
+- **Bug de classificação ainda não corrigido** (achado, não mexido): o Banco do Brasil manda
+  `TRNTYPE=CREDIT` mesmo em "Pix - Enviado" (saída de dinheiro) — `extratos/import/route.ts` infere
+  `type: DESPESA` só quando `trnType === DEBIT`, então todo Pix enviado nesse formato de OFX vira
+  candidato de RECEITA na hora do auto-match, nunca batendo com o lançamento de despesa real. É
+  provavelmente por isso que a conciliação automática nunca "pega sozinha" pra esse banco.
+
+### Contrato CT-006 — Abraão Nery Biscaia (coordenação de mídia/RP/design)
+Criado via `/financeiro/contratos` (modelo PF): CPF/nome/endereço extraídos da CNH-e enviada por
+WhatsApp, endereço confirmado via ViaCEP (Rua Reinaldo Stocco, 274, Pinheirinho, Curitiba/PR). R$5.000,
+pago via PIX em 26/08 (já constava no extrato importado). Vigência corrigida de 16/08–30/09 pra
+**16/08–15/09/2026** a pedido do Edson (2 regenerações de PDF). Telefone (41) 99264-6863 adicionado
+depois. PDF final conferido linha a linha.
+
+### E-mail do domínio prandresantos.com.br — configurado (infra do domínio, fora do código do repo)
+- DNS já é gerenciado pelo Vercel (nameservers lá desde antes) — não precisou mexer no painel do
+  registro.br, só `vercel dns add`.
+- **ImprovMX** (encaminhamento grátis): MX (mx1/mx2.improvmx.com) + SPF adicionados via CLI. Alias
+  `contato@` + curinga `*@` → `equipeandresantos@gmail.com`.
+- Primeiro teste caiu em spam (normal pra domínio novo sem DKIM — o plano grátis do ImprovMX não libera
+  DKIM próprio, é feature paga de "Whitelabel"); resolvido marcando "Não é spam" no Gmail, segundo teste
+  já chegou direto na caixa de entrada.
+- **Pendente:** hoje só *recebe* — não dá pra *enviar* nativamente como `contato@prandresantos.com.br`
+  (precisaria configurar "Enviar e-mail como" no Gmail, com as limitações desse método). Se quiser
+  deliverability confiável de verdade (importante numa campanha — apoiadores/imprensa que recebem
+  e-mail desse domínio não vão saber marcar "não é spam"), as opções são upgrade pago do ImprovMX (DKIM)
+  ou migrar pra Google Workspace (caixa completa).
+
+### Pendências operacionais (Edson)
+- Preencher `contactWhatsapp` em Configurações → Integrações pra ativar de fato o fluxo anti-ban do
+  `/cadastro` (código já em produção, mas inativo até o número ser configurado).
+- Decidir se quer destacar algum candidato a Governador no comparativo TSE (NOVO não tem candidato
+  próprio nessa disputa).
+- Corrigir (ou não) o bug de classificação RECEITA/DESPESA do OFX do Banco do Brasil — hoje o auto-match
+  na importação nunca encontra candidato pra Pix enviados desse banco.
+- E-mail prandresantos.com.br: decidir se fica só no encaminhamento grátis ou vale investir numa caixa
+  completa (Workspace/Zoho/ImprovMX pago).
 
 ---
 
