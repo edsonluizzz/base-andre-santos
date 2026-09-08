@@ -3,16 +3,14 @@ import PDFDocument from "pdfkit";
 import { auth } from "@/lib/auth";
 import { getCampaignContext } from "@/lib/campaign-context";
 import { materialItemLabel, MATERIAL_CATALOG_MAP, type MaterialRequestItem } from "@/lib/material-catalog";
-import type { MaterialRequestStatus } from "@prisma/client";
+import { parseMaterialFilters, buildMaterialWhere } from "@/lib/materiais-filters";
 
 export const maxDuration = 60;
-
-const VALID_STATUSES = new Set<MaterialRequestStatus>(["PENDENTE_APROVACAO", "APROVADO", "ENTREGUE", "RECUSADO"]);
 
 type Envio = { name: string; cidadeUf: string; itemsLabel: string };
 
 function buildSeparacaoPdf(opts: {
-  statusLabel: string;
+  filterLabel: string;
   totalRows: { label: string; qty: number; unidade: string }[];
   grandTotal: number;
   envios: Envio[];
@@ -35,7 +33,7 @@ function buildSeparacaoPdf(opts: {
 
     // Cabeçalho geral
     doc.font("Helvetica-Bold").fontSize(15).fillColor("#000").text("Separação de Material de Campanha");
-    doc.font("Helvetica").fontSize(9).fillColor("#666").text(`${opts.envios.length} envio(s) — status: ${opts.statusLabel}`);
+    doc.font("Helvetica").fontSize(9).fillColor("#666").text(`${opts.envios.length} envio(s) — ${opts.filterLabel}`);
     doc.fontSize(8).fillColor("#999").text(`Gerado em ${new Date().toLocaleDateString("pt-BR")}`);
     doc.moveDown(0.8);
 
@@ -146,14 +144,23 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
     const { db, cid } = getCampaignContext(session);
-    const statusParam = new URL(req.url).searchParams.get("status") ?? "APROVADO";
-    const status = VALID_STATUSES.has(statusParam as MaterialRequestStatus) ? (statusParam as MaterialRequestStatus) : "APROVADO";
+    const filters = parseMaterialFilters(req.url, { defaultStatus: "APROVADO" });
+    const where = buildMaterialWhere(cid, filters);
 
-    const rows = await db.materialRequest.findMany({
-      where: { campaignId: cid, status },
-      select: { items: true, termSnapshotName: true, deliveryMunicipio: true, deliveryUf: true },
-      orderBy: { termSnapshotName: "asc" },
-    });
+    const [rows, zone] = await Promise.all([
+      db.materialRequest.findMany({
+        where,
+        select: { items: true, termSnapshotName: true, deliveryMunicipio: true, deliveryUf: true },
+        orderBy: { termSnapshotName: "asc" },
+      }),
+      filters.zoneId ? db.zone.findUnique({ where: { id: filters.zoneId }, select: { name: true } }) : Promise.resolve(null),
+    ]);
+
+    const filterLabel = [
+      `status: ${filters.status ?? "todos"}`,
+      filters.municipio && `cidade: ${filters.municipio}`,
+      zone && `classificação: ${zone.name}`,
+    ].filter(Boolean).join(" · ");
 
     const totals = new Map<string, number>();
     for (const r of rows) {
@@ -175,7 +182,7 @@ export async function GET(req: NextRequest) {
       itemsLabel: (r.items as unknown as MaterialRequestItem[]).map((it) => `${it.qty}× ${materialItemLabel(it.item)}`).join(", "),
     }));
 
-    const pdfBuffer = await buildSeparacaoPdf({ statusLabel: status, totalRows, grandTotal, envios });
+    const pdfBuffer = await buildSeparacaoPdf({ filterLabel, totalRows, grandTotal, envios });
 
     const date = new Date().toISOString().split("T")[0];
     return new NextResponse(new Uint8Array(pdfBuffer), {

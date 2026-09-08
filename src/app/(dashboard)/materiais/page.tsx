@@ -59,29 +59,53 @@ function fmtDate(iso: string) {
   });
 }
 
+type ZoneOption = { id: string; name: string; type: "REGIONAL" | "MUNICIPAL" | "BAIRRO" };
+const ZONE_TYPE_LABEL: Record<ZoneOption["type"], string> = {
+  REGIONAL: "Região", MUNICIPAL: "Município", BAIRRO: "Bairro",
+};
+
 export default function MateriaisPage() {
   const [rows, setRows] = useState<MaterialRequestRow[]>([]);
+  const [cities, setCities] = useState<string[]>([]);
+  const [zones, setZones] = useState<ZoneOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState("PENDENTE_APROVACAO");
+  const [cityFilter, setCityFilter] = useState("ALL");
+  const [zoneFilter, setZoneFilter] = useState("ALL");
   const [actingId, setActingId] = useState<string | null>(null);
+
+  const filterQs = useCallback(() => {
+    const params = new URLSearchParams();
+    if (statusFilter && statusFilter !== "ALL") params.set("status", statusFilter);
+    if (cityFilter && cityFilter !== "ALL") params.set("municipio", cityFilter);
+    if (zoneFilter && zoneFilter !== "ALL") params.set("zoneId", zoneFilter);
+    const qs = params.toString();
+    return qs ? `?${qs}` : "";
+  }, [statusFilter, cityFilter, zoneFilter]);
 
   const fetchRows = useCallback(async () => {
     setLoading(true);
     try {
-      const qs = statusFilter && statusFilter !== "ALL" ? `?status=${statusFilter}` : "";
-      const res = await fetch(`/api/materiais${qs}`);
+      const res = await fetch(`/api/materiais${filterQs()}`);
       if (res.ok) {
         const d = await res.json();
         setRows(d.rows ?? []);
+        if (Array.isArray(d.cities)) setCities(d.cities);
       } else {
         toast.error("Erro ao carregar solicitações");
       }
     } finally {
       setLoading(false);
     }
-  }, [statusFilter]);
+  }, [filterQs]);
 
   useEffect(() => { fetchRows(); }, [fetchRows]);
+
+  useEffect(() => {
+    fetch("/api/zones").then((r) => r.ok ? r.json() : []).then((data) => {
+      if (Array.isArray(data)) setZones(data.map((z) => ({ id: z.id, name: z.name, type: z.type })));
+    }).catch(() => {});
+  }, []);
 
   async function deleteRequest(id: string, name: string) {
     if (!confirm(`Excluir a solicitação de material de "${name}"? Essa ação não pode ser desfeita.`)) return;
@@ -146,27 +170,41 @@ export default function MateriaisPage() {
               <SelectItem value="ALL">Todos</SelectItem>
             </SelectContent>
           </Select>
-          <a href={`/api/materiais/export-pdf${statusFilter && statusFilter !== "ALL" ? `?status=${statusFilter}` : ""}`}
+          <Select value={cityFilter} onValueChange={(v) => setCityFilter(v ?? "ALL")}>
+            <SelectTrigger className="w-44"><SelectValue placeholder="Cidade" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">Todas as cidades</SelectItem>
+              {cities.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={zoneFilter} onValueChange={(v) => setZoneFilter(v ?? "ALL")}>
+            <SelectTrigger className="w-48"><SelectValue placeholder="Classificação" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">Todas as classificações</SelectItem>
+              {zones.map((z) => <SelectItem key={z.id} value={z.id}>{ZONE_TYPE_LABEL[z.type]}: {z.name}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <a href={`/api/materiais/export-pdf${filterQs()}`}
             className="inline-flex items-center gap-1.5 h-9 px-3 rounded-md text-xs font-medium border border-white/[0.08] text-muted-foreground hover:text-foreground hover:bg-white/[0.04] transition-colors">
             <FileText className="w-3.5 h-3.5" /> PDF
           </a>
-          <a href={`/api/materiais/export${statusFilter && statusFilter !== "ALL" ? `?status=${statusFilter}` : ""}`}
+          <a href={`/api/materiais/export${filterQs()}`}
             className="inline-flex items-center gap-1.5 h-9 px-3 rounded-md text-xs font-medium border border-white/[0.08] text-muted-foreground hover:text-foreground hover:bg-white/[0.04] transition-colors">
             <FileSpreadsheet className="w-3.5 h-3.5" /> Excel
           </a>
           {statusFilter === "APROVADO" && (
             <>
-              <a href="/api/materiais/export-separacao"
-                title="Quanto separar de cada material (soma de todos os aprovados)"
+              <a href={`/api/materiais/export-separacao${filterQs()}`}
+                title="Quanto separar de cada material (soma dos aprovados no filtro atual)"
                 className="inline-flex items-center gap-1.5 h-9 px-3 rounded-md text-xs font-medium border border-primary/30 text-primary hover:bg-primary/10 transition-colors">
                 <ClipboardList className="w-3.5 h-3.5" /> Separação
               </a>
-              <a href="/api/materiais/export-etiquetas"
+              <a href={`/api/materiais/export-etiquetas${filterQs()}`}
                 title="Planilha pronta pra Etiqueta Fácil dos Correios ou mala direta"
                 className="inline-flex items-center gap-1.5 h-9 px-3 rounded-md text-xs font-medium border border-primary/30 text-primary hover:bg-primary/10 transition-colors">
                 <Tags className="w-3.5 h-3.5" /> Etiquetas (Excel)
               </a>
-              <a href="/api/materiais/export-etiquetas-pdf"
+              <a href={`/api/materiais/export-etiquetas-pdf${filterQs()}`}
                 title="Etiquetas prontas pra imprimir e recortar"
                 className="inline-flex items-center gap-1.5 h-9 px-3 rounded-md text-xs font-medium border border-primary/30 text-primary hover:bg-primary/10 transition-colors">
                 <Tags className="w-3.5 h-3.5" /> Etiquetas (PDF)

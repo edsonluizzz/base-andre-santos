@@ -3,11 +3,9 @@ import ExcelJS from "exceljs";
 import { auth } from "@/lib/auth";
 import { getCampaignContext } from "@/lib/campaign-context";
 import { materialItemLabel, type MaterialRequestItem } from "@/lib/material-catalog";
-import type { MaterialRequestStatus } from "@prisma/client";
+import { parseMaterialFilters, buildMaterialWhere } from "@/lib/materiais-filters";
 
 export const maxDuration = 60;
-
-const VALID_STATUSES = new Set<MaterialRequestStatus>(["PENDENTE_APROVACAO", "APROVADO", "ENTREGUE", "RECUSADO"]);
 
 /**
  * Planilha de etiquetas pra envio pelo Correios — uma linha por solicitação,
@@ -23,11 +21,11 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
     const { db, cid } = getCampaignContext(session);
-    const statusParam = new URL(req.url).searchParams.get("status") ?? "APROVADO";
-    const status = VALID_STATUSES.has(statusParam as MaterialRequestStatus) ? (statusParam as MaterialRequestStatus) : "APROVADO";
+    const filters = parseMaterialFilters(req.url, { defaultStatus: "APROVADO" });
+    const where = buildMaterialWhere(cid, filters);
 
     const rows = await db.materialRequest.findMany({
-      where: { campaignId: cid, status },
+      where,
       select: {
         items: true, termSnapshotName: true,
         deliveryCep: true, deliveryLogradouro: true, deliveryNumero: true,

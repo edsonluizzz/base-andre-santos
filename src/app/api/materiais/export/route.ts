@@ -4,7 +4,7 @@ import { auth } from "@/lib/auth";
 import { getCampaignContext } from "@/lib/campaign-context";
 import { formatDeliveryAddress } from "@/lib/termo-apoiador";
 import { materialItemLabel, type MaterialRequestItem } from "@/lib/material-catalog";
-import type { MaterialRequestStatus } from "@prisma/client";
+import { parseMaterialFilters, buildMaterialWhere } from "@/lib/materiais-filters";
 
 export const maxDuration = 60;
 
@@ -14,7 +14,6 @@ const STATUS_LABEL: Record<string, string> = {
   ENTREGUE: "Entregue",
   RECUSADO: "Recusado",
 };
-const VALID_STATUSES = new Set<MaterialRequestStatus>(["PENDENTE_APROVACAO", "APROVADO", "ENTREGUE", "RECUSADO"]);
 
 export async function GET(req: NextRequest) {
   try {
@@ -24,11 +23,11 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
     const { db, cid } = getCampaignContext(session);
-    const statusParam = new URL(req.url).searchParams.get("status") ?? "";
-    const status = VALID_STATUSES.has(statusParam as MaterialRequestStatus) ? (statusParam as MaterialRequestStatus) : undefined;
+    const filters = parseMaterialFilters(req.url);
+    const where = buildMaterialWhere(cid, filters);
 
     const rows = await db.materialRequest.findMany({
-      where: { campaignId: cid, ...(status ? { status } : {}) },
+      where,
       select: {
         items: true, status: true, pdfUrl: true,
         termSnapshotName: true, termSnapshotCpf: true, termAcceptedAt: true,

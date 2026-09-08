@@ -4,11 +4,9 @@ import { auth } from "@/lib/auth";
 import { getCampaignContext } from "@/lib/campaign-context";
 import { formatDeliveryAddress } from "@/lib/termo-apoiador";
 import { materialItemLabel, type MaterialRequestItem } from "@/lib/material-catalog";
-import type { MaterialRequestStatus } from "@prisma/client";
+import { parseMaterialFilters, buildMaterialWhere } from "@/lib/materiais-filters";
 
 export const maxDuration = 60;
-
-const VALID_STATUSES = new Set<MaterialRequestStatus>(["PENDENTE_APROVACAO", "APROVADO", "ENTREGUE", "RECUSADO"]);
 
 // Grade genérica 2×5 (10 etiquetas por página A4) — não é alinhada a uma folha
 // adesiva específica (ex.: Pimaco); tem linha pontilhada de corte pra quem for
@@ -64,11 +62,11 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
     const { db, cid } = getCampaignContext(session);
-    const statusParam = new URL(req.url).searchParams.get("status") ?? "APROVADO";
-    const status = VALID_STATUSES.has(statusParam as MaterialRequestStatus) ? (statusParam as MaterialRequestStatus) : "APROVADO";
+    const filters = parseMaterialFilters(req.url, { defaultStatus: "APROVADO" });
+    const where = buildMaterialWhere(cid, filters);
 
     const rows = await db.materialRequest.findMany({
-      where: { campaignId: cid, status },
+      where,
       select: {
         items: true, termSnapshotName: true,
         deliveryCep: true, deliveryLogradouro: true, deliveryNumero: true,
