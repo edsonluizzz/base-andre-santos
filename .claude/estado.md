@@ -1,6 +1,61 @@
 # Estado — Ovile Eleitoral (Base André Santos)
 
-**Última atualização:** 2026-09-08 (sessão: investigação de envio de imagem no disparo WhatsApp — sem alteração de código)
+**Última atualização:** 2026-09-08 (sessão: contrato CT-008/CT-009, reconciliação de extratos, bug de duplicidade de conta OFX, comparativo TSE)
+
+---
+
+## Sessão 2026-09-08 — Extratos, contratos CT-008/CT-009, bug de conta duplicada no OFX, comparativo TSE
+
+### Contrato CT-008 (Edson, R$18.000) — data de assinatura corrigida
+Vigência já estava certa (16/08–15/09), mas `signatureDate` (texto "assinam o presente em [data]" no
+rodapé do PDF) tinha ficado gravada na data de criação (08/09) em vez de 16/08. Corrigido via o mesmo
+fluxo do PATCH da API (regenera PDF, sobe novo blob).
+
+### Extratos bancários — reconciliação completa (24 → 0 não conciliados)
+- 16 transações eram **duplicatas de reimportação** (mesmo Pix batido duas vezes, uma sob `acctId` com
+  traço, outra sem) — marcadas `IGNORED`.
+- 3 já tinham `FinancialEntry` pronto mas nunca vincularam por causa do bug do BB que manda
+  `TRNTYPE=CREDIT` em Pix enviado: CT-006 (Abraão), CT-007 (Ana Carolina), **CT-008 (Edson)**.
+  Vinculadas ao lançamento certo (a transação `CREDIT` duplicada foi ignorada).
+- 5 eram movimentação real sem lançamento: 2 tarifas bancárias avulsas, R$500 de Impulsionamento
+  (Facebook), e uma doação de **R$519,45 via QueroApoiar** que ainda não tinha entrado no financeiro.
+  Lançamentos criados e vinculados.
+- Um Pix de **R$2.000 pro Facebook** (07/09, importado depois) tinha sido marcado `IGNORED` por engano
+  (não era duplicata) — revertido, lançamento de Impulsionamento criado e vinculado.
+
+### Bug real corrigido: conta duplicada no import de OFX (causa raiz da "Visão Geral desatualizada")
+O internet banking do BB exporta a conta ora com dígito verificador (`57509-7`) ora sem (`57509`),
+dependendo da tela/formato usado pra gerar o extrato. Sem normalizar, cada formato virava uma "conta"
+diferente: duplicava transações (dedup por `acctId+fitid`) e deixava `BankAccountBalance` (chave única
+por acctId) com uma linha estagnada por formato — por isso os saldos da Visão Geral pareciam nunca
+atualizar mesmo depois de importar extrato novo. **Fix**: `src/lib/ofx.ts` agora normaliza pro prefixo
+antes do traço (`normalizeAcctId`, commit `1260523`). Dados de produção já existentes migrados
+separadamente (6 linhas de saldo → 3, 24 transações renomeadas pra conta canônica).
+
+### Contrato CT-009 — Gilberto Carlos da Silva (militância/cabo eleitoral, Telêmaco Borba)
+Analisado os 3 modelos de Militância na pasta CONTRATOS: a v2 é a certa (é a que o app já implementa em
+`src/lib/contracts.ts`, com cláusula de assinatura eletrônica; a v1 é anterior a isso e a "Lista de
+Presença" é só folha de assinatura de um ato pontual, não serve pra atuação contínua). Gerado via o
+mesmo fluxo da API: vigência 16/08–15/09/2026, R$600, status GERADO (ainda não pago/assinado).
+
+### Comparativo TSE (`/financeiro/tse-comparativo`)
+- **Incidente do bookmarklet**: favorito "🔄 Atualizar TSE" salvo antes do commit `bd5ff0b` (que
+  adicionou Senador/Governador) ficou rodando versão antiga — clique voltava a aba sozinha mas sem
+  nenhuma mensagem, e `fetchedAt` não mudava no banco. Resolvido re-arrastando o favorito atualizado.
+  Ver [[base_andre_santos_tse_snapshot_update]] na memória — vale checar isso primeiro sempre que o
+  bookmarklet "não fizer nada".
+- Snapshot atualizado em produção: 42 Estadual + 31 Federal + 9 Senador + 8 Governador, 08/09 13:26.
+- **UI**: composição de receitas (PF/PJ/Fundo partidário) não fica mais sempre visível pra todo
+  candidato — agora é um painel que abre ao clicar, com barra proporcional colorida + percentual por
+  fonte, ticket médio por doação, posição no ranking, distância do líder, situação da candidatura e
+  data da última prestação de contas (tudo com dado já salvo no snapshot, sem nova busca ao TSE).
+  Commits `51be506` e `400f395`.
+
+### Pendências operacionais (Edson)
+- CT-009 (Gilberto): falta enviar pra assinatura e registrar pagamento quando sair.
+- Comparativo TSE: se quiser mais detalhes além do que a API já retorna (despesas, saldo em caixa,
+  histórico mensal), preciso que alguém cole o JSON bruto de um candidato (via Console no site do TSE)
+  pra eu saber se esses campos existem na resposta — não dá pra descobrir daqui (bloqueio de CORS/403).
 
 ---
 
