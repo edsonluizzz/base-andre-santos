@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Wallet, TrendingUp, ExternalLink, RefreshCw } from "lucide-react";
+import { Wallet, TrendingUp, ExternalLink, RefreshCw, ChevronDown } from "lucide-react";
 import { FinanceGuard } from "@/components/financeiro/finance-guard";
 import { FinanceNav } from "@/components/financeiro/finance-nav";
 import { TSE_BOOKMARKLET_HREF, TSE_SNAPSHOT_MARKER } from "@/lib/tse-bookmarklet";
@@ -42,12 +42,23 @@ function ComparativoContent() {
   const [applyingBookmarklet, setApplyingBookmarklet] = useState(false);
   const [bookmarkletMsg, setBookmarkletMsg] = useState<string | null>(null);
   const appliedBookmarklet = useRef(false);
+  const [expanded, setExpanded] = useState<Set<number>>(new Set());
+
+  const toggleExpanded = (numero: number) => {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(numero)) next.delete(numero);
+      else next.add(numero);
+      return next;
+    });
+  };
 
   const { cargo, partido, label, destaque: destaqueNumeros } = CARGOS[cargoIdx];
 
   const load = useCallback(async (cargoCodigo: number, partidoCodigo: number) => {
     setLoading(true);
     setError(null);
+    setExpanded(new Set());
     try {
       const res = await fetch(`/api/financeiro/tse-comparativo?uf=PR&cargo=${cargoCodigo}&partido=${partidoCodigo}`);
       const j = await res.json();
@@ -204,28 +215,73 @@ function ComparativoContent() {
               const total = r.totalRecebido ?? 0;
               const pct = Math.round((total / maxRecebido) * 100);
               const destaque = (destaqueNumeros as readonly number[]).includes(r.numero);
+              const hasComposicao = r.totalReceitaPF != null || r.totalReceitaPJ != null || r.totalPartidos != null;
+              const isOpen = expanded.has(r.numero);
+              const pf = r.totalReceitaPF ?? 0;
+              const pj = r.totalReceitaPJ ?? 0;
+              const partidos = r.totalPartidos ?? 0;
+              const composTotal = Math.max(1, pf + pj + partidos);
               return (
                 <div
                   key={r.numero}
-                  className={`rounded-xl border p-3 ${destaque ? "border-primary/40 bg-primary/5" : "border-white/[0.06]"}`}
+                  className={`rounded-xl border ${destaque ? "border-primary/40 bg-primary/5" : "border-white/[0.06]"}`}
                 >
-                  <div className="flex items-center justify-between gap-3 mb-1.5">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span className="text-[10px] text-muted-foreground w-6 shrink-0">{i + 1}º</span>
-                      <p className={`text-sm truncate ${destaque ? "font-bold text-primary" : "font-medium"}`}>
-                        {r.nome} <span className="text-muted-foreground font-normal">— {r.numero}</span>
+                  <button
+                    type="button"
+                    onClick={() => hasComposicao && toggleExpanded(r.numero)}
+                    className={`w-full text-left p-3 ${hasComposicao ? "cursor-pointer" : "cursor-default"}`}
+                    aria-expanded={isOpen}
+                  >
+                    <div className="flex items-center justify-between gap-3 mb-1.5">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="text-[10px] text-muted-foreground w-6 shrink-0">{i + 1}º</span>
+                        <p className={`text-sm truncate ${destaque ? "font-bold text-primary" : "font-medium"}`}>
+                          {r.nome} <span className="text-muted-foreground font-normal">— {r.numero}</span>
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <p className={`text-sm font-bold ${destaque ? "text-primary" : ""}`}>{fmt(total)}</p>
+                        {hasComposicao && (
+                          <ChevronDown
+                            className={`w-3.5 h-3.5 text-muted-foreground transition-transform ${isOpen ? "rotate-180" : ""}`}
+                          />
+                        )}
+                      </div>
+                    </div>
+                    <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+                      <div className={`h-full rounded-full ${destaque ? "bg-primary" : "bg-white/20"}`} style={{ width: `${pct}%` }} />
+                    </div>
+                  </button>
+
+                  {isOpen && hasComposicao && (
+                    <div className="px-3 pb-3 space-y-2 border-t border-white/[0.06] pt-2.5">
+                      <div className="h-2.5 rounded-full overflow-hidden flex bg-white/[0.06]">
+                        <div className="h-full bg-emerald-400" style={{ width: `${(pf / composTotal) * 100}%` }} title="Pessoa Física" />
+                        <div className="h-full bg-sky-400" style={{ width: `${(pj / composTotal) * 100}%` }} title="Pessoa Jurídica" />
+                        <div className="h-full bg-amber-400" style={{ width: `${(partidos / composTotal) * 100}%` }} title="Fundo partidário/FEFC" />
+                      </div>
+                      <div className="grid grid-cols-3 gap-2 text-[11px]">
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
+                          <span className="text-muted-foreground">PF</span>
+                          <span className="font-medium ml-auto">{fmt(pf)}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-full bg-sky-400 shrink-0" />
+                          <span className="text-muted-foreground">PJ</span>
+                          <span className="font-medium ml-auto">{fmt(pj)}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" />
+                          <span className="text-muted-foreground">Partidário</span>
+                          <span className="font-medium ml-auto">{fmt(partidos)}</span>
+                        </div>
+                      </div>
+                      <p className="text-[10px] text-muted-foreground">
+                        {r.qtdRecebido ?? 0} doação(ões) recebida(s)
+                        {r.dataUltimaAtualizacaoContas && ` · Última prestação de contas: ${r.dataUltimaAtualizacaoContas}`}
                       </p>
                     </div>
-                    <p className={`text-sm font-bold shrink-0 ${destaque ? "text-primary" : ""}`}>{fmt(total)}</p>
-                  </div>
-                  <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
-                    <div className={`h-full rounded-full ${destaque ? "bg-primary" : "bg-white/20"}`} style={{ width: `${pct}%` }} />
-                  </div>
-                  {(r.qtdRecebido != null || r.totalReceitaPF != null) && (
-                    <p className="text-[10px] text-muted-foreground mt-1">
-                      {r.qtdRecebido ?? 0} doação(ões) · PF {fmt(r.totalReceitaPF ?? 0)} · PJ {fmt(r.totalReceitaPJ ?? 0)} · Fundo partidário/FEFC {fmt(r.totalPartidos ?? 0)}
-                      {r.dataUltimaAtualizacaoContas && ` · Última prestação: ${r.dataUltimaAtualizacaoContas}`}
-                    </p>
                   )}
                 </div>
               );
