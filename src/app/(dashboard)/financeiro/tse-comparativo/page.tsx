@@ -254,33 +254,69 @@ function ComparativoContent() {
                   </button>
 
                   {isOpen && hasComposicao && (
-                    <div className="px-3 pb-3 space-y-2 border-t border-white/[0.06] pt-2.5">
+                    <div className="px-3 pb-3 space-y-3 border-t border-white/[0.06] pt-2.5">
                       <div className="h-2.5 rounded-full overflow-hidden flex bg-white/[0.06]">
                         <div className="h-full bg-emerald-400" style={{ width: `${(pf / composTotal) * 100}%` }} title="Pessoa Física" />
                         <div className="h-full bg-sky-400" style={{ width: `${(pj / composTotal) * 100}%` }} title="Pessoa Jurídica" />
                         <div className="h-full bg-amber-400" style={{ width: `${(partidos / composTotal) * 100}%` }} title="Fundo partidário/FEFC" />
                       </div>
                       <div className="grid grid-cols-3 gap-2 text-[11px]">
-                        <div className="flex items-center gap-1.5">
-                          <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
-                          <span className="text-muted-foreground">PF</span>
-                          <span className="font-medium ml-auto">{fmt(pf)}</span>
+                        <div className="space-y-0.5">
+                          <div className="flex items-center gap-1.5">
+                            <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
+                            <span className="text-muted-foreground">Pessoa Física</span>
+                          </div>
+                          <p className="font-medium">{fmt(pf)}</p>
+                          <p className="text-muted-foreground/70">{Math.round((pf / composTotal) * 100)}%</p>
                         </div>
-                        <div className="flex items-center gap-1.5">
-                          <span className="w-2 h-2 rounded-full bg-sky-400 shrink-0" />
-                          <span className="text-muted-foreground">PJ</span>
-                          <span className="font-medium ml-auto">{fmt(pj)}</span>
+                        <div className="space-y-0.5">
+                          <div className="flex items-center gap-1.5">
+                            <span className="w-2 h-2 rounded-full bg-sky-400 shrink-0" />
+                            <span className="text-muted-foreground">Pessoa Jurídica</span>
+                          </div>
+                          <p className="font-medium">{fmt(pj)}</p>
+                          <p className="text-muted-foreground/70">{Math.round((pj / composTotal) * 100)}%</p>
                         </div>
-                        <div className="flex items-center gap-1.5">
-                          <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" />
-                          <span className="text-muted-foreground">Partidário</span>
-                          <span className="font-medium ml-auto">{fmt(partidos)}</span>
+                        <div className="space-y-0.5">
+                          <div className="flex items-center gap-1.5">
+                            <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" />
+                            <span className="text-muted-foreground">Fundo Part./FEFC</span>
+                          </div>
+                          <p className="font-medium">{fmt(partidos)}</p>
+                          <p className="text-muted-foreground/70">{Math.round((partidos / composTotal) * 100)}%</p>
                         </div>
                       </div>
-                      <p className="text-[10px] text-muted-foreground">
-                        {r.qtdRecebido ?? 0} doação(ões) recebida(s)
-                        {r.dataUltimaAtualizacaoContas && ` · Última prestação de contas: ${r.dataUltimaAtualizacaoContas}`}
-                      </p>
+
+                      <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-[11px] rounded-lg bg-white/[0.02] border border-white/[0.05] p-2.5">
+                        <div className="flex justify-between gap-2">
+                          <span className="text-muted-foreground">Doações recebidas</span>
+                          <span className="font-medium">{r.qtdRecebido ?? 0}</span>
+                        </div>
+                        <div className="flex justify-between gap-2">
+                          <span className="text-muted-foreground">Ticket médio</span>
+                          <span className="font-medium">{fmt(r.qtdRecebido ? total / r.qtdRecebido : 0)}</span>
+                        </div>
+                        <div className="flex justify-between gap-2">
+                          <span className="text-muted-foreground">Posição no ranking</span>
+                          <span className="font-medium">{i + 1}º de {rows.length}</span>
+                        </div>
+                        <div className="flex justify-between gap-2">
+                          <span className="text-muted-foreground">Distância do líder</span>
+                          <span className="font-medium">{i === 0 ? "—" : `-${fmt((rows[0]?.totalRecebido ?? 0) - total)}`}</span>
+                        </div>
+                        {r.situacao && (
+                          <div className="flex justify-between gap-2 col-span-2">
+                            <span className="text-muted-foreground">Situação da candidatura</span>
+                            <span className="font-medium">{r.situacao}</span>
+                          </div>
+                        )}
+                        {r.dataUltimaAtualizacaoContas && (
+                          <div className="flex justify-between gap-2 col-span-2">
+                            <span className="text-muted-foreground">Última prestação de contas</span>
+                            <span className="font-medium">{r.dataUltimaAtualizacaoContas}</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>
