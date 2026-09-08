@@ -42,12 +42,25 @@ function parseOfxDate(raw: string): Date | null {
  * bloco: tags-folha vêm fechadas inline, mas <STMTTRN> não tem fechamento
  * explícito (delimitação é pelo próprio corte no split).
  */
+/**
+ * O internet banking do BB exporta o número da conta ora com dígito verificador
+ * ("57509-7"), ora sem ("57509"), dependendo do formato/tela usada pra gerar o
+ * OFX. Sem normalizar, as duas formas viram "contas" diferentes pro sistema —
+ * duplicando transações (a trava de dedup é por acctId+fitid) e deixando o
+ * saldo (BankAccountBalance, chave única por acctId) com uma linha estagnada
+ * por formato. Normaliza pro prefixo antes do traço (a base sem o dígito
+ * verificador), que é a forma usada em ACCOUNT_LABEL abaixo.
+ */
+function normalizeAcctId(raw: string): string {
+  return raw.split("-")[0].trim();
+}
+
 export function parseOfx(text: string): ParsedOfx {
   const acctBlockMatch = text.match(/<BANKACCTFROM>([\s\S]*?)<\/BANKACCTFROM>/i);
   const acctBlock = acctBlockMatch ? acctBlockMatch[1] : text;
   const bankId = extractTag(acctBlock, "BANKID");
   const branchId = extractTag(acctBlock, "BRANCHID");
-  const acctId = extractTag(acctBlock, "ACCTID");
+  const acctId = normalizeAcctId(extractTag(acctBlock, "ACCTID"));
 
   const blocks = text.split(/<STMTTRN>/i).slice(1);
   const transactions: ParsedOfxTransaction[] = [];
