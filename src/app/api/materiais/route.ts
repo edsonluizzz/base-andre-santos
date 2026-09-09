@@ -40,8 +40,11 @@ export async function GET(req: NextRequest) {
     ]);
 
     const cities = cityRows.map((r) => r.deliveryMunicipio!).filter(Boolean);
+    // Soma de membros no filtro atual — só faz sentido pra listagem de congregações,
+    // mas calcular sempre é barato (já veio no select) e evita mais uma rota.
+    const totalMembers = rows.reduce((sum, r) => sum + (r.memberCount ?? 0), 0);
 
-    return NextResponse.json({ rows, cities });
+    return NextResponse.json({ rows, cities, totalMembers });
   } catch (err) {
     console.error("[api/materiais] erro:", err);
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });

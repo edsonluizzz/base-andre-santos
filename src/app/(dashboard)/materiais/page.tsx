@@ -74,6 +74,8 @@ export default function MateriaisPage() {
   const [statusFilter, setStatusFilter] = useState("PENDENTE_APROVACAO");
   const [cityFilter, setCityFilter] = useState("ALL");
   const [zoneFilter, setZoneFilter] = useState("ALL");
+  const [kindFilter, setKindFilter] = useState("ALL");
+  const [totalMembers, setTotalMembers] = useState(0);
   const [actingId, setActingId] = useState<string | null>(null);
 
   const filterQs = useCallback(() => {
@@ -81,9 +83,10 @@ export default function MateriaisPage() {
     if (statusFilter && statusFilter !== "ALL") params.set("status", statusFilter);
     if (cityFilter && cityFilter !== "ALL") params.set("municipio", cityFilter);
     if (zoneFilter && zoneFilter !== "ALL") params.set("zoneId", zoneFilter);
+    if (kindFilter && kindFilter !== "ALL") params.set("kind", kindFilter);
     const qs = params.toString();
     return qs ? `?${qs}` : "";
-  }, [statusFilter, cityFilter, zoneFilter]);
+  }, [statusFilter, cityFilter, zoneFilter, kindFilter]);
 
   const fetchRows = useCallback(async () => {
     setLoading(true);
@@ -93,6 +96,7 @@ export default function MateriaisPage() {
         const d = await res.json();
         setRows(d.rows ?? []);
         if (Array.isArray(d.cities)) setCities(d.cities);
+        setTotalMembers(d.totalMembers ?? 0);
       } else {
         toast.error("Erro ao carregar solicitações");
       }
@@ -172,6 +176,14 @@ export default function MateriaisPage() {
               <SelectItem value="ALL">Todos</SelectItem>
             </SelectContent>
           </Select>
+          <Select value={kindFilter} onValueChange={(v) => setKindFilter(v ?? "ALL")}>
+            <SelectTrigger className="w-40"><SelectValue placeholder="Tipo" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">Todos os tipos</SelectItem>
+              <SelectItem value="individual">Individual</SelectItem>
+              <SelectItem value="church">Congregações</SelectItem>
+            </SelectContent>
+          </Select>
           <Select value={cityFilter} onValueChange={(v) => setCityFilter(v ?? "ALL")}>
             <SelectTrigger className="w-44"><SelectValue placeholder="Cidade" /></SelectTrigger>
             <SelectContent>
@@ -215,6 +227,13 @@ export default function MateriaisPage() {
           )}
         </div>
       </div>
+
+      {kindFilter === "church" && !loading && rows.length > 0 && (
+        <div className="glass-card rounded-xl px-4 py-2.5 text-sm border border-primary/20 bg-primary/5">
+          <strong className="text-foreground">{rows.length}</strong> congregaç{rows.length === 1 ? "ão" : "ões"} neste filtro —{" "}
+          <strong className="text-foreground">{totalMembers.toLocaleString("pt-BR")}</strong> membros no total (base pro kit).
+        </div>
+      )}
 
       {loading ? (
         <div className="text-center py-8 text-muted-foreground text-sm">Carregando...</div>
