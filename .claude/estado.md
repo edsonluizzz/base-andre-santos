@@ -1,6 +1,38 @@
 # Estado — Ovile Eleitoral (Base André Santos)
 
-**Última atualização:** 2026-09-08 (sessão: contrato CT-008/CT-009, reconciliação de extratos, bug de duplicidade de conta OFX, comparativo TSE)
+**Última atualização:** 2026-09-09 (sessão: filtros de cidade/classificação na separação de material + skills instaladas no Claude Code)
+
+---
+
+## Sessão 2026-09-09 — Filtros de cidade/classificação em Material de Campanha; skills novas no Claude Code
+
+### Skills instaladas (ambiente Claude Code, fora deste repo)
+Avaliado o repositório `skills-nocode-startup.lovable.app` (índice de skills públicas) e instaladas 6:
+`pdf`, `docx`, `pptx` (anthropics/skills), `mcp-builder` (anthropics/skills), `firecrawl-scrape`
+(firecrawl/skills — **precisa de `FIRECRAWL_API_KEY`**, ainda não configurada), `webapp-testing`
+(anthropics/skills). Conteúdo da skill `pdf` foi revisado manualmente (SKILL.md + 8 scripts) —
+só usa libs locais (pypdf/pdfplumber/reportlab/poppler), sem rede — apesar do alerta "High Risk" do
+Snyk ser scan automático de dependência, não indício de código malicioso.
+
+### Filtros de cidade e classificação na tela de Material de Campanha (`/materiais`)
+Pedido: filtros por cidade e "classificação" na separação de material + impressão respeitando os
+filtros. "Classificação" foi esclarecido com o usuário como **zona/região do módulo Zonas**
+(Região > Município > Bairro), não perfil (Pastor/Vereador) nem cargo (Coord/Líder/Voluntário).
+
+- Novo `src/lib/materiais-filters.ts`: `parseMaterialFilters()` + `buildMaterialWhere()` compartilhados
+  pelos 6 endpoints de material (evita duplicar parsing de status/cidade/zona em cada um).
+- Filtro de cidade usa `deliveryMunicipio` (snapshot do endereço de entrega, já existente no schema).
+- Filtro de classificação usa `collaborator.zones.some({ zoneId })` (relação `ZoneCollaborator`).
+- Aplicado em `/api/materiais` (lista, retorna `cities` distintas pro dropdown), `export`, `export-pdf`,
+  `export-separacao` (label do PDF agora mostra status+cidade+zona escolhidos), `export-etiquetas`,
+  `export-etiquetas-pdf`.
+- Frontend (`(dashboard)/materiais/page.tsx`): dois novos `<Select>` (Cidade, Classificação) ao lado do
+  filtro de status já existente; zonas carregadas de `GET /api/zones` (endpoint já existente, sem
+  mudança); todos os links de export/impressão usam a mesma querystring de filtros.
+- `tsc --noEmit` e `eslint` limpos nos arquivos tocados (erros pré-existentes em outros módulos não
+  relacionados, não mexidos). Commit `417bf22`, push feito, deploy Vercel disparado (build iniciado,
+  não confirmado "Ready" ao encerrar — conferir `vercel ls` na próxima sessão se algo parecer
+  desatualizado).
 
 ---
 
