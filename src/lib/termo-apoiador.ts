@@ -18,6 +18,8 @@ export interface TermoApoiadorData {
   supporterCpf: string;
   deliveryAddress: string | null;
   items: MaterialRequestItem[];
+  churchName: string | null;
+  memberCount: number | null;
   acceptedAt: Date;
   ip: string | null;
   candidateName: string;
@@ -38,7 +40,11 @@ export function buildTermoText(d: TermoApoiadorData): {
 } {
   const officeLabel = d.office ?? "candidato(a)";
   const itemsLabel = d.items.map((i) => ({ label: materialItemLabel(i.item), qty: i.qty }));
-  const itemsText = itemsLabel.map((i) => `${i.qty} ${i.label.toLowerCase()}`).join(", ");
+  const isKit = d.items.length === 0 && d.churchName;
+  const itemsText = isKit
+    ? `kit de material de campanha a ser definido pela equipe, proporcional ao número de membros informado` +
+      (d.memberCount ? ` (${d.memberCount} membros)` : "") + ` da congregação ${d.churchName}`
+    : itemsLabel.map((i) => `${i.qty} ${i.label.toLowerCase()}`).join(", ");
 
   const paragraphs = [
     `Eu, ${d.supporterName}, portador(a) do CPF ${formatCpf(d.supporterCpf)}` +

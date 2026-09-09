@@ -42,6 +42,7 @@ export async function GET(req: NextRequest) {
       name: c.name,
       regional: c.regional,
       denominacao: c.denominacao,
+      memberCount: c.memberCount,
       pastor: c.pastor,
       latestAssignment: c.assignments[0] ?? null,
     }));

@@ -7,6 +7,7 @@ const patchSchema = z.object({
   name: z.string().min(1).max(255).optional(),
   regional: z.string().max(100).nullable().optional(),
   denominacao: z.string().max(100).nullable().optional(),
+  memberCount: z.number().int().min(0).max(1000000).nullable().optional(),
   pastorId: z.string().nullable().optional(),
 });
 
@@ -25,7 +26,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     if (!parsed.success) {
       return NextResponse.json({ error: parsed.error.errors[0]?.message ?? "Dados inválidos" }, { status: 400 });
     }
-    const { name, regional, denominacao, pastorId } = parsed.data;
+    const { name, regional, denominacao, memberCount, pastorId } = parsed.data;
 
     const { db, cid: CID } = getCampaignContext(session);
 
@@ -47,6 +48,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
         ...(name !== undefined && { name: name.trim() }),
         ...(regional !== undefined && { regional: regional?.trim() || null }),
         ...(denominacao !== undefined && { denominacao: denominacao?.trim() || null }),
+        ...(memberCount !== undefined && { memberCount }),
         ...(pastorId !== undefined && { pastorId: pastorId || null }),
       },
       select: { id: true },

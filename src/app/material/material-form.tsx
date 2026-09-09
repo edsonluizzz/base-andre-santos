@@ -9,7 +9,7 @@ type Step = "dados" | "termo" | "success";
 
 const inputStyle = { background: "#1a2f4e", border: "1px solid rgba(255,255,255,0.07)" };
 
-type ChurchOption = { id: string; name: string; regional: string | null };
+type ChurchOption = { id: string; name: string; regional: string | null; memberCount: number | null };
 
 export function MaterialForm({ requireChurch = false }: { requireChurch?: boolean }) {
   const [step, setStep] = useState<Step>("dados");
@@ -120,6 +120,7 @@ export function MaterialForm({ requireChurch = false }: { requireChurch?: boolea
   }
 
   const selectedItems = Object.entries(qty).map(([item, q]) => ({ item, qty: q }));
+  const selectedChurch = churches.find((c) => c.id === churchId) ?? null;
 
   function validateDados(): string | null {
     if (!name.trim() || name.trim().length < 2) return "Informe seu nome completo";
@@ -133,7 +134,7 @@ export function MaterialForm({ requireChurch = false }: { requireChurch?: boolea
     if (!city.trim()) return "Informe a cidade";
     if (uf.trim().length !== 2) return "Informe a UF";
     if (requireChurch && !churchId) return "Selecione sua congregação";
-    if (selectedItems.length === 0) return "Selecione ao menos um material";
+    if (!requireChurch && selectedItems.length === 0) return "Selecione ao menos um material";
     return null;
   }
 
@@ -155,7 +156,7 @@ export function MaterialForm({ requireChurch = false }: { requireChurch?: boolea
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name, cpf, phone, email, cep, logradouro, numero, complemento, city, neighborhood, uf,
-          items: selectedItems,
+          items: requireChurch ? [] : selectedItems,
           termAccepted: true,
           ...(requireChurch && churchId ? { churchId } : {}),
         }),
@@ -232,8 +233,12 @@ export function MaterialForm({ requireChurch = false }: { requireChurch?: boolea
           </div>
           <div>
             <p className="text-xs tracking-[3px] uppercase" style={{ color: "rgba(var(--accent-rgb),0.7)" }}>{campaignName}</p>
-            <h1 className="text-2xl font-bold text-white mt-1">Solicitar Material</h1>
-            <p className="text-slate-400 text-sm mt-1">Preencha seus dados e escolha o material — seu Termo de Apoiador sai pronto.</p>
+            <h1 className="text-2xl font-bold text-white mt-1">{requireChurch ? "Material Congregações" : "Solicitar Material"}</h1>
+            <p className="text-slate-400 text-sm mt-1">
+              {requireChurch
+                ? "Preencha seus dados e selecione a congregação — o kit de material é preparado pela equipe com base no número de membros."
+                : "Preencha seus dados e escolha o material — seu Termo de Apoiador sai pronto."}
+            </p>
           </div>
         </div>
 
@@ -322,63 +327,72 @@ export function MaterialForm({ requireChurch = false }: { requireChurch?: boolea
               </div>
             </div>
 
-            {requireChurch && (
-              <div className="rounded-2xl p-5 space-y-1.5" style={{ background: "rgba(13,27,42,0.70)", border: "1px solid rgba(255,255,255,0.07)" }}>
-                <label className="text-xs font-medium text-slate-300">Sua congregação <span style={{ color: "var(--accent)" }}>*</span></label>
-                <select
-                  value={churchId}
-                  onChange={(e) => setChurchId(e.target.value)}
-                  className="w-full rounded-xl px-4 py-3 text-sm text-white outline-none"
-                  style={inputStyle}
-                >
-                  <option value="" style={{ background: "#1a2f4e" }}>Selecione sua congregação...</option>
-                  {Object.entries(
-                    churches.reduce<Record<string, ChurchOption[]>>((acc, c) => {
-                      const key = c.regional ?? "Outras";
-                      (acc[key] ??= []).push(c);
-                      return acc;
-                    }, {})
-                  ).map(([regional, options]) => (
-                    <optgroup key={regional} label={regional} style={{ background: "#1a2f4e" }}>
-                      {options.map((c) => (
-                        <option key={c.id} value={c.id} style={{ background: "#1a2f4e" }}>{c.name}</option>
-                      ))}
-                    </optgroup>
-                  ))}
-                </select>
+            {requireChurch ? (
+              <div className="rounded-2xl p-5 space-y-3" style={{ background: "rgba(13,27,42,0.70)", border: "1px solid rgba(255,255,255,0.07)" }}>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-slate-300">Sua congregação <span style={{ color: "var(--accent)" }}>*</span></label>
+                  <select
+                    value={churchId}
+                    onChange={(e) => setChurchId(e.target.value)}
+                    className="w-full rounded-xl px-4 py-3 text-sm text-white outline-none"
+                    style={inputStyle}
+                  >
+                    <option value="" style={{ background: "#1a2f4e" }}>Selecione sua congregação...</option>
+                    {Object.entries(
+                      churches.reduce<Record<string, ChurchOption[]>>((acc, c) => {
+                        const key = c.regional ?? "Outras";
+                        (acc[key] ??= []).push(c);
+                        return acc;
+                      }, {})
+                    ).map(([regional, options]) => (
+                      <optgroup key={regional} label={regional} style={{ background: "#1a2f4e" }}>
+                        {options.map((c) => (
+                          <option key={c.id} value={c.id} style={{ background: "#1a2f4e" }}>{c.name}</option>
+                        ))}
+                      </optgroup>
+                    ))}
+                  </select>
+                </div>
+                {selectedChurch && (
+                  <p className="text-xs rounded-xl px-3 py-2.5" style={{ background: "rgba(var(--accent-rgb),0.08)", border: "1px solid rgba(var(--accent-rgb),0.25)", color: "rgba(var(--accent-rgb),0.9)" }}>
+                    {selectedChurch.memberCount != null
+                      ? `${selectedChurch.memberCount} membros cadastrados — o kit é preparado pela equipe com base nesse número.`
+                      : "Número de membros não cadastrado para essa congregação — a equipe vai definir o kit manualmente."}
+                  </p>
+                )}
+              </div>
+            ) : (
+              <div className="rounded-2xl p-5 space-y-3" style={{ background: "rgba(13,27,42,0.70)", border: "1px solid rgba(255,255,255,0.07)" }}>
+                <p className="text-xs font-medium text-slate-300">Qual material você quer receber? <span style={{ color: "var(--accent)" }}>*</span></p>
+                <div className="space-y-2">
+                  {MATERIAL_CATALOG.map((it) => {
+                    const checked = qty[it.id] !== undefined;
+                    return (
+                      <div key={it.id} className="flex items-center justify-between rounded-xl px-3 py-2.5" style={{ background: checked ? "rgba(var(--accent-rgb),0.08)" : "rgba(255,255,255,0.02)", border: checked ? "1px solid rgba(var(--accent-rgb),0.25)" : "1px solid rgba(255,255,255,0.06)" }}>
+                        <label className="flex items-center gap-2.5 cursor-pointer flex-1">
+                          <input type="checkbox" checked={checked} onChange={() => toggleItem(it.id)} className="sr-only" />
+                          <div className="w-5 h-5 rounded flex items-center justify-center shrink-0" style={{ background: checked ? "var(--accent)" : "transparent", border: checked ? "1px solid var(--accent)" : "1px solid rgba(255,255,255,0.2)" }}>
+                            {checked && <svg className="w-3 h-3" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#0a1220" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>}
+                          </div>
+                          <span className="text-sm text-slate-200">{it.label}</span>
+                        </label>
+                        {checked && (
+                          <input
+                            type="number"
+                            min={1}
+                            max={9999}
+                            value={qty[it.id]}
+                            onChange={(e) => setItemQty(it.id, parseInt(e.target.value) || 1)}
+                            className="w-16 rounded-lg px-2 py-1.5 text-sm text-white text-center outline-none"
+                            style={inputStyle}
+                          />
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             )}
-
-            <div className="rounded-2xl p-5 space-y-3" style={{ background: "rgba(13,27,42,0.70)", border: "1px solid rgba(255,255,255,0.07)" }}>
-              <p className="text-xs font-medium text-slate-300">Qual material você quer receber? <span style={{ color: "var(--accent)" }}>*</span></p>
-              <div className="space-y-2">
-                {MATERIAL_CATALOG.map((it) => {
-                  const checked = qty[it.id] !== undefined;
-                  return (
-                    <div key={it.id} className="flex items-center justify-between rounded-xl px-3 py-2.5" style={{ background: checked ? "rgba(var(--accent-rgb),0.08)" : "rgba(255,255,255,0.02)", border: checked ? "1px solid rgba(var(--accent-rgb),0.25)" : "1px solid rgba(255,255,255,0.06)" }}>
-                      <label className="flex items-center gap-2.5 cursor-pointer flex-1">
-                        <input type="checkbox" checked={checked} onChange={() => toggleItem(it.id)} className="sr-only" />
-                        <div className="w-5 h-5 rounded flex items-center justify-center shrink-0" style={{ background: checked ? "var(--accent)" : "transparent", border: checked ? "1px solid var(--accent)" : "1px solid rgba(255,255,255,0.2)" }}>
-                          {checked && <svg className="w-3 h-3" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#0a1220" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>}
-                        </div>
-                        <span className="text-sm text-slate-200">{it.label}</span>
-                      </label>
-                      {checked && (
-                        <input
-                          type="number"
-                          min={1}
-                          max={9999}
-                          value={qty[it.id]}
-                          onChange={(e) => setItemQty(it.id, parseInt(e.target.value) || 1)}
-                          className="w-16 rounded-lg px-2 py-1.5 text-sm text-white text-center outline-none"
-                          style={inputStyle}
-                        />
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
 
             {error && (
               <p className="text-sm text-center rounded-xl py-2.5 px-4" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", color: "#ef4444" }}>
@@ -402,13 +416,22 @@ export function MaterialForm({ requireChurch = false }: { requireChurch?: boolea
               <p>
                 Eu, <strong className="text-white">{name}</strong>, portador(a) do CPF <strong className="text-white">{cpf}</strong>
                 {fullAddress ? `, residente em ${fullAddress}` : ""}, declaro para os devidos fins que recebo, na condição de apoiador(a)
-                voluntário(a) da campanha de <strong className="text-white">{campaignName}</strong>, o seguinte material de campanha:
+                voluntário(a) da campanha de <strong className="text-white">{campaignName}</strong>
+                {requireChurch ? ", em nome da congregação abaixo, o seguinte material de campanha:" : ", o seguinte material de campanha:"}
               </p>
-              <ul className="list-disc list-inside space-y-0.5">
-                {selectedItems.map((i) => (
-                  <li key={i.item}>{i.qty} × {MATERIAL_CATALOG.find((m) => m.id === i.item)?.label ?? i.item}</li>
-                ))}
-              </ul>
+              {requireChurch ? (
+                <p>
+                  Kit de material de campanha para a congregação <strong className="text-white">{selectedChurch?.name}</strong>
+                  {selectedChurch?.memberCount != null ? ` (${selectedChurch.memberCount} membros)` : ""}, a ser definido
+                  pela equipe da campanha conforme o número de membros informado.
+                </p>
+              ) : (
+                <ul className="list-disc list-inside space-y-0.5">
+                  {selectedItems.map((i) => (
+                    <li key={i.item}>{i.qty} × {MATERIAL_CATALOG.find((m) => m.id === i.item)?.label ?? i.item}</li>
+                  ))}
+                </ul>
+              )}
               <p>
                 Declaro que o material acima é recebido de forma voluntária e gratuita, sem qualquer contrapartida
                 financeira, para distribuição espontânea de apoio à candidatura, comprometendo-me a utilizá-lo em

@@ -25,6 +25,7 @@ type MaterialRequestRow = {
   deliveryMunicipio: string | null;
   deliveryUf: string | null;
   churchName: string | null;
+  memberCount: number | null;
   approvedAt: string | null;
   deliveredAt: string | null;
   notes: string | null;
@@ -240,6 +241,7 @@ export default function MateriaisPage() {
                   {r.churchName && (
                     <p className="text-[11px] text-muted-foreground/70 mt-0.5">
                       Congregação: <span className="text-foreground/80">{r.churchName}</span>
+                      {r.memberCount != null && <span> — {r.memberCount} membros</span>}
                     </p>
                   )}
                   {fmtAddress(r) && (

@@ -7,7 +7,7 @@ export async function GET(req: NextRequest) {
 
     const churches = await db.church.findMany({
       where: { campaignId: CID },
-      select: { id: true, name: true, regional: true },
+      select: { id: true, name: true, regional: true, memberCount: true },
       orderBy: [{ regional: "asc" }, { name: "asc" }],
     });
 

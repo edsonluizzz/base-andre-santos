@@ -50,9 +50,12 @@ const materialRequestSchema = z.object({
   neighborhood: z.string().min(2).max(100),
   city: z.string().min(2).max(100),
   uf: z.string().length(2),
-  items: z.array(itemSchema).min(1).max(20),
+  items: z.array(itemSchema).max(20),
   termAccepted: z.literal(true),
   churchId: z.string().optional(),
+}).refine((d) => d.churchId || d.items.length > 0, {
+  message: "Selecione ao menos um material",
+  path: ["items"],
 });
 
 export async function POST(req: NextRequest) {
@@ -93,12 +96,14 @@ export async function POST(req: NextRequest) {
     const { db, cid: CID } = await resolvePublicTenant(req);
 
     let churchName: string | null = null;
+    let memberCount: number | null = null;
     if (churchId) {
-      const church = await db.church.findFirst({ where: { id: churchId, campaignId: CID }, select: { name: true } });
+      const church = await db.church.findFirst({ where: { id: churchId, campaignId: CID }, select: { name: true, memberCount: true } });
       if (!church) {
         return NextResponse.json({ error: "Congregação inválida" }, { status: 400, headers: cors });
       }
       churchName = church.name;
+      memberCount = church.memberCount; // fonte de verdade é o cadastro, não o que vier do cliente
     }
 
     const pNorm = normalizePhone(cleanPhone);
@@ -160,6 +165,7 @@ export async function POST(req: NextRequest) {
         deliveryUf: uf.toUpperCase(),
         churchId: churchId ?? null,
         churchName,
+        memberCount,
       },
     });
 

@@ -21,6 +21,7 @@ type Church = {
   name: string;
   regional: string | null;
   denominacao: string | null;
+  memberCount: number | null;
   pastor: { id: string; name: string } | null;
   latestAssignment: Assignment | null;
 };
@@ -132,6 +133,7 @@ export default function IgrejasPage() {
                   <th className="px-4 py-2.5 text-left text-muted-foreground font-medium">Congregação</th>
                   <th className="px-4 py-2.5 text-left text-muted-foreground font-medium">Regional</th>
                   <th className="px-4 py-2.5 text-left text-muted-foreground font-medium">Pastor</th>
+                  <th className="px-4 py-2.5 text-left text-muted-foreground font-medium">Membros</th>
                   <th className="px-4 py-2.5 text-left text-muted-foreground font-medium">Status</th>
                   <th className="px-4 py-2.5 text-left text-muted-foreground font-medium">Dupla</th>
                   <th className="px-4 py-2.5 text-right text-muted-foreground font-medium">Ação</th>
@@ -139,15 +141,16 @@ export default function IgrejasPage() {
               </thead>
               <tbody className="divide-y divide-white/[0.04]">
                 {loading ? (
-                  <tr><td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">Carregando...</td></tr>
+                  <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">Carregando...</td></tr>
                 ) : churches.length === 0 ? (
-                  <tr><td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">Nenhuma igreja importada ainda.</td></tr>
+                  <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">Nenhuma igreja importada ainda.</td></tr>
                 ) : (
                   churches.map((c) => (
                     <tr key={c.id} className="hover:bg-white/[0.02]">
                       <td className="px-4 py-2.5 text-foreground">{c.name}</td>
                       <td className="px-4 py-2.5 text-muted-foreground">{c.regional ?? "—"}</td>
                       <td className="px-4 py-2.5 text-muted-foreground">{c.pastor?.name ?? "—"}</td>
+                      <td className="px-4 py-2.5 text-muted-foreground">{c.memberCount ?? "—"}</td>
                       <td className="px-4 py-2.5">
                         <span className={`px-2 py-0.5 rounded-full text-xs border ${STATUS_COLOR[c.latestAssignment?.status ?? "SEM_DUPLA"] ?? "border-border text-muted-foreground"}`}>
                           {c.latestAssignment ? STATUS_LABEL[c.latestAssignment.status] : "Sem dupla"}

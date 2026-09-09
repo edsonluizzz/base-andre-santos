@@ -17,6 +17,7 @@ async function loadTermoData(db: PrismaClient, materialRequestId: string, campai
       termIp: true,
       deliveryCep: true, deliveryLogradouro: true, deliveryNumero: true,
       deliveryComplemento: true, deliveryBairro: true, deliveryMunicipio: true, deliveryUf: true,
+      churchName: true, memberCount: true,
       collaborator: { select: { email: true, phone: true } },
     },
   });
@@ -63,6 +64,8 @@ export async function generateTermoApoiadorPdf(
       supporterCpf: mr.termSnapshotCpf,
       deliveryAddress: formatDeliveryAddress(mr),
       items: mr.items as unknown as MaterialRequestItem[],
+      churchName: mr.churchName,
+      memberCount: mr.memberCount,
       acceptedAt: mr.termAcceptedAt,
       ip: mr.termIp,
       candidateName,

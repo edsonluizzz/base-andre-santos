@@ -824,6 +824,7 @@ model Church {
   name        String
   regional    String?
   denominacao String?
+  memberCount Int?     // nº de membros — base pro kit de material do link /material/curitiba
   pastorId    String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -941,6 +942,7 @@ model MaterialRequest {
   // (sobrevive caso a igreja seja renomeada/removida depois).
   churchId         String?
   churchName       String?
+  memberCount      Int?    // nº de membros informado pela congregação — base pro kit (equipe define quantidades na aprovação)
 
   pdfUrl           String?               @db.Text
   emailStatus      ReceiptChannelStatus  @default(SKIPPED)

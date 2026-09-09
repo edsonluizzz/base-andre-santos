@@ -12,6 +12,7 @@ type Church = {
   name: string;
   regional: string | null;
   denominacao: string | null;
+  memberCount: number | null;
   pastor: Collab | null;
 };
 type Props = {
@@ -25,6 +26,7 @@ export function EditChurchDialog({ open, church, onOpenChange, onSuccess }: Prop
   const [name, setName] = useState("");
   const [regional, setRegional] = useState("");
   const [denominacao, setDenominacao] = useState("");
+  const [memberCount, setMemberCount] = useState("");
   const [pastor, setPastor] = useState<Collab | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -34,6 +36,7 @@ export function EditChurchDialog({ open, church, onOpenChange, onSuccess }: Prop
       setName(church.name);
       setRegional(church.regional ?? "");
       setDenominacao(church.denominacao ?? "");
+      setMemberCount(church.memberCount != null ? String(church.memberCount) : "");
       setPastor(church.pastor);
       setError("");
     }
@@ -56,6 +59,7 @@ export function EditChurchDialog({ open, church, onOpenChange, onSuccess }: Prop
           name: name.trim(),
           regional: regional.trim() || null,
           denominacao: denominacao.trim() || null,
+          memberCount: memberCount.trim() ? parseInt(memberCount, 10) : null,
           pastorId: pastor?.id ?? null,
         }),
       });
@@ -104,6 +108,17 @@ export function EditChurchDialog({ open, church, onOpenChange, onSuccess }: Prop
               type="text"
               value={denominacao}
               onChange={(e) => setDenominacao(e.target.value)}
+              className="w-full rounded-lg px-3 py-2 text-sm bg-secondary border border-border outline-none"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground">Número de membros</label>
+            <input
+              type="number"
+              min={0}
+              value={memberCount}
+              onChange={(e) => setMemberCount(e.target.value)}
+              placeholder="Ex: 165"
               className="w-full rounded-lg px-3 py-2 text-sm bg-secondary border border-border outline-none"
             />
           </div>
