@@ -24,6 +24,7 @@ type MaterialRequestRow = {
   deliveryBairro: string | null;
   deliveryMunicipio: string | null;
   deliveryUf: string | null;
+  churchName: string | null;
   approvedAt: string | null;
   deliveredAt: string | null;
   notes: string | null;
@@ -236,6 +237,11 @@ export default function MateriaisPage() {
                   <p className="text-[11px] text-muted-foreground/70 mt-0.5">
                     CPF {r.termSnapshotCpf} · assinado em {fmtDate(r.termAcceptedAt)}
                   </p>
+                  {r.churchName && (
+                    <p className="text-[11px] text-muted-foreground/70 mt-0.5">
+                      Congregação: <span className="text-foreground/80">{r.churchName}</span>
+                    </p>
+                  )}
                   {fmtAddress(r) && (
                     <p className="text-[11px] text-muted-foreground/70 flex items-center gap-1 mt-0.5">
                       <MapPin className="w-3 h-3" /> {fmtAddress(r)}

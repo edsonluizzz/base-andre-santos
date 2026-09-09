@@ -21,6 +21,7 @@ export async function GET(req: NextRequest) {
           emailStatus: true, whatsappStatus: true,
           deliveryCep: true, deliveryLogradouro: true, deliveryNumero: true,
           deliveryComplemento: true, deliveryBairro: true, deliveryMunicipio: true, deliveryUf: true,
+          churchName: true,
           approvedAt: true, deliveredAt: true, notes: true, createdAt: true,
           collaborator: { select: { id: true, name: true, phone: true, email: true } },
           approvedBy: { select: { name: true, email: true } },

@@ -936,6 +936,12 @@ model MaterialRequest {
   deliveryMunicipio    String?
   deliveryUf           String?
 
+  // Congregação vinculada — só preenchido nos links de material que exigem
+  // seleção de igreja (ex.: /material/curitiba). churchName é snapshot
+  // (sobrevive caso a igreja seja renomeada/removida depois).
+  churchId         String?
+  churchName       String?
+
   pdfUrl           String?               @db.Text
   emailStatus      ReceiptChannelStatus  @default(SKIPPED)
   whatsappStatus   ReceiptChannelStatus  @default(SKIPPED)
@@ -958,6 +964,7 @@ model MaterialRequest {
 
   @@index([campaignId, status])
   @@index([collaboratorId])
+  @@index([churchId])
 }
 
 enum BankTransactionStatus {

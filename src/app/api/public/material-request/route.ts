@@ -52,6 +52,7 @@ const materialRequestSchema = z.object({
   uf: z.string().length(2),
   items: z.array(itemSchema).min(1).max(20),
   termAccepted: z.literal(true),
+  churchId: z.string().optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -63,7 +64,7 @@ export async function POST(req: NextRequest) {
       const msg = parsed.error.errors[0]?.message ?? "Dados inválidos";
       return NextResponse.json({ error: msg }, { status: 400, headers: cors });
     }
-    const { name, cpf, phone, email, cep, logradouro, numero, complemento, city, neighborhood, uf, items } = parsed.data;
+    const { name, cpf, phone, email, cep, logradouro, numero, complemento, city, neighborhood, uf, items, churchId } = parsed.data;
 
     const cleanCpf = normalizeCpf(cpf);
     if (!isValidCpf(cleanCpf)) {
@@ -90,6 +91,15 @@ export async function POST(req: NextRequest) {
     }
 
     const { db, cid: CID } = await resolvePublicTenant(req);
+
+    let churchName: string | null = null;
+    if (churchId) {
+      const church = await db.church.findFirst({ where: { id: churchId, campaignId: CID }, select: { name: true } });
+      if (!church) {
+        return NextResponse.json({ error: "Congregação inválida" }, { status: 400, headers: cors });
+      }
+      churchName = church.name;
+    }
 
     const pNorm = normalizePhone(cleanPhone);
     let collaboratorId: string;
@@ -148,6 +158,8 @@ export async function POST(req: NextRequest) {
         deliveryBairro: neighborhood.trim(),
         deliveryMunicipio: city.trim(),
         deliveryUf: uf.toUpperCase(),
+        churchId: churchId ?? null,
+        churchName,
       },
     });
 

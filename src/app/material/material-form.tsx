@@ -9,7 +9,9 @@ type Step = "dados" | "termo" | "success";
 
 const inputStyle = { background: "#1a2f4e", border: "1px solid rgba(255,255,255,0.07)" };
 
-export function MaterialForm() {
+type ChurchOption = { id: string; name: string; regional: string | null };
+
+export function MaterialForm({ requireChurch = false }: { requireChurch?: boolean }) {
   const [step, setStep] = useState<Step>("dados");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -18,6 +20,9 @@ export function MaterialForm() {
   const [accent, setAccent] = useState("#ff6b04");
   const [waGroupUrl, setWaGroupUrl] = useState("");
   const theme = tenantThemeVars(accent);
+
+  const [churches, setChurches] = useState<ChurchOption[]>([]);
+  const [churchId, setChurchId] = useState("");
 
   const [name, setName] = useState("");
   const [cpf, setCpf] = useState("");
@@ -50,6 +55,16 @@ export function MaterialForm() {
       })
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (!requireChurch) return;
+    fetch("/api/public/churches")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (Array.isArray(d?.churches)) setChurches(d.churches);
+      })
+      .catch(() => {});
+  }, [requireChurch]);
 
   function formatCpf(val: string) {
     const d = val.replace(/\D/g, "").slice(0, 11);
@@ -117,6 +132,7 @@ export function MaterialForm() {
     if (!neighborhood.trim()) return "Informe o bairro";
     if (!city.trim()) return "Informe a cidade";
     if (uf.trim().length !== 2) return "Informe a UF";
+    if (requireChurch && !churchId) return "Selecione sua congregação";
     if (selectedItems.length === 0) return "Selecione ao menos um material";
     return null;
   }
@@ -141,6 +157,7 @@ export function MaterialForm() {
           name, cpf, phone, email, cep, logradouro, numero, complemento, city, neighborhood, uf,
           items: selectedItems,
           termAccepted: true,
+          ...(requireChurch && churchId ? { churchId } : {}),
         }),
       });
       const data = await res.json();
@@ -304,6 +321,33 @@ export function MaterialForm() {
                 </div>
               </div>
             </div>
+
+            {requireChurch && (
+              <div className="rounded-2xl p-5 space-y-1.5" style={{ background: "rgba(13,27,42,0.70)", border: "1px solid rgba(255,255,255,0.07)" }}>
+                <label className="text-xs font-medium text-slate-300">Sua congregação <span style={{ color: "var(--accent)" }}>*</span></label>
+                <select
+                  value={churchId}
+                  onChange={(e) => setChurchId(e.target.value)}
+                  className="w-full rounded-xl px-4 py-3 text-sm text-white outline-none"
+                  style={inputStyle}
+                >
+                  <option value="" style={{ background: "#1a2f4e" }}>Selecione sua congregação...</option>
+                  {Object.entries(
+                    churches.reduce<Record<string, ChurchOption[]>>((acc, c) => {
+                      const key = c.regional ?? "Outras";
+                      (acc[key] ??= []).push(c);
+                      return acc;
+                    }, {})
+                  ).map(([regional, options]) => (
+                    <optgroup key={regional} label={regional} style={{ background: "#1a2f4e" }}>
+                      {options.map((c) => (
+                        <option key={c.id} value={c.id} style={{ background: "#1a2f4e" }}>{c.name}</option>
+                      ))}
+                    </optgroup>
+                  ))}
+                </select>
+              </div>
+            )}
 
             <div className="rounded-2xl p-5 space-y-3" style={{ background: "rgba(13,27,42,0.70)", border: "1px solid rgba(255,255,255,0.07)" }}>
               <p className="text-xs font-medium text-slate-300">Qual material você quer receber? <span style={{ color: "var(--accent)" }}>*</span></p>
