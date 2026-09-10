@@ -1,10 +1,132 @@
-import type { PrismaClient } from "@prisma/client";
+import type { Prisma, PrismaClient } from "@prisma/client";
 import { put } from "@vercel/blob";
 import { buildTermoApoiadorPdf } from "./termo-apoiador-pdf";
 import { committeeFromSettings, formatDeliveryAddress, TERM_VERSION } from "./termo-apoiador";
 import { sendMaterialRequestEmail } from "./email";
 import { zapiSendDocument, toZapiPhone, ZapiNotConfiguredError } from "./zapi";
-import type { MaterialRequestItem } from "./material-catalog";
+import { MATERIAL_CATALOG_MAP, type MaterialRequestItem } from "./material-catalog";
+import { normalizePhone } from "./utils";
+import { normalizeCpf, isValidCpf } from "./cpf";
+
+export type CreateMaterialRequestInput = {
+  name: string; cpf: string; phone: string; email: string;
+  cep: string; logradouro: string; numero: string; complemento?: string | null;
+  neighborhood: string; city: string; uf: string;
+  items: MaterialRequestItem[];
+  churchId?: string | null;
+  termIp: string | null;
+  termUserAgent: string | null;
+  /** Quem cadastrou o colaborador, se for criado agora (pedido manual pela equipe). */
+  registeredById?: string | null;
+  source?: string;
+};
+
+export type CreateMaterialRequestResult =
+  | { ok: true; materialRequestId: string; pdfUrl: string | null }
+  | { ok: false; error: string };
+
+/**
+ * Núcleo de criação de um pedido de material — valida CPF/telefone/itens,
+ * casa ou cria o Collaborator (dedup por telefone), grava o MaterialRequest
+ * e gera o Termo em PDF (envio por email/WhatsApp fica a cargo do chamador,
+ * que decide se é fire-and-forget). Compartilhado entre a rota pública
+ * (clickwrap do apoiador) e a criação manual pelo admin.
+ */
+export async function createMaterialRequest(
+  db: PrismaClient,
+  campaignId: string,
+  input: CreateMaterialRequestInput,
+): Promise<CreateMaterialRequestResult> {
+  const cleanCpf = normalizeCpf(input.cpf);
+  if (!isValidCpf(cleanCpf)) return { ok: false, error: "CPF inválido" };
+
+  const cleanPhone = input.phone.replace(/\D/g, "");
+  if (cleanPhone.length < 10) return { ok: false, error: "Número de WhatsApp inválido" };
+
+  for (const i of input.items) {
+    if (!MATERIAL_CATALOG_MAP[i.item]) return { ok: false, error: "Item de material inválido" };
+  }
+  if (!input.churchId && input.items.length === 0) return { ok: false, error: "Selecione ao menos um material" };
+
+  let churchName: string | null = null;
+  let memberCount: number | null = null;
+  if (input.churchId) {
+    const church = await db.church.findFirst({ where: { id: input.churchId, campaignId }, select: { name: true, memberCount: true } });
+    if (!church) return { ok: false, error: "Congregação inválida" };
+    churchName = church.name;
+    memberCount = church.memberCount;
+  }
+
+  const pNorm = normalizePhone(cleanPhone);
+  let collaboratorId: string;
+  const existing = pNorm
+    ? await db.collaborator.findFirst({ where: { campaignId, phoneNormalized: pNorm }, select: { id: true } })
+    : null;
+
+  const cleanEmail = input.email.trim() || null;
+
+  if (existing) {
+    collaboratorId = existing.id;
+    await db.collaborator.update({
+      where: { id: collaboratorId },
+      data: {
+        cpf: cleanCpf,
+        ...(cleanEmail ? { email: cleanEmail } : {}),
+        city: input.city.trim(),
+        neighborhood: input.neighborhood.trim(),
+      },
+    }).catch(() => {});
+  } else {
+    const created = await db.collaborator.create({
+      data: {
+        campaignId,
+        name: input.name.trim(),
+        cpf: cleanCpf,
+        phone: cleanPhone,
+        phoneNormalized: pNorm,
+        email: cleanEmail,
+        city: input.city.trim(),
+        neighborhood: input.neighborhood.trim(),
+        campaignRole: "VOLUNTARIO",
+        status: "LEAD",
+        source: input.source ?? "MATERIAL",
+        registeredById: input.registeredById ?? null,
+        lgpdConsent: true,
+        lgpdConsentAt: new Date(),
+      },
+    });
+    collaboratorId = created.id;
+  }
+
+  const materialRequest = await db.materialRequest.create({
+    data: {
+      campaignId,
+      collaboratorId,
+      items: input.items as unknown as Prisma.InputJsonValue,
+      termSnapshotName: input.name.trim(),
+      termSnapshotCpf: cleanCpf,
+      termVersion: TERM_VERSION,
+      termAcceptedAt: new Date(),
+      termIp: input.termIp,
+      termUserAgent: input.termUserAgent,
+      deliveryCep: input.cep.replace(/\D/g, ""),
+      deliveryLogradouro: input.logradouro.trim(),
+      deliveryNumero: input.numero.trim(),
+      deliveryComplemento: input.complemento?.trim() || null,
+      deliveryBairro: input.neighborhood.trim(),
+      deliveryMunicipio: input.city.trim(),
+      deliveryUf: input.uf.toUpperCase(),
+      churchId: input.churchId ?? null,
+      churchName,
+      memberCount,
+    },
+  });
+
+  const pdfUrl = await generateTermoApoiadorPdf(db, materialRequest.id, campaignId);
+  if (pdfUrl) sendTermoApoiadorChannels(db, materialRequest.id, campaignId, pdfUrl).catch(() => {});
+
+  return { ok: true, materialRequestId: materialRequest.id, pdfUrl };
+}
 
 async function loadTermoData(db: PrismaClient, materialRequestId: string, campaignId: string) {
   const mr = await db.materialRequest.findUnique({

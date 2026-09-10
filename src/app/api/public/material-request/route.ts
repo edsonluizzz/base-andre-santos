@@ -2,11 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { resolvePublicTenant } from "@/lib/tenant-resolver";
 import { isRateLimited } from "@/lib/rate-limit";
-import { normalizePhone } from "@/lib/utils";
-import { normalizeCpf, isValidCpf } from "@/lib/cpf";
-import { MATERIAL_CATALOG_MAP } from "@/lib/material-catalog";
-import { generateTermoApoiadorPdf, sendTermoApoiadorChannels } from "@/lib/material-request";
-import { TERM_VERSION } from "@/lib/termo-apoiador";
+import { createMaterialRequest } from "@/lib/material-request";
 
 const ALLOWED_ORIGINS = new Set([
   "https://prandresantos.com.br",
@@ -69,22 +65,6 @@ export async function POST(req: NextRequest) {
     }
     const { name, cpf, phone, email, cep, logradouro, numero, complemento, city, neighborhood, uf, items, churchId } = parsed.data;
 
-    const cleanCpf = normalizeCpf(cpf);
-    if (!isValidCpf(cleanCpf)) {
-      return NextResponse.json({ error: "CPF inválido" }, { status: 400, headers: cors });
-    }
-
-    const cleanPhone = phone.replace(/\D/g, "");
-    if (cleanPhone.length < 10) {
-      return NextResponse.json({ error: "Número de WhatsApp inválido" }, { status: 400, headers: cors });
-    }
-
-    for (const i of items) {
-      if (!MATERIAL_CATALOG_MAP[i.item]) {
-        return NextResponse.json({ error: "Item de material inválido" }, { status: 400, headers: cors });
-      }
-    }
-
     const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
     if (await isRateLimited("material_request_public", ip, 5, 60)) {
       return NextResponse.json(
@@ -95,89 +75,19 @@ export async function POST(req: NextRequest) {
 
     const { db, cid: CID } = await resolvePublicTenant(req);
 
-    let churchName: string | null = null;
-    let memberCount: number | null = null;
-    if (churchId) {
-      const church = await db.church.findFirst({ where: { id: churchId, campaignId: CID }, select: { name: true, memberCount: true } });
-      if (!church) {
-        return NextResponse.json({ error: "Congregação inválida" }, { status: 400, headers: cors });
-      }
-      churchName = church.name;
-      memberCount = church.memberCount; // fonte de verdade é o cadastro, não o que vier do cliente
-    }
-
-    const pNorm = normalizePhone(cleanPhone);
-    let collaboratorId: string;
-    const existing = pNorm
-      ? await db.collaborator.findFirst({ where: { campaignId: CID, phoneNormalized: pNorm }, select: { id: true } })
-      : null;
-
-    if (existing) {
-      collaboratorId = existing.id;
-      // Mantém CPF/email atualizados se a pessoa não tinha informado antes.
-      await db.collaborator.update({
-        where: { id: collaboratorId },
-        data: {
-          cpf: cleanCpf,
-          email: email.trim(),
-          city: city.trim(),
-          neighborhood: neighborhood.trim(),
-        },
-      }).catch(() => {});
-    } else {
-      const created = await db.collaborator.create({
-        data: {
-          campaignId: CID,
-          name: name.trim(),
-          cpf: cleanCpf,
-          phone: cleanPhone,
-          phoneNormalized: pNorm,
-          email: email.trim(),
-          city: city.trim(),
-          neighborhood: neighborhood.trim(),
-          campaignRole: "VOLUNTARIO",
-          status: "LEAD",
-          source: "MATERIAL",
-          lgpdConsent: true,
-          lgpdConsentAt: new Date(),
-        },
-      });
-      collaboratorId = created.id;
-    }
-
-    const materialRequest = await db.materialRequest.create({
-      data: {
-        campaignId: CID,
-        collaboratorId,
-        items,
-        termSnapshotName: name.trim(),
-        termSnapshotCpf: cleanCpf,
-        termVersion: TERM_VERSION,
-        termAcceptedAt: new Date(),
-        termIp: ip,
-        termUserAgent: req.headers.get("user-agent") ?? null,
-        deliveryCep: cep.replace(/\D/g, ""),
-        deliveryLogradouro: logradouro.trim(),
-        deliveryNumero: numero.trim(),
-        deliveryComplemento: complemento?.trim() || null,
-        deliveryBairro: neighborhood.trim(),
-        deliveryMunicipio: city.trim(),
-        deliveryUf: uf.toUpperCase(),
-        churchId: churchId ?? null,
-        churchName,
-        memberCount,
-      },
+    const result = await createMaterialRequest(db, CID, {
+      name, cpf, phone, email, cep, logradouro, numero, complemento, city, neighborhood, uf, items,
+      churchId: churchId ?? null,
+      termIp: ip,
+      termUserAgent: req.headers.get("user-agent") ?? null,
     });
 
-    // PDF é síncrono (rápido, poucos segundos) — devolve pdfUrl já no response
-    // pra permitir download imediato na tela de sucesso.
-    const pdfUrl = await generateTermoApoiadorPdf(db, materialRequest.id, CID);
-
-    // Envio por email/WhatsApp é fire-and-forget — não bloqueia o response.
-    if (pdfUrl) sendTermoApoiadorChannels(db, materialRequest.id, CID, pdfUrl).catch(() => {});
+    if (!result.ok) {
+      return NextResponse.json({ error: result.error }, { status: 400, headers: cors });
+    }
 
     return NextResponse.json(
-      { message: "Solicitação enviada! Aguarde a aprovação da equipe.", materialRequestId: materialRequest.id, pdfUrl },
+      { message: "Solicitação enviada! Aguarde a aprovação da equipe.", materialRequestId: result.materialRequestId, pdfUrl: result.pdfUrl },
       { status: 200, headers: cors }
     );
   } catch (err) {

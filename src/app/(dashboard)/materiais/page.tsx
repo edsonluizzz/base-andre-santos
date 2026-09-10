@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Package, Check, X, FileText, MapPin, Mail, MessageCircle, FileSpreadsheet, Trash2, ClipboardList, Tags } from "lucide-react";
+import { Package, Check, X, FileText, MapPin, Mail, MessageCircle, FileSpreadsheet, Trash2, ClipboardList, Tags, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { materialItemLabel, type MaterialRequestItem } from "@/lib/material-catalog";
+import { NewMaterialRequestDialog } from "@/components/materiais/new-material-request-dialog";
 
 type MaterialRequestRow = {
   id: string;
@@ -77,6 +78,7 @@ export default function MateriaisPage() {
   const [kindFilter, setKindFilter] = useState("ALL");
   const [totalMembers, setTotalMembers] = useState(0);
   const [actingId, setActingId] = useState<string | null>(null);
+  const [newOpen, setNewOpen] = useState(false);
 
   const filterQs = useCallback(() => {
     const params = new URLSearchParams();
@@ -166,6 +168,9 @@ export default function MateriaisPage() {
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
+          <Button onClick={() => setNewOpen(true)} className="bg-primary text-primary-foreground gap-1.5">
+            <Plus className="w-4 h-4" /> Novo pedido
+          </Button>
           <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v ?? "PENDENTE_APROVACAO")}>
             <SelectTrigger className="w-56"><SelectValue /></SelectTrigger>
             <SelectContent>
@@ -330,6 +335,8 @@ export default function MateriaisPage() {
           ))}
         </div>
       )}
+
+      <NewMaterialRequestDialog open={newOpen} onOpenChange={setNewOpen} onSuccess={fetchRows} />
     </div>
   );
 }
