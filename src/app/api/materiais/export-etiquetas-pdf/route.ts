@@ -7,10 +7,11 @@ import { parseMaterialFilters, buildMaterialWhere } from "@/lib/materiais-filter
 
 export const maxDuration = 60;
 
-// Meia folha A4 (1 coluna × 2 linhas — 2 etiquetas por página, uma em cima da
-// outra) com remetente e destinatário, sem conteúdo do pacote. Recorta ao
-// meio pra colar/afixar em cada pacote.
-const ROWS = 2;
+// Largura cheia da A4 (sem colunas) — a altura de cada etiqueta é fixa
+// (o suficiente pra remetente + destinatário sem cortar texto) e a página
+// agrupa quantas etiquetas couberem no comprimento, em vez de fixar em
+// meia folha. Recorta nas linhas pontilhadas pra separar cada etiqueta.
+const LABEL_HEIGHT = 280;
 
 type Label = { name: string; address: string };
 type Sender = { name: string; address: string | null };
@@ -25,17 +26,18 @@ function buildLabelsPdf(labels: Label[], sender: Sender): Promise<Buffer> {
 
     const pageWidth = doc.page.width;
     const pageHeight = doc.page.height;
-    const cellH = pageHeight / ROWS;
+    const cellH = LABEL_HEIGHT;
+    const rowsPerPage = Math.max(1, Math.floor(pageHeight / cellH));
     const pad = 32;
 
     labels.forEach((label, i) => {
-      const posInPage = i % ROWS;
+      const posInPage = i % rowsPerPage;
       if (i > 0 && posInPage === 0) doc.addPage();
 
       const y = posInPage * cellH;
 
-      // Linha de corte entre as duas metades da folha.
-      if (posInPage === 1) {
+      // Linha de corte entre etiquetas consecutivas na mesma folha.
+      if (posInPage > 0) {
         doc.dash(3, { space: 3 }).moveTo(0, y).lineTo(pageWidth, y).stroke("#999999");
         doc.undash();
       }
