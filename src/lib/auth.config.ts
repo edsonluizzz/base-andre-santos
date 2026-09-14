@@ -7,6 +7,10 @@ const ROUTE_MIN_RANK: [string, number][] = [
   ["/comunicados", 2], ["/configuracoes", 2], ["/super-admin", 2],
 ];
 
+// Dono da campanha — sempre super admin + finance admin, mesmo que
+// SUPER_ADMIN_EMAILS/FINANCE_ADMIN_EMAILS seja removida/editada por engano.
+export const ALWAYS_ADMIN_EMAIL = "edsonluizz.silva@gmail.com";
+
 export const authConfig: NextAuthConfig = {
   providers: [
     Google({
@@ -69,8 +73,12 @@ export const authConfig: NextAuthConfig = {
         session.user.id = (token.id as string) ?? "";
         session.user.role = (token.role as string) ?? "MEMBER";
         session.user.campaignId = (token.campaignId as string) ?? "andre-santos-2026";
-        session.user.isSuperAdmin = Boolean(token.isSuperAdmin);
-        session.user.isFinanceAdmin = Boolean(token.isFinanceAdmin);
+        // edsonluizz.silva@gmail.com sempre tem acesso total, independente do
+        // conteúdo de SUPER_ADMIN_EMAILS/FINANCE_ADMIN_EMAILS na Vercel — trava
+        // de segurança contra remoção acidental da env var (pedido do Edson).
+        const isOwner = session.user.email === ALWAYS_ADMIN_EMAIL;
+        session.user.isSuperAdmin = isOwner || Boolean(token.isSuperAdmin);
+        session.user.isFinanceAdmin = isOwner || Boolean(token.isFinanceAdmin);
         session.user.suspended = false;
         session.user.isImpersonating = Boolean(token.isImpersonating);
       }

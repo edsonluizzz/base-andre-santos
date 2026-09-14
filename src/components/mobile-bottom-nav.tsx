@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useSession } from "next-auth/react";
-import { LayoutDashboard, Users, Calendar, Network, Package, BarChart2, Menu } from "lucide-react";
+import { useSession, signOut } from "next-auth/react";
+import { LayoutDashboard, Users, Calendar, Network, Package, BarChart2, Menu, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface NavItem {
@@ -77,6 +77,16 @@ export function MobileBottomNav({ onOpenMenu }: MobileBottomNavProps) {
         >
           <Menu className="w-5 h-5" />
           <span className="text-[10px] leading-none">Menu</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => signOut({ callbackUrl: "/login" })}
+          className="flex-1 flex flex-col items-center justify-center gap-0.5 tap-transparent touchable text-muted-foreground min-w-0 px-1"
+          aria-label="Sair"
+        >
+          <LogOut className="w-5 h-5" />
+          <span className="text-[10px] leading-none">Sair</span>
         </button>
       </div>
     </nav>

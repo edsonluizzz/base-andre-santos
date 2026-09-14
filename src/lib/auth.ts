@@ -1,6 +1,6 @@
 import NextAuth from "next-auth";
 import { db } from "./db";
-import { authConfig } from "./auth.config";
+import { authConfig, ALWAYS_ADMIN_EMAIL } from "./auth.config";
 import { getCampaignDbUrl, getCampaignModuleScope } from "./meta-db";
 
 // Tenant/campanha padrão desta implantação. Cada projeto Vercel que roda este
@@ -39,10 +39,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           token.id = userId;
           token.name = user.name ?? token.name;
           token.image = user.image ?? token.image;
-          token.isSuperAdmin = superAdminEmails.includes(user.email);
+          const isOwner = user.email === ALWAYS_ADMIN_EMAIL;
+          token.isSuperAdmin = isOwner || superAdminEmails.includes(user.email);
           // Financeiro é restrito por e-mail, separado do role ADMIN (compartilhado por 5 pessoas)
           // e de isSuperAdmin (acesso de plataforma) — só quem estiver em FINANCE_ADMIN_EMAILS entra.
-          token.isFinanceAdmin = financeAdminEmails.includes(user.email);
+          // Exceção: ALWAYS_ADMIN_EMAIL (dono da campanha) sempre passa.
+          token.isFinanceAdmin = isOwner || financeAdminEmails.includes(user.email);
 
           // A) Vincula Collaborators existentes por email PRIMEIRO (evita criação de duplicata)
           let linkedCollabId: string | null = null;
@@ -195,9 +197,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           .split(",").map((e) => e.trim()).filter(Boolean);
         const financeAdminEmails = (process.env.FINANCE_ADMIN_EMAILS ?? "")
           .split(",").map((e) => e.trim()).filter(Boolean);
-        session.user.isSuperAdmin = Boolean(token.isSuperAdmin) ||
+        const isOwner = session.user.email === ALWAYS_ADMIN_EMAIL;
+        session.user.isSuperAdmin = isOwner || Boolean(token.isSuperAdmin) ||
           (!!session.user.email && superAdminEmails.includes(session.user.email));
-        session.user.isFinanceAdmin = Boolean(token.isFinanceAdmin) ||
+        session.user.isFinanceAdmin = isOwner || Boolean(token.isFinanceAdmin) ||
           (!!session.user.email && financeAdminEmails.includes(session.user.email));
         session.user.suspended = false;
         session.user.isImpersonating = Boolean(token.isImpersonating);
