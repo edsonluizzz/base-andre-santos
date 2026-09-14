@@ -458,7 +458,7 @@ function ContratosContent() {
           </Button>
         </div>
 
-        <div className="rounded-xl border border-white/[0.08] overflow-hidden">
+        <div className="rounded-xl border border-white/[0.08] overflow-hidden overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-white/[0.07]" style={{ background: "rgba(13,27,42,0.5)" }}>

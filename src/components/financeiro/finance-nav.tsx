@@ -17,7 +17,7 @@ const TABS = [
 export function FinanceNav() {
   const pathname = usePathname();
   return (
-    <div className="flex gap-2 border-b border-white/[0.08] pb-3">
+    <div className="flex gap-2 border-b border-white/[0.08] pb-3 overflow-x-auto [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       {TABS.map((tab) => {
         const active = tab.href === "/financeiro" ? pathname === tab.href : pathname.startsWith(tab.href);
         return (
@@ -25,7 +25,7 @@ export function FinanceNav() {
             key={tab.href}
             href={tab.href}
             className={cn(
-              "px-3 py-1.5 rounded-lg text-sm border transition-colors",
+              "px-3 py-1.5 rounded-lg text-sm border transition-colors flex-shrink-0 whitespace-nowrap",
               active
                 ? "bg-primary/10 border-primary/30 text-primary"
                 : "border-white/[0.08] text-muted-foreground hover:text-foreground"
