@@ -1,6 +1,66 @@
 # Estado — Ovile Eleitoral (Base André Santos)
 
-**Última atualização:** 2026-09-09 (sessão: filtros de cidade/classificação na separação de material + skills instaladas no Claude Code)
+**Última atualização:** 2026-09-14 (sessão: link /material/curitiba com kit por congregação, pedido manual, etiquetas remetente/destinatário, financeiro de fretes conciliado, TSE atualizado)
+
+---
+
+## Sessão 2026-09-10 a 2026-09-14 — Material Congregações, pedido manual, etiquetas, financeiro de fretes, TSE
+
+### Link `/material/curitiba` — kit por congregação (commits `d9ebcf3`, `92c3e55`)
+Novo link público, mesmo layout do `/material` geral, específico pras congregações de Curitiba:
+- Exige selecionar a congregação (novo endpoint `GET /api/public/churches`, lista as igrejas já
+  cadastradas agrupadas por regional).
+- **Não pede mais seleção manual de materiais** — ao escolher a igreja, mostra o nº de membros
+  (puxado do cadastro, não digitado pelo requerente) e o kit fica a critério da equipe na aprovação.
+- Schema: `Church.memberCount` e `MaterialRequest.churchId/churchName/memberCount` (snapshot).
+- Backfill: importado o PDF `sc_pdf_..._cnsGridMembros.pdf` (156 congregações/30.972 membros) e casado
+  **158 das 165** igrejas já cadastradas (só update, sem criar novas — nomes com grafia diferente tipo
+  "Hauer Belém"↔"HAUER-BELÉM" resolvidos manualmente). 7 igrejas ficaram sem nº de membros (Cachoeira
+  II, Diadema II, Jardim Primavera II, Moradias Coqueiros II, SEDE, Vila Oficinas II, Solar-Bacacheri)
+  por falta de correspondência confiável no PDF.
+- Título da página: "Material Congregações". `Church.memberCount` editável em `/igrejas`.
+
+### Filtro Individual/Congregações + pedido manual em `/materiais` (commits `d8dc470`, `a919795`)
+- Filtro "Tipo" (Individual/Congregações) em `materiais-filters.ts` + UI — com "Congregações" ativo,
+  mostra total de membros somado no filtro (referência pra separar material).
+- Botão **"Novo pedido"** (LEADER+) abre formulário pra registrar pedido recebido por telefone/
+  presencial — mesmos campos do link público (dados, endereço, individual ou kit por igreja),
+  checkbox de confirmação de consentimento, gera o mesmo Termo de Apoiador em PDF.
+- Lógica de criação extraída pra `createMaterialRequest()` em `lib/material-request.ts`, compartilhada
+  entre a rota pública e a nova rota admin (`POST /api/materiais`).
+
+### Etiquetas de envio — remetente/destinatário, meia folha depois otimizada (commits `de25247`, `99e731f`)
+Pedido: etiquetas com remetente+destinatário, sem lista de itens do pedido, melhor aproveitamento da
+A4. Layout final: largura cheia, altura fixa de 280pt por etiqueta (cabe remetente+destinatário sem
+cortar texto), agrupando quantas etiquetas couberem no comprimento da página (3 por A4, com linha de
+corte pontilhada) em vez de fixar 2 por folha. Remetente vem do comitê cadastrado em Configurações.
+
+### Financeiro — 3 fretes lançados e conciliados com o extrato (fora do git, direto em produção)
+Conferência de comprovantes soltos (3 DACTe da Expresso Princesa dos Campos + 1 comprovante Correios
+SEDEX) contra `/financeiro/lancamentos`: 1 DACTe já estava lançado, os outros 3 não. Criados (com PDF
+do comprovante anexado via Vercel Blob) e conciliados 1:1 com as transações PIX correspondentes no
+extrato BB (memo do extrato confirmou que o pagamento dos Correios também foi PIX). Extrato ficou com
+**0 transações UNMATCHED**. Novo fornecedor "Correios (ECT)" cadastrado.
+
+### TSE — fluxo de atualização repetido (bookmarklet/técnica window.name, sem mudança de código)
+Snapshot atualizado 2x nesta janela (10/09 e 11/09) pros 4 cargos (Estadual 42, Federal 31, Senador 9,
+Governador 8) via `claude-in-chrome`, replicando a lógica de `src/lib/tse-bookmarklet.ts` num tab real
+(fetch na aba do TSE → `window.name` → navega pra `/financeiro/tse-comparativo`, que lê o marcador e
+faz o POST sozinha). Navegação pra domínio autenticado do financeiro foi bloqueada uma vez pelo
+classificador de permissão do modo automático — pedi confirmação ao Edson antes de prosseguir.
+André Santos em 9º lugar entre os candidatos a Dep. Estadual do NOVO-PR (R$92.064 declarados).
+
+### Planilha "Dobrada Mecabo" (fora do repo — `~/Campanha Andre Santos/Dobrada Mecabo/`)
+A pedido, extraída lista de 7 cabos eleitorais de Foz do Iguaçu de um PDF (nomes em negrito = R$900,
+demais = R$1.800, período 15/09–03/10) e organizada em planilha centralizada com abas por equipe
+("Equipe Foz" preenchida, "Equipe Maringá e Região" como template vazio pra próxima lista) — fica em
+`Campanha Andre Santos/Dobrada Mecabo/Dobrada Mecabo.xlsx`, fora deste repositório de código.
+
+### Pendências / próximos passos
+- 7 igrejas sem `memberCount` (listadas acima) — preencher manualmente em `/igrejas` quando souber.
+- Frete do Carlos Eduardo de Moraes (Campina Grande do Sul) — nenhum comprovante encontrado ainda;
+  lançar no financeiro quando o comprovante chegar.
+- Aba "Equipe Maringá e Região" da planilha Dobrada Mecabo aguardando lista de nomes.
 
 ---
 
