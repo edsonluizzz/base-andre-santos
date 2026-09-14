@@ -1,6 +1,42 @@
 # Estado — Ovile Eleitoral (Base André Santos)
 
-**Última atualização:** 2026-09-14 (sessão: link /material/curitiba com kit por congregação, pedido manual, etiquetas remetente/destinatário, financeiro de fretes conciliado, TSE atualizado)
+**Última atualização:** 2026-09-14 (sessão: /grupo do andre-santos passou a gravar em /api/public/cadastro, contratos duplicados CT-014→020 apagados, planilha Dobrada Mecabo atualizada)
+
+---
+
+## Sessão 2026-09-14 (tarde) — Página de captura /grupo, /api/public/cadastro como destino de leads, limpeza de contratos duplicados
+
+### `/grupo` (repo `andre-santos`) agora grava lead aqui, não em Apps Script
+Nova página de captura pro grupo do WhatsApp (`prandresantos.com.br/grupo`) tentava gravar lead num
+Google Apps Script hardcoded (mesmo default usado por `/api/leads`) que estava morto — Google retornava
+405 "arquivo não encontrado". Troquei o destino pra `POST /api/public/cadastro` deste projeto
+(`leads.prandresantos.com.br`), que já aceita `prandresantos.com.br` via CORS e é o CRM real
+(`Collaborator`, source/channel `WHATSAPP`). Testado ponta a ponta em produção; 2 registros de teste
+("Teste Diag Grupo", "Teste Grupo Prod") criados durante o teste foram apagados do banco depois
+(autorizado pelo Edson, classificador de permissão bloqueou o delete direto até confirmação).
+
+### Contratos CT-014 a CT-020 apagados — duplicavam a planilha Dobrada Mecabo
+Alguém (outra sessão/fluxo) gerou 7 `Contract` (status `GERADO`, nenhum assinado) pros mesmos 7 nomes
+da "Equipe Foz" da planilha `Dobrada Mecabo.xlsx`. Edson confirmou que esse controle é só pra planilha,
+não pro Ovile — apagados via Prisma direto (`contract.deleteMany`, confirmado nenhum estava `ASSINADO`
+antes de apagar). `FinancialEntry.contractId` é `onDelete: SetNull`, então nenhum lançamento financeiro
+foi afetado.
+
+### Planilha "Dobrada Mecabo" (fora do repo) — Maringá + organização de documentos
+- Aba "Equipe Maringá e Região": +4 linhas (Leomarcos 1, Leomarcos 2, Ivan/Sarandi, Andersom/Maringá),
+  R$1.500 cada. Time final vai ser 8 de R$1.500 + 1 coordenador de R$2.000 — faltam 3 nomes + o
+  coordenador. Já existia 1 linha prévia (Júlio César Lopes Ferreira, Cambé/PR) sem valor preenchido.
+- Criadas pastas `Maringa/` e `Foz/` dentro de `Dobrada Mecabo/` pro Edson salvar documentos (CNH/RG)
+  de cada pessoa. 5 docs da Foz já salvos, lidos (CNH-e digital + fotos de CNH/RG física) e renomeados
+  pra `Nome Completo - CNH.pdf` / `- RG.jpeg`: Raquel da Silveira Evangelista, Ana Carolina dos Santos
+  Leandro, Wilian Pereira Leandro Machado, Jucélia Vaz de Camargo, Fernando Rodriguez Conceição.
+  Faltam docs de João Paulo Ardenghi de Oliveira e Laryssa Alves Brandão pra completar os 7 da Foz.
+
+### Pendências / próximos passos
+- Completar Equipe Maringá: 3 nomes + 1 coordenador (R$2.000), mais CPF/endereço/telefone de todos.
+- Docs pendentes: João Paulo Ardenghi de Oliveira e Laryssa Alves Brandão (Foz).
+- 7 igrejas sem `memberCount` (listadas na sessão anterior) — preencher manualmente em `/igrejas`.
+- Frete do Carlos Eduardo de Moraes (Campina Grande do Sul) — nenhum comprovante encontrado ainda.
 
 ---
 
