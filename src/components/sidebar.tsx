@@ -7,7 +7,7 @@ import { signOut, useSession } from "next-auth/react";
 import {
   LayoutDashboard, Users, Calendar,
   Megaphone, Settings, LogOut, Shield, Star, Map, BarChart2, Network, Target, ClipboardList, Award, Building2, Plus, UserPlus, Link2, Church,
-  ChevronLeft, ChevronRight, Sun, Moon, GraduationCap, Send, IdCard, Wallet, Package,
+  ChevronLeft, ChevronRight, Sun, Moon, GraduationCap, Send, IdCard, Wallet, Package, Mail,
 } from "lucide-react";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { useTheme } from "next-themes";
@@ -37,6 +37,7 @@ const navItems = [
   { href: "/tarefas",        icon: ClipboardList,    label: "Tarefas",         minRole: "ADMIN",  superAdminOnly: false, financeAdminOnly: false, leadsOnly: false },
   { href: "/whatsapp",       icon: Send,             label: "WhatsApp",        minRole: "ADMIN",  superAdminOnly: false, financeAdminOnly: false, leadsOnly: false },
   { href: "/comunicados",    icon: Megaphone,        label: "Comunicados",     minRole: "ADMIN",  superAdminOnly: false, financeAdminOnly: false, leadsOnly: false },
+  { href: "/mala-direta",    icon: Mail,             label: "Mala direta",     minRole: "ADMIN",  superAdminOnly: false, financeAdminOnly: true,  leadsOnly: false },
   { href: "/configuracoes",  icon: Settings,         label: "Configurações",   minRole: "ADMIN",  superAdminOnly: false, financeAdminOnly: false, leadsOnly: false },
   { href: "/financeiro",     icon: Wallet,           label: "Financeiro",      minRole: "ADMIN",  superAdminOnly: false, financeAdminOnly: true,  leadsOnly: false },
   { href: "/super-admin",    icon: Shield,           label: "Super Admin",     minRole: "ADMIN",  superAdminOnly: true,  financeAdminOnly: false, leadsOnly: false },
