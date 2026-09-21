@@ -1,8 +1,8 @@
 export function getMalaDiretaConfig() {
   const from = process.env.MALA_DIRETA_FROM;
-  const appUrl = process.env.APP_URL;
+  const appUrl = process.env.MALA_DIRETA_APP_URL ?? process.env.APP_URL;
   if (!from) throw new Error("MALA_DIRETA_FROM ausente");
-  if (!appUrl) throw new Error("APP_URL ausente");
+  if (!appUrl) throw new Error("MALA_DIRETA_APP_URL/APP_URL ausente");
   return {
     from,
     appUrl: appUrl.replace(/\/$/, ""),
