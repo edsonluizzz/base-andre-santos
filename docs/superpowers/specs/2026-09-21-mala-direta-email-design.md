@@ -16,7 +16,7 @@ Enviar propaganda eleitoral por email para a base de cadastros da campanha Andr�
 
 ### 1. `EmailSuppression` (novo modelo Prisma)
 - Campos: `email` (único, minúsculo), `reason` (`UNSUBSCRIBE` | `BOUNCE` | `COMPLAINT` | `MANUAL`), `createdAt`.
-- Independente de `Collaborator`, para cobrir emails que só existem no CSV de leads.
+- Independente de `Collaborator`, para cobrir descadastros de emails que ainda não são `Collaborator`.
 - Consultada em todo envio. Bounces e reclamações de spam do Resend entram aqui via webhook.
 
 ### 2. Descadastro
@@ -49,7 +49,7 @@ Enviar propaganda eleitoral por email para a base de cadastros da campanha Andr�
 ## Fora do escopo
 - Segmentação por cidade/perfil.
 - Métricas além das do painel do Resend.
-- Importar leads para a base de apoio.
+- Migrar outros formulários além de `/leads` (o `/grupo` já grava no banco).
 
 ## Pendências
 - Texto e arte da mala direta.
