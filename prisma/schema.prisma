@@ -1041,3 +1041,64 @@ model TseComparativoSnapshot {
   @@unique([campaignId, uf, cargo, partido])
   @@index([campaignId])
 }
+
+enum EmailSuppressionReason {
+  UNSUBSCRIBE
+  BOUNCE
+  COMPLAINT
+  MANUAL
+}
+
+enum EmailSendStatus {
+  PENDING
+  SENDING
+  SENT
+  FAILED
+}
+
+/// Lista de supressão de mala direta. `campaignId` = tenant (sem FK para não exigir back-relation em Campaign).
+model EmailSuppression {
+  id         String                 @id @default(cuid())
+  campaignId String
+  email      String
+  reason     EmailSuppressionReason
+  createdAt  DateTime               @default(now())
+
+  @@unique([campaignId, email])
+}
+
+model EmailCampaign {
+  id         String   @id @default(cuid())
+  campaignId String
+  subject    String
+  bodyText   String   @db.Text
+  ctaLabel   String?
+  ctaUrl     String?
+  createdBy  String?
+  createdAt  DateTime @default(now())
+
+  sends EmailCampaignSend[]
+
+  @@index([campaignId])
+}
+
+/// Um registro por (mala direta, email). A constraint única é o que garante idempotência.
+model EmailCampaignSend {
+  id              String          @id @default(cuid())
+  campaignId      String
+  emailCampaignId String
+  email           String
+  name            String
+  status          EmailSendStatus @default(PENDING)
+  providerId      String?
+  error           String?         @db.Text
+  sentAt          DateTime?
+  createdAt       DateTime        @default(now())
+
+  emailCampaign EmailCampaign @relation(fields: [emailCampaignId], references: [id], onDelete: Cascade)
+
+  @@unique([emailCampaignId, email])
+  @@index([emailCampaignId, status])
+  @@index([campaignId, sentAt])
+  @@index([providerId])
+}
