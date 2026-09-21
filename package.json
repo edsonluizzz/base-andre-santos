@@ -7,6 +7,7 @@
     "build": "prisma db push || echo 'db push skipped (offline)' && prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
+    "test": "vitest run",
     "test:e2e": "playwright test",
     "db:seed": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seed.ts"
   },
@@ -63,6 +64,7 @@
     "eslint-config-next": "14.2.35",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^3.2.7"
   }
 }
