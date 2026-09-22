@@ -10,8 +10,6 @@ export interface MaterialCatalogItem {
 export const MATERIAL_CATALOG: MaterialCatalogItem[] = [
   { id: "santinho", label: "Santinho", unidade: "unidades" },
   { id: "adesivo", label: "Adesivo", unidade: "unidades" },
-  { id: "perfurado_m", label: "Perfurado M", unidade: "unidades" },
-  { id: "perfurado_p", label: "Perfurado P", unidade: "unidades" },
 ];
 
 export const MATERIAL_CATALOG_MAP: Record<string, MaterialCatalogItem> = Object.fromEntries(
