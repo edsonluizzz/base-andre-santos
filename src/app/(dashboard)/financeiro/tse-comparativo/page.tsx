@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Wallet, TrendingUp, ExternalLink, RefreshCw, ChevronDown } from "lucide-react";
+import { Wallet, TrendingUp, ExternalLink, RefreshCw, ChevronDown, FileText } from "lucide-react";
 import { FinanceGuard } from "@/components/financeiro/finance-guard";
 import { FinanceNav } from "@/components/financeiro/finance-nav";
 import { TSE_BOOKMARKLET_HREF, TSE_SNAPSHOT_MARKER } from "@/lib/tse-bookmarklet";
@@ -134,13 +134,24 @@ function ComparativoContent() {
             <TrendingUp className="w-4 h-4 text-primary" />
             <h2 className="text-sm font-semibold">Ranking de receitas — snapshot do DivulgaCandContas (TSE)</h2>
           </div>
-          <a
-            href="https://divulgacandcontas.tse.jus.br/divulga/#/candidato/regiao/SUL/20322002026"
-            target="_blank" rel="noopener noreferrer"
-            className="text-[11px] text-primary hover:underline flex items-center gap-1"
-          >
-            Ver no site do TSE <ExternalLink className="w-3 h-3" />
-          </a>
+          <div className="flex items-center gap-3">
+            {rows.length > 0 && (
+              <a
+                href={`/api/financeiro/tse-comparativo/export-pdf?uf=PR&cargo=${cargo}&partido=${partido}`}
+                download
+                className="text-[11px] text-primary hover:underline flex items-center gap-1"
+              >
+                <FileText className="w-3 h-3" /> Imprimir relatório (PDF)
+              </a>
+            )}
+            <a
+              href="https://divulgacandcontas.tse.jus.br/divulga/#/candidato/regiao/SUL/20322002026"
+              target="_blank" rel="noopener noreferrer"
+              className="text-[11px] text-primary hover:underline flex items-center gap-1"
+            >
+              Ver no site do TSE <ExternalLink className="w-3 h-3" />
+            </a>
+          </div>
         </div>
 
         <div className="flex gap-1.5">
