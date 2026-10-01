@@ -1,4 +1,4 @@
-import { fmtInt, fmtPct, fmtHora, fmtDelta, selecionarChapa, pontosSparkline } from "./util.mjs";
+import { fmtInt, fmtPct, fmtHora, fmtDelta, fmtPos, semContato, selecionarChapa, pontosSparkline } from "./util.mjs";
 
 const ANDRE = "30777";
 const $ = (id) => document.getElementById(id);
@@ -52,6 +52,7 @@ function criarLinha(k) {
   }
   li.querySelector(".barra").append(document.createElement("i"));
   li.classList.add("entrou");
+  li.addEventListener("animationend", () => li.classList.remove("entrou"), { once: true });
   return li;
 }
 
@@ -64,13 +65,15 @@ function renderLista(ul, itens, montar) {
     existentes.set(li.dataset.k, li);
   }
   const usados = new Set();
-  for (const item of itens) {
+  for (const [k, li] of existentes) if (!itens.some((i) => i.k === k)) li.remove();
+  itens.forEach((item, i) => {
     const li = existentes.get(item.k) ?? criarLinha(item.k);
     usados.add(item.k);
-    ul.append(li);
+    // Só mexe no DOM quando a linha mudou de lugar: reinserir reinicia animações
+    // e impede a transição de largura das barras.
+    if (ul.children[i] !== li) ul.insertBefore(li, ul.children[i] ?? null);
     montar(li, item);
-  }
-  for (const [k, li] of existentes) if (!usados.has(k)) li.remove();
+  });
   for (const li of ul.children) {
     const topoAntes = antes.get(li.dataset.k);
     if (topoAntes === undefined) continue;
@@ -84,7 +87,7 @@ function renderLista(ul, itens, montar) {
 }
 
 function montarLinha(li, d) {
-  li.querySelector(".pos").textContent = `${d.pos}º`;
+  li.querySelector(".pos").textContent = fmtPos(d.pos, d.votos);
   const nome = li.querySelector(".nome");
   nome.textContent = d.nome;
   if (d.sub) {
@@ -113,8 +116,8 @@ function renderAndre(a) {
   const chapa = $("andre-pos-chapa");
   if (chapa._pos !== undefined && a.posChapa < chapa._pos) piscar($("andre"), "subiu");
   chapa._pos = a.posChapa;
-  chapa.textContent = `${a.posChapa}º`;
-  $("andre-pos-geral").textContent = `${a.posGeral}º`;
+  chapa.textContent = fmtPos(a.posChapa, a.votos);
+  $("andre-pos-geral").textContent = fmtPos(a.posGeral, a.votos);
   $("andre-pos-geral-txt").textContent = `no geral (${fmtInt(a.totalCandidatos)} candidatos)`;
   $("andre-linha").setAttribute("points", pontosSparkline(a.historico, 400, 110));
   $("andre-situacao").textContent = a.eleito ? "ELEITO" : a.situacao || "em apuração";
@@ -223,21 +226,33 @@ function mostrar(n) {
 }
 
 function girar() {
-  if (modo !== "auto" || !estado?.municipios || Date.now() < trocaEm) return;
+  if (modo !== "auto" || Date.now() < trocaEm) return;
+  // Sem voto em nenhum município a segunda tela não tem o que mostrar.
+  if (telaAtual === 1 && !(estado?.municipios?.comVotos > 0)) return;
   mostrar(telaAtual === 1 ? 2 : 1);
   trocaEm = Date.now() + (telaAtual === 1 ? 40000 : 20000);
+}
+
+// Dois avisos possíveis: a página perdeu o servidor local, ou o servidor perdeu o TSE.
+function avisar() {
+  const aviso = $("aviso");
+  if (!estado) return;
+  let texto = "";
+  if (semContato(estado, Date.now())) {
+    texto = `Painel sem contato com o servidor local desde ${fmtHora(estado.geradoEm)} — números parados`;
+  } else if (!estado.fonte.ok) {
+    texto = estado.fonte.ultimaLeituraOk
+      ? `Sem atualização desde ${fmtHora(estado.fonte.ultimaLeituraOk)} — exibindo a última leitura`
+      : "Sem resposta do TSE — tentando novamente";
+  }
+  aviso.hidden = !texto;
+  if (aviso.textContent !== texto) aviso.textContent = texto;
 }
 
 function render(e) {
   estado = e;
   $("tarja-sim").hidden = !e.simulacao;
-  const aviso = $("aviso");
-  aviso.hidden = e.fonte.ok;
-  if (!e.fonte.ok) {
-    aviso.textContent = e.fonte.ultimaLeituraOk
-      ? `Sem atualização desde ${fmtHora(e.fonte.ultimaLeituraOk)} — exibindo a última leitura`
-      : "Sem resposta do TSE — tentando novamente";
-  }
+  avisar();
   $("ultima").textContent = e.pr ? `TSE gerou em ${e.pr.tseGeradoEm}` : "aguardando primeira leitura";
   if (e.pr) {
     animarNumero($("secoes-pct"), e.pr.secoesPct, fmtPct);
@@ -260,6 +275,7 @@ function tique() {
     $("contagem").textContent = Math.ceil(resta / 1000);
     $("anel-arco").style.strokeDashoffset = CIRCUNFERENCIA * (1 - resta / total);
     $("anel").classList.toggle("buscando", resta === 0);
+    avisar();
   }
   girar();
   requestAnimationFrame(tique);

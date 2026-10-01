@@ -3,7 +3,25 @@
 cd "$(dirname "$0")/.." || exit 1
 PORTA="${PORTA:-4310}"
 
-caffeinate -dims node apuracao/server.mjs "$@" &
+# Um painel esquecido em outra janela ocuparia a porta: encerra antes de subir.
+ANTIGO=$(lsof -ti "tcp:$PORTA" -sTCP:LISTEN)
+if [ -n "$ANTIGO" ]; then
+  echo "Já havia um painel na porta $PORTA; encerrando o antigo."
+  kill $ANTIGO 2>/dev/null
+  sleep 1
+fi
+
+# Se o servidor cair no meio da noite, sobe de novo sozinho.
+(
+  trap 'kill $NODE 2>/dev/null; exit' TERM INT
+  while true; do
+    caffeinate -dims node apuracao/server.mjs "$@" &
+    NODE=$!
+    wait $NODE
+    echo "Servidor parou; reiniciando em 2 segundos..."
+    sleep 2
+  done
+) &
 SERVIDOR=$!
 trap 'kill $SERVIDOR 2>/dev/null' EXIT INT TERM
 
@@ -17,7 +35,9 @@ for c in "/Applications/Google Chrome.app" "$HOME/Applications/Google Chrome.app
   [ -d "$c" ] && CHROME="$c/Contents/MacOS/Google Chrome" && break
 done
 
-if [ -n "$CHROME" ]; then
+if [ -n "$SEM_NAVEGADOR" ]; then
+  echo "Navegador não aberto (SEM_NAVEGADOR). Acesse http://localhost:$PORTA/"
+elif [ -n "$CHROME" ]; then
   "$CHROME" --kiosk --user-data-dir="$HOME/.apuracao-chrome" --no-first-run "http://localhost:$PORTA/" >/dev/null 2>&1 &
 else
   open "http://localhost:$PORTA/"

@@ -32,6 +32,7 @@ export function criarServidor({
   let municipiosCompleto = null;
   let municipios = null;
   let rodando = false;
+  let rodandoMun = false;
   const clientes = new Set();
   const timers = [];
 
@@ -70,12 +71,21 @@ export function criarServidor({
       if (estado.andre && estado.pr) {
         // Antes de a totalização começar tudo vem zerado; gravar esses pontos
         // esticaria o eixo do gráfico de evolução para dias antes da apuração.
-        if (estado.andre.votos > 0 || estado.pr.secoesPct > 0) {
-          store.registrar({ t: agora, votos: estado.andre.votos, secoesPct: estado.pr.secoesPct });
+        // Falha de disco não pode derrubar a tela: o estado segue para a página.
+        try {
+          if (estado.andre.votos > 0 || estado.pr.secoesPct > 0) {
+            store.registrar({ t: agora, votos: estado.andre.votos, secoesPct: estado.pr.secoesPct });
+          }
+          estado.andre.historico = store.historico();
+        } catch (e) {
+          console.error("[histórico]", e?.message ?? e);
         }
-        estado.andre.historico = store.historico();
       }
-      store.salvarEstado(estado);
+      try {
+        store.salvarEstado(estado);
+      } catch (e) {
+        console.error("[disco]", e?.message ?? e);
+      }
       publicar();
       return estado;
     } finally {
@@ -84,7 +94,8 @@ export function criarServidor({
   }
 
   async function cicloMunicipios() {
-    if (!obterMunicipios) return;
+    if (!obterMunicipios || rodandoMun) return;
+    rodandoMun = true;
     try {
       municipiosCompleto = await obterMunicipios(municipiosCompleto);
       municipios = resumir(municipiosCompleto);
@@ -94,6 +105,8 @@ export function criarServidor({
       }
     } catch (e) {
       console.error("[municípios]", e?.message ?? e);
+    } finally {
+      rodandoMun = false;
     }
   }
 
@@ -117,7 +130,13 @@ export function criarServidor({
   }
 
   const server = http.createServer((req, res) => {
-    const caminho = new URL(req.url, "http://x").pathname;
+    let caminho;
+    try {
+      caminho = new URL(req.url, "http://x").pathname;
+    } catch {
+      res.writeHead(400).end();
+      return;
+    }
     if (caminho === "/api/state") {
       res.writeHead(estado ? 200 : 503, { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" });
       res.end(JSON.stringify(estado ?? { erro: "aguardando primeira leitura" }));
@@ -140,8 +159,9 @@ export function criarServidor({
     cicloMunicipios,
     estado: () => estado,
     iniciar() {
-      ciclo().then(() => cicloMunicipios());
-      timers.push(setInterval(ciclo, intervaloMs));
+      const seguro = () => ciclo().catch((e) => console.error("[ciclo]", e?.message ?? e));
+      seguro().then(() => cicloMunicipios());
+      timers.push(setInterval(seguro, intervaloMs));
       if (obterMunicipios) timers.push(setInterval(cicloMunicipios, intervaloMunMs));
       // Mantém a conexão SSE viva em proxies e no próprio Chrome.
       timers.push(setInterval(() => { for (const c of clientes) c.write(": ping\n\n"); }, 20000));
@@ -176,13 +196,11 @@ async function principal() {
       obterMunicipios: async () => sim.municipios(lista, Date.now()),
     };
   } else {
-    let lista;
-    try {
-      lista = parseListaMunicipios(await baixarJson(URL_MUNICIPIOS));
-    } catch (e) {
-      console.error("[municípios] lista do TSE indisponível, usando a cópia local:", e.message);
-      lista = listaLocal();
-    }
+    // Começa com a cópia local para o painel subir na hora; a lista do TSE entra depois.
+    let lista = listaLocal();
+    baixarJson(URL_MUNICIPIOS)
+      .then((json) => { lista = parseListaMunicipios(json); })
+      .catch((e) => console.error("[municípios] lista do TSE indisponível, usando a cópia local:", e.message));
     opcoes = {
       store: criarStore(join(RAIZ, "data", "real")),
       obterBrutos: () => baixarPrincipais(),
@@ -196,6 +214,10 @@ async function principal() {
   }
 
   const app = criarServidor({ ...opcoes, resumir: resumirMunicipios });
+  app.server.on("error", (e) => {
+    console.error(`Não foi possível abrir a porta ${porta}: ${e.message}`);
+    process.exit(1);
+  });
   app.server.listen(porta, "127.0.0.1", () => {
     console.log(`Painel de apuração em http://localhost:${porta}${simular ? "  (SIMULAÇÃO)" : ""}`);
     app.iniciar();

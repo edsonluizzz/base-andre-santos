@@ -7,6 +7,13 @@ export const fmtPct = (n, casas = 2) =>
 
 export const fmtHora = (ms) => (ms ? new Date(ms).toLocaleTimeString("pt-BR") : "--:--:--");
 
+// Antes do primeiro voto todos empatam em 1º; mostrar posição seria enganoso.
+export const fmtPos = (pos, votos) => (votos > 0 ? `${pos}º` : "–");
+
+// A página perdeu o servidor: o último estado é mais velho que 2,5 intervalos de busca.
+export const semContato = (estado, agora) =>
+  !!estado && agora - estado.geradoEm > 2.5 * (estado.proximaBuscaEm - estado.geradoEm);
+
 export const fmtDelta = (d) => (d > 0 ? `▲ +${fmtInt(d)}` : d < 0 ? `▼ ${fmtInt(d)}` : "");
 
 // Primeiras `limite` linhas; se o candidato fixo ficou de fora, ocupa a última.

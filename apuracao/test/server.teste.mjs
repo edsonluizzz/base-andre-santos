@@ -124,3 +124,43 @@ test("ciclo de municípios entra no estado já resumido", async () => {
   assert.equal(e.municipios.total, 2);
   app.parar();
 });
+
+test("coletas de municípios não se sobrepõem", async () => {
+  let chamadas = 0;
+  const pendentes = [];
+  const { app } = await subir({
+    obterBrutos: async () => ({ brutos: brutosReais(), erros: [] }),
+    obterMunicipios: () => {
+      chamadas++;
+      return new Promise((ok) => pendentes.push(() => ok({ atualizadoEm: 1, comVotos: 0, total: 0, falhas: 0, lista: [] })));
+    },
+  });
+  const a = app.cicloMunicipios();
+  const b = app.cicloMunicipios();
+  for (const liberar of pendentes) liberar();
+  await Promise.all([a, b]);
+  assert.equal(chamadas, 1);
+  app.parar();
+});
+
+test("falha ao gravar em disco não derruba o ciclo", async () => {
+  const store = { historico: () => [], registrar: () => { throw new Error("disco cheio"); }, salvarEstado: () => { throw new Error("disco cheio"); } };
+  const app = criarServidor({ store, obterBrutos: async () => ({ brutos: criarSimulador(brutosReais(), { passos: 2 }).proximo(), erros: [] }) });
+  const e = await app.ciclo();
+  assert.equal(e.andre.nome, "ANDRÉ SANTOS");
+  assert.ok(e.andre.votos > 0);
+});
+
+test("requisição com URL malformada não derruba o servidor", async () => {
+  const { app, url } = await subir({ obterBrutos: async () => ({ brutos: brutosReais(), erros: [] }) });
+  const porta = app.server.address().port;
+  const net = await import("node:net");
+  const resposta = await new Promise((ok) => {
+    const c = net.connect(porta, "127.0.0.1", () => c.write("GET // HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n"));
+    let dados = "";
+    c.on("data", (d) => (dados += d)).on("close", () => ok(dados)).on("error", () => ok(dados));
+  });
+  assert.match(resposta, /^HTTP\/1\.1 4\d\d/);
+  assert.equal((await fetch(`${url}/`)).status, 200);
+  app.parar();
+});

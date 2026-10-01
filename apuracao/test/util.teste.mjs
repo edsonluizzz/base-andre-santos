@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { fmtInt, fmtPct, fmtDelta, selecionarChapa, pontosSparkline } from "../public/util.mjs";
+import { fmtInt, fmtPct, fmtDelta, fmtPos, semContato, selecionarChapa, pontosSparkline } from "../public/util.mjs";
 
 test("formatação pt-BR", () => {
   assert.equal(fmtInt(38412), "38.412");
@@ -40,4 +40,17 @@ test("pontosSparkline", () => {
     "0.0,40.0 50.0,20.0 100.0,0.0",
   );
   assert.equal(pontosSparkline([{ t: 0, votos: 0 }, { t: 0, votos: 0 }], 100, 40), "0.0,40.0 0.0,40.0");
+});
+
+test("posição só aparece para quem já tem voto", () => {
+  assert.equal(fmtPos(3, 120), "3º");
+  assert.equal(fmtPos(1, 0), "–");
+});
+
+test("semContato: estado mais velho que 2,5 intervalos", () => {
+  const e = { geradoEm: 1000, proximaBuscaEm: 61000 };
+  assert.equal(semContato(e, 61000), false);
+  assert.equal(semContato(e, 150000), false);
+  assert.equal(semContato(e, 151001), true);
+  assert.equal(semContato(null, 5), false);
 });

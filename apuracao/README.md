@@ -25,10 +25,11 @@ avançando a cada 10 segundos.
 | O que aparece | O que fazer |
 |---|---|
 | Faixa âmbar "Sem atualização desde HH:MM" | O TSE ou a internet falharam. Os números na tela são os últimos lidos. Volta sozinho; confira o Wi-Fi. |
+| Faixa âmbar "Painel sem contato com o servidor local" | O programa caiu. Ele sobe de novo sozinho em segundos e a tela volta a atualizar; se não voltar em 1 minuto, dois cliques em `iniciar.command`. |
 | Tela parada, contagem não anda | Aperte `Cmd+R` no Chrome. |
 | Chrome fechou | Abra `http://localhost:4310` em qualquer navegador e aperte `F`. |
 | Terminal fechou | Dois cliques em `iniciar.command` de novo. O gráfico de evolução do André continua de onde parou. |
-| "address already in use" | Já há um painel rodando. Abra `http://localhost:4310`. |
+| Abriu a simulação em vez do real (tarja vermelha) | Feche tudo e dê dois cliques em `iniciar.command`: ele encerra o painel antigo antes de subir. |
 
 ## O que a tela mostra
 
@@ -36,7 +37,8 @@ avançando a cada 10 segundos.
   Vira "quociente oficial" quando o TSE publicar o dele.
 - **Vagas diretas:** quantas cadeiras o NOVO garante só pelo quociente. As sobras não são
   calculadas aqui; o resultado final é o "✔" ao lado de cada eleito, que vem do TSE.
-- **Municípios:** atualizam a cada 5 minutos (são 399 arquivos por rodada).
+- **Posições:** aparecem como "–" até o primeiro voto entrar.
+- **Municípios:** atualizam a cada 5 minutos (são 399 arquivos por rodada). A segunda tela só entra na rotação quando houver voto em algum município.
 
 ## Dados
 
