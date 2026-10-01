@@ -1,6 +1,6 @@
 # Painel de apuração PR 2026 — design
 
-Data: 2026-09-30 · Status: desenho aprovado (fases 1 e 2), aguardando plano de implementação
+Data: 2026-09-30 · Status: desenho aprovado (fases 1 e 2) · Plano: `docs/superpowers/plans/2026-09-30-painel-apuracao.md`
 
 ## Objetivo
 Acompanhar numa TV, na noite de 04/10/2026 (1º turno), a apuração oficial do Paraná com destaque para André Santos (Dep. Estadual, NOVO, nº 30777): chapas estadual e federal do NOVO, senador, governador e presidente.
@@ -30,7 +30,7 @@ Arquivos JSON oficiais do TSE, base `https://resultados.tse.jus.br/oficial/ele20
 
 Fatos observados:
 - Estrutura: cabeçalho (`dg`/`hg` data e hora da geração, `s` seções, `e` eleitorado, `v` votos) e `carg[0].agr[].par[].cand[]`. Números vêm como texto; percentuais com vírgula.
-- Candidato: `n` número, `nmu` nome de urna, `vap` votos, `pvap` %, `st` situação, `e` eleito (`s`/`n`), `seq` ordem. Partido: `sg`, `tvtn` nominais, `tvtl` legenda, `tvan` total. Cargo: `nv` vagas (54 estadual, 30 federal, 2 senador), `qe` quociente eleitoral (0 até o TSE calcular).
+- Candidato: `n` número, `nmu` nome de urna, `vap` votos, `pvap` %, `st` situação, `e` eleito (`s`/`n`), `seq` ordem. Partido: `sg`, `tvtn` nominais, `tvtl` legenda; total do partido = `tvtn` + `tvtl`. Cargo: `nv` vagas (54 estadual, 30 federal, 2 senador), `qe` quociente eleitoral (0 até o TSE calcular).
 - Seções totalizadas: `s.pst`. Votos válidos: `v.vv`. Brancos `v.vb`, nulos `v.tvn`.
 - Cache do TSE: `max-age=58`. Limite: 2000 requisições por janela.
 - **Requisição com cabeçalho `Origin` de outro domínio recebe 403**: o navegador não pode buscar direto; quem busca é o servidor local.
@@ -44,6 +44,8 @@ apuracao/
   lib/tse.mjs       URLs e download (timeout, retry no ciclo seguinte)
   lib/parse.mjs     JSON do TSE → estado enxuto (funções puras)
   lib/quociente.mjs quociente eleitoral e vagas diretas (funções puras)
+  lib/estado.mjs    blocos lidos → estado enviado à página (funções puras)
+  lib/municipios.mjs coleta por município (fase 2)
   lib/store.mjs     gravação e releitura do histórico em disco
   lib/simulador.mjs gera apuração fictícia progressiva
   public/           index.html, app.js, styles.css
