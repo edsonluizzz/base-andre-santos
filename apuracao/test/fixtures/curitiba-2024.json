@@ -1,0 +1,48 @@
+
+{ "ele" : "619", "t" : "1", "f" : "o", "sup" : "n", "tpabr" : "mu", "cdabr" : "75353", "dg" : "29/09/2026", "hg" : "19:29:04", "idg" : "432303", "dt" : "06/10/2024", "ht" : "19:30:46", "dv" : "s", "tf" : "s", "and" : "f", "esae" : "n", "mnae" : [  ], "carg" : [ 
+{ "cd" : "11", "nmn" : "Prefeito", "nmm" : "Prefeito", "nmf" : "Prefeita", "nv" : "1", "fed" : [ 
+{ "n" : "102", "sg" : "PSOL/REDE", "nm" : "Federação PSOL REDE", "com" : "PSOL/REDE", "npar" : [ "18", "50" ] }, 
+{ "n" : "100", "sg" : "PSDB/CIDADANIA", "nm" : "Federação PSDB CIDADANIA", "com" : "PSDB/CIDADANIA", "npar" : [ "23", "45" ] } ], "agr" : [ 
+{ "n" : "160001705299", "nm" : "Curitiba Amor e Inovação", "tp" : "c", "com" : "NOVO / PL / MDB / REPUBLICANOS / PSD / PODE / AVANTE / PRTB", "tvtn" : "313347", "tvan" : "313347", "par" : [ 
+{ "n" : "55", "sg" : "PSD", "nm" : "Partido Social Democrático", "nfed" : "", "tvtn" : "313347", "tvan" : "313347", "cand" : [ 
+{ "n" : "55", "sqcand" : "160001990123", "nm" : "EDUARDO PIMENTEL SLAVIERO", "nmu" : "EDUARDO PIMENTEL", "dt" : "21/09/1984", "dvt" : "Válido", "seq" : "1", "e" : "s", "st" : "2º turno", "vap" : "313347", "pvap" : "33,51", "pvapn" : "33,506991784", "vs" : [ 
+{ "tp" : "v", "sqcand" : "160001990124", "nm" : "PAULO EDUARDO LIMA MARTINS", "nmu" : "PAULO MARTINS", "sgp" : "PL" } ] } ] } ] }, 
+{ "n" : "160001759269", "nm" : "Partido da Causa Operária", "tp" : "i", "com" : "PCO", "vag" : "0", "par" : [ 
+{ "n" : "29", "sg" : "PCO", "nm" : "Partido da Causa Operária", "nfed" : "", "tvtn" : "341", "tvan" : "341", "cand" : [ 
+{ "n" : "29", "sqcand" : "160002350485", "nm" : "FELIPE GUSTAVO BOMBARDELLI", "nmu" : "FELIPE BOMBARDELLI", "dt" : "07/04/1990", "dvt" : "Válido", "seq" : "1006", "e" : "n", "st" : "Não eleito", "vap" : "341", "pvap" : "0,04", "pvapn" : "0,036463997", "vs" : [ 
+{ "tp" : "v", "sqcand" : "160002350484", "nm" : "PAULO CESAR COSTYCHA", "nmu" : "PAULO COSTYCHA", "sgp" : "PCO" } ] } ] } ] }, 
+{ "n" : "160001696597", "nm" : "Partido Socialista dos Trabalhadores Unificado", "tp" : "i", "com" : "PSTU", "vag" : "0", "par" : [ 
+{ "n" : "16", "sg" : "PSTU", "nm" : "Partido Socialista dos Trabalhadores Unificado", "nfed" : "", "tvtn" : "569", "tvan" : "569", "cand" : [ 
+{ "n" : "16", "sqcand" : "160001917175", "nm" : "SAMUEL DE MATTOS FIGUEIREDO", "nmu" : "SAMUEL DE MATTOS", "dt" : "25/03/1988", "dvt" : "Válido", "seq" : "960", "e" : "n", "st" : "Não eleito", "vap" : "569", "pvap" : "0,06", "pvapn" : "0,060844617", "vs" : [ 
+{ "tp" : "v", "sqcand" : "160001917176", "nm" : "LEONARDO GUEDES MARTINEZ", "nmu" : "LEO MARTINEZ", "sgp" : "PSTU" } ] } ] } ] }, 
+{ "n" : "160001759292", "nm" : "Partido da Mulher Brasileira", "tp" : "i", "com" : "PMB", "vag" : "0", "par" : [ 
+{ "n" : "35", "sg" : "PMB", "nm" : "Partido da Mulher Brasileira", "nfed" : "", "tvtn" : "291523", "tvan" : "291523", "cand" : [ 
+{ "n" : "35", "sqcand" : "160002350673", "nm" : "CRISTINA REIS GRAEML", "nmu" : "CRISTINA GRAEML", "dt" : "07/12/1969", "dvt" : "Válido", "seq" : "2", "e" : "s", "st" : "2º turno", "vap" : "291523", "pvap" : "31,17", "pvapn" : "31,173295950", "vs" : [ 
+{ "tp" : "v", "sqcand" : "160002350672", "nm" : "JAIRO APARECIDO FERREIRA FILHO", "nmu" : "DR JAIRO FILHO", "sgp" : "PMB" } ] } ] } ] }, 
+{ "n" : "160001734157", "nm" : "CURITIBA PODE MAIS", "tp" : "c", "com" : "UNIÃO / AGIR / DC", "tvtn" : "60675", "tvan" : "60675", "par" : [ 
+{ "n" : "44", "sg" : "UNIÃO", "nm" : "União Brasil", "nfed" : "", "tvtn" : "60675", "tvan" : "60675", "cand" : [ 
+{ "n" : "44", "sqcand" : "160002173114", "nm" : "NEY LEPREVOST NETO", "nmu" : "NEY LEPREVOST", "dt" : "26/10/1973", "dvt" : "Válido", "seq" : "403", "e" : "n", "st" : "Não eleito", "vap" : "60675", "pvap" : "6,49", "pvapn" : "6,488132092", "vs" : [ 
+{ "tp" : "v", "sqcand" : "160002173113", "nm" : "ROSANGELA MARIA WOLFF DE QUADROS MORO", "nmu" : "ROSÂNGELA MORO", "sgp" : "UNIÃO" } ] } ] } ] }, 
+{ "n" : "160001743174", "nm" : "Mobilização Nacional", "tp" : "i", "com" : "MOBILIZA", "vag" : "0", "par" : [ 
+{ "n" : "33", "sg" : "MOBILIZA", "nm" : "Mobilização Nacional", "nfed" : "", "tvtn" : "17155", "tvan" : "17155", "cand" : [ 
+{ "n" : "33", "sqcand" : "160002232820", "nm" : "ROBERTO REQUIÃO DE MELLO E SILVA", "nmu" : "ROBERTO REQUIÃO", "dt" : "05/03/1941", "dvt" : "Válido", "seq" : "430", "e" : "n", "st" : "Não eleito", "vap" : "17155", "pvap" : "1,83", "pvapn" : "1,834427788", "vs" : [ 
+{ "tp" : "v", "sqcand" : "160002232821", "nm" : "MARCELO HENRIQUE PAULA PINTO", "nmu" : "MARCELO HENRIQUE", "sgp" : "MOBILIZA" } ] } ] } ] }, 
+{ "n" : "160001710032", "nm" : "Solidariedade", "tp" : "i", "com" : "SOLIDARIEDADE", "vag" : "0", "par" : [ 
+{ "n" : "77", "sg" : "SOLIDARIEDADE", "nm" : "Solidariedade", "nfed" : "", "tvtn" : "41271", "tvan" : "41271", "cand" : [ 
+{ "n" : "77", "sqcand" : "160002029787", "nm" : "LUIZ GOULARTE ALVES", "nmu" : "LUIZÃO GOULART", "dt" : "06/06/1962", "dvt" : "Válido", "seq" : "407", "e" : "n", "st" : "Não eleito", "vap" : "41271", "pvap" : "4,41", "pvapn" : "4,413213013", "vs" : [ 
+{ "tp" : "v", "sqcand" : "160002029786", "nm" : "TIAGO FRANCISCO DA SILVA", "nmu" : "TIAGO CHICO", "sgp" : "SOLIDARIEDADE" } ] } ] } ] }, 
+{ "n" : "160001696033", "nm" : "Curitiba + Social e Humana", "tp" : "c", "com" : "PSB / PC do B / PT / PV / PDT", "tvtn" : "181770", "tvan" : "181770", "par" : [ 
+{ "n" : "40", "sg" : "PSB", "nm" : "Partido Socialista Brasileiro", "nfed" : "", "tvtn" : "181770", "tvan" : "181770", "cand" : [ 
+{ "n" : "40", "sqcand" : "160001911941", "nm" : "LUCIANO DUCCI", "nmu" : "LUCIANO DUCCI", "dt" : "23/03/1955", "dvt" : "Válido", "seq" : "402", "e" : "n", "st" : "Não eleito", "vap" : "181770", "pvap" : "19,44", "pvapn" : "19,437128476", "vs" : [ 
+{ "tp" : "v", "sqcand" : "160001911942", "nm" : "JORGE GOMES DE OLIVEIRA BRAND", "nmu" : "GOURA", "sgp" : "PDT" } ] } ] } ] }, 
+{ "n" : "160001705303", "nm" : "CURITIBA MELHOR PARA TODOS", "tp" : "c", "com" : "PP / PRD", "tvtn" : "20497", "tvan" : "20497", "par" : [ 
+{ "n" : "11", "sg" : "PP", "nm" : "PROGRESSISTAS", "nfed" : "", "tvtn" : "20497", "tvan" : "20497", "cand" : [ 
+{ "n" : "11", "sqcand" : "160001990151", "nm" : "MARIA VICTORIA BORGHETTI BARROS", "nmu" : "MARIA VICTORIA", "dt" : "01/02/1992", "dvt" : "Válido", "seq" : "424", "e" : "n", "st" : "Não eleito", "vap" : "20497", "pvap" : "2,19", "pvapn" : "2,191796349", "vs" : [ 
+{ "tp" : "v", "sqcand" : "160001990152", "nm" : "WALTER ANTONIO PETRUZZIELLO", "nmu" : "WALTER PETRUZZIELLO", "sgp" : "PP" } ] } ] } ] }, 
+{ "n" : "160001697843", "nm" : "Federação PSOL REDE", "tp" : "f", "com" : "PSOL / REDE", "tvtn" : "8021", "tvan" : "8021", "vag" : "0", "par" : [ 
+{ "n" : "50", "sg" : "PSOL", "nm" : "Partido Socialismo e Liberdade", "nfed" : "102", "tvtn" : "8021", "tvan" : "8021", "cand" : [ 
+{ "n" : "50", "sqcand" : "160001927844", "nm" : "ANDREA DO ROCIO CALDAS", "nmu" : "PROFESSORA ANDREA CALDAS", "dt" : "15/11/1969", "dvt" : "Válido", "seq" : "454", "e" : "n", "st" : "Não eleito", "vap" : "8021", "pvap" : "0,86", "pvapn" : "0,857705933", "vs" : [ 
+{ "tp" : "v", "sqcand" : "160001927845", "nm" : "LETICIA CABRAL DE FARIA", "nmu" : "LETICIA FARIA", "sgp" : "PSOL" } ] } ] } ] } ] } ], "s" : 
+{ "ts" : "4022", "st" : "4022", "pst" : "100,00", "pstn" : "100", "snt" : "0", "psnt" : "0,00", "psntn" : "0", "si" : "4022", "psi" : "100,00", "psin" : "100", "sni" : "0", "psni" : "0,00", "psnin" : "0", "sa" : "4022", "psa" : "100,00", "psan" : "100", "sna" : "0", "psna" : "0,00", "psnan" : "0" }, "e" : 
+{ "te" : "1423722", "est" : "1423722", "pest" : "100,00", "pestn" : "100", "esnt" : "0", "pesnt" : "0,00", "pesntn" : "0", "esi" : "1423722", "pesi" : "100,00", "pesin" : "100", "esni" : "0", "pesni" : "0,00", "pesnin" : "0", "esa" : "1423722", "pesa" : "100,00", "pesan" : "100", "esna" : "0", "pesna" : "0,00", "pesnan" : "0", "c" : "1028810", "pc" : "72,26", "pcn" : "72,262000587", "a" : "394912", "pa" : "27,74", "pan" : "27,737999413" }, "v" : 
+{ "tv" : "1028810", "vvc" : "935169", "pvvc" : "90,90", "pvvcn" : "90,898125018", "vv" : "935169", "pvv" : "100,00", "pvvn" : "100", "vnom" : "935169", "pvnom" : "100,00", "pvnomn" : "100", "van" : "0", "pvan" : "0,00", "pvann" : "0", "vansj" : "0", "pvansj" : "0,00", "pvansjn" : "0", "vb" : "45913", "pvb" : "4,46", "pvbn" : "4,462728784", "tvn" : "47728", "ptvn" : "4,64", "ptvnn" : "4,639146198", "vn" : "47728", "pvn" : "100,00", "pvnn" : "100", "vnt" : "0", "pvnt" : "0,00", "pvntn" : "0", "vsan" : "0", "vscv" : "0" } }
