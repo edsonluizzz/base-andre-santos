@@ -24,6 +24,14 @@ export function selecionarChapa(candidatos, limite, fixo) {
   return alvo ? [...topo.slice(0, limite - 1), alvo] : topo;
 }
 
+// Polígono da área sob a linha: desce até a base no primeiro e no último ponto.
+export function areaSparkline(pontos, altura) {
+  if (!pontos) return "";
+  const lista = pontos.split(" ");
+  const x = (p) => p.split(",")[0];
+  return `${x(lista[0])},${altura} ${pontos} ${x(lista.at(-1))},${altura}`;
+}
+
 export function pontosSparkline(historico, largura, altura) {
   if (historico.length < 2) return "";
   const t0 = historico[0].t;

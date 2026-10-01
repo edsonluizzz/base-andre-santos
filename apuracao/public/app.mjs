@@ -1,4 +1,4 @@
-import { fmtInt, fmtPct, fmtHora, fmtDelta, fmtPos, semContato, selecionarChapa, pontosSparkline } from "./util.mjs";
+import { fmtInt, fmtPct, fmtHora, fmtDelta, fmtPos, semContato, selecionarChapa, pontosSparkline, areaSparkline } from "./util.mjs";
 
 const ANDRE = "30777";
 const $ = (id) => document.getElementById(id);
@@ -122,7 +122,11 @@ function renderAndre(a) {
   chapa.textContent = fmtPos(a.posChapa, a.votos);
   $("andre-pos-geral").textContent = fmtPos(a.posGeral, a.votos);
   $("andre-pos-geral-txt").textContent = `no geral (${fmtInt(a.totalCandidatos)} candidatos)`;
-  $("andre-linha").setAttribute("points", pontosSparkline(a.historico, 400, 110));
+  const pontos = pontosSparkline(a.historico, 400, 110);
+  for (const g of document.querySelectorAll(".grafico")) {
+    g.querySelector(".linha").setAttribute("points", pontos);
+    g.querySelector(".area").setAttribute("points", areaSparkline(pontos, 110));
+  }
   $("andre-situacao").textContent = a.eleito ? "ELEITO" : a.situacao || "em apuração";
 }
 
@@ -130,9 +134,11 @@ function rodape(footer, c) {
   const item = (rotulo, valor, classe) => {
     const s = document.createElement("span");
     if (classe) s.className = classe;
+    const r = document.createElement("small");
+    r.textContent = rotulo;
     const b = document.createElement("b");
     b.textContent = valor;
-    s.append(`${rotulo} `, b);
+    s.append(r, b);
     return s;
   };
   const partes = [
@@ -286,9 +292,21 @@ function tique() {
   requestAnimationFrame(tique);
 }
 
+// Tema: escuro (padrão) ou claro. T alterna; a escolha fica guardada neste navegador.
+function lerTemaSalvo() {
+  try { return localStorage.getItem("tema"); } catch { return null; }
+}
+function aplicarTema(tema) {
+  document.documentElement.dataset.tema = tema === "claro" ? "claro" : "escuro";
+  try { localStorage.setItem("tema", document.documentElement.dataset.tema); } catch { /* navegação privada */ }
+}
+aplicarTema(new URLSearchParams(location.search).get("tema") ?? lerTemaSalvo() ?? "escuro");
+
 addEventListener("keydown", (ev) => {
   const k = ev.key.toLowerCase();
-  if (k === "f") {
+  if (k === "t") {
+    aplicarTema(document.documentElement.dataset.tema === "claro" ? "escuro" : "claro");
+  } else if (k === "f") {
     if (document.fullscreenElement) document.exitFullscreen();
     else document.documentElement.requestFullscreen();
   } else if (k === "1" || k === "2") {

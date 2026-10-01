@@ -11,7 +11,8 @@ Roda só neste Mac; não depende do sistema em produção.
 3. Antes das 17h os números ficam zerados. A partir do início da totalização, a tela
    atualiza sozinha a cada minuto.
 
-Teclas: `1` tela principal · `2` André por município · `R` alternar sozinho · `F` tela cheia.
+Teclas: `1` tela principal · `2` André por município · `R` alternar sozinho · `F` tela cheia · `T` tema claro/escuro.
+O tema escolhido fica guardado; o escuro é o padrão (melhor em sala com pouca luz), o claro serve para sala iluminada ou projetor.
 Para sair do Chrome: `Cmd+Q`. Para encerrar o painel: feche a janela do Terminal.
 
 ## Para testar antes

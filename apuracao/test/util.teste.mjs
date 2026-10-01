@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { fmtInt, fmtPct, fmtDelta, fmtPos, semContato, selecionarChapa, pontosSparkline } from "../public/util.mjs";
+import { fmtInt, fmtPct, fmtDelta, fmtPos, semContato, selecionarChapa, pontosSparkline, areaSparkline } from "../public/util.mjs";
 
 test("formatação pt-BR", () => {
   assert.equal(fmtInt(38412), "38.412");
@@ -53,4 +53,9 @@ test("semContato: estado mais velho que 2,5 intervalos", () => {
   assert.equal(semContato(e, 150000), false);
   assert.equal(semContato(e, 151001), true);
   assert.equal(semContato(null, 5), false);
+});
+
+test("areaSparkline fecha a linha até a base do gráfico", () => {
+  assert.equal(areaSparkline("", 40), "");
+  assert.equal(areaSparkline("0.0,40.0 50.0,20.0 100.0,0.0", 40), "0.0,40 0.0,40.0 50.0,20.0 100.0,0.0 100.0,40");
 });
