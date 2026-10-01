@@ -141,7 +141,7 @@ function rodape(footer, c) {
     item(c.quocienteOficial ? "Quociente oficial" : "Quociente parcial", fmtInt(c.quociente)),
     item("Vagas", String(c.novo.vagasDiretas), "vagas"),
   ];
-  if (c.novo.faltamProxima != null) partes.push(item("Faltam p/ próxima", fmtInt(c.novo.faltamProxima)));
+  if (c.novo.faltamProxima != null) partes.push(item("Faltam p/ +1 vaga", fmtInt(c.novo.faltamProxima)));
   footer.replaceChildren(...partes);
 }
 
