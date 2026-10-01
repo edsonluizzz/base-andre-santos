@@ -1,0 +1,11 @@
+<!doctype html>
+<html lang="pt-BR">
+<head><meta charset="utf-8"><title>Apuração Paraná 2026</title></head>
+<body><pre id="saida">aguardando…</pre>
+<script>
+  new EventSource("/events").onmessage = (ev) => {
+    document.getElementById("saida").textContent = JSON.stringify(JSON.parse(ev.data), null, 1);
+  };
+</script>
+</body>
+</html>
