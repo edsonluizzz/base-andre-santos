@@ -68,7 +68,11 @@ export function criarServidor({
         agora, proximaBuscaEm: agora + intervaloMs, simulacao, municipios,
       });
       if (estado.andre && estado.pr) {
-        store.registrar({ t: agora, votos: estado.andre.votos, secoesPct: estado.pr.secoesPct });
+        // Antes de a totalização começar tudo vem zerado; gravar esses pontos
+        // esticaria o eixo do gráfico de evolução para dias antes da apuração.
+        if (estado.andre.votos > 0 || estado.pr.secoesPct > 0) {
+          store.registrar({ t: agora, votos: estado.andre.votos, secoesPct: estado.pr.secoesPct });
+        }
         estado.andre.historico = store.historico();
       }
       store.salvarEstado(estado);

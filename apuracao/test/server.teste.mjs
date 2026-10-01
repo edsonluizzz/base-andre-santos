@@ -6,6 +6,7 @@ import { join } from "node:path";
 import { criarServidor } from "../server.mjs";
 import { criarStore } from "../lib/store.mjs";
 import { CHAVES } from "../lib/estado.mjs";
+import { criarSimulador } from "../lib/simulador.mjs";
 import { fx } from "./fx.mjs";
 
 const brutosReais = () => Object.fromEntries(CHAVES.map((k) => [k, fx(`${k}.json`)]));
@@ -14,6 +15,7 @@ async function subir(opcoes) {
   const store = criarStore(mkdtempSync(join(tmpdir(), "apuracao-srv-")));
   const app = criarServidor({ store, ...opcoes });
   await new Promise((ok) => app.server.listen(0, "127.0.0.1", ok));
+  app.server.unref(); // um teste que falha antes de parar() não prende o processo
   const url = `http://127.0.0.1:${app.server.address().port}`;
   return { app, url, store };
 }
@@ -36,7 +38,25 @@ test("ciclo monta o estado, grava histórico e serve em /api/state", async () =>
   assert.equal(e.proximaBuscaEm, 65000);
   assert.equal(e.andre.nome, "ANDRÉ SANTOS");
   assert.equal(e.estadual.candidatos.length, 41);
-  assert.deepEqual(e.andre.historico, [{ t: 5000, votos: 0, secoesPct: 0 }]);
+  app.parar();
+});
+
+test("antes de a apuração começar (tudo zerado) nada entra no histórico", async () => {
+  const { app, store } = await subir({ obterBrutos: async () => ({ brutos: brutosReais(), erros: [] }) });
+  const e = await app.ciclo();
+  assert.deepEqual(e.andre.historico, []);
+  assert.equal(store.historico().length, 0);
+  app.parar();
+});
+
+test("com a apuração em andamento o ponto entra no histórico", async () => {
+  const sim = criarSimulador(brutosReais(), { passos: 10 });
+  const { app, store } = await subir({ obterBrutos: async () => ({ brutos: sim.proximo(), erros: [] }), relogio: () => 5000 });
+  const e = await app.ciclo();
+  assert.equal(e.andre.historico.length, 1);
+  assert.equal(e.andre.historico[0].t, 5000);
+  assert.equal(e.andre.historico[0].secoesPct, 10);
+  assert.ok(e.andre.historico[0].votos > 0);
   assert.equal(store.historico().length, 1);
   app.parar();
 });
