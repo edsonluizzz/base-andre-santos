@@ -6,7 +6,8 @@ import { fileURLToPath } from "node:url";
 import { parseCargo } from "./lib/parse.mjs";
 import { CHAVES, mesclarBlocos, montarEstado } from "./lib/estado.mjs";
 import { criarStore } from "./lib/store.mjs";
-import { baixarPrincipais } from "./lib/tse.mjs";
+import { baixarJson, baixarPrincipais, URL_ANDAMENTO, URL_MUNICIPIOS, urlMunicipio } from "./lib/tse.mjs";
+import { coletarMunicipios, parseListaMunicipios, resumirMunicipios } from "./lib/municipios.mjs";
 import { criarSimulador } from "./lib/simulador.mjs";
 
 const RAIZ = dirname(fileURLToPath(import.meta.url));
@@ -150,31 +151,47 @@ export function criarServidor({
   };
 }
 
-function principal() {
+async function principal() {
   const simular = process.argv.includes("--simular");
   const porta = Number(process.env.PORTA ?? 4310);
   const fixture = (nome) => JSON.parse(readFileSync(join(RAIZ, "test", "fixtures", nome), "utf8"));
+  const listaLocal = () => parseListaMunicipios(fixture("municipios-pr.json"));
   let opcoes;
 
   if (simular) {
     const dir = join(RAIZ, "data", "sim");
     rmSync(dir, { recursive: true, force: true });
     const sim = criarSimulador(Object.fromEntries(CHAVES.map((k) => [k, fixture(`${k}.json`)])));
+    const lista = listaLocal();
     opcoes = {
       store: criarStore(dir),
       simulacao: true,
       intervaloMs: 10000,
       intervaloMunMs: 20000,
       obterBrutos: async () => ({ brutos: sim.proximo(), erros: [] }),
+      obterMunicipios: async () => sim.municipios(lista, Date.now()),
     };
   } else {
+    let lista;
+    try {
+      lista = parseListaMunicipios(await baixarJson(URL_MUNICIPIOS));
+    } catch (e) {
+      console.error("[municípios] lista do TSE indisponível, usando a cópia local:", e.message);
+      lista = listaLocal();
+    }
     opcoes = {
       store: criarStore(join(RAIZ, "data", "real")),
       obterBrutos: () => baixarPrincipais(),
+      obterMunicipios: (anterior) =>
+        coletarMunicipios({
+          lista, anterior, agora: Date.now(),
+          baixarAndamento: () => baixarJson(URL_ANDAMENTO),
+          baixarMunicipio: (cd) => baixarJson(urlMunicipio(cd)),
+        }),
     };
   }
 
-  const app = criarServidor(opcoes);
+  const app = criarServidor({ ...opcoes, resumir: resumirMunicipios });
   app.server.listen(porta, "127.0.0.1", () => {
     console.log(`Painel de apuração em http://localhost:${porta}${simular ? "  (SIMULAÇÃO)" : ""}`);
     app.iniciar();

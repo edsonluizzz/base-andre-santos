@@ -192,6 +192,42 @@ function renderPresidente(p) {
   );
 }
 
+function renderMunicipios(m) {
+  $("mun").classList.toggle("vazio", !m);
+  if (!m) return;
+  $("mun-com-votos").textContent = fmtInt(m.comVotos);
+  $("mun-com-votos-txt").textContent = `de ${fmtInt(m.total)} municípios com voto`;
+  $("mun-atualizado").textContent = `municípios atualizados às ${fmtHora(m.atualizadoEm)}` +
+    (m.falhas ? ` · ${m.falhas} sem resposta` : "");
+  const max = Math.max(1, m.lista[0]?.votos ?? 0);
+  renderLista(
+    $("mun").querySelector(".lista"),
+    m.lista.map((x, i) => ({
+      k: x.cd, pos: i + 1, nome: x.nome, votos: x.votos, pct: x.pctValidos,
+      largura: (100 * x.votos) / max, vaga: true,
+      selo: `${fmtPct(x.secoesPct, 0)}% apurado`,
+    })),
+    montarLinha,
+  );
+}
+
+// Rotação: 40 s na tela principal, 20 s na de municípios. 1/2 fixam, R volta a alternar.
+let modo = "auto";
+let telaAtual = 1;
+let trocaEm = Date.now() + 40000;
+
+function mostrar(n) {
+  telaAtual = n;
+  $("tela-1").classList.toggle("ativa", n === 1);
+  $("tela-2").classList.toggle("ativa", n === 2);
+}
+
+function girar() {
+  if (modo !== "auto" || !estado?.municipios || Date.now() < trocaEm) return;
+  mostrar(telaAtual === 1 ? 2 : 1);
+  trocaEm = Date.now() + (telaAtual === 1 ? 40000 : 20000);
+}
+
 function render(e) {
   estado = e;
   $("tarja-sim").hidden = !e.simulacao;
@@ -213,6 +249,7 @@ function render(e) {
   renderMajor("gov", e.governador, 5);
   renderMajor("sen", e.senador, 6);
   renderPresidente(e.presidente);
+  renderMunicipios(e.municipios);
 }
 
 function tique() {
@@ -224,13 +261,21 @@ function tique() {
     $("anel-arco").style.strokeDashoffset = CIRCUNFERENCIA * (1 - resta / total);
     $("anel").classList.toggle("buscando", resta === 0);
   }
+  girar();
   requestAnimationFrame(tique);
 }
 
 addEventListener("keydown", (ev) => {
-  if (ev.key.toLowerCase() === "f") {
+  const k = ev.key.toLowerCase();
+  if (k === "f") {
     if (document.fullscreenElement) document.exitFullscreen();
     else document.documentElement.requestFullscreen();
+  } else if (k === "1" || k === "2") {
+    modo = "fixo";
+    mostrar(Number(k));
+  } else if (k === "r") {
+    modo = "auto";
+    trocaEm = Date.now() + 5000;
   }
 });
 
