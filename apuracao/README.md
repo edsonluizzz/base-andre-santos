@@ -20,6 +20,21 @@ Dois cliques em `apuracao/iniciar-simulacao.command`. Aparece uma tarja vermelha
 "SIMULAÇÃO — DADOS FICTÍCIOS": são números inventados sobre os candidatos reais,
 avançando a cada 10 segundos.
 
+### Ensaio com volume real: 1º turno de 2022
+
+Dois cliques em `apuracao/iniciar-simulacao-2022.command`. Reapresenta a apuração de 2022 com
+os **resultados oficiais do TSE** (860 candidatos a estadual, 600 a federal, 399 municípios,
+6 milhões de votos no PR e 118 milhões para presidente), em 10 minutos. Os totais finais são
+os oficiais; o ritmo em que os municípios "chegam" é inventado.
+
+Como o André não foi candidato em 2022, o destaque fica com o mais votado do NOVO a estadual
+naquele ano (João Bettega, 30123). Para trocar o candidato em destaque ou a duração:
+
+    node apuracao/server.mjs --simular-2022 --foco=30300 --passos=30   # 30 passos de 10 s
+
+Os dados ficam em `apuracao/dados-2022/pr-2022.json.gz`; `gerar.py` na mesma pasta mostra
+como foram montados a partir do Portal de Dados Abertos do TSE.
+
 ## Se algo der errado
 
 | O que aparece | O que fazer |

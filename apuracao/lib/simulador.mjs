@@ -8,7 +8,7 @@ const TOTAL_VOTOS = {
 };
 const ALVO_ANDRE = 38_000;
 
-function prng(seed) {
+export function prng(seed) {
   let s = seed >>> 0;
   return () => {
     s = (s + 0x6d2b79f5) | 0;

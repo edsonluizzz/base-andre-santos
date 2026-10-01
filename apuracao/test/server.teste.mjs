@@ -164,3 +164,14 @@ test("requisição com URL malformada não derruba o servidor", async () => {
   assert.equal((await fetch(`${url}/`)).status, 200);
   app.parar();
 });
+
+test("servidor aceita outro candidato em foco e rótulo de simulação", async () => {
+  const { app } = await subir({
+    obterBrutos: async () => ({ brutos: brutosReais(), erros: [] }),
+    foco: "30010", simulacao: "SIMULAÇÃO — TESTE",
+  });
+  const e = await app.ciclo();
+  assert.equal(e.andre.n, "30010");
+  assert.equal(e.simulacao, "SIMULAÇÃO — TESTE");
+  app.parar();
+});

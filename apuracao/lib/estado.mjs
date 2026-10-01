@@ -39,8 +39,8 @@ function chapa(bloco) {
 const majoritario = (bloco) =>
   bloco ? { vagas: bloco.vagas, secoesPct: bloco.secoesPct, candidatos: bloco.candidatos } : null;
 
-function andreDe(est, anterior) {
-  const c = est?.candidatos.find((x) => x.n === ANDRE);
+function andreDe(est, anterior, foco) {
+  const c = est?.candidatos.find((x) => x.n === foco);
   if (!c) return null;
   const ant = anterior?.andre;
   const delta = !ant ? 0 : c.votos === ant.votos ? ant.delta : c.votos - ant.votos;
@@ -60,7 +60,7 @@ function andreDe(est, anterior) {
 
 export function montarEstado({
   blocos, falhas = [], erros = [], anterior = null,
-  agora, proximaBuscaEm, simulacao = false, municipios = null,
+  agora, proximaBuscaEm, simulacao = false, municipios = null, foco = ANDRE,
 }) {
   const est = blocos.estadual;
   const ok = falhas.length === 0;
@@ -76,7 +76,7 @@ export function montarEstado({
     pr: est
       ? { secoesPct: est.secoesPct, comparecimentoPct: est.comparecimentoPct, tseGeradoEm: est.tseGeradoEm }
       : null,
-    andre: andreDe(est, anterior),
+    andre: andreDe(est, anterior, foco),
     estadual: chapa(est),
     federal: chapa(blocos.federal),
     governador: majoritario(blocos.governador),

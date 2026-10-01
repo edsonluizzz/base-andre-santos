@@ -110,6 +110,9 @@ function renderAndre(a) {
     return;
   }
   $("andre-nome").textContent = a.nome;
+  $("andre-numero").textContent = a.n;
+  $("mun-rotulo").textContent = `${a.nome} · ${a.n}`;
+  $("mun-titulo").textContent = `${a.nome} POR MUNICÍPIO · 15 MAIORES VOTAÇÕES`;
   animarNumero($("andre-votos"), a.votos);
   animarNumero($("mun-andre-votos"), a.votos);
   $("andre-delta").textContent = fmtDelta(a.delta);
@@ -252,6 +255,7 @@ function avisar() {
 function render(e) {
   estado = e;
   $("tarja-sim").hidden = !e.simulacao;
+  if (typeof e.simulacao === "string") $("tarja-sim").textContent = e.simulacao;
   avisar();
   $("ultima").textContent = e.pr ? `TSE gerou em ${e.pr.tseGeradoEm}` : "aguardando primeira leitura";
   if (e.pr) {
@@ -259,10 +263,11 @@ function render(e) {
     $("secoes-barra").style.width = `${e.pr.secoesPct}%`;
   }
   renderAndre(e.andre);
-  renderChapa("est", e.estadual, 10, ANDRE);
+  renderChapa("est", e.estadual, 10, e.andre?.n ?? ANDRE);
   renderChapa("fed", e.federal, 8, null);
   renderMajor("gov", e.governador, 5);
   renderMajor("sen", e.senador, 6);
+  if (e.senador) $("sen-titulo").textContent = `SENADOR · ${e.senador.vagas} ${e.senador.vagas === 1 ? "VAGA" : "VAGAS"}`;
   renderPresidente(e.presidente);
   renderMunicipios(e.municipios);
 }

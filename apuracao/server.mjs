@@ -9,6 +9,7 @@ import { criarStore } from "./lib/store.mjs";
 import { baixarJson, baixarPrincipais, URL_ANDAMENTO, URL_MUNICIPIOS, urlMunicipio } from "./lib/tse.mjs";
 import { coletarMunicipios, parseListaMunicipios, resumirMunicipios } from "./lib/municipios.mjs";
 import { criarSimulador } from "./lib/simulador.mjs";
+import { carregarDados2022, criarSimulador2022 } from "./lib/simulador2022.mjs";
 
 const RAIZ = dirname(fileURLToPath(import.meta.url));
 const PUBLICO = join(RAIZ, "public");
@@ -25,7 +26,7 @@ const MIME = {
 export function criarServidor({
   obterBrutos, obterMunicipios = null, store,
   intervaloMs = 60000, intervaloMunMs = 300000,
-  simulacao = false, relogio = Date.now, resumir = (m) => m,
+  simulacao = false, relogio = Date.now, resumir = (m) => m, foco,
 }) {
   let blocos = null;
   let estado = null;
@@ -66,7 +67,7 @@ export function criarServidor({
       blocos = m.blocos;
       estado = montarEstado({
         blocos, falhas: m.falhas, erros, anterior: estado,
-        agora, proximaBuscaEm: agora + intervaloMs, simulacao, municipios,
+        agora, proximaBuscaEm: agora + intervaloMs, simulacao, municipios, foco,
       });
       if (estado.andre && estado.pr) {
         // Antes de a totalização começar tudo vem zerado; gravar esses pontos
@@ -182,7 +183,25 @@ async function principal() {
   const listaLocal = () => parseListaMunicipios(fixture("municipios-pr.json"));
   let opcoes;
 
-  if (simular) {
+  if (process.argv.includes("--simular-2022")) {
+    // Reapresenta o 1º turno de 2022 com os resultados oficiais (volume real).
+    const arg = (nome, padrao) => process.argv.find((a) => a.startsWith(`--${nome}=`))?.split("=")[1] ?? padrao;
+    const foco = arg("foco", "30123"); // mais votado do NOVO a estadual em 2022
+    const dir = join(RAIZ, "data", "sim2022");
+    rmSync(dir, { recursive: true, force: true });
+    const sim = criarSimulador2022(carregarDados2022(join(RAIZ, "dados-2022", "pr-2022.json.gz")), {
+      passos: Number(arg("passos", 60)), foco,
+    });
+    opcoes = {
+      store: criarStore(dir),
+      simulacao: "SIMULAÇÃO — RESULTADO OFICIAL DE 2022 (1º TURNO) REAPRESENTADO",
+      foco,
+      intervaloMs: 10000,
+      intervaloMunMs: 20000,
+      obterBrutos: async () => ({ brutos: sim.proximo(), erros: [] }),
+      obterMunicipios: async () => sim.municipios(null, Date.now()),
+    };
+  } else if (simular) {
     const dir = join(RAIZ, "data", "sim");
     rmSync(dir, { recursive: true, force: true });
     const sim = criarSimulador(Object.fromEntries(CHAVES.map((k) => [k, fixture(`${k}.json`)])));
@@ -219,7 +238,7 @@ async function principal() {
     process.exit(1);
   });
   app.server.listen(porta, "127.0.0.1", () => {
-    console.log(`Painel de apuração em http://localhost:${porta}${simular ? "  (SIMULAÇÃO)" : ""}`);
+    console.log(`Painel de apuração em http://localhost:${porta}${opcoes.simulacao ? "  (SIMULAÇÃO)" : ""}`);
     app.iniciar();
   });
 }
