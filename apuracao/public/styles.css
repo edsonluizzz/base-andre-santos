@@ -1,0 +1,88 @@
+:root {
+  --fundo: #0b0f17; --cartao: #141a26; --borda: #232c3d;
+  --texto: #f2f5fa; --suave: #8b97ad; --laranja: #ff6a13; --verde: #2ecc71; --ambar: #f5b301;
+}
+* { box-sizing: border-box; margin: 0; }
+html, body { height: 100%; background: var(--fundo); overflow: hidden; }
+body { color: var(--texto); font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; font-variant-numeric: tabular-nums; }
+
+#palco { position: absolute; width: 1920px; height: 1080px; transform-origin: 0 0; padding: 24px 32px; display: flex; flex-direction: column; gap: 16px; }
+
+header { display: flex; align-items: center; gap: 40px; height: 84px; }
+h1 { font-size: 34px; font-weight: 300; letter-spacing: 3px; white-space: nowrap; }
+h1 b { font-weight: 800; color: var(--laranja); }
+.secoes { flex: 1; display: flex; align-items: center; gap: 20px; font-size: 24px; color: var(--suave); }
+.secoes b { color: var(--texto); font-size: 34px; }
+.trilho { flex: 1; height: 16px; border-radius: 8px; background: var(--borda); overflow: hidden; }
+#secoes-barra { height: 100%; width: 0; background: linear-gradient(90deg, var(--laranja), #ffb074); border-radius: 8px; transition: width 1.2s cubic-bezier(.2,.8,.2,1); }
+.relogio { display: flex; align-items: center; gap: 14px; position: relative; }
+#anel { width: 68px; height: 68px; transform: rotate(-90deg); }
+#anel circle { fill: none; stroke-width: 4; }
+#anel .fundo { stroke: var(--borda); }
+#anel-arco { stroke: var(--laranja); stroke-linecap: round; stroke-dasharray: 119.38; stroke-dashoffset: 0; }
+#anel.buscando { animation: pulsar .7s ease-in-out infinite; }
+#contagem { position: absolute; left: 0; width: 68px; text-align: center; font-size: 22px; font-weight: 700; }
+#hora { font-size: 30px; font-weight: 700; }
+small, .rotulo { font-size: 15px; color: var(--suave); letter-spacing: 1px; }
+
+#aviso { background: var(--ambar); color: #201800; font-size: 22px; font-weight: 700; padding: 8px 20px; border-radius: 10px; }
+#tarja-sim { position: fixed; left: 0; right: 0; top: 0; background: #d1001f; color: #fff; text-align: center; font-size: 15px; font-weight: 800; letter-spacing: 6px; line-height: 22px; z-index: 9; }
+
+.tela { flex: 1; min-height: 0; display: none; gap: 20px; }
+.tela.ativa { display: grid; animation: surgir .6s ease; }
+#tela-1 { grid-template-columns: 450px minmax(0, 1fr) 620px; }
+#tela-2 { grid-template-columns: 450px minmax(0, 1fr); }
+.coluna { display: flex; flex-direction: column; gap: 16px; min-height: 0; }
+.cartao { background: var(--cartao); border: 1px solid var(--borda); border-radius: 18px; padding: 14px 22px; min-height: 0; }
+.coluna .cartao { flex: 1 1 auto; }
+h3 { font-size: 17px; letter-spacing: 2px; color: var(--suave); font-weight: 700; margin-bottom: 8px; }
+h3 em { font-style: normal; font-weight: 400; }
+
+#andre, #mun-resumo { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px; border-color: var(--laranja); box-shadow: 0 0 60px -30px var(--laranja); }
+#andre h2 { font-size: 46px; font-weight: 800; margin-top: 6px; }
+.numero-urna { font-size: 30px; font-weight: 700; color: var(--laranja); letter-spacing: 6px; }
+.votos-grande { font-size: 118px; font-weight: 800; line-height: 1; margin-top: 18px; }
+.legenda-votos { font-size: 22px; color: var(--suave); }
+.delta { height: 34px; font-size: 28px; font-weight: 700; color: var(--verde); }
+.posicoes { display: flex; gap: 14px; width: 100%; margin: 14px 0; }
+.posicoes div { flex: 1; background: var(--fundo); border-radius: 12px; padding: 12px 6px; }
+.posicoes b { display: block; font-size: 52px; line-height: 1; }
+.posicoes span { font-size: 16px; color: var(--suave); }
+#andre-grafico { width: 100%; flex: 1; min-height: 110px; margin-top: 10px; }
+#andre-linha { fill: none; stroke: var(--laranja); stroke-width: 3; vector-effect: non-scaling-stroke; }
+.situacao { font-size: 22px; font-weight: 700; padding: 6px 18px; border-radius: 20px; background: var(--fundo); color: var(--suave); }
+.situacao.eleito { background: var(--verde); color: #04210f; }
+#andre.subiu { animation: subiu 1.6s ease; }
+
+.lista { list-style: none; padding: 0; }
+.lista li { display: grid; grid-template-columns: 40px minmax(0, 1fr) 70px 104px 76px 30px; align-items: center; gap: 10px; height: 38px; font-size: 21px; border-radius: 8px; padding: 0 6px; }
+.lista .pos { color: var(--suave); font-weight: 700; }
+.lista .nome { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lista .nome small { margin-left: 8px; }
+.lista .barra { height: 12px; background: var(--fundo); border-radius: 6px; overflow: hidden; }
+.lista .barra i { display: block; height: 100%; width: 0; background: #5b6b8a; border-radius: 6px; transition: width 1.2s cubic-bezier(.2,.8,.2,1); }
+.lista .votos, .lista .pct { text-align: right; font-weight: 700; }
+.lista .pct { color: var(--suave); font-weight: 400; }
+.lista .selo { color: var(--verde); font-weight: 800; white-space: nowrap; }
+.lista li.destaque { background: rgba(255,106,19,.16); }
+.lista li.destaque .barra i, .lista li.vaga .barra i { background: var(--laranja); }
+.lista li.destaque .nome { font-weight: 800; }
+.lista li.entrou { animation: surgir .6s ease; }
+#pres .lista li { grid-template-columns: 40px minmax(0, 1fr) 70px 76px 104px; }
+.chapa .lista li { grid-template-columns: 44px minmax(0, 1.2fr) minmax(0, 1fr) 110px 30px; height: 36px; }
+.chapa .lista .pct { display: none; }
+#pres .lista .votos { display: none; }
+#pres .lista .selo { color: var(--suave); font-weight: 400; font-size: 18px; text-align: right; }
+#mun .lista li { height: 54px; font-size: 26px; grid-template-columns: 50px minmax(0, 1.2fr) minmax(0, 1fr) 130px 110px 150px; }
+#mun .lista .selo { color: var(--suave); font-weight: 400; font-size: 18px; text-align: right; }
+
+.chapa footer { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; white-space: nowrap; margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--borda); font-size: 15px; color: var(--suave); }
+.chapa footer b { color: var(--texto); font-size: 19px; }
+.chapa footer .vagas b { color: var(--laranja); font-size: 26px; }
+.vazio .lista::before { content: "aguardando dados do TSE…"; color: var(--suave); font-size: 20px; }
+
+.piscou { animation: piscar 1.4s ease; }
+@keyframes piscar { 0% { color: var(--laranja); text-shadow: 0 0 18px var(--laranja); } 100% { text-shadow: none; } }
+@keyframes surgir { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes pulsar { 50% { opacity: .35; } }
+@keyframes subiu { 0%, 60% { box-shadow: 0 0 90px 0 var(--laranja); transform: scale(1.02); } 100% { transform: none; } }

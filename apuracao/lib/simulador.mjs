@@ -58,6 +58,11 @@ export function criarSimulador(bases, { passos = 30, seed = 2026 } = {}) {
     alvos[k] = new Map(cands.map((c, i) => [c.n, Math.round((TOTAL_VOTOS[k] * 0.9 * pesos[i]) / soma)]));
   }
   alvos.estadual?.set("30777", ALVO_ANDRE);
+  // Presidente no PR acompanha a proporção nacional, para a simulação ficar plausível.
+  if (alvos.presBr && alvos.presPr) {
+    const k = TOTAL_VOTOS.presPr / TOTAL_VOTOS.presBr;
+    for (const [n, v] of alvos.presBr) if (alvos.presPr.has(n)) alvos.presPr.set(n, Math.round(v * k));
+  }
   const pesosMun = Array.from({ length: 500 }, () => Math.pow(rand(), 3) + 0.001);
   let passo = 0;
 

@@ -1,11 +1,84 @@
 <!doctype html>
 <html lang="pt-BR">
-<head><meta charset="utf-8"><title>Apuração Paraná 2026</title></head>
-<body><pre id="saida">aguardando…</pre>
-<script>
-  new EventSource("/events").onmessage = (ev) => {
-    document.getElementById("saida").textContent = JSON.stringify(JSON.parse(ev.data), null, 1);
-  };
-</script>
+<head>
+  <meta charset="utf-8">
+  <title>Apuração Paraná 2026</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="palco">
+  <header>
+    <h1>APURAÇÃO <b>PARANÁ 2026</b></h1>
+    <div class="secoes">
+      <div class="trilho"><div id="secoes-barra"></div></div>
+      <span><b id="secoes-pct">0,00</b>% das seções totalizadas</span>
+    </div>
+    <div class="relogio">
+      <svg id="anel" viewBox="0 0 44 44">
+        <circle class="fundo" cx="22" cy="22" r="19"/>
+        <circle id="anel-arco" cx="22" cy="22" r="19"/>
+      </svg>
+      <span id="contagem">--</span>
+      <div><div id="hora">--:--:--</div><small id="ultima">aguardando primeira leitura</small></div>
+    </div>
+  </header>
+  <div id="aviso" hidden></div>
+
+  <main id="tela-1" class="tela ativa">
+    <section id="andre" class="cartao">
+      <small class="rotulo">DEPUTADO ESTADUAL · NOVO</small>
+      <h2 id="andre-nome">ANDRÉ SANTOS</h2>
+      <div class="numero-urna">30777</div>
+      <div id="andre-votos" class="votos-grande">0</div>
+      <div class="legenda-votos">votos</div>
+      <div id="andre-delta" class="delta"></div>
+      <div class="posicoes">
+        <div><b id="andre-pos-chapa">–</b><span>na chapa do NOVO</span></div>
+        <div><b id="andre-pos-geral">–</b><span id="andre-pos-geral-txt">no geral</span></div>
+      </div>
+      <svg id="andre-grafico" viewBox="0 0 400 110" preserveAspectRatio="none"><polyline id="andre-linha" points=""/></svg>
+      <small class="rotulo">evolução dos votos na noite</small>
+      <div id="andre-situacao" class="situacao">em apuração</div>
+    </section>
+
+    <div class="coluna">
+      <section id="est" class="cartao chapa">
+        <h3>CHAPA NOVO · DEPUTADO ESTADUAL</h3>
+        <ul class="lista"></ul>
+        <footer></footer>
+      </section>
+      <section id="fed" class="cartao chapa">
+        <h3>CHAPA NOVO · DEPUTADO FEDERAL</h3>
+        <ul class="lista"></ul>
+        <footer></footer>
+      </section>
+    </div>
+
+    <div class="coluna">
+      <section id="gov" class="cartao"><h3>GOVERNADOR</h3><ul class="lista"></ul></section>
+      <section id="sen" class="cartao"><h3>SENADOR · 2 VAGAS</h3><ul class="lista"></ul></section>
+      <section id="pres" class="cartao"><h3>PRESIDENTE · BRASIL <em>e no Paraná</em></h3><ul class="lista"></ul></section>
+    </div>
+  </main>
+
+  <main id="tela-2" class="tela">
+    <section class="cartao" id="mun-resumo">
+      <small class="rotulo">ANDRÉ SANTOS · 30777</small>
+      <div id="mun-andre-votos" class="votos-grande">0</div>
+      <div class="legenda-votos">votos</div>
+      <div class="posicoes">
+        <div><b id="mun-com-votos">–</b><span id="mun-com-votos-txt">municípios com voto</span></div>
+      </div>
+      <small id="mun-atualizado" class="rotulo"></small>
+    </section>
+    <section class="cartao" id="mun">
+      <h3>ANDRÉ POR MUNICÍPIO · 15 MAIORES VOTAÇÕES</h3>
+      <ul class="lista"></ul>
+    </section>
+  </main>
+</div>
+<div id="tarja-sim" hidden>SIMULAÇÃO — DADOS FICTÍCIOS</div>
+<script type="module" src="app.mjs"></script>
 </body>
 </html>
