@@ -9,6 +9,7 @@ import { criarStore } from "./lib/store.mjs";
 import { baixarJson, baixarPresidente, baixarPrincipais, URL_ANDAMENTO, URL_MUNICIPIOS, urlMunicipio } from "./lib/tse.mjs";
 import { coletarMunicipios, parseListaMunicipios, resumirMunicipios } from "./lib/municipios.mjs";
 import { criarSimulador } from "./lib/simulador.mjs";
+import { acharChrome, criarGeradorPdf } from "./lib/pdf.mjs";
 import { carregarDados2022, criarSimulador2022 } from "./lib/simulador2022.mjs";
 
 const RAIZ = dirname(fileURLToPath(import.meta.url));
@@ -26,7 +27,7 @@ const MIME = {
 export function criarServidor({
   obterBrutos, obterMunicipios = null, obterPresidente = null, store,
   intervaloMs = 60000, intervaloMunMs = 300000, intervaloPresMs = 30000,
-  simulacao = false, relogio = Date.now, resumir = (m) => m, foco,
+  simulacao = false, relogio = Date.now, resumir = (m) => m, foco, gerarPdf = null,
 }) {
   let blocos = null;
   let estado = null;
@@ -183,6 +184,34 @@ export function criarServidor({
       res.end(JSON.stringify(estado ?? { erro: "aguardando primeira leitura" }));
       return;
     }
+    if (caminho === "/api/municipios") {
+      // Lista completa (os 399), para o relatório; a tela usa só os 30 primeiros.
+      res.writeHead(municipiosCompleto ? 200 : 503, { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" });
+      res.end(JSON.stringify(municipiosCompleto ?? { erro: "municípios ainda não coletados" }));
+      return;
+    }
+    if (caminho === "/municipios.pdf") {
+      if (!gerarPdf) {
+        res.writeHead(501, { "content-type": "text/plain; charset=utf-8" });
+        res.end("Chrome não encontrado para gerar o PDF. Abra /municipios.html e use Cmd+P → Salvar como PDF.");
+        return;
+      }
+      const { port } = server.address();
+      const d = new Date(relogio());
+      const p2 = (n) => String(n).padStart(2, "0");
+      const nome = `votos-por-municipio-${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}-${p2(d.getHours())}${p2(d.getMinutes())}.pdf`;
+      gerarPdf(`http://127.0.0.1:${port}/municipios.html`)
+        .then((pdf) => {
+          res.writeHead(200, { "content-type": "application/pdf", "content-disposition": `attachment; filename="${nome}"`, "cache-control": "no-store" });
+          res.end(pdf);
+        })
+        .catch((e) => {
+          console.error("[pdf]", e?.message ?? e);
+          res.writeHead(500, { "content-type": "text/plain; charset=utf-8" });
+          res.end("Falha ao gerar o PDF. Abra /municipios.html e use Cmd+P → Salvar como PDF.");
+        });
+      return;
+    }
     if (caminho === "/events") {
       res.writeHead(200, { "content-type": "text/event-stream", "cache-control": "no-store", connection: "keep-alive" });
       if (estado) res.write(`data: ${JSON.stringify(estado)}\n\n`);
@@ -275,7 +304,8 @@ async function principal() {
     };
   }
 
-  const app = criarServidor({ ...opcoes, resumir: resumirMunicipios });
+  const chrome = acharChrome();
+  const app = criarServidor({ ...opcoes, resumir: resumirMunicipios, gerarPdf: chrome ? criarGeradorPdf(chrome) : null });
   app.server.on("error", (e) => {
     console.error(`Não foi possível abrir a porta ${porta}: ${e.message}`);
     process.exit(1);

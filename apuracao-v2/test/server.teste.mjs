@@ -208,3 +208,52 @@ test("V2: falha no ciclo de presidente mantém os números anteriores", async ()
   assert.equal(e.presidente.br.candidatos.length, 13);
   app.parar();
 });
+
+test("V2: /api/municipios devolve a lista completa, não só os 30 da tela", async () => {
+  const lista = Array.from({ length: 40 }, (_, i) => ({ cd: String(i), nome: `M${i}`, votos: 40 - i, validos: 100, pctValidos: 1, secoesPct: 50 }));
+  const { app, url } = await subir({
+    obterBrutos: async () => ({ brutos: brutosReais(), erros: [] }),
+    obterMunicipios: async () => ({ atualizadoEm: 9, comVotos: 40, total: 40, falhas: 0, lista }),
+    resumir: (m) => ({ ...m, lista: m.lista.slice(0, 30) }),
+  });
+  assert.equal((await fetch(`${url}/api/municipios`)).status, 503);
+  await app.ciclo();
+  await app.cicloMunicipios();
+  const r = await (await fetch(`${url}/api/municipios`)).json();
+  assert.equal(r.lista.length, 40);
+  assert.equal(r.atualizadoEm, 9);
+  app.parar();
+});
+
+test("V2: /municipios.pdf entrega o PDF gerado a partir da página de relatório", async () => {
+  let pedido;
+  const { app, url } = await subir({
+    obterBrutos: async () => ({ brutos: brutosReais(), erros: [] }),
+    gerarPdf: async (endereco) => { pedido = endereco; return Buffer.from("%PDF-1.4 teste"); },
+  });
+  const r = await fetch(`${url}/municipios.pdf`);
+  assert.equal(r.status, 200);
+  assert.match(r.headers.get("content-type"), /application\/pdf/);
+  assert.match(r.headers.get("content-disposition"), /attachment; filename="votos-por-municipio-\d{4}-\d{2}-\d{2}-\d{4}\.pdf"/);
+  assert.equal(await r.text(), "%PDF-1.4 teste");
+  assert.match(pedido, /\/municipios\.html$/);
+  app.parar();
+});
+
+test("V2: sem Chrome para gerar o PDF, explica e aponta a página de relatório", async () => {
+  const { app, url } = await subir({ obterBrutos: async () => ({ brutos: brutosReais(), erros: [] }) });
+  const r = await fetch(`${url}/municipios.pdf`);
+  assert.equal(r.status, 501);
+  assert.match(await r.text(), /municipios\.html/);
+  app.parar();
+});
+
+test("V2: falha do gerador de PDF vira erro 500 sem derrubar o servidor", async () => {
+  const { app, url } = await subir({
+    obterBrutos: async () => ({ brutos: brutosReais(), erros: [] }),
+    gerarPdf: async () => { throw new Error("chrome travou"); },
+  });
+  assert.equal((await fetch(`${url}/municipios.pdf`)).status, 500);
+  assert.equal((await fetch(`${url}/`)).status, 200);
+  app.parar();
+});

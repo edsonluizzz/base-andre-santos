@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>Votos por município</title>
+  <link rel="icon" href="data:,">
+  <style>
+    @page { size: A4; margin: 14mm 12mm; }
+    * { box-sizing: border-box; }
+    body { font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; color: #131a26; margin: 0; font-size: 10.5pt; font-variant-numeric: tabular-nums; }
+    h1 { font-size: 17pt; margin: 0 0 2px; }
+    h1 span { color: #e85400; }
+    .sub { color: #57647a; margin-bottom: 10px; }
+    .resumo { display: flex; gap: 8px; margin: 8px 0 12px; }
+    .resumo div { flex: 1; border: 1px solid #d5dce7; border-radius: 6px; padding: 6px 10px; }
+    .resumo small { display: block; color: #57647a; font-size: 8pt; }
+    .resumo b { font-size: 14pt; }
+    table { width: 100%; border-collapse: collapse; }
+    thead { display: table-header-group; }
+    tfoot { display: table-row-group; }
+    th { text-align: left; font-size: 8.5pt; color: #57647a; border-bottom: 1.5px solid #131a26; padding: 4px 6px; }
+    td { padding: 3px 6px; border-bottom: 1px solid #e6eaf0; }
+    tr { break-inside: avoid; }
+    tbody tr:nth-child(even) td { background: #f5f7fa; }
+    .n { text-align: right; }
+    .zero td { color: #8b97ad; }
+    tfoot td { font-weight: 700; border-top: 1.5px solid #131a26; border-bottom: none; }
+    .nota { margin-top: 10px; color: #57647a; font-size: 8pt; }
+    #carregando { color: #57647a; }
+  </style>
+</head>
+<body>
+  <h1>Votos por município · <span id="nome">—</span></h1>
+  <div class="sub" id="sub">Deputado Estadual · Paraná 2026</div>
+  <div class="resumo">
+    <div><small>Votos totais (TSE, estado)</small><b id="total">—</b></div>
+    <div><small>Municípios com voto</small><b id="com-votos">—</b></div>
+    <div><small>Seções totalizadas no PR</small><b id="secoes">—</b></div>
+    <div><small>Municípios atualizados às</small><b id="hora">—</b></div>
+  </div>
+  <p id="carregando">Carregando dados do painel…</p>
+  <table hidden>
+    <thead><tr><th>#</th><th>Município</th><th class="n">Votos</th><th class="n">% dos válidos no município</th><th class="n">% apurado</th></tr></thead>
+    <tbody></tbody>
+    <tfoot><tr><td></td><td>Soma dos municípios</td><td class="n" id="soma"></td><td></td><td></td></tr></tfoot>
+  </table>
+  <p class="nota" id="nota"></p>
+  <script type="module" src="municipios.mjs"></script>
+</body>
+</html>

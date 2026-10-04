@@ -167,3 +167,10 @@ h3 em { font-style: normal; font-weight: 400; }
 .grade-eleitos li.destaque { background: color-mix(in srgb, var(--laranja) 20%, transparent); box-shadow: inset 4px 0 0 var(--laranja); }
 #tela-4 h3 { display: flex; justify-content: space-between; font-size: 20px; }
 #tela-4 h3 em { color: var(--laranja); font-size: 20px; font-weight: 800; }
+#tela-4 { position: relative; }
+#eleitos-espera { position: absolute; inset: 0; z-index: 2; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; text-align: center; background: color-mix(in srgb, var(--fundo) 88%, transparent); border-radius: 18px; }
+#eleitos-espera[hidden] { display: none; }
+#eleitos-espera h2 { font-size: 52px; font-weight: 800; }
+#eleitos-espera p { font-size: 28px; color: var(--suave); }
+#eleitos-espera p b { color: var(--laranja); font-size: 34px; }
+#eleitos-espera small { font-size: 18px; }

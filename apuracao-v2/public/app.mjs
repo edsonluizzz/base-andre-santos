@@ -271,7 +271,15 @@ function renderPresidenteTela(e) {
 }
 
 // Tela 4: todos os eleitos a deputado, de todos os partidos (só quando o TSE marcar).
+// Até lá, explica por que está vazia em vez de mostrar uma grade em branco.
 function renderEleitos(e) {
+  const nenhum = !(e.eleitos?.estadual?.length || e.eleitos?.federal?.length);
+  const espera = $("eleitos-espera");
+  espera.hidden = !nenhum;
+  if (nenhum) {
+    espera.querySelector("b").textContent = e.pr ? `${fmtPct(e.pr.secoesPct)}%` : "—";
+    espera.querySelector("small").textContent = e.pr ? `arquivo do TSE gerado em ${e.pr.tseGeradoEm}` : "";
+  }
   for (const [id, lista, vagas] of [["eleitos-est", e.eleitos?.estadual ?? [], 54], ["eleitos-fed", e.eleitos?.federal ?? [], 30]]) {
     const sec = $(id);
     sec.querySelector(".eleitos-conta").textContent = `${lista.length} de ${vagas}`;
@@ -401,6 +409,8 @@ addEventListener("keydown", (ev) => {
   } else if (["1", "2", "3", "4"].includes(k)) {
     modo = "fixo";
     mostrar(Number(k));
+  } else if (k === "p") {
+    window.open("/municipios.pdf", "_blank");
   } else if (k === "r") {
     modo = "auto";
     trocaEm = Date.now() + 5000;
