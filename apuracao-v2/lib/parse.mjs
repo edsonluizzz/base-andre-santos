@@ -21,7 +21,9 @@ export function parseCargo(json) {
     for (const par of agr.par ?? []) {
       const nominais = num(par.tvtn);
       const legenda = num(par.tvtl);
-      partidos.push({ sg: par.sg, nominais, legenda, total: nominais + legenda });
+      // Federação concorre como um partido só: o agrupamento do TSE (agr) identifica a entidade.
+      const entidade = agr.n ?? par.sg;
+      partidos.push({ sg: par.sg, nominais, legenda, total: nominais + legenda, entidade });
       for (const c of par.cand ?? []) {
         const situacao = c.st ?? "";
         candidatos.push({
@@ -33,6 +35,8 @@ export function parseCargo(json) {
           situacao,
           // "e":"s" também marca quem vai ao 2º turno; isso não é eleito.
           eleito: c.e === "s" && !/turno/i.test(situacao),
+          entidade,
+          valido: !c.dvt || /^válido/i.test(c.dvt),
         });
       }
     }

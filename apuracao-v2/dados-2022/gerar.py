@@ -55,7 +55,9 @@ def montar(linhas_cand, linhas_det, linhas_part, chave_local, nome_local, cargos
             continue
         n = l["NR_CANDIDATO"]
         st, e = situacao(l["DS_SIT_TOT_TURNO"])
-        cands[cargo].setdefault(n, {"n": n, "nome": l["NM_URNA_CANDIDATO"], "partido": l["SG_PARTIDO"], "st": st, "e": e})
+        fed = l.get("SG_FEDERACAO", "#NULO#")
+        cands[cargo].setdefault(n, {"n": n, "nome": l["NM_URNA_CANDIDATO"], "partido": l["SG_PARTIDO"], "st": st, "e": e,
+                                    **({"federacao": fed} if fed and not fed.startswith("#") else {})})
         votos[cargo][l[chave_local]][n] += int(l["QT_VOTOS_NOMINAIS_VALIDOS"])
 
     legenda = defaultdict(lambda: defaultdict(lambda: defaultdict(int)))  # cargo -> cd -> partido -> votos

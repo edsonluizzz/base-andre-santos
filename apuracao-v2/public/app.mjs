@@ -1,4 +1,4 @@
-import { fmtInt, fmtPct, fmtHora, fmtDelta, fmtPos, semContato, selecionarLinhas, seloSituacao, pontosSparkline, areaSparkline } from "./util.mjs";
+import { fmtInt, fmtPct, fmtHora, fmtDelta, fmtPos, semContato, selecionarLinhas, seloSituacao, seloProjecao, pontosSparkline, areaSparkline } from "./util.mjs";
 
 const ANDRE = "30777";
 const $ = (id) => document.getElementById(id);
@@ -103,7 +103,7 @@ function montarLinha(li, d) {
   li.querySelector(".pct").textContent = d.pct == null ? "" : `${fmtPct(d.pct)}%`;
   const selo = li.querySelector(".selo");
   selo.textContent = d.selo ?? "";
-  selo.dataset.tipo = /^ELEITO/.test(d.selo ?? "") ? "eleito" : d.selo === "SUPLENTE" ? "suplente" : d.selo === "2º TURNO" ? "turno" : "";
+  selo.dataset.tipo = /^PROJ/.test(d.selo ?? "") ? "proj" : /^ELEITO/.test(d.selo ?? "") ? "eleito" : d.selo === "SUPLENTE" ? "suplente" : d.selo === "2º TURNO" ? "turno" : "";
   li.classList.toggle("destaque", !!d.destaque);
   li.classList.toggle("vaga", !!d.vaga);
 }
@@ -149,11 +149,11 @@ function rodape(footer, c) {
   const partes = [
     item("Legenda", fmtInt(c.novo.legenda)),
     item("Total", fmtInt(c.novo.total)),
-    item(c.quocienteOficial ? "Quociente oficial" : "Quociente parcial", fmtInt(c.quociente)),
+    item(c.quocienteOficial ? "QE oficial" : "QE parcial", fmtInt(c.quociente)),
     item("Vagas", String(c.novo.vagasDiretas), "vagas"),
   ];
-  if (c.novo.faltamProxima != null) partes.push(item("Faltam p/ +1 vaga", fmtInt(c.novo.faltamProxima)));
-  if (c.novo.eleitos > 0) partes.push(item("Eleitos NOVO", String(c.novo.eleitos), "eleitos"));
+  if (c.novo.faltamProxima != null) partes.push(item("Faltam +1 vaga", fmtInt(c.novo.faltamProxima)));
+  if (c.novo.eleitos > 0) partes.push(item(c.novo.eleitosProjecao ? "Eleitos (proj.)" : "Eleitos NOVO", String(c.novo.eleitos), "eleitos"));
   footer.replaceChildren(...partes);
 }
 
@@ -168,7 +168,7 @@ function renderChapa(id, c, limite, fixo) {
     linhas.map((x) => ({
       k: x.n, pos: x.pos, nome: x.nome, sub: x.n, votos: x.votos, pct: null,
       largura: (100 * x.votos) / max, destaque: x.n === fixo,
-      selo: seloSituacao(x.situacao, x.eleito),
+      selo: seloSituacao(x.situacao, x.eleito) || seloProjecao(x.projecao),
     })),
     montarLinha,
   );
@@ -186,7 +186,7 @@ function renderMajor(id, m, limite) {
     linhas.map((x, i) => ({
       k: x.n, pos: i + 1, nome: x.nome, sub: x.partido, votos: x.votos, pct: x.pct,
       largura: (100 * x.votos) / max, vaga: i < m.vagas && x.votos > 0,
-      selo: seloSituacao(x.situacao, x.eleito),
+      selo: seloSituacao(x.situacao, x.eleito) || seloProjecao(x.projecao),
     })),
     montarLinha,
   );
@@ -247,7 +247,7 @@ function renderPresidenteTela(e) {
         k: x.n, pos: i + 1, nome: x.nome, sub: x.partido, votos: x.votos, pct: x.pct,
         largura: (100 * x.votos) / max, vaga: i === 0 && x.votos > 0,
         destaque: x.partido === "NOVO",
-        selo: seloSituacao(x.situacao, x.eleito),
+        selo: seloSituacao(x.situacao, x.eleito) || seloProjecao(x.projecao),
       })),
       montarLinha,
     );
@@ -282,7 +282,10 @@ function renderEleitos(e) {
   }
   for (const [id, lista, vagas] of [["eleitos-est", e.eleitos?.estadual ?? [], 54], ["eleitos-fed", e.eleitos?.federal ?? [], 30]]) {
     const sec = $(id);
-    sec.querySelector(".eleitos-conta").textContent = `${lista.length} de ${vagas}`;
+    sec.querySelector(".eleitos-titulo").textContent = e.eleitos?.projecao ? "PROJEÇÃO DE ELEITOS" : "ELEITOS";
+    sec.querySelector(".eleitos-conta").textContent = e.eleitos?.projecao && e.pr
+      ? `${lista.length} de ${vagas} · ${fmtPct(e.pr.secoesPct)}% apurado`
+      : `${lista.length} de ${vagas}`;
     const ol = sec.querySelector("ol");
     ol.replaceChildren(...lista.map((c, i) => {
       const li = document.createElement("li");

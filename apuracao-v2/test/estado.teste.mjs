@@ -26,7 +26,7 @@ test("estado com os arquivos zerados de 2026", () => {
   assert.equal(e.estadual.candidatos.length, 41);
   assert.equal(e.federal.candidatos.length, 31);
   assert.equal(e.estadual.quociente, 0);
-  assert.deepEqual(e.estadual.novo, { nominais: 0, legenda: 0, total: 0, vagasDiretas: 0, faltamProxima: null, eleitos: 0 });
+  assert.deepEqual(e.estadual.novo, { nominais: 0, legenda: 0, total: 0, vagasDiretas: 0, faltamProxima: null, eleitos: 0, eleitosProjecao: false });
   assert.equal(e.senador.vagas, 2);
   assert.equal(e.presidente.br.candidatos.length, 13);
   assert.equal(e.presidente.pr.candidatos.length, 13);
@@ -121,5 +121,42 @@ test("V2: presidente traz comparecimento, válidos, brancos e nulos", () => {
 
 test("V2: sem bloco estadual a lista de eleitos fica vazia", () => {
   const e = montarEstado({ ...base, blocos: { ...blocosReais(), estadual: null }, falhas: ["estadual"] });
-  assert.deepEqual(e.eleitos, { estadual: [], federal: [] });
+  assert.deepEqual(e.eleitos, { estadual: [], federal: [], projecao: false });
+});
+
+test("V2: sem eleitos oficiais, projeta pelo que já foi apurado e marca como projeção", () => {
+  const blocos = blocosReais();
+  // Dá votos a todos: o NOVO com muito voto garante cadeiras na projeção
+  const votos = {};
+  blocos.estadual.candidatos.forEach((c, i) => { votos[c.n] = c.partido === "NOVO" ? 200000 - i : 1000 + i; });
+  const est = comVotos(blocos.estadual, votos);
+  const totalPorPartido = new Map();
+  for (const c of est.candidatos) totalPorPartido.set(c.partido, (totalPorPartido.get(c.partido) ?? 0) + c.votos);
+  est.partidos = est.partidos.map((p) => ({ ...p, nominais: totalPorPartido.get(p.sg) ?? 0, total: totalPorPartido.get(p.sg) ?? 0 }));
+  est.validos = [...totalPorPartido.values()].reduce((a, b) => a + b, 0);
+  blocos.estadual = est;
+  blocos.governador = comVotos(blocos.governador, Object.fromEntries(blocos.governador.candidatos.map((c, i) => [c.n, i === 0 ? 2000 : 100])));
+  blocos.governador.validos = 2000 + 100 * (blocos.governador.candidatos.length - 1); // 74%: maioria absoluta
+  const e = montarEstado({ ...base, blocos, falhas: [] });
+  assert.equal(e.eleitos.projecao, true);
+  assert.equal(e.eleitos.estadual.length, 54);
+  assert.match(e.eleitos.estadual[0].situacao, /^Projeção/);
+  assert.ok(e.estadual.novo.eleitos > 0);
+  assert.equal(e.estadual.novo.eleitosProjecao, true);
+  assert.ok(["QP", "MÉDIA"].includes(e.estadual.candidatos[0].projecao));
+  assert.equal(e.governador.candidatos[0].projecao, "ELEITO");
+  assert.equal(e.governador.candidatos[1].projecao, null);
+  assert.equal(e.presidente.pr.candidatos[0].projecao ?? null, null);
+});
+
+test("V2: com eleitos oficiais, não projeta", () => {
+  const blocos = blocosReais();
+  const novo = blocos.estadual.candidatos.find((c) => c.partido === "NOVO");
+  blocos.estadual = comEleitos(comVotos(blocos.estadual, { [novo.n]: 500 }), [novo.n]);
+  blocos.estadual.validos = 1000;
+  const e = montarEstado({ ...base, blocos, falhas: [] });
+  assert.equal(e.eleitos.projecao, false);
+  assert.deepEqual(e.eleitos.estadual.map((c) => c.n), [novo.n]);
+  assert.equal(e.estadual.novo.eleitosProjecao, false);
+  assert.equal(e.estadual.candidatos.find((c) => c.n === novo.n).projecao, null);
 });

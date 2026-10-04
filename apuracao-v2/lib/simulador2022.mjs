@@ -57,6 +57,14 @@ function montar(chave, cargo, locais, fracoes, final) {
       st: final ? c.st : "", e: final ? c.e : "n",
     });
   });
+  // Partidos de uma federação ficam no mesmo agrupamento (agr), como no arquivo real do TSE.
+  const federacaoDe = new Map(cargo.candidatos.filter((c) => c.federacao).map((c) => [c.partido, c.federacao]));
+  const agrs = new Map();
+  for (const p of porPartido.values()) {
+    const chave = federacaoDe.get(p.sg) ?? p.sg;
+    if (!agrs.has(chave)) agrs.set(chave, { n: chave, tp: federacaoDe.has(p.sg) ? "f" : "i", par: [] });
+    agrs.get(chave).par.push({ ...p, tvtn: String(p.tvtn) });
+  }
   const agora = new Date();
   return {
     dg: agora.toLocaleDateString("pt-BR"),
@@ -66,7 +74,7 @@ function montar(chave, cargo, locais, fracoes, final) {
     v: { vv: String(validos) },
     carg: [{
       cd: CD_CARGO[chave], nv: String(cargo.vagas), qe: "0",
-      agr: [{ par: [...porPartido.values()].map((p) => ({ ...p, tvtn: String(p.tvtn) })) }],
+      agr: [...agrs.values()],
     }],
   };
 }

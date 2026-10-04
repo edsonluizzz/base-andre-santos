@@ -174,3 +174,7 @@ h3 em { font-style: normal; font-weight: 400; }
 #eleitos-espera p { font-size: 28px; color: var(--suave); }
 #eleitos-espera p b { color: var(--laranja); font-size: 34px; }
 #eleitos-espera small { font-size: 18px; }
+.lista .selo[data-tipo="proj"] { background: none; color: var(--verde); box-shadow: inset 0 0 0 2px var(--verde); }
+#tela-4 h3 em { font-size: 16px; }
+#tela-4 h3 { white-space: nowrap; font-size: 18px; gap: 12px; }
+#tela-4 h3 > span { overflow: hidden; text-overflow: ellipsis; }

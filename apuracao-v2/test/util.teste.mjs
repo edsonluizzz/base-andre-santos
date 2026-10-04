@@ -84,3 +84,12 @@ test("V2: eleitos e o fixo entram na lista mesmo fora do topo", async () => {
   assert.equal(selecionarLinhas(todos, 5, "18").length, 5);
   assert.ok(selecionarLinhas(todos, 5, "18").some((c) => c.n === "18"));
 });
+
+test("V2: selo de projeção", async () => {
+  const { seloProjecao } = await import("../public/util.mjs");
+  assert.equal(seloProjecao("QP"), "PROJ. QP");
+  assert.equal(seloProjecao("MÉDIA"), "PROJ. MÉDIA");
+  assert.equal(seloProjecao("ELEITO"), "PROJ. ELEITO");
+  assert.equal(seloProjecao("2º TURNO"), "PROJ. 2º T");
+  assert.equal(seloProjecao(null), "");
+});

@@ -43,8 +43,10 @@ test("votos só crescem e o último passo fecha exatamente no resultado final", 
   assert.equal(est.validos, 4000);
   assert.equal(est.comparecimentoPct, 81.82);
   assert.deepEqual(est.candidatos.map((c) => [c.n, c.votos]), [["30123", 2000], ["13000", 1750], ["30456", 100]]);
-  assert.deepEqual(est.candidatos[0], { n: "30123", nome: "FULANO", partido: "NOVO", votos: 2000, pct: 50, situacao: "Eleito por QP", eleito: true });
-  assert.deepEqual(est.partidos.find((p) => p.sg === "NOVO"), { sg: "NOVO", nominais: 2100, legenda: 110, total: 2210 });
+  const { entidade: _e, valido: _v, ...primeiro } = est.candidatos[0];
+  assert.deepEqual(primeiro, { n: "30123", nome: "FULANO", partido: "NOVO", votos: 2000, pct: 50, situacao: "Eleito por QP", eleito: true });
+  const { entidade: _en, ...novo } = est.partidos.find((p) => p.sg === "NOVO");
+  assert.deepEqual(novo, { sg: "NOVO", nominais: 2100, legenda: 110, total: 2210 });
   assert.equal(est.vagas, 2);
   for (const k of CHAVES) assert.ok(parseCargo(ultimo[k]).candidatos.length === 3, k);
 });

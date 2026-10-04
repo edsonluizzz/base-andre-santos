@@ -15,7 +15,10 @@ test("num e pct convertem texto do TSE", () => {
 test("Curitiba 2024: votos reais, ordenação e 2º turno não é eleito", () => {
   const b = parseCargo(fx("curitiba-2024.json"));
   assert.equal(b.candidatos.length, 10);
-  assert.deepEqual(b.candidatos[0], {
+  const { entidade, valido, ...primeiro } = b.candidatos[0];
+  assert.equal(entidade, "160001705299");
+  assert.equal(valido, true);
+  assert.deepEqual(primeiro, {
     n: "55", nome: "EDUARDO PIMENTEL", partido: "PSD",
     votos: 313347, pct: 33.51, situacao: "2º turno", eleito: false,
   });
@@ -35,8 +38,9 @@ test("Dep. Estadual PR 2026: 592 candidatos, 54 vagas, André presente", () => {
   const andre = b.candidatos.find((c) => c.n === "30777");
   assert.equal(andre.nome, "ANDRÉ SANTOS");
   assert.equal(andre.votos, 0);
-  assert.deepEqual(b.partidos.find((p) => p.sg === "NOVO"),
-    { sg: "NOVO", nominais: 0, legenda: 0, total: 0 });
+  const { entidade, ...novo } = b.partidos.find((p) => p.sg === "NOVO");
+  assert.ok(entidade);
+  assert.deepEqual(novo, { sg: "NOVO", nominais: 0, legenda: 0, total: 0 });
 });
 
 test("demais cargos de 2026 são lidos", () => {

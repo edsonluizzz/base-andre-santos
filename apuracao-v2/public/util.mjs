@@ -66,6 +66,11 @@ export function selecionarLinhas(candidatos, limite, fixo) {
   return topo.sort((a, b) => ordem.get(a) - ordem.get(b));
 }
 
+// Selo de projeção (não oficial): o TSE ainda não declarou os eleitos do cargo.
+export function seloProjecao(via) {
+  return { QP: "PROJ. QP", "MÉDIA": "PROJ. MÉDIA", ELEITO: "PROJ. ELEITO", "2º TURNO": "PROJ. 2º T" }[via] ?? "";
+}
+
 export function pontosSparkline(historico, largura, altura) {
   if (historico.length < 2) return "";
   const t0 = historico[0].t;
