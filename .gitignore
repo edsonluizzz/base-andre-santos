@@ -63,3 +63,4 @@ temporaria/*.csv
 
 # painel de apuração: histórico local
 apuracao/data/
+apuracao-v2/data/
