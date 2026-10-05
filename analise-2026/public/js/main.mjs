@@ -4,10 +4,12 @@ import { escreverRota, lerRota } from "./rota.mjs";
 import { esconderDica } from "./dica.mjs";
 import * as panorama from "./telas/panorama.mjs";
 import * as andre from "./telas/andre.mjs";
+import * as custo from "./telas/custo.mjs";
 
 const TELAS = [
   { id: "panorama", nome: "Panorama", mod: panorama },
   { id: "andre", nome: "Votos do André", mod: andre },
+  { id: "custo", nome: "Custo do voto", mod: custo },
 ];
 
 let erros = 0;

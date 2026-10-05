@@ -22,7 +22,7 @@ FALHOU=0
 for rota in "${ROTAS[@]}"; do
   url="http://localhost:$PORTA/#$rota"
   nome=$(echo "$rota" | tr '?&=' '___')
-  opts=(--headless=new --disable-gpu --no-sandbox --no-first-run --disable-background-networking --disable-component-update
+  opts=(--headless=new --disable-gpu --no-sandbox --no-first-run --disable-background-networking --disable-component-update --force-prefers-reduced-motion
         --hide-scrollbars --window-size=1600,1100 --virtual-time-budget=8000 --user-data-dir="$SAIDA/perfil")
   # Nesta máquina o Chrome headless entrega o resultado mas nem sempre encerra: limite de 15 s por chamada.
   limite "$CHROME" "${opts[@]}" --dump-dom "$url" > "$SAIDA/$nome.html" 2>/dev/null

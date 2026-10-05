@@ -72,3 +72,4 @@ footer { color: var(--suave); font-size: 12px; padding: 0 24px 24px; line-height
   header, main { padding-left: 16px; padding-right: 16px; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+.empilhada .trilho span { display: block; height: 100%; }
