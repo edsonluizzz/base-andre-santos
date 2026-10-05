@@ -19,6 +19,10 @@ function nowBRT() {
   return new Date(Date.now() - 3 * 60 * 60 * 1000);
 }
 
+// Campanhas cuja agenda diária (Telegram + WhatsApp) está desligada.
+// André Santos: campanha encerrada em 2026-10-05. Remova o id para reativar.
+const AGENDA_DISABLED_CAMPAIGNS = new Set<string>(["andre-santos-2026"]);
+
 // Itera todas as campanhas ativas que tenham Telegram configurado.
 export async function GET(req: NextRequest) {
   const secret = req.headers.get("authorization")?.replace("Bearer ", "");
@@ -43,6 +47,10 @@ export async function GET(req: NextRequest) {
   const summary: Array<{ campaignId: string; sent: boolean; events: number; reason?: string }> = [];
 
   for (const camp of campaigns) {
+    if (AGENDA_DISABLED_CAMPAIGNS.has(camp.id)) {
+      summary.push({ campaignId: camp.id, sent: false, events: 0, reason: "agenda desativada" });
+      continue;
+    }
     try {
       const { db } = getCampaignContext({ user: { campaignId: camp.id, dbUrl: camp.dbUrl ?? undefined } });
 
