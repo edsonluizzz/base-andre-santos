@@ -1,6 +1,6 @@
 # Análise da eleição 2026 PR — design
 
-Data: 2026-10-05 · Status: desenho aprovado em conversa, spec aguardando revisão · Plano: (a escrever)
+Data: 2026-10-05 · Status: spec aprovada (fase 1; fase 2 = módulo no ovile) · Plano: (a escrever)
 
 ## Objetivo
 Dashboard interno e animado para entender, em detalhe, o resultado de André Santos (Dep. Estadual, NOVO, nº 30777, 9.481 votos, suplente) na eleição de 04/10/2026: de onde vieram os votos (do município até o local de votação), quanto custou cada voto, como ele se compara a qualquer outro estadual da chapa do NOVO e aos três concorrentes no eleitorado da igreja.
@@ -15,6 +15,7 @@ Sucesso = em poucos cliques responder: "onde o André foi forte/fraco?", "quanto
 - **Front em HTML/CSS/JavaScript puro (módulos ES), sem build.** D3 v7 + topojson-client copiados para `public/vendor/` (sem CDN, funciona offline).
 - **Só votos oficiais** para a comparação de igreja. Sem sobrepor as igrejas/membros do CRM.
 - Somente Deputado Estadual PR, 1º turno.
+- **Preparado para ir ao ovile (fase 2).** Depois desta fase, a aplicação entra no sistema (ovile.com.br) como módulo "Eleição 2026 — Análise", atrás do login. Por isso, desde já: todos os caminhos em `public/` são **relativos** (funciona servida em `/` local ou em qualquer subcaminho), nenhuma tela depende do `servidor.mjs` (que só serve arquivos), nenhum dado interno do CRM entra em `dados.json` (só dado público do TSE/IBGE), e a nota do gasto interno da tela 3 vem de um arquivo opcional `interno.json` que o módulo online pode omitir ou servir só para quem tem acesso ao financeiro.
 
 ## Candidatos em foco
 | Papel | Nome de urna | Nº | Partido | Votos (oficial) | Situação |
@@ -105,7 +106,7 @@ Navegação por abas e teclas `1`–`5`; estado na URL (`#comparador?b=30300&niv
 
 1. **Panorama PR** — votos válidos, quociente, cadeiras por partido (barras animadas), chapa do NOVO em "corrida" de barras até o resultado, destaque do André (posição na chapa e geral) e dos eleitos. Card de quanto faltou para a 3ª/4ª vaga do NOVO.
 2. **De onde vieram os votos do André** — mapa coroplético (votos absolutos ou % dos válidos do município, alternável); zoom aproxima e mostra locais de votação como círculos proporcionais; tooltip com escola, bairro, votos, % no local, aptos. Ao lado: regiões (Curitiba/RMC/Litoral/Interior), top 20 municípios, top 20 locais, top bairros de Curitiba, curva de concentração ("N municípios fazem 50%/80% dos votos"), municípios com zero voto.
-3. **Custo do voto** — tabela e dispersão despesa × votos para os 42 do NOVO + rivais; R$/voto, receita por origem; André destacado. Mostra a data da posição das contas e o aviso de que a prestação final sai em novembro. Valor do módulo financeiro interno (R$ 90.861 gastos) aparece como nota ao lado do valor declarado ao TSE, sem substituir.
+3. **Custo do voto** — tabela e dispersão despesa × votos para os 42 do NOVO + rivais; R$/voto, receita por origem; André destacado. Mostra a data da posição das contas e o aviso de que a prestação final sai em novembro. Valor do módulo financeiro interno (R$ 90.861 gastos) aparece como nota ao lado do valor declarado ao TSE, sem substituir — lido de `interno.json` (opcional, gitignored); se ausente, a nota some.
 4. **Comparador** — seletor de candidato B (todos do NOVO + rivais; padrão Fabio Oliveira). Nível município ou local. Modos: lado a lado (dois mapas sincronizados) e diferença (cor divergente: André vs B). Métricas: votos, R$/voto, nº de municípios/locais com voto, sobreposição (locais onde ambos têm voto, e % dos votos de cada um que está nessa interseção), correlação geográfica. Tabelas ordenáveis "onde B foi forte e André fraco" e o inverso.
 5. **Rivais da igreja** — André + Fabio + Mara + Dirlete: mapa "quem venceu" cada município/local entre os quatro, barras por região, matriz de sobreposição 4×4, e para cada rival a lista dos 15 locais onde ele foi mais forte com o voto do André no mesmo local.
 
@@ -132,5 +133,5 @@ Navegação por abas e teclas `1`–`5`; estado na URL (`#comparador?b=30300&niv
 ## Fora do escopo
 - Igrejas/membros do CRM no mapa.
 - Deputado federal, senador, governador, presidente.
-- Publicação online (pode virar Artifact privado depois, sem mudar a página).
+- Integração ao ovile (rota, item de menu, controle de acesso): fase 2, com spec própria.
 - Comparação com 2022.
