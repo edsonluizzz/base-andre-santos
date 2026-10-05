@@ -5,6 +5,7 @@ import { sendTelegram } from "@/lib/telegram";
 import { ensureCityGoal } from "@/lib/municipality-goals";
 import { triggerLeadWebhook } from "@/lib/n8n";
 import { resolvePublicTenant } from "@/lib/tenant-resolver";
+import { arePublicFormsClosed, publicFormsClosedResponse } from "@/lib/public-forms";
 import { isRateLimited } from "@/lib/rate-limit";
 import { normalizePhone } from "@/lib/utils";
 import { z } from "zod";
@@ -68,6 +69,9 @@ function rlConfigFor(source: string | undefined): { max: number; windowSec: numb
 export async function POST(req: NextRequest) {
   const cors = corsHeaders(req);
   try {
+    const tenant = await resolvePublicTenant(req);
+    if (arePublicFormsClosed(tenant.cid)) return publicFormsClosedResponse(cors);
+
     const body = await req.json();
     const parsed = cadastroSchema.safeParse(body);
     if (!parsed.success) {
@@ -82,7 +86,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Resolve tenant SEMPRE pelo host (anti-IDOR — nunca por input do usuário)
-    const { db, cid: CID } = await resolvePublicTenant(req);
+    const { db, cid: CID } = tenant;
 
     // 1) Dedup ANTES do rate-limit: cadastro repetido com mesmo phone retorna
     //    200 cached, sem consumir cota — evita falso 429 quando o usuário

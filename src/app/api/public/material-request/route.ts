@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { resolvePublicTenant } from "@/lib/tenant-resolver";
+import { arePublicFormsClosed, publicFormsClosedResponse } from "@/lib/public-forms";
 import { isRateLimited } from "@/lib/rate-limit";
 import { createMaterialRequest } from "@/lib/material-request";
 
@@ -57,6 +58,9 @@ const materialRequestSchema = z.object({
 export async function POST(req: NextRequest) {
   const cors = corsHeaders(req);
   try {
+    const tenant = await resolvePublicTenant(req);
+    if (arePublicFormsClosed(tenant.cid)) return publicFormsClosedResponse(cors);
+
     const body = await req.json();
     const parsed = materialRequestSchema.safeParse(body);
     if (!parsed.success) {
@@ -73,7 +77,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { db, cid: CID } = await resolvePublicTenant(req);
+    const { db, cid: CID } = tenant;
 
     const result = await createMaterialRequest(db, CID, {
       name, cpf, phone, email, cep, logradouro, numero, complemento, city, neighborhood, uf, items,

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { isRateLimited } from "@/lib/rate-limit";
+import { arePublicFormsClosed, publicFormsClosedResponse } from "@/lib/public-forms";
 
 export async function POST(req: NextRequest) {
   try {
@@ -20,6 +21,7 @@ export async function POST(req: NextRequest) {
     }
 
     const cid = link.campaignId;
+    if (arePublicFormsClosed(cid)) return publicFormsClosedResponse();
     const normalizedEmail = email.toLowerCase().trim();
 
     // Verifica se já existe usuário com esse email aceito na campanha
