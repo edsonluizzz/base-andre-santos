@@ -11,9 +11,15 @@ import { zapiSendText } from "./zapi";
 // Match por "contém" insensível a maiúsculas → pega "Agenda", "Agendas".
 const AGENDA_GROUP_NAME = "Agenda";
 
+// Interruptor geral de TODOS os envios de agenda (agenda diária e avisos de
+// evento criado/atualizado/removido), em todas as campanhas, Telegram e WhatsApp.
+// Desligado em 2026-10-05 (fim da campanha). Para reativar, troque para true e faça deploy.
+export const AGENDA_SENDING_ENABLED = false;
+
 // Envia uma mensagem ao grupo "Agendas" via Z-API. Best-effort: nunca lança
 // (retorna false em qualquer falha — Z-API não configurada, grupo inexistente etc).
 export async function sendToAgendaGroup(db: PrismaClient, cid: string, message: string): Promise<boolean> {
+  if (!AGENDA_SENDING_ENABLED) return false;
   try {
     const group = await db.whatsAppGroup.findFirst({
       where: {
