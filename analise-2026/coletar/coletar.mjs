@@ -12,6 +12,7 @@ import { criarAgregador } from "./agregar.mjs";
 import { conferir } from "./conferir.mjs";
 import { criarSomaContas } from "./contas.mjs";
 import { criarLeitorLocais } from "./locais.mjs";
+import { orientarParaD3 } from "./malha.mjs";
 import { montarDados } from "./montar.mjs";
 import { parseMunicipiosCfg, parseOficial } from "./oficial.mjs";
 import { conferirRegioes } from "./regioes.mjs";
@@ -132,7 +133,7 @@ async function main() {
   });
   const semCoord = dados.locais.filter((l) => l.lat == null).length;
   writeFileSync(join(PUBLICO, "dados.json"), JSON.stringify(dados));
-  writeFileSync(join(PUBLICO, "mapa.geo.json"), readFileSync(arq.malha));
+  writeFileSync(join(PUBLICO, "mapa.geo.json"), JSON.stringify(orientarParaD3(lerJson(arq.malha))));
   console.log(`${dados.candidatos.length} candidatos, ${dados.municipios.length} municípios, ${dados.locais.length} locais (${semCoord} sem coordenada)`);
   console.log(`gravado public/dados.json (${tamanho(join(PUBLICO, "dados.json"))}) e public/mapa.geo.json (${tamanho(join(PUBLICO, "mapa.geo.json"))})`);
 }
