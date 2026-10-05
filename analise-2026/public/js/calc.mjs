@@ -1,0 +1,63 @@
+export const rsPorVoto = (valor, votos) => (valor == null || !votos ? null : valor / votos);
+
+// Menor nº de áreas (municípios ou locais) que somam 50% e 80% dos votos.
+export function concentracao(valores) {
+  const v = valores.filter((x) => x > 0).sort((a, b) => b - a);
+  const total = v.reduce((s, x) => s + x, 0);
+  let acc = 0, p50 = 0, p80 = 0;
+  for (let k = 0; k < v.length && !p80; k++) {
+    acc += v[k];
+    if (!p50 && acc >= total * 0.5) p50 = k + 1;
+    if (acc >= total * 0.8) p80 = k + 1;
+  }
+  return { p50, p80, total, n: v.length };
+}
+
+export function sobreposicao(a, b) {
+  let areas = 0, va = 0, vb = 0, ta = 0, tb = 0;
+  for (const v of a.values()) ta += v;
+  for (const v of b.values()) tb += v;
+  for (const [k, x] of a) {
+    const y = b.get(k) ?? 0;
+    if (x > 0 && y > 0) { areas++; va += x; vb += y; }
+  }
+  return { areas, fracA: ta ? va / ta : 0, fracB: tb ? vb / tb : 0 };
+}
+
+export function pearson(a, b) {
+  const ks = [...new Set([...a.keys(), ...b.keys()])];
+  if (ks.length < 3) return null;
+  const xs = ks.map((k) => a.get(k) ?? 0);
+  const ys = ks.map((k) => b.get(k) ?? 0);
+  const mx = xs.reduce((s, x) => s + x, 0) / xs.length;
+  const my = ys.reduce((s, y) => s + y, 0) / ys.length;
+  let sxy = 0, sxx = 0, syy = 0;
+  for (let i = 0; i < xs.length; i++) {
+    const dx = xs[i] - mx, dy = ys[i] - my;
+    sxy += dx * dy; sxx += dx * dx; syy += dy * dy;
+  }
+  return sxx && syy ? sxy / Math.sqrt(sxx * syy) : null;
+}
+
+export function diferenca(x, y) {
+  const ks = [...new Set([...x.keys(), ...y.keys()])];
+  return ks.map((k) => {
+    const a = x.get(k) ?? 0, b = y.get(k) ?? 0;
+    return { k, x: a, y: b, d: a - b };
+  }).sort((p, q) => q.d - p.d);
+}
+
+// Para cada área, quem teve mais votos entre as séries; empate no topo → n = null.
+export function vencedor(series) {
+  const chaves = new Set(series.flatMap((s) => [...s.mapa.keys()]));
+  const out = new Map();
+  for (const k of chaves) {
+    let melhor = null, v1 = 0, v2 = 0;
+    for (const s of series) {
+      const v = s.mapa.get(k) ?? 0;
+      if (v > v1) { v2 = v1; v1 = v; melhor = s.n; } else if (v > v2) v2 = v;
+    }
+    if (v1 > 0) out.set(k, { n: v1 === v2 ? null : melhor, v: v1, margem: v1 - v2 });
+  }
+  return out;
+}
