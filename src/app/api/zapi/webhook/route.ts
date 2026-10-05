@@ -48,10 +48,14 @@ function parseContent(b: ZapiWebhookBody): { type: string; body?: string; mediaU
   return { type: "other" };
 }
 
+// Resposta automática SIM/NÃO desligada em 2026-10-05 (campanha encerrada).
+// Para reativar, troque para true e faça deploy.
+const WF2_RELAY_ENABLED = false;
+
 // Repassa o payload cru ao WF2 (n8n) — mantém o fluxo SIM/NÃO. Best-effort.
 async function relayToWF2(raw: unknown): Promise<void> {
   const url = process.env.N8N_RESPOSTA_WEBHOOK_URL;
-  if (!url) return;
+  if (!WF2_RELAY_ENABLED || !url) return;
   try {
     await fetch(url, {
       method: "POST",
