@@ -15,8 +15,8 @@ test("diverge: lista o candidato com os dois totais", () => {
   assert.deepEqual(r.divergentes, [{ n: "30777", nm: "ANDRÉ", oficial: 7, csv: 5 }]);
 });
 
-test("número no CSV fora do resultado oficial", () => {
-  const r = conferir(cands, new Map([["30777", new Map([["a", 7]])], ["99999", new Map([["a", 1]])]]));
-  assert.equal(r.ok, false);
-  assert.deepEqual(r.desconhecidos, ["99999"]);
+test("número no CSV fora do resultado oficial (registro indeferido = nulo técnico): listado, não reprova", () => {
+  const r = conferir(cands, new Map([["30777", new Map([["a", 7]])], ["99999", new Map([["a", 1], ["b", 2]])]]));
+  assert.equal(r.ok, true);
+  assert.deepEqual(r.desconhecidos, [{ n: "99999", votos: 3 }]);
 });
