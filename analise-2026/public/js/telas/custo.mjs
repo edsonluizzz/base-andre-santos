@@ -1,87 +1,44 @@
 import { CATEGORIAS_RECEITA, CORES_IGREJA, FOCO, PARTIDO, RIVAIS_IGREJA } from "../config.mjs";
 import { projetar, quantil, regressaoLog, rsPorVoto } from "../calc.mjs";
 import { tabela } from "../tabela.mjs";
-import { esconderDica, mostrarDica } from "../dica.mjs";
 import { barras, reduzido } from "../animar.mjs";
 import { esc, inteiro, pct, reais, reaisCurto } from "../fmt.mjs";
 
-const d3 = globalThis.d3;
 const CORES_CATS = ["--laranja", "--laranja-2", "--ambar", "--azul", "--roxo", "--rosa", "--barra"];
 const porVoto = (v, c) => (!c.votos ? "—" : reais(v));
 
-// Ticks com pelo menos `px` de distância na tela.
-function espacados(escala, px) {
-  const out = [];
-  for (const v of escala.ticks(10)) if (!out.length || Math.abs(escala(v) - escala(out[out.length - 1])) >= px) out.push(v);
-  return out;
+const corDe = (c) => CORES_IGREJA[c.n] ?? (c.eleito ? "var(--verde)" : "var(--barra)");
+
+// Cartões grandes: quanto cada um pagou por voto, mais a mediana da chapa do NOVO.
+function cartoes(el, D, grupo, eixo) {
+  const mediana = quantil(grupo.filter((c) => c.sg === PARTIDO && c[eixo] != null && c.votos > 0).map((c) => rsPorVoto(c[eixo], c.votos)), 0.5);
+  el.innerHTML = [FOCO, ...RIVAIS_IGREJA].map((n) => {
+    const c = D.porNumero.get(n);
+    return `<div class="cartao kpi" style="border-top:3px solid ${CORES_IGREJA[n]}"><h2>${esc(c.nm)}</h2>
+      <b style="color:${CORES_IGREJA[n]}">${porVoto(rsPorVoto(c[eixo], c.votos), c)}</b>
+      <small>por voto · ${reaisCurto(c[eixo])} ÷ ${inteiro(c.votos)} votos</small></div>`;
+  }).join("") + `<div class="cartao kpi"><h2>Mediana da chapa do NOVO</h2><b>${reais(mediana || null)}</b><small>por voto · metade da chapa pagou mais que isso</small></div>`;
 }
 
-const CUSTOS = [2, 5, 10, 25, 50, 100, 250]; // linhas de "R$ por voto" constante
-
-// Dispersão em escala log: todos os estaduais do PR ao fundo, NOVO e rivais em destaque e
-// diagonais de custo igual (acima da linha = voto mais barato que aquele valor).
-function dispersao(el, todos, grupo, eixo, curvas = []) {
-  const pts = todos.filter((c) => c[eixo] > 0 && c.votos > 0);
-  const noGrupo = new Set(grupo.map((c) => c.n));
-  const L = 760, A = 500, m = { t: 14, r: 20, b: 44, l: 64 };
-  // corta a cauda de baixo (candidatos com poucas centenas de reais ou votos) para não espremer o gráfico
-  const x = d3.scaleLog().domain([quantil(pts.map((c) => c[eixo]), 0.05), d3.max(pts, (c) => c[eixo])]).range([m.l, L - m.r]).nice();
-  const y = d3.scaleLog().domain([quantil(pts.map((c) => c.votos), 0.05), d3.max(pts, (c) => c.votos)]).range([A - m.b, m.t]).nice();
-  const svg = d3.select(el).append("svg").attr("viewBox", `0 0 ${L} ${A}`).style("width", "100%");
-  const idClip = `clip-${Math.random().toString(36).slice(2)}`;
-  svg.append("clipPath").attr("id", idClip).append("rect").attr("x", m.l).attr("y", m.t).attr("width", L - m.l - m.r).attr("height", A - m.t - m.b);
-  svg.append("g").attr("transform", `translate(0,${A - m.b})`).call(d3.axisBottom(x).tickValues(espacados(x, 70)).tickFormat(reaisCurto)).attr("color", "var(--suave)");
-  svg.append("g").attr("transform", `translate(${m.l},0)`).call(d3.axisLeft(y).tickValues(espacados(y, 40)).tickFormat(inteiro)).attr("color", "var(--suave)");
-  svg.append("text").attr("x", L - m.r).attr("y", A - 6).attr("text-anchor", "end").style("fill", "var(--suave)").style("font-size", "11px").text(eixo === "receita" ? "receita declarada (log)" : "despesa contratada (log)");
-  svg.append("text").attr("transform", `translate(12,${(A - m.b + m.t) / 2}) rotate(-90)`).attr("text-anchor", "middle").style("fill", "var(--suave)").style("font-size", "11px").text("votos (log)");
-
-  const [x0, x1] = x.domain();
-  const [y0, y1] = y.domain();
-  const linhas = svg.append("g").attr("clip-path", `url(#${idClip})`);
-  for (const custo of CUSTOS) {
-    linhas.append("line").attr("x1", x(x0)).attr("y1", y(x0 / custo)).attr("x2", x(x1)).attr("y2", y(x1 / custo))
-      .style("stroke", "var(--borda)").style("stroke-dasharray", "4 4");
-    // rótulo inclinado sobre a linha, um pouco depois de ela entrar no gráfico por baixo ou pela esquerda
-    const xe = Math.max(x0, y0 * custo) * 1.6;
-    if (xe > x1 || xe / custo > y1) continue;
-    const ang = (Math.atan2(y(xe * 10 / custo) - y(xe / custo), x(xe * 10) - x(xe)) * 180) / Math.PI;
-    svg.append("text").attr("transform", `translate(${x(xe)},${y(xe / custo) - 4}) rotate(${ang})`)
-      .style("fill", "var(--suave)").style("font-size", "10px").text(`R$ ${custo}/voto`);
-  }
-
-  // curvas ajustadas (votos = e^a · receita^b)
-  for (const cv of curvas) {
-    const xs = d3.range(0, 41).map((k) => x0 * Math.pow(x1 / x0, k / 40));
-    linhas.append("path").attr("d", d3.line()(xs.map((v) => [x(v), y(Math.exp(cv.fit.a) * Math.pow(v, cv.fit.b))])))
-      .style("fill", "none").style("stroke", cv.cor).style("stroke-width", 2).style("opacity", 0.8);
-  }
-
-  const destaque = (c) => CORES_IGREJA[c.n];
-  const corDe = (c) => destaque(c) ?? (c.eleito ? "var(--verde)" : noGrupo.has(c.n) ? "var(--barra-2, var(--barra))" : "var(--barra)");
-  const raio = (c) => (destaque(c) ? 7 : noGrupo.has(c.n) ? 4.5 : 2.5);
-  const opac = (c) => (destaque(c) || noGrupo.has(c.n) ? 0.95 : 0.35);
-  const ordem = [...pts].sort((a, b) => raio(a) - raio(b)); // destaques por cima
-  const ms = reduzido() ? 0 : 1100;
-  svg.append("g").attr("clip-path", `url(#${idClip})`).selectAll("circle").data(ordem).join("circle")
-    .attr("cx", x(x0)).attr("cy", y(y0)).attr("r", raio).style("fill", corDe).style("fill-opacity", opac)
-    .style("stroke", (c) => (noGrupo.has(c.n) ? "var(--fundo)" : "none"))
-    .on("mousemove", (ev, c) => mostrarDica(ev, `<b>${esc(c.nm)}</b>${esc(c.sg)} · ${inteiro(c.votos)} votos · ${esc(c.st)}<br>${eixo === "receita" ? "Receita" : "Despesa"}: ${reais(c[eixo], 0)}<br><b>${porVoto(rsPorVoto(c[eixo], c.votos), c)}</b> por voto`))
-    .on("mouseleave", esconderDica)
-    .transition().duration(ms).delay((c, k) => (ms ? Math.min(k * 2, 700) : 0))
-    .attr("cx", (c) => x(c[eixo])).attr("cy", (c) => y(c.votos));
-  // rótulos afastados verticalmente quando ficariam um em cima do outro
-  const rotulados = pts.filter((c) => destaque(c) || (noGrupo.has(c.n) && c.eleito))
-    .map((c) => ({ c, x: x(c[eixo]), y: y(c.votos) + 4, dir: x(c[eixo]) > L - 200 }))
-    .sort((a, b) => a.y - b.y);
-  for (let i = 1; i < rotulados.length; i++) {
-    const ant = rotulados[i - 1], r = rotulados[i];
-    if (Math.abs(r.x - ant.x) < 220 && r.y - ant.y < 13) r.y = ant.y + 13;
-  }
-  svg.append("g").selectAll("text").data(rotulados).join("text")
-    .attr("x", (r) => (r.dir ? r.x - 10 : r.x + 10)).attr("y", (r) => r.y)
-    .attr("text-anchor", (r) => (r.dir ? "end" : "start")).text((r) => r.c.nm)
-    .style("fill", (r) => destaque(r.c) ?? "var(--texto)").style("font-size", "11px").style("font-weight", 700).style("opacity", 0)
-    .transition().delay(ms).duration(ms ? 400 : 0).style("opacity", 1);
+// Para cada candidato, a barra cinza é o dinheiro e a colorida são os votos, um embaixo do outro.
+function dinheiroVotos(el, cands, eixo) {
+  const maxR = Math.max(1, ...cands.map((c) => c[eixo] ?? 0));
+  const maxV = Math.max(1, ...cands.map((c) => c.votos));
+  el.innerHTML = `<div class="legenda"><span><span class="chip" style="background:var(--barra)"></span>${eixo === "receita" ? "dinheiro recebido" : "despesa contratada"}</span>
+      <span><span class="chip" style="background:var(--laranja)"></span>votos (na cor do candidato; verde = eleito)</span></div>` +
+    cands.map((c) => `
+      <div class="par-barras">
+        <div class="par-nome"><b style="color:${CORES_IGREJA[c.n] ?? "var(--texto)"}">${esc(c.nm)}</b><small>${esc(c.sg)} · <b>${porVoto(rsPorVoto(c[eixo], c.votos), c)}</b> por voto</small></div>
+        <div class="par-linhas">
+          <div class="barra"><span class="trilho"><span class="enche" data-w="${(100 * (c[eixo] ?? 0)) / maxR}" style="background:var(--barra)"></span></span><span class="val">${reaisCurto(c[eixo])}</span></div>
+          <div class="barra"><span class="trilho"><span class="enche" data-w="${(100 * c.votos) / maxV}" style="background:${corDe(c)}"></span></span><span class="val">${inteiro(c.votos)} votos</span></div>
+        </div>
+      </div>`).join("");
+  el.offsetWidth; // largura 0 antes de animar
+  el.querySelectorAll(".enche").forEach((e, k) => {
+    e.style.transitionDelay = reduzido() ? "0s" : `${k * 40}ms`;
+    e.style.width = `${e.dataset.w}%`;
+  });
 }
 
 // Ranking do voto mais barato ao mais caro dentro do grupo.
@@ -121,8 +78,8 @@ function cenarios(el, D, andre, eixo, fitPR, fitNovo) {
           (elasticidade ${nf2(fitPR.b)}; a curva explica ${pct(fitPR.r2, 0)} da variação).${fitNovo ? ` Só no NOVO (${fitNovo.n} candidatos): ${mais10(fitNovo)} (elasticidade ${nf2(fitNovo.b)}).` : ""}</p>
         <p class="espaco">Com ${reais(r0, 0)}, um candidato médio do PR faria cerca de <b>${inteiro(previsto(fitPR, r0))}</b> votos.
           O André fez <b class="destaque">${inteiro(andre.votos)}</b> — <b class="destaque">${nf2(eficiencia)}× o esperado</b> para o dinheiro que teve.</p>
-        <p class="espaco"><small>Linhas no gráfico acima: cinza = curva do PR, laranja claro = curva do NOVO. Os cenários ao lado são estimativas a partir dessa relação entre candidatos —
-          ela não prova que mais dinheiro causa mais voto (candidato com mais base também arrecada mais). Use o intervalo, não um número só.
+        <p class="espaco"><small>Os cenários ao lado partem dessa relação entre os candidatos — ela não prova que mais dinheiro causa mais voto
+          (candidato com mais base também arrecada mais). Use o intervalo, não um número só.
           Para a ${ag.vagas + 1}ª cadeira o NOVO precisava de ${inteiro(faltaNovo)} votos a mais na legenda.</small></p>
       </div>
       <div id="cu-cen-tab"></div>
@@ -166,10 +123,10 @@ export function montar(el, { D, params, navegar, interno }) {
       <span class="seg"><button data-eixo="receita" class="${eixo === "receita" ? "on" : ""}">Receita</button><button data-eixo="despesa" class="${eixo === "despesa" ? "on" : ""}">Despesa contratada</button></span>
       ${gi ? `<small>Gasto do André no módulo financeiro: <b>${reais(gi)}</b> (${reais(rsPorVoto(gi, andre.votos))} por voto) — ${esc(interno.andre.fonte)}, ${esc(interno.andre.data)}</small>` : ""}
     </div>
-    <div class="grade g2">
-      <div class="cartao"><h2>${eixo === "receita" ? "Receita" : "Despesa contratada"} × votos · todos os estaduais do PR</h2><div id="cu-disp"></div>
-        <small><span class="chip" style="background:var(--barra)"></span>outros candidatos do PR · <span class="chip" style="background:var(--verde)"></span>eleitos · NOVO com borda · André e rivais nas cores deles.
-        Linhas tracejadas: custo igual por voto (acima da linha = mais barato).${grupo.length - comValor.length ? ` ${grupo.length - comValor.length} do grupo sem ${eixo} declarada ficaram fora.` : ""}</small></div>
+    <div id="cu-kpis" class="grade kpis"></div>
+    <div class="grade g2 espaco">
+      <div class="cartao"><h2>Dinheiro × votos · André, rivais e eleitos do NOVO</h2><div id="cu-par"></div>
+        <small>Ordem: do voto mais barato ao mais caro.${grupo.length - comValor.length ? ` ${grupo.length - comValor.length} do grupo sem ${eixo} declarada ficaram fora.` : ""}</small></div>
       <div class="cartao"><h2>R$ por voto · do mais barato ao mais caro</h2><div id="cu-rank" class="rolagem" style="max-height:560px"></div></div>
     </div>
     <div class="cartao espaco"><h2>Recurso × voto · cenários para o André</h2><div id="cu-cen"></div></div>
@@ -179,9 +136,10 @@ export function montar(el, { D, params, navegar, interno }) {
   const pontos = (f) => D.candidatos.filter(f).map((c) => ({ x: c[eixo], y: c.votos }));
   const fitPR = regressaoLog(pontos(() => true));
   const fitNovo = regressaoLog(pontos((c) => c.sg === PARTIDO));
-  dispersao(el.querySelector("#cu-disp"), D.candidatos, grupo, eixo, [
-    ...(fitPR ? [{ fit: fitPR, cor: "var(--suave)" }] : []), ...(fitNovo ? [{ fit: fitNovo, cor: "var(--laranja-2)" }] : []),
-  ]);
+  cartoes(el.querySelector("#cu-kpis"), D, grupo, eixo);
+  const destaque = grupo.filter((c) => (c.n === FOCO || RIVAIS_IGREJA.includes(c.n) || (c.sg === PARTIDO && c.eleito)) && c[eixo] != null && c.votos > 0)
+    .sort((a, b) => rsPorVoto(a[eixo], a.votos) - rsPorVoto(b[eixo], b.votos));
+  dinheiroVotos(el.querySelector("#cu-par"), destaque, eixo);
   cenarios(el.querySelector("#cu-cen"), D, andre, eixo, fitPR, fitNovo);
   ranking(el.querySelector("#cu-rank"), grupo, eixo);
   origem(el.querySelector("#cu-origem"), [FOCO, ...RIVAIS_IGREJA].map((n) => D.porNumero.get(n)));

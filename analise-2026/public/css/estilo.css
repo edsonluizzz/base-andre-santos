@@ -94,3 +94,10 @@ tr.sel td { background: color-mix(in srgb, var(--laranja) 18%, transparent); }
 .marcas { display: inline-flex; gap: 12px; flex-wrap: wrap; }
 .marcas label { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
 .ranking-mun { font-size: 13px; line-height: 1.7; }
+.par-barras { display: grid; grid-template-columns: 220px 1fr; gap: 12px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--borda); }
+.par-barras:last-child { border-bottom: 0; }
+.par-nome { font-size: 14px; }
+.par-nome small { display: block; margin-top: 2px; }
+.par-linhas { display: flex; flex-direction: column; gap: 5px; }
+.par-linhas .barra { grid-template-columns: 1fr 110px; }
+.par-linhas .val { font-size: 13px; }
