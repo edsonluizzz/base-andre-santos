@@ -9,6 +9,7 @@ export function parseOficial(json) {
   if (!cargo) throw new Error("Resultado oficial sem cargo (carg[0])");
   const agremiacoes = [];
   const candidatos = [];
+  const legendasValidas = [];
   for (const agr of cargo.agr ?? []) {
     const federacao = agr.tp === "f";
     const siglas = agr.par.map((p) => p.sg);
@@ -22,6 +23,7 @@ export function parseOficial(json) {
       legenda: agr.par.reduce((s, p) => s + num(p.tvtl), 0),
     });
     for (const par of agr.par) {
+      if (String(par.dvt ?? "").startsWith("Válido")) legendasValidas.push(par.n);
       for (const c of par.cand ?? []) {
         candidatos.push({
           n: c.n, sq: c.sqcand, nm: c.nmu, sg: par.sg, fed: federacao ? agr.nm : null,
@@ -39,6 +41,7 @@ export function parseOficial(json) {
     },
     agremiacoes,
     candidatos,
+    legendasValidas,
   };
 }
 

@@ -69,7 +69,7 @@ async function main() {
   const fontes = { oficial: oficial.geradoEm };
 
   console.log("lendo votação por seção (830 MB; leva alguns minutos)...");
-  const ag = criarAgregador({ validos, focoLocal });
+  const ag = criarAgregador({ validos, legendas: new Set(oficial.legendasValidas), focoLocal });
   const nSecao = await percorrerCsvDoZip(arq.secao, "votacao_secao_2026_PR.csv",
     ["DT_GERACAO", "HH_GERACAO", "CD_CARGO", "CD_MUNICIPIO", "NR_ZONA", "NR_LOCAL_VOTACAO", "NR_VOTAVEL", "QT_VOTOS"],
     (c, i) => {

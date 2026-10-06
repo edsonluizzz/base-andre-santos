@@ -6,13 +6,13 @@ const json = {
   dg: "04/10/2026", hg: "23:59:59",
   v: { vv: "1000", vnom: "900", vl: "100", vb: "40", tvn: "20" },
   carg: [{ nv: "54", qe: "114449", agr: [
-    { nm: "PARTIDO NOVO", tp: "i", com: "NOVO", vag: "3", par: [{ sg: "NOVO", tvtn: "371998", tvtl: "35192", cand: [
+    { nm: "PARTIDO NOVO", tp: "i", com: "NOVO", vag: "3", par: [{ n: "30", dvt: "Válido (legenda)", sg: "NOVO", tvtn: "371998", tvtl: "35192", cand: [
       { n: "30777", sqcand: "160002542346", nmu: "ANDRÉ SANTOS", st: "Suplente", e: "n", dvt: "Válido", vap: "9481" },
       { n: "30123", sqcand: "1", nmu: "ELEITO", st: "Eleito por QP", e: "s", dvt: "Válido", vap: "80000" },
     ] }] },
     { nm: "FEDERAÇÃO X", tp: "f", com: "PT / PV", vag: "8", par: [
-      { sg: "PT", tvtn: "500", tvtl: "50", cand: [{ n: "13000", sqcand: "2", nmu: "FULANO", st: "Não eleito", e: "n", dvt: "Anulado sub judice", vap: "120" }] },
-      { sg: "PV", tvtn: "100", tvtl: "10", cand: [] },
+      { n: "13", dvt: "Válido (legenda)", sg: "PT", tvtn: "500", tvtl: "50", cand: [{ n: "13000", sqcand: "2", nmu: "FULANO", st: "Não eleito", e: "n", dvt: "Anulado sub judice", vap: "120" }] },
+      { n: "43", dvt: "Anulado sub judice", sg: "PV", tvtn: "100", tvtl: "10", cand: [] },
     ] },
   ] }],
 };
@@ -28,6 +28,7 @@ test("parseOficial: cargo, agremiações e candidatos", () => {
   assert.deepEqual(andre, { n: "30777", sq: "160002542346", nm: "ANDRÉ SANTOS", sg: "NOVO", fed: null, st: "Suplente", eleito: false, valido: true, votos: 9481 });
   assert.equal(r.candidatos[2].fed, "FEDERAÇÃO X");
   assert.equal(r.candidatos[2].valido, false);
+  assert.deepEqual(r.legendasValidas, ["30", "13"]);
 });
 
 test("parseOficial sem cargo: erro claro", () => {

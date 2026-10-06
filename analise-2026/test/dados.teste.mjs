@@ -36,3 +36,37 @@ test("região e bairro", () => {
   assert.deepEqual(porRegiao(D, andre), { Curitiba: 30, RMC: 0, Litoral: 20, Interior: 0 });
   assert.deepEqual(porBairro(D, andre), [{ bairro: "CENTRO", votos: 20, total: 300 }, { bairro: "CAJURU", votos: 10, total: 200 }]);
 });
+
+import { acharMunicipio, idxMunicipio, lerSelecao, locaisDoMunicipio, rankingNoMunicipio, restringir } from "../public/js/dados.mjs";
+
+test("acharMunicipio: nome exato sem acento ou prefixo único", () => {
+  assert.equal(acharMunicipio(D, "paranagua"), 2);
+  assert.equal(acharMunicipio(D, "São José"), 1);
+  assert.equal(acharMunicipio(D, "CURITIBA"), 0);
+  assert.equal(acharMunicipio(D, "xyz"), null);
+  assert.equal(acharMunicipio(D, "  "), null);
+});
+
+test("idxMunicipio pelo código TSE da URL", () => {
+  assert.equal(idxMunicipio(D, "77771"), 2);
+  assert.equal(idxMunicipio(D, "0"), null);
+  assert.equal(idxMunicipio(D, undefined), null);
+});
+
+test("locais e ranking de um município", () => {
+  assert.deepEqual(locaisDoMunicipio(D, 0), [0, 1]);
+  assert.deepEqual(locaisDoMunicipio(D, 9), []);
+  assert.deepEqual(rankingNoMunicipio(D, 0).map((x) => [x.c.n, x.v]), [["55555", 200], ["30123", 60], ["30300", 40], ["30777", 30]]);
+});
+
+test("lerSelecao: só opções válidas, na ordem das opções; vazio = todas", () => {
+  const ops = ["30777", "30300", "10456", "22622"];
+  assert.deepEqual(lerSelecao("10456,30777", ops), ["30777", "10456"]);
+  assert.deepEqual(lerSelecao("xx", ops), ops);
+  assert.deepEqual(lerSelecao(undefined, ops), ops);
+});
+
+test("restringir mantém só as chaves pedidas", () => {
+  assert.deepEqual([...restringir(new Map([[0, 1], [1, 2], [3, 4]]), new Set([1, 3]))], [[1, 2], [3, 4]]);
+  assert.deepEqual([...restringir(new Map([[0, 1]]), null)], [[0, 1]]);
+});

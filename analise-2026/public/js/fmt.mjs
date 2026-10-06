@@ -3,6 +3,7 @@ const dec = (v, casas) => v.toLocaleString("pt-BR", { minimumFractionDigits: cas
 
 export const inteiro = (n) => NUM.format(Math.round(n));
 export const reais = (v, casas = 2) => (v == null ? "sem dado" : `R$ ${dec(v, casas)}`);
+export const pp = (x, casas = 2) => (x == null ? "—" : `${dec(x * 100, casas)} p.p.`);
 export const pct = (x, casas = 2) => (x == null ? "—" : `${dec(x * 100, casas)}%`);
 export function reaisCurto(v) {
   if (v == null) return "sem dado";

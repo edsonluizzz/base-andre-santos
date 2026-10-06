@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { esc, inteiro, pct, reais, reaisCurto } from "../public/js/fmt.mjs";
+import { esc, inteiro, pct, pp, reais, reaisCurto } from "../public/js/fmt.mjs";
 
 test("formatos pt-BR", () => {
   assert.equal(inteiro(9481), "9.481");
@@ -18,4 +18,10 @@ test("formatos pt-BR", () => {
   assert.equal(reaisCurto(null), "sem dado");
   assert.equal(esc('<a "b">&'), "&lt;a &quot;b&quot;&gt;&amp;");
   assert.equal(esc(null), "");
+});
+
+test("pp: diferença entre percentuais em pontos percentuais", () => {
+  assert.equal(pp(0.0588), "5,88 p.p.");
+  assert.equal(pp(-0.012, 1), "-1,2 p.p.");
+  assert.equal(pp(null), "—");
 });
