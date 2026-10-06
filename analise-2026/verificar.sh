@@ -6,7 +6,7 @@ PORTA=4331
 SAIDA="${SAIDA:-/tmp/analise-2026-telas}"
 mkdir -p "$SAIDA"
 ROTAS=("$@")
-[ ${#ROTAS[@]} -eq 0 ] && ROTAS=(panorama andre custo comparador igreja dobradas)
+[ ${#ROTAS[@]} -eq 0 ] && ROTAS=(panorama andre custo comparador igreja)
 node servidor.mjs --porta=$PORTA >/dev/null 2>&1 &
 SRV=$!
 trap 'kill $SRV 2>/dev/null; wait $SRV 2>/dev/null; pkill -f "user-data-dir=$SAIDA/perfil" 2>/dev/null' EXIT

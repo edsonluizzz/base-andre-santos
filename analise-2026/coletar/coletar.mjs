@@ -9,7 +9,6 @@ import { pipeline } from "node:stream/promises";
 import { fileURLToPath } from "node:url";
 import { FOCO, PARTIDO, RIVAIS_IGREJA } from "../public/js/config.mjs";
 import { criarAgregador } from "./agregar.mjs";
-import { CARGOS_DOBRADA, calcularDobradas, criarAgregadorCargos } from "./dobradas.mjs";
 import { conferir } from "./conferir.mjs";
 import { criarSomaContas } from "./contas.mjs";
 import { criarLeitorLocais } from "./locais.mjs";
@@ -30,9 +29,6 @@ const FONTES = {
   contas: { url: `${ODSELE}/prestacao_contas/prestacao_de_contas_eleitorais_candidatos_2026.zip`, arquivo: "contas.zip" },
   oficial: { url: `${RES}/dados/pr/pr-c0007-e006259-u.json`, arquivo: "oficial.json" },
   municipios: { url: `${RES}/config/mun-e006259-cm.json`, arquivo: "municipios.json" },
-  oficial6: { url: `${RES}/dados/pr/pr-c0006-e006259-u.json`, arquivo: "oficial-c0006.json" },
-  oficial5: { url: `${RES}/dados/pr/pr-c0005-e006259-u.json`, arquivo: "oficial-c0005.json" },
-  oficial3: { url: `${RES}/dados/pr/pr-c0003-e006259-u.json`, arquivo: "oficial-c0003.json" },
   malha: { url: "https://servicodados.ibge.gov.br/api/v3/malhas/estados/41?formato=application/vnd.geo+json&qualidade=minima&intrarregiao=municipio", arquivo: "malha.geojson" },
 };
 const ARGS = new Set(process.argv.slice(2));
@@ -71,19 +67,13 @@ async function main() {
   const validos = new Set(oficial.candidatos.filter((c) => c.valido).map((c) => c.n));
   const focoLocal = new Set([...oficial.candidatos.filter((c) => c.sg === PARTIDO).map((c) => c.n), FOCO, ...RIVAIS_IGREJA]);
   const fontes = { oficial: oficial.geradoEm };
-  const outros = Object.fromEntries(Object.keys(CARGOS_DOBRADA).map((c) => [c, parseOficial(lerJson(arq[`oficial${c}`]))]));
-  const agCargos = criarAgregadorCargos(new Map(Object.entries(outros).map(([c, o]) => [c, new Set(o.candidatos.filter((x) => x.valido).map((x) => x.n))])));
 
   console.log("lendo votação por seção (830 MB; leva alguns minutos)...");
   const ag = criarAgregador({ validos, legendas: new Set(oficial.legendasValidas), focoLocal });
   const nSecao = await percorrerCsvDoZip(arq.secao, "votacao_secao_2026_PR.csv",
     ["DT_GERACAO", "HH_GERACAO", "CD_CARGO", "CD_MUNICIPIO", "NR_ZONA", "NR_LOCAL_VOTACAO", "NR_VOTAVEL", "QT_VOTOS"],
     (c, i) => {
-      const cargo = c[i.CD_CARGO];
-      if (cargo !== "7") {
-        agCargos.adicionar({ cargo, mun: c[i.CD_MUNICIPIO], zona: c[i.NR_ZONA], local: c[i.NR_LOCAL_VOTACAO], votavel: c[i.NR_VOTAVEL], votos: Number(c[i.QT_VOTOS]) });
-        return;
-      }
+      if (c[i.CD_CARGO] !== "7") return;
       fontes.secao ??= geracao(c, i);
       ag.adicionar({ mun: c[i.CD_MUNICIPIO], zona: c[i.NR_ZONA], local: c[i.NR_LOCAL_VOTACAO], votavel: c[i.NR_VOTAVEL], votos: Number(c[i.QT_VOTOS]) });
     });
@@ -137,22 +127,7 @@ async function main() {
     }
   }
 
-  // Dobradas: afinidade do André com cada candidato a federal, senador e governador.
-  const porCargo = agCargos.resultado();
-  const dobradas = { totais: {} };
-  for (const [cargo, nome] of Object.entries(CARGOS_DOBRADA)) {
-    const ag = porCargo.get(cargo);
-    const div = outros[cargo].candidatos.filter((x) => x.valido && [...(ag.votos.get(x.n)?.values() ?? [])].reduce((a, b) => a + b, 0) !== x.votos).length;
-    console.log(`  ${nome}: ${outros[cargo].candidatos.length} candidatos${div ? `, ${div} com soma diferente do oficial` : ", somas batem com o oficial"}`);
-    dobradas[nome] = calcularDobradas({
-      candidatos: outros[cargo].candidatos, agregado: ag, ids: [...agregado.totalLocal.keys()],
-      andre: agregado.votosLocal.get(FOCO), totAndre: agregado.totalLocal,
-      comMapa: (l, k) => nome !== "federal" || k < 15 || l.sg === PARTIDO,
-    });
-    dobradas.totais[nome] = ag.total;
-  }
-
-  const dados = montarDados({ dobradas,
+  const dados = montarDados({
     oficial, municipios, agregado, locais: leitorLocais.resultado(), contas: soma.resultado(), focoLocal,
     meta: { geradoEm: new Date().toISOString(), fontes, divergencias: conf.divergentes.length },
   });
