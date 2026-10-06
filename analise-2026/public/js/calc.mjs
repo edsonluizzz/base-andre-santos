@@ -68,3 +68,45 @@ export function quantil(valores, q) {
   const v = [...valores].sort((a, b) => a - b);
   return v[Math.min(v.length - 1, Math.floor(q * (v.length - 1)))];
 }
+
+// Ajuste ln(y) = a + b·ln(x): b é a elasticidade (quanto % de voto a mais por % de receita a mais).
+export function regressaoLog(pontos) {
+  const p = pontos.filter((q) => q.x > 0 && q.y > 0).map((q) => [Math.log(q.x), Math.log(q.y)]);
+  if (p.length < 3) return null;
+  const mx = p.reduce((s, [x]) => s + x, 0) / p.length;
+  const my = p.reduce((s, [, y]) => s + y, 0) / p.length;
+  let sxy = 0, sxx = 0, syy = 0;
+  for (const [x, y] of p) { sxy += (x - mx) * (y - my); sxx += (x - mx) ** 2; syy += (y - my) ** 2; }
+  if (!sxx || !syy) return null;
+  const b = sxy / sxx;
+  return { a: my - b * mx, b, r2: (sxy * sxy) / (sxx * syy), n: p.length };
+}
+
+export const projetar = (votos0, receita0, receita1, b) => votos0 * Math.pow(receita1 / receita0, b);
+
+// Afinidade geográfica entre André e outro candidato, sobre todos os locais (zeros incluídos):
+// r = correlação dos % por local; lift = % médio do candidato nos locais do André (pesado pelos votos
+// do André) ÷ % dele no estado.
+export function afinidade(ids, andre, totAndre, x, totX) {
+  const pa = [], px = [];
+  let somaA = 0, pesoX = 0, votosX = 0, totalX = 0;
+  for (const id of ids) {
+    const ta = totAndre.get(id) ?? 0, tx = totX.get(id) ?? 0;
+    if (!ta || !tx) continue;
+    const a = andre.get(id) ?? 0, v = x.get(id) ?? 0;
+    pa.push(a / ta); px.push(v / tx);
+    somaA += a; pesoX += a * (v / tx); votosX += v; totalX += tx;
+  }
+  const mediaA = pa.reduce((s, v) => s + v, 0) / pa.length;
+  const mediaX = px.reduce((s, v) => s + v, 0) / px.length;
+  let sxy = 0, sxx = 0, syy = 0;
+  for (let i = 0; i < pa.length; i++) {
+    const da = pa[i] - mediaA, dx = px[i] - mediaX;
+    sxy += da * dx; sxx += da * da; syy += dx * dx;
+  }
+  const estado = totalX ? votosX / totalX : 0;
+  return {
+    r: sxx && syy ? sxy / Math.sqrt(sxx * syy) : null,
+    lift: somaA && estado ? pesoX / somaA / estado : 0,
+  };
+}

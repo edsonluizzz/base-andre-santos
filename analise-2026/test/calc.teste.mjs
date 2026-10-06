@@ -51,3 +51,35 @@ test("quantil: valor de corte que ignora pontos extremos", () => {
   assert.equal(quantil([], 0.98), 0);
   assert.ok(quantil([...Array(99).fill(1), 1000], 0.98) < 1000);
 });
+
+import { afinidade, projetar, regressaoLog } from "../public/js/calc.mjs";
+
+test("regressaoLog: y = 2·x^0,5 dá elasticidade 0,5", () => {
+  const r = regressaoLog([1, 4, 9, 16, 100].map((x) => ({ x, y: 2 * Math.sqrt(x) })));
+  assert.ok(Math.abs(r.b - 0.5) < 1e-9);
+  assert.ok(Math.abs(Math.exp(r.a) - 2) < 1e-9);
+  assert.ok(Math.abs(r.r2 - 1) < 1e-9);
+  assert.equal(r.n, 5);
+  assert.equal(regressaoLog([{ x: 0, y: 1 }, { x: 1, y: 0 }]), null); // valores não positivos são ignorados
+});
+
+test("projetar: votos crescem pela elasticidade", () => {
+  assert.equal(projetar(1000, 100, 400, 0.5), 2000);
+  assert.equal(projetar(1000, 100, 100, 0.7), 1000);
+});
+
+test("afinidade: correlação dos % por local e lift nos locais do André", () => {
+  const ids = ["a", "b", "c", "d"];
+  const M = (o) => new Map(Object.entries(o));
+  // André forte em a e b; X igual; Y forte onde André não está
+  const andre = M({ a: 30, b: 20 }), totA = M({ a: 100, b: 100, c: 100, d: 100 });
+  const tot = M({ a: 200, b: 200, c: 200, d: 200 });
+  const x = M({ a: 60, b: 40 }), y = M({ c: 50, d: 50 });
+  const rx = afinidade(ids, andre, totA, x, tot);
+  const ry = afinidade(ids, andre, totA, y, tot);
+  assert.ok(Math.abs(rx.r - 1) < 1e-9);
+  assert.ok(ry.r < 0);
+  // X: 100 votos em 800 = 12,5% no estado; nos locais do André pesa (30·0,3 + 20·0,2)/50 = 26% → lift 2,08
+  assert.ok(Math.abs(rx.lift - 0.26 / 0.125) < 1e-9);
+  assert.equal(ry.lift, 0);
+});

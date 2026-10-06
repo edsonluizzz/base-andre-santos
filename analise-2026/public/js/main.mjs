@@ -7,6 +7,7 @@ import * as andre from "./telas/andre.mjs";
 import * as custo from "./telas/custo.mjs";
 import * as comparador from "./telas/comparador.mjs";
 import * as igreja from "./telas/igreja.mjs";
+import * as dobradas from "./telas/dobradas.mjs";
 
 const TELAS = [
   { id: "panorama", nome: "Panorama", mod: panorama },
@@ -14,6 +15,7 @@ const TELAS = [
   { id: "custo", nome: "Custo do voto", mod: custo },
   { id: "comparador", nome: "Comparador", mod: comparador },
   { id: "igreja", nome: "Rivais da igreja", mod: igreja },
+  { id: "dobradas", nome: "Dobradas", mod: dobradas },
 ];
 
 let erros = 0;

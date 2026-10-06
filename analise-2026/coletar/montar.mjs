@@ -14,7 +14,7 @@ function esparso(mapa, indice, oQue) {
   return out.sort((a, b) => b[1] - a[1]);
 }
 
-export function montarDados({ oficial, municipios, agregado, locais, contas, focoLocal, meta }) {
+export function montarDados({ oficial, municipios, agregado, locais, contas, focoLocal, meta, dobradas = null }) {
   const { votosMun, votosLocal, totalLocal, validosMun } = agregado;
   const idxMun = new Map(municipios.map((m, i) => [m.cd, i]));
   // Votos em município fora da lista abortam, mesmo de candidato fora do foco.
@@ -48,5 +48,14 @@ export function montarDados({ oficial, municipios, agregado, locais, contas, foc
     };
   });
 
-  return { meta, cargo: oficial.cargo, agremiacoes: oficial.agremiacoes, municipios: municipiosOut, locais: locaisOut, candidatos };
+  // Dobradas: locais que só aparecem em outro cargo ficam de fora (o mapa é dos locais do estadual).
+  const paraIndices = (mapa) => [...mapa].flatMap(([id, v]) => (idxLoc.has(id) && v > 0 ? [[idxLoc.get(id), v]] : [])).sort((a, b) => b[1] - a[1]);
+  const casas = (v, n) => (v == null ? null : Math.round(v * 10 ** n) / 10 ** n);
+  const dobradasOut = dobradas && {
+    cargos: Object.fromEntries(Object.entries(dobradas).filter(([k]) => k !== "totais").map(([cargo, linhas]) => [cargo,
+      linhas.map((l) => ({ ...l, r: casas(l.r, 4), lift: casas(l.lift, 3), loc: l.loc ? paraIndices(l.loc) : null }))])),
+    totais: Object.fromEntries(Object.entries(dobradas.totais).map(([cargo, mapa]) => [cargo, ids.map((id) => mapa.get(id) ?? 0)])),
+  };
+
+  return { meta, cargo: oficial.cargo, agremiacoes: oficial.agremiacoes, municipios: municipiosOut, locais: locaisOut, candidatos, dobradas: dobradasOut };
 }

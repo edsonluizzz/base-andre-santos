@@ -55,3 +55,20 @@ test("município da votação fora da lista do TSE: erro com o código", () => {
   e.agregado.votosMun.get("55555").set("99999", 1);
   assert.throws(() => montarDados(e), /Município 99999/);
 });
+
+test("dobradas: séries por local viram índices, totais alinhados aos locais, números arredondados", () => {
+  const e = entrada();
+  e.dobradas = {
+    federal: [{ n: "3011", nm: "FED", sg: "NOVO", st: "Eleito", eleito: true, votos: 9, r: 0.123456789, lift: 2.3456789, loc: new Map([["75353-1-10", 7], ["74934-2-20", 2], ["99999-1-1", 5]]) },
+      { n: "1300", nm: "OUTRO", sg: "PT", st: "Suplente", eleito: false, votos: 4, r: null, lift: 0, loc: null }],
+    totais: { federal: new Map([["75353-1-10", 20], ["74934-2-20", 6]]) },
+  };
+  const d = montarDados(e);
+  const [f, o] = d.dobradas.cargos.federal;
+  assert.deepEqual(f.loc, [[1, 7], [0, 2]]); // local fora do estadual é ignorado
+  assert.equal(f.r, 0.1235);
+  assert.equal(f.lift, 2.346);
+  assert.equal(o.loc, null);
+  assert.equal(o.r, null);
+  assert.deepEqual(d.dobradas.totais.federal, [6, 20]);
+});
