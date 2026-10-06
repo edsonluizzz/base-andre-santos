@@ -1,6 +1,46 @@
 # Estado — Ovile Eleitoral (Base André Santos)
 
-**Última atualização:** 2026-09-14 (sessão: /grupo do andre-santos passou a gravar em /api/public/cadastro, contratos duplicados CT-014→020 apagados, planilha Dobrada Mecabo atualizada)
+**Última atualização:** 2026-10-06 (sessão: painel "Eleição 2026 — Análise" — analise-2026/ local + módulo online em /eleicao-2026/analise)
+
+---
+
+## Sessão 2026-10-05/06 — Painel de análise da eleição 2026 (local e online)
+
+### O que é
+Mini-app em `analise-2026/` (fora de `src/`, sem dependências npm): análise pós-eleição do André
+(9.481 votos, suplente) com dados abertos do TSE. Spec `docs/superpowers/specs/2026-10-05-analise-eleicao-2026-design.md`,
+plano `docs/superpowers/plans/2026-10-05-analise-eleicao-2026.md`. README em `analise-2026/README.md`.
+- **Local:** dois cliques em `analise-2026/analise.command` (porta 4330).
+- **Online:** `ovile.com.br/eleicao-2026/analise`, só ADMIN, item "Análise 2026" no menu. Rota
+  `src/app/eleicao-2026/analise/[[...arquivo]]/route.ts` lê `analise-2026/public` (outputFileTracingIncludes),
+  injeta `<base>`, ETag por commit, bloqueia `interno.json`. `.vercelignore` exclui `analise-2026/coletar/` e `test/`.
+
+### Telas
+1 Panorama · 2 Votos do André (mapa até local de votação, seleção de município, 399 municípios, bairros)
+· 3 Custo do voto (receita ÷ votos; cartões, barras dinheiro × votos, ranking, cenários de receita)
+· 4 Comparador (André × NOVO/rivais, por município ou local) · 5 Rivais da igreja (Fabio 30300, Mara 10456,
+Dirlete 22622; quem lidera / mapa de calor). Mapas: ampliar, tela cheia, clique no município.
+A tela de Dobradas foi feita e **removida a pedido do Edson**.
+
+### Dados
+`node analise-2026/coletar/coletar.mjs` (cache em `coletar/cache/`, gitignored, ~300 MB) gera
+`public/dados.json` + `public/mapa.geo.json`; só grava se os 591 candidatos baterem com o oficial.
+Para atualizar online: rodar a coleta, commitar `public/dados.json` e dar push.
+Armadilhas resolvidas: API DivulgaCandContas dá 403 (usar CSV de contas); nulos técnicos de candidatos
+indeferidos; seções que mudaram usam NR_LOCAL_VOTACAO_ORIGINAL; malha IBGE precisa reorientar anéis p/ D3;
+legenda de partido anulado fora dos válidos.
+
+### Testes
+`node --test analise-2026/test/*.teste.mjs` (57) · `npx vitest run src/lib/analise-2026.test.ts` ·
+`analise-2026/verificar.sh` (Chrome headless, prints em /tmp/analise-2026-telas).
+
+### Pendências / próximos passos
+- Medir tempo de carga online depois da pré-carga/cache; se ainda lento, comprimir `dados.json`.
+- Prestação de contas final (novembro): rodar a coleta com `--refazer`.
+- Ideias de análise não feitas: onde o NOVO foi bem e o André não; perfil do eleitorado por local;
+  comparação com 2022.
+- Minors da revisão (adiados): aptos inflado nos 69 locais remapeados; `analise.command` mata qualquer
+  processo na porta 4330; frase de sobras do Panorama assume só vagas diretas.
 
 ---
 
