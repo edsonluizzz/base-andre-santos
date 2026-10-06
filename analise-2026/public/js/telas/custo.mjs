@@ -1,9 +1,9 @@
 import { CATEGORIAS_RECEITA, CORES_IGREJA, FOCO, PARTIDO, RIVAIS_IGREJA } from "../config.mjs";
-import { quantil, rsPorVoto } from "../calc.mjs";
+import { projetar, quantil, regressaoLog, rsPorVoto } from "../calc.mjs";
 import { tabela } from "../tabela.mjs";
 import { esconderDica, mostrarDica } from "../dica.mjs";
 import { barras, reduzido } from "../animar.mjs";
-import { esc, inteiro, reais, reaisCurto } from "../fmt.mjs";
+import { esc, inteiro, pct, reais, reaisCurto } from "../fmt.mjs";
 
 const d3 = globalThis.d3;
 const CORES_CATS = ["--laranja", "--laranja-2", "--ambar", "--azul", "--roxo", "--rosa", "--barra"];
@@ -20,7 +20,7 @@ const CUSTOS = [2, 5, 10, 25, 50, 100, 250]; // linhas de "R$ por voto" constant
 
 // Dispersão em escala log: todos os estaduais do PR ao fundo, NOVO e rivais em destaque e
 // diagonais de custo igual (acima da linha = voto mais barato que aquele valor).
-function dispersao(el, todos, grupo, eixo) {
+function dispersao(el, todos, grupo, eixo, curvas = []) {
   const pts = todos.filter((c) => c[eixo] > 0 && c.votos > 0);
   const noGrupo = new Set(grupo.map((c) => c.n));
   const L = 760, A = 500, m = { t: 14, r: 20, b: 44, l: 64 };
@@ -47,6 +47,13 @@ function dispersao(el, todos, grupo, eixo) {
     const ang = (Math.atan2(y(xe * 10 / custo) - y(xe / custo), x(xe * 10) - x(xe)) * 180) / Math.PI;
     svg.append("text").attr("transform", `translate(${x(xe)},${y(xe / custo) - 4}) rotate(${ang})`)
       .style("fill", "var(--suave)").style("font-size", "10px").text(`R$ ${custo}/voto`);
+  }
+
+  // curvas ajustadas (votos = e^a · receita^b)
+  for (const cv of curvas) {
+    const xs = d3.range(0, 41).map((k) => x0 * Math.pow(x1 / x0, k / 40));
+    linhas.append("path").attr("d", d3.line()(xs.map((v) => [x(v), y(Math.exp(cv.fit.a) * Math.pow(v, cv.fit.b))])))
+      .style("fill", "none").style("stroke", cv.cor).style("stroke-width", 2).style("opacity", 0.8);
   }
 
   const destaque = (c) => CORES_IGREJA[c.n];
@@ -90,6 +97,49 @@ function ranking(el, grupo, eixo) {
   })), { formato: (v) => reais(v) });
 }
 
+const RECEITAS_CENARIO = [200e3, 300e3, 500e3, 800e3, 1e6];
+const nf2 = (v) => v.toLocaleString("pt-BR", { maximumFractionDigits: 2 });
+
+// Quanto voto cada real trouxe (ajuste log-log entre candidatos) e o que isso sugere para o André.
+// É correlação entre candidatos, não efeito causal: candidato popular também arrecada mais.
+function cenarios(el, D, andre, eixo, fitPR, fitNovo) {
+  const r0 = andre[eixo];
+  if (!fitPR || !r0) { el.innerHTML = "<small>Sem dados suficientes para o ajuste.</small>"; return; }
+  const previsto = (fit, r) => Math.exp(fit.a) * Math.pow(r, fit.b);
+  const eficiencia = andre.votos / previsto(fitPR, r0);
+  const b = (fitNovo ?? fitPR).b;
+  const ag = D.agremiacoes.find((a) => a.siglas.includes(PARTIDO));
+  const faltaNovo = (ag.vagas + 1) * D.cargo.qe - (ag.nominais + ag.legenda);
+  const mais10 = (fit) => `${nf2((Math.pow(1.1, fit.b) - 1) * 100)}%`;
+  const linhas = [r0, ...RECEITAS_CENARIO.filter((r) => r > r0)].map((r) => ({
+    r, piso: previsto(fitPR, r), cons: projetar(andre.votos, r0, r, b / 2), otim: projetar(andre.votos, r0, r, b),
+  }));
+  el.innerHTML = `
+    <div class="grade g2">
+      <div>
+        <p>Entre os ${inteiro(fitPR.n)} estaduais do PR com ${eixo} declarada, <b>cada 10% a mais de ${eixo} veio com ${mais10(fitPR)} a mais de votos</b>
+          (elasticidade ${nf2(fitPR.b)}; a curva explica ${pct(fitPR.r2, 0)} da variação).${fitNovo ? ` Só no NOVO (${fitNovo.n} candidatos): ${mais10(fitNovo)} (elasticidade ${nf2(fitNovo.b)}).` : ""}</p>
+        <p class="espaco">Com ${reais(r0, 0)}, um candidato médio do PR faria cerca de <b>${inteiro(previsto(fitPR, r0))}</b> votos.
+          O André fez <b class="destaque">${inteiro(andre.votos)}</b> — <b class="destaque">${nf2(eficiencia)}× o esperado</b> para o dinheiro que teve.</p>
+        <p class="espaco"><small>Linhas no gráfico acima: cinza = curva do PR, laranja claro = curva do NOVO. Os cenários ao lado são estimativas a partir dessa relação entre candidatos —
+          ela não prova que mais dinheiro causa mais voto (candidato com mais base também arrecada mais). Use o intervalo, não um número só.
+          Para a ${ag.vagas + 1}ª cadeira o NOVO precisava de ${inteiro(faltaNovo)} votos a mais na legenda.</small></p>
+      </div>
+      <div id="cu-cen-tab"></div>
+    </div>`;
+  tabela(el.querySelector("#cu-cen-tab"), {
+    linhas, ordem: 0, desc: false,
+    classe: (l) => (l.r === r0 ? "foco" : ""),
+    colunas: [
+      { rotulo: eixo === "receita" ? "Receita" : "Despesa", valor: (l) => l.r, formato: (v) => reaisCurto(v), num: true },
+      { rotulo: "Piso (candidato médio)", valor: (l) => l.piso, formato: inteiro, num: true },
+      { rotulo: "Conservador", valor: (l) => l.cons, formato: inteiro, num: true },
+      { rotulo: "Otimista", valor: (l) => l.otim, formato: inteiro, num: true },
+    ],
+  });
+  el.querySelector("#cu-cen-tab").insertAdjacentHTML("beforeend", `<small>Conservador: metade da elasticidade do ${fitNovo ? "NOVO" : "PR"}, mantendo a base do André. Otimista: elasticidade inteira, mantendo a eficiência atual dele. Piso: o que a curva do PR dá para essa receita.</small>`);
+}
+
 function origem(el, cands) {
   const max = Math.max(1, ...cands.map((c) => c.receita ?? 0));
   el.innerHTML = `<div class="legenda">${CATEGORIAS_RECEITA.map((k, i) => `<span><span class="chip" style="background:var(${CORES_CATS[i]})"></span>${esc(k)}</span>`).join("")}</div>` +
@@ -122,10 +172,17 @@ export function montar(el, { D, params, navegar, interno }) {
         Linhas tracejadas: custo igual por voto (acima da linha = mais barato).${grupo.length - comValor.length ? ` ${grupo.length - comValor.length} do grupo sem ${eixo} declarada ficaram fora.` : ""}</small></div>
       <div class="cartao"><h2>R$ por voto · do mais barato ao mais caro</h2><div id="cu-rank" class="rolagem" style="max-height:560px"></div></div>
     </div>
+    <div class="cartao espaco"><h2>Recurso × voto · cenários para o André</h2><div id="cu-cen"></div></div>
     <div class="cartao espaco"><h2>De onde veio o dinheiro</h2><div id="cu-origem"></div></div>
     <div class="cartao espaco"><h2>Chapa do NOVO + rivais da igreja · clique no cabeçalho para ordenar</h2><div id="cu-tab"></div></div>`;
   el.querySelectorAll("[data-eixo]").forEach((b) => { b.onclick = () => navegar({ eixo: b.dataset.eixo }); });
-  dispersao(el.querySelector("#cu-disp"), D.candidatos, grupo, eixo);
+  const pontos = (f) => D.candidatos.filter(f).map((c) => ({ x: c[eixo], y: c.votos }));
+  const fitPR = regressaoLog(pontos(() => true));
+  const fitNovo = regressaoLog(pontos((c) => c.sg === PARTIDO));
+  dispersao(el.querySelector("#cu-disp"), D.candidatos, grupo, eixo, [
+    ...(fitPR ? [{ fit: fitPR, cor: "var(--suave)" }] : []), ...(fitNovo ? [{ fit: fitNovo, cor: "var(--laranja-2)" }] : []),
+  ]);
+  cenarios(el.querySelector("#cu-cen"), D, andre, eixo, fitPR, fitNovo);
   ranking(el.querySelector("#cu-rank"), grupo, eixo);
   origem(el.querySelector("#cu-origem"), [FOCO, ...RIVAIS_IGREJA].map((n) => D.porNumero.get(n)));
   tabela(el.querySelector("#cu-tab"), {

@@ -9,15 +9,16 @@ Roda só neste Mac; não depende do sistema em produção.
 
 Dois cliques em `analise-2026/analise.command`. Abre no Chrome em `http://localhost:4330`.
 
-Teclas: `1`–`5` trocam de tela · `T` tema claro/escuro. O endereço guarda a tela e as escolhas
+Teclas: `1`–`6` trocam de tela · `T` tema claro/escuro. O endereço guarda a tela e as escolhas
 (ex.: `#comparador?b=10456&nivel=loc`), então dá para salvar nos favoritos.
 
 | Tela | O que mostra |
 |---|---|
 | 1 Panorama | Quociente, cadeiras por partido, chapa do NOVO, posição do André |
 | 2 Votos do André | Mapa por município (zoom mostra os locais de votação), regiões, concentração, os 399 municípios com busca, locais e bairros da cidade escolhida, ranking do André na cidade |
-| 3 Custo do voto | Receita ÷ votos (supõe que gastam tudo), todos os estaduais do PR em escala log com linhas de custo igual, ranking do voto mais barato, origem do dinheiro |
+| 3 Custo do voto | Receita ÷ votos (supõe que gastam tudo), todos os estaduais do PR em escala log com linhas de custo igual e curvas de recurso × voto, ranking do voto mais barato, cenários de receita para o André (piso, conservador, otimista), origem do dinheiro |
 | 4 Comparador | André × qualquer estadual do NOVO ou rival, por município ou local, lado a lado ou diferença |
+| 6 Dobradas | Afinidade geográfica do André com cada candidato a federal, senador e governador (correlação dos % por local e lift), mapas lado a lado |
 | 5 Rivais da igreja | Escolha quais dos quatro mostrar; "Quem lidera" ou "Mapa de calor" (um mapa por candidato, escala própria ou comum); sobreposição de bases; onde cada rival foi forte |
 
 Em todos os mapas: ⤢ amplia, ⛶ tela cheia, ⟲ volta ao Paraná inteiro. Clique num município (ou use o campo
