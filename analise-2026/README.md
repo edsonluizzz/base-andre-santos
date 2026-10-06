@@ -15,10 +15,13 @@ Teclas: `1`–`5` trocam de tela · `T` tema claro/escuro. O endereço guarda a 
 | Tela | O que mostra |
 |---|---|
 | 1 Panorama | Quociente, cadeiras por partido, chapa do NOVO, posição do André |
-| 2 Votos do André | Mapa por município (zoom mostra os locais de votação), regiões, concentração, top municípios/locais, bairros de Curitiba |
-| 3 Custo do voto | Receita e despesa declaradas ao TSE por voto, origem do dinheiro |
+| 2 Votos do André | Mapa por município (zoom mostra os locais de votação), regiões, concentração, os 399 municípios com busca, locais e bairros da cidade escolhida, ranking do André na cidade |
+| 3 Custo do voto | Receita ÷ votos (supõe que gastam tudo), todos os estaduais do PR em escala log com linhas de custo igual, ranking do voto mais barato, origem do dinheiro |
 | 4 Comparador | André × qualquer estadual do NOVO ou rival, por município ou local, lado a lado ou diferença |
-| 5 Rivais da igreja | Quem lidera onde entre os quatro, sobreposição de bases, onde cada rival foi forte |
+| 5 Rivais da igreja | Escolha quais dos quatro mostrar; "Quem lidera" ou "Mapa de calor" (um mapa por candidato, escala própria ou comum); sobreposição de bases; onde cada rival foi forte |
+
+Em todos os mapas: ⤢ amplia, ⛶ tela cheia, ⟲ volta ao Paraná inteiro. Clique num município (ou use o campo
+"Município") para dar zoom nele e ver os locais de votação daquela cidade nas tabelas.
 
 ## Atualizar os dados
 
