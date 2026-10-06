@@ -7,9 +7,9 @@ const LIMIAR_PONTOS = 2.5; // zoom a partir do qual os locais de votação apare
 
 export const cor = (nome) => getComputedStyle(document.documentElement).getPropertyValue(nome).trim();
 
-export function escalaSeq(max, nomeVar) {
-  const s = d3.scaleSequentialSqrt(d3.interpolateRgb(cor("--mapa-vazio"), cor(nomeVar))).domain([0, max || 1]).clamp(true);
-  return (v) => s(0.06 * (max || 1) + 0.94 * v); // valor positivo pequeno já aparece tingido
+export function escalaSeq(max, nomeVar, { linear = false } = {}) {
+  const s = (linear ? d3.scaleSequential : d3.scaleSequentialSqrt)(d3.interpolateRgb(cor("--mapa-vazio"), cor(nomeVar))).domain([0, max || 1]).clamp(true);
+  return (v) => s(0.01 * (max || 1) + 0.99 * v); // valor positivo pequeno ainda aparece levemente tingido
 }
 
 export function escalaDiv(lim) {
