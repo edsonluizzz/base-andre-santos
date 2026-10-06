@@ -73,3 +73,24 @@ footer { color: var(--suave); font-size: 12px; padding: 0 24px 24px; line-height
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
 .empilhada .trilho span { display: block; height: 100%; }
+.mapa-botoes { position: absolute; top: 6px; right: 6px; display: flex; gap: 4px; z-index: 2; }
+.mapa-botoes button { padding: 4px 9px; font-size: 15px; line-height: 1; opacity: .85; }
+.mapa-botoes button:hover { opacity: 1; border-color: var(--laranja); }
+.mapa .contorno-sel { fill: none; stroke: var(--texto); stroke-width: 2; vector-effect: non-scaling-stroke; pointer-events: none; }
+.mapa path { cursor: pointer; }
+.grade > .cartao.ampliado { grid-column: 1 / -1; }
+.cartao.ampliado .mapa { aspect-ratio: auto; height: 78vh; }
+.cartao:fullscreen { overflow: auto; border-radius: 0; padding: 20px; }
+.cartao:fullscreen .mapa { aspect-ratio: auto; height: calc(100vh - 120px); }
+.cartao:fullscreen .mapas-grade .mapa { height: calc(50vh - 80px); }
+.mapas-grade { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+.mapas-grade h3 { font-size: 13px; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
+.seletor { display: inline-flex; align-items: center; gap: 8px; }
+.seletor input, input.busca { background: var(--cartao); color: var(--texto); border: 1px solid var(--borda); border-radius: 8px; padding: 6px 10px; font: inherit; font-size: 14px; min-width: 240px; }
+input.busca { width: 100%; margin-bottom: 8px; }
+tr.clicavel { cursor: pointer; }
+tr.clicavel:hover td { background: var(--borda); }
+tr.sel td { background: color-mix(in srgb, var(--laranja) 18%, transparent); }
+.marcas { display: inline-flex; gap: 12px; flex-wrap: wrap; }
+.marcas label { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
+.ranking-mun { font-size: 13px; line-height: 1.7; }

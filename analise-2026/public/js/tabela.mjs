@@ -10,15 +10,26 @@ export function ordenar(linhas, valor, desc) {
 }
 
 // Tabela ordenável: clique no cabeçalho alterna a ordem. "formato" devolve HTML (já escapado).
-export function tabela(el, { colunas, linhas, ordem = 0, desc = true, classe = () => "", limite = Infinity }) {
-  let o = ordem, d = desc;
+// Com "busca", um campo filtra pela primeira coluna; com "aoClicar", cada linha vira um botão.
+const normal = (s) => String(s ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
+
+export function tabela(el, { colunas, linhas, ordem = 0, desc = true, classe = () => "", limite = Infinity, busca = null, aoClicar = null }) {
+  let o = ordem, d = desc, filtro = "";
+  let alvo = el;
+  if (busca) {
+    el.innerHTML = `<input type="search" class="busca" placeholder="${esc(busca)}"><div class="tabela-corpo"></div>`;
+    alvo = el.querySelector(".tabela-corpo");
+    el.querySelector(".busca").addEventListener("input", (ev) => { filtro = normal(ev.target.value.trim()); render(); });
+  }
+  let ls = [];
   const render = () => {
-    const ls = ordenar(linhas, colunas[o].valor, d).slice(0, limite);
-    el.innerHTML = `<table><thead><tr>${colunas.map((c, k) =>
+    const vis = filtro ? linhas.filter((l) => normal(colunas[0].valor(l)).includes(filtro)) : linhas;
+    ls = ordenar(vis, colunas[o].valor, d).slice(0, limite);
+    alvo.innerHTML = `<table><thead><tr>${colunas.map((c, k) =>
       `<th data-ordem="${k}" class="${c.num ? "n" : ""}">${esc(c.rotulo)}${k === o ? (d ? " ▾" : " ▴") : ""}</th>`).join("")}</tr></thead>
-      <tbody>${ls.map((l) => `<tr class="${classe(l)}">${colunas.map((c) =>
+      <tbody>${ls.map((l, i) => `<tr data-i="${i}" class="${classe(l)}${aoClicar ? " clicavel" : ""}">${colunas.map((c) =>
         `<td class="${c.num ? "n" : ""}">${(c.formato ?? esc)(c.valor(l), l)}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
-    el.querySelectorAll("th").forEach((th) => {
+    alvo.querySelectorAll("th").forEach((th) => {
       th.onclick = () => {
         const k = Number(th.dataset.ordem);
         if (k === o) d = !d; else { o = k; d = true; }
@@ -26,5 +37,6 @@ export function tabela(el, { colunas, linhas, ordem = 0, desc = true, classe = (
       };
     });
   };
+  if (aoClicar) alvo.addEventListener("click", (ev) => { const tr = ev.target.closest("tr[data-i]"); if (tr) aoClicar(ls[Number(tr.dataset.i)]); });
   render();
 }

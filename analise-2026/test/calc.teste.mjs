@@ -42,3 +42,12 @@ test("vencedor com empate", () => {
   assert.deepEqual(r.get("2"), { n: "A", v: 3, margem: 3 });
   assert.deepEqual(r.get("3"), { n: "B", v: 1, margem: 1 });
 });
+
+import { quantil } from "../public/js/calc.mjs";
+
+test("quantil: valor de corte que ignora pontos extremos", () => {
+  assert.equal(quantil([1, 2, 3, 4, 100], 0.5), 3);
+  assert.equal(quantil([5], 0.98), 5);
+  assert.equal(quantil([], 0.98), 0);
+  assert.ok(quantil([...Array(99).fill(1), 1000], 0.98) < 1000);
+});

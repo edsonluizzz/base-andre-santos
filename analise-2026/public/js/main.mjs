@@ -66,12 +66,17 @@ async function iniciar() {
     const { tela: id, params } = lerRota(location.hash, ids);
     nav.querySelectorAll("a").forEach((a) => a.classList.toggle("ativa", a.dataset.id === id));
     esconderDica();
+    // Mapa em tela cheia ou ampliado continua assim depois de redesenhar (ex.: ao escolher um município).
+    const cheio = document.fullscreenElement?.querySelector(".mapa[id]")?.id;
+    const ampliados = [...tela.querySelectorAll(".cartao.ampliado .mapa[id]")].map((m) => m.id);
     tela.replaceChildren();
     tela.style.animation = "none";
     tela.offsetWidth;
     tela.style.animation = "";
     const navegar = (novos) => { location.hash = escreverRota(id, { ...params, ...novos }); };
     TELAS.find((t) => t.id === id).mod.montar(tela, { ...base, params, navegar });
+    for (const m of ampliados) document.getElementById(m)?.closest(".cartao")?.classList.add("ampliado");
+    if (cheio) document.getElementById(cheio)?.closest(".cartao")?.requestFullscreen?.().catch(() => {});
     document.body.dataset.pronta = id;
   };
   const trocarTema = () => {

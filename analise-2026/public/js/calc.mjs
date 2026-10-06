@@ -61,3 +61,10 @@ export function vencedor(series) {
   }
   return out;
 }
+
+// Quantil por posição (sem interpolação); usado para a escala de cor não ser achatada por um extremo.
+export function quantil(valores, q) {
+  if (!valores.length) return 0;
+  const v = [...valores].sort((a, b) => a - b);
+  return v[Math.min(v.length - 1, Math.floor(q * (v.length - 1)))];
+}
