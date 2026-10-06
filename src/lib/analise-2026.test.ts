@@ -27,3 +27,16 @@ describe("prepararIndex", () => {
     expect(out).toContain('<a id="voltar" href="../../dashboard">');
   });
 });
+
+import { cabecalhosCache } from "./analise-2026";
+
+describe("cabecalhosCache", () => {
+  it("biblioteca de terceiros fica um dia em cache", () => {
+    expect(cabecalhosCache("vendor/d3.v7.min.js", "abc")["cache-control"]).toBe("private, max-age=86400, immutable");
+  });
+  it("o resto revalida pela versão do deploy (ETag)", () => {
+    const h = cabecalhosCache("dados.json", "abc123");
+    expect(h["cache-control"]).toBe("private, max-age=300, must-revalidate");
+    expect(h.etag).toBe('"abc123-dados.json"');
+  });
+});

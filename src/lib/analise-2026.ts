@@ -26,3 +26,10 @@ export function resolverArquivo(raiz: string, partes: string[] | undefined) {
 export function prepararIndex(html: string, base: string) {
   return html.replace("<head>", `<head>\n  <base href="${base}">`).replace('id="voltar" href="../../dashboard" hidden', 'id="voltar" href="../../dashboard"');
 }
+
+// Biblioteca de terceiros não muda entre deploys; o resto revalida com ETag da versão do deploy
+// (o navegador reaproveita a cópia por 5 min e depois só recebe 304 se nada mudou).
+export function cabecalhosCache(rel: string, versao: string): Record<string, string> {
+  if (rel.startsWith("vendor/")) return { "cache-control": "private, max-age=86400, immutable" };
+  return { "cache-control": "private, max-age=300, must-revalidate", etag: `"${versao}-${rel}"` };
+}

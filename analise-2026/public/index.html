@@ -5,6 +5,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Análise Eleição 2026 PR</title>
   <link rel="stylesheet" href="css/estilo.css">
+  <!-- baixa tudo em paralelo em vez de descobrir os arquivos um a um -->
+  <link rel="preload" href="dados.json" as="fetch" crossorigin>
+  <link rel="preload" href="mapa.geo.json" as="fetch" crossorigin>
+  <link rel="modulepreload" href="js/main.mjs">
+  <link rel="modulepreload" href="js/animar.mjs">
+  <link rel="modulepreload" href="js/calc.mjs">
+  <link rel="modulepreload" href="js/config.mjs">
+  <link rel="modulepreload" href="js/dados.mjs">
+  <link rel="modulepreload" href="js/dica.mjs">
+  <link rel="modulepreload" href="js/fmt.mjs">
+  <link rel="modulepreload" href="js/mapa.mjs">
+  <link rel="modulepreload" href="js/rota.mjs">
+  <link rel="modulepreload" href="js/seletor.mjs">
+  <link rel="modulepreload" href="js/tabela.mjs">
+  <link rel="modulepreload" href="js/telas/andre.mjs">
+  <link rel="modulepreload" href="js/telas/comparador.mjs">
+  <link rel="modulepreload" href="js/telas/custo.mjs">
+  <link rel="modulepreload" href="js/telas/igreja.mjs">
+  <link rel="modulepreload" href="js/telas/panorama.mjs">
   <script src="vendor/d3.v7.min.js"></script>
   <script type="module" src="js/main.mjs"></script>
 </head>
