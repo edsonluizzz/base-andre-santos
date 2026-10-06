@@ -101,3 +101,5 @@ tr.sel td { background: color-mix(in srgb, var(--laranja) 18%, transparent); }
 .par-linhas { display: flex; flex-direction: column; gap: 5px; }
 .par-linhas .barra { grid-template-columns: 1fr 110px; }
 .par-linhas .val { font-size: 13px; }
+#voltar { color: var(--suave); text-decoration: none; font-size: 13px; border: 1px solid var(--borda); border-radius: 8px; padding: 6px 10px; }
+#voltar:hover { color: var(--texto); border-color: var(--laranja); }

@@ -5,3 +5,8 @@ node_modules/
 
 apuracao/
 apuracao-v2/
+
+# analise-2026: só public/ vai para a Vercel (coleta tem ~300 MB de cache; gasto interno fica no Mac)
+analise-2026/coletar/
+analise-2026/test/
+analise-2026/public/interno.json

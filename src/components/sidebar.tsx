@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, type AnchorHTMLAttributes, type ComponentProps } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import {
   LayoutDashboard, Users, Calendar,
   Megaphone, Settings, LogOut, Shield, Star, Map, BarChart2, Network, Target, ClipboardList, Award, Building2, Plus, UserPlus, Link2, Church,
-  ChevronLeft, ChevronRight, Sun, Moon, GraduationCap, Send, IdCard, Wallet, Package, Mail,
+  ChevronLeft, ChevronRight, Sun, Moon, GraduationCap, Send, IdCard, Wallet, Package, Mail, PieChart,
 } from "lucide-react";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { useTheme } from "next-themes";
@@ -17,6 +17,15 @@ import { useSidebar } from "@/contexts/sidebar-context";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const ROLE_RANK: Record<string, number> = { MEMBER: 0, LEADER: 1, ADMIN: 2 };
+
+// Item "externo" aponta para uma rota que devolve HTML pronto: precisa de navegação completa.
+function LinkMenu({ externo, ...props }: ComponentProps<typeof Link> & { externo?: boolean }) {
+  if (externo) {
+    const { href, className, style, onClick, children } = props;
+    return <a href={String(href)} className={className} style={style} onClick={onClick as AnchorHTMLAttributes<HTMLAnchorElement>["onClick"]}>{children}</a>;
+  }
+  return <Link {...props} />;
+}
 
 const navItems = [
   { href: "/dashboard",      icon: LayoutDashboard, label: "Dashboard",       minRole: "MEMBER", superAdminOnly: false, financeAdminOnly: false, leadsOnly: true  },
@@ -31,6 +40,8 @@ const navItems = [
   { href: "/relatorio",      icon: BarChart2,        label: "Relatório",       minRole: "LEADER", superAdminOnly: false, financeAdminOnly: false, leadsOnly: true  },
   { href: "/metas",          icon: Target,           label: "Metas",           minRole: "LEADER", superAdminOnly: false, financeAdminOnly: false, leadsOnly: false },
   { href: "/eleitos-2022",   icon: Award,            label: "Eleitos 2022",    minRole: "LEADER", superAdminOnly: false, financeAdminOnly: false, leadsOnly: false },
+  // Página estática servida por rota (não é página do Next): abre com <a>, sem navegação client-side.
+  { href: "/eleicao-2026/analise", icon: PieChart, label: "Análise 2026", minRole: "ADMIN", superAdminOnly: false, financeAdminOnly: false, leadsOnly: false, externo: true },
   { href: "/materiais",      icon: Package,          label: "Material",        minRole: "LEADER", superAdminOnly: false, financeAdminOnly: false, leadsOnly: true  },
   { href: "/convites",       icon: Link2,            label: "Convites",        minRole: "ADMIN",  superAdminOnly: false, financeAdminOnly: false, leadsOnly: false },
   { href: "/igrejas",        icon: Building2,        label: "Igrejas",         minRole: "ADMIN",  superAdminOnly: false, financeAdminOnly: false, leadsOnly: false },
@@ -170,7 +181,8 @@ export function Sidebar({
                     {groupItems.map((item) => {
                       const active = pathname.startsWith(item.href);
                       return (
-                        <Link
+                        <LinkMenu
+                          externo={item.externo}
                           key={item.href}
                           href={item.href}
                           onClick={() => setMobileOpen(false)}
@@ -189,7 +201,7 @@ export function Sidebar({
                               {waUnread > 99 ? "99+" : waUnread}
                             </span>
                           )}
-                        </Link>
+                        </LinkMenu>
                       );
                     })}
                   </div>
@@ -200,7 +212,8 @@ export function Sidebar({
             finalItems.map((item) => {
               const active = pathname.startsWith(item.href);
               const linkEl = (
-                <Link
+                <LinkMenu
+                  externo={item.externo}
                   key={item.href}
                   href={item.href}
                   onClick={() => setMobileOpen(false)}
@@ -216,7 +229,7 @@ export function Sidebar({
                   {item.href === "/whatsapp" && waUnread > 0 && (
                     <span className="absolute top-1 right-1.5 w-2 h-2 rounded-full bg-green-500" />
                   )}
-                </Link>
+                </LinkMenu>
               );
               return (
                 <Tooltip key={item.href}>

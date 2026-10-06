@@ -22,6 +22,8 @@ const nextConfig = {
       "/api/collaborators/export-pdf": ["./node_modules/pdfkit/js/data/**/*"],
       "/api/public/material-request": ["./node_modules/pdfkit/js/data/**/*"],
       "/api/materiais/": ["./node_modules/pdfkit/js/data/**/*"],
+      // Painel de análise da eleição: a rota lê os arquivos estáticos via fs.
+      "/eleicao-2026/analise/": ["./analise-2026/public/**/*"],
     },
   },
   async rewrites() {

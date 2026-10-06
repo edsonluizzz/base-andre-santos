@@ -4,7 +4,7 @@ import Google from "next-auth/providers/google";
 const ROLE_RANK: Record<string, number> = { MEMBER: 0, LEADER: 1, ADMIN: 2 };
 const ROUTE_MIN_RANK: [string, number][] = [
   ["/mapa", 1], ["/zonas", 1], ["/grupos", 1], ["/agenda", 1], ["/relatorio", 1],
-  ["/comunicados", 2], ["/configuracoes", 2], ["/super-admin", 2],
+  ["/comunicados", 2], ["/configuracoes", 2], ["/super-admin", 2], ["/eleicao-2026", 2],
 ];
 
 // Dono da campanha — sempre super admin + finance admin, mesmo que
