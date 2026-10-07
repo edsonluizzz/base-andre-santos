@@ -36,7 +36,7 @@ export function montar(el, { D, geo, params, navegar }) {
     </div>
     <div class="grade g2">
       <div class="cartao">${modo === "lado"
-        ? `<div class="grade" style="grid-template-columns:1fr 1fr"><div><h2 class="destaque">${esc(a.nm)}</h2><div id="cp-ma"></div></div><div><h2>${esc(b.nm)}</h2><div id="cp-mb"></div></div></div>`
+        ? `<div class="grade mapas-lado"><div><h2 class="destaque">${esc(a.nm)}</h2><div id="cp-ma"></div></div><div><h2>${esc(b.nm)}</h2><div id="cp-mb"></div></div></div>`
         : `<h2>Diferença em pontos percentuais · laranja = André mais forte · azul = ${esc(b.nm)} mais forte</h2><div id="cp-md"></div>`}
         <div id="cp-leg"></div></div>
       <div class="cartao"><h2>Números</h2>

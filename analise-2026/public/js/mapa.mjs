@@ -22,10 +22,10 @@ export function legenda(el, { cores, min, max, titulo }) {
 }
 
 // Botões sobre o mapa: ampliar o cartão, tela cheia e voltar ao estado inteiro.
-function botoes(el, zerar) {
+function botoes(el, zerar, escalar) {
   const barra = document.createElement("div");
   barra.className = "mapa-botoes";
-  barra.innerHTML = `<button type="button" data-acao="ampliar" title="Ampliar o mapa">⤢</button><button type="button" data-acao="cheia" title="Tela cheia">⛶</button><button type="button" data-acao="zerar" title="Ver o Paraná inteiro">⟲</button>`;
+  barra.innerHTML = `<button type="button" data-acao="mais" title="Aproximar">+</button><button type="button" data-acao="menos" title="Afastar">−</button><button type="button" data-acao="ampliar" title="Ampliar o mapa">⤢</button><button type="button" data-acao="cheia" title="Tela cheia">⛶</button><button type="button" data-acao="zerar" title="Ver o Paraná inteiro">⟲</button>`;
   barra.addEventListener("click", (ev) => {
     const acao = ev.target.closest("button")?.dataset.acao;
     const cartao = el.closest(".cartao") ?? el;
@@ -35,6 +35,8 @@ function botoes(el, zerar) {
       else cartao.requestFullscreen?.();
     }
     if (acao === "zerar") zerar();
+    if (acao === "mais") escalar(2);
+    if (acao === "menos") escalar(0.5);
   });
   el.appendChild(barra);
 }
@@ -71,15 +73,22 @@ export function criarMapa(el, { geo, D }) {
       .on("mousemove", (ev, p) => mostrarDica(ev, htmlLoc?.(p.j))).on("mouseleave", esconderDica);
   }
 
-  const zoom = d3.zoom().scaleExtent([1, 40]).translateExtent([[0, 0], [L, A]]).on("zoom", (ev) => {
-    g.attr("transform", ev.transform);
-    k = ev.transform.k;
-    desenharPontos();
-    if (!sincronizando) ouvintes.forEach((fn) => fn(ev.transform));
-  });
+  // No celular, com o mapa inteiro um dedo rola a página (senão o mapa "prende" a rolagem); depois de
+  // aproximar (botão +, pinça ou município escolhido), o dedo passa a arrastar o mapa.
+  const toqueLivre = () => svg.style("touch-action", k > 1 ? "none" : "pan-y");
+  const zoom = d3.zoom().scaleExtent([1, 40]).translateExtent([[0, 0], [L, A]])
+    .filter((ev) => (ev.type.startsWith("touch") ? k > 1 || ev.touches.length >= 2 : (!ev.ctrlKey || ev.type === "wheel") && !ev.button))
+    .on("zoom", (ev) => {
+      g.attr("transform", ev.transform);
+      k = ev.transform.k;
+      toqueLivre();
+      desenharPontos();
+      if (!sincronizando) ouvintes.forEach((fn) => fn(ev.transform));
+    });
   svg.call(zoom);
+  toqueLivre();
   const irPara = (t) => svg.transition().duration(reduzido() ? 0 : 750).call(zoom.transform, t);
-  botoes(el, () => irPara(d3.zoomIdentity));
+  botoes(el, () => irPara(d3.zoomIdentity), (f) => svg.transition().duration(reduzido() ? 0 : 300).call(zoom.scaleBy, f));
   const destacar = (i) => {
     const f = i == null ? null : geo.features.find((x) => munIdx(x) === i);
     contorno.datum(f).attr("d", f ? caminho : null).style("display", f ? null : "none");

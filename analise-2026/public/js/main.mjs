@@ -65,6 +65,9 @@ async function iniciar() {
   const render = () => {
     const { tela: id, params } = lerRota(location.hash, ids);
     nav.querySelectorAll("a").forEach((a) => a.classList.toggle("ativa", a.dataset.id === id));
+    // No celular o menu rola para o lado: traz a aba ativa para a vista.
+    const ativa = nav.querySelector(".ativa");
+    if (ativa) nav.scrollLeft = ativa.offsetLeft - (nav.clientWidth - ativa.offsetWidth) / 2;
     esconderDica();
     // Mapa em tela cheia ou ampliado continua assim depois de redesenhar (ex.: ao escolher um município).
     const cheio = document.fullscreenElement?.querySelector(".mapa[id]")?.id;
