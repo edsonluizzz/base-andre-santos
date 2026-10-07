@@ -39,9 +39,9 @@ describe("cabecalhosCache", () => {
   it("biblioteca de terceiros fica um dia em cache", () => {
     expect(cabecalhosCache("vendor/d3.v7.min.js", "abc")["cache-control"]).toBe("private, max-age=86400, immutable");
   });
-  it("o resto revalida pela versão do deploy (ETag)", () => {
+  it("o resto revalida a cada acesso pela versão do deploy (ETag)", () => {
     const h = cabecalhosCache("dados.json", "abc123");
-    expect(h["cache-control"]).toBe("private, max-age=300, must-revalidate");
+    expect(h["cache-control"]).toBe("private, no-cache");
     expect(h.etag).toBe('"abc123-dados.json"');
   });
 });

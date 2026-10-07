@@ -29,9 +29,9 @@ export function prepararIndex(html: string, base: string, mostrarVoltar: boolean
   return mostrarVoltar ? comBase.replace('id="voltar" href="../../dashboard" hidden', 'id="voltar" href="../../dashboard"') : comBase;
 }
 
-// Biblioteca de terceiros não muda entre deploys; o resto revalida com ETag da versão do deploy
-// (o navegador reaproveita a cópia por 5 min e depois só recebe 304 se nada mudou).
+// Biblioteca de terceiros não muda entre deploys; o resto revalida a cada acesso com ETag da versão
+// do deploy (304 se nada mudou) — assim uma atualização aparece na hora, sem esperar o cache vencer.
 export function cabecalhosCache(rel: string, versao: string): Record<string, string> {
   if (rel.startsWith("vendor/")) return { "cache-control": "private, max-age=86400, immutable" };
-  return { "cache-control": "private, max-age=300, must-revalidate", etag: `"${versao}-${rel}"` };
+  return { "cache-control": "private, no-cache", etag: `"${versao}-${rel}"` };
 }
