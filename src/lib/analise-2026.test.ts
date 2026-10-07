@@ -20,11 +20,16 @@ describe("resolverArquivo", () => {
 });
 
 describe("prepararIndex", () => {
-  it("injeta a base do subcaminho e mostra o link de volta", () => {
-    const html = '<html><head>\n<title>x</title></head><body><a id="voltar" href="../../dashboard" hidden>← sistema</a></body></html>';
-    const out = prepararIndex(html, "/eleicao-2026/analise/");
+  const html = '<html><head>\n<title>x</title></head><body><a id="voltar" href="../../dashboard" hidden>← sistema</a></body></html>';
+  it("injeta a base do subcaminho e mostra o link de volta para quem é do sistema", () => {
+    const out = prepararIndex(html, "/eleicao-2026/analise/", true);
     expect(out).toContain('<head>\n  <base href="/eleicao-2026/analise/">');
     expect(out).toContain('<a id="voltar" href="../../dashboard">');
+  });
+  it("visitante público não vê o link para o sistema", () => {
+    const out = prepararIndex(html, "/eleicao-2026/analise/", false);
+    expect(out).toContain('<base href="/eleicao-2026/analise/">');
+    expect(out).toContain('<a id="voltar" href="../../dashboard" hidden>');
   });
 });
 

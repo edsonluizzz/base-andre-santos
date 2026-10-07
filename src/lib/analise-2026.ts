@@ -23,8 +23,10 @@ export function resolverArquivo(raiz: string, partes: string[] | undefined) {
 }
 
 // Servido em /eleicao-2026/analise (sem barra final), os caminhos relativos precisam de <base>.
-export function prepararIndex(html: string, base: string) {
-  return html.replace("<head>", `<head>\n  <base href="${base}">`).replace('id="voltar" href="../../dashboard" hidden', 'id="voltar" href="../../dashboard"');
+// O link "← sistema" só aparece para quem está logado; o visitante público vê só o painel.
+export function prepararIndex(html: string, base: string, mostrarVoltar: boolean) {
+  const comBase = html.replace("<head>", `<head>\n  <base href="${base}">`);
+  return mostrarVoltar ? comBase.replace('id="voltar" href="../../dashboard" hidden', 'id="voltar" href="../../dashboard"') : comBase;
 }
 
 // Biblioteca de terceiros não muda entre deploys; o resto revalida com ETag da versão do deploy

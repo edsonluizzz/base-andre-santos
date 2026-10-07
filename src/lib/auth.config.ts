@@ -108,6 +108,9 @@ export const authConfig: NextAuthConfig = {
         pathname.startsWith("/api/cep/") ||
         pathname.startsWith("/api/n8n/") ||
         pathname === "/privacidade" ||
+        // Painel de análise da eleição: público, só leitura, só esta pasta (dados TSE/IBGE).
+        pathname === "/eleicao-2026/analise" ||
+        pathname.startsWith("/eleicao-2026/analise/") ||
         pathname === "/api/onboarding";
 
       if (isPublic) return true;
