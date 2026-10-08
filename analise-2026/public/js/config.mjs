@@ -1,9 +1,14 @@
 // Configuração compartilhada pela coleta (Node) e pela página.
-export const FOCO = "30777";
-export const PARTIDO = "NOVO";
-export const RIVAIS_IGREJA = ["30300", "10456", "22622"];
-export const PADRAO_B = "30300";
-export const CORES_VAR = { 30777: "--laranja", 30300: "--azul", 10456: "--rosa", 22622: "--roxo" };
-export const CORES_IGREJA = Object.fromEntries(Object.entries(CORES_VAR).map(([n, v]) => [n, `var(${v})`]));
+// Cargos disponíveis: código do TSE, dígitos do número do candidato e arquivo do resultado oficial.
+export const CARGOS = {
+  estadual: { nome: "Deputado Estadual", curto: "Estadual", cd: "7", digitos: 5, oficial: "c0007" },
+  federal: { nome: "Deputado Federal", curto: "Federal", cd: "6", digitos: 4, oficial: "c0006" },
+};
+export const CARGO_PADRAO = "estadual";
+export const UF = { sigla: "PR", nome: "Paraná" };
+// Até quantos candidatos entram na comparação (um por cor).
+export const MAX_COMPARADOS = 3;
+// Cor do candidato principal e dos comparados, na ordem.
+export const CORES_SERIE = ["--laranja", "--azul", "--rosa", "--roxo"];
 // Ordem fixa das categorias de receita (coleta e gráfico usam a mesma lista).
 export const CATEGORIAS_RECEITA = ["FEFC", "Fundo Partidário", "Partido (outros recursos)", "Pessoas físicas", "Recursos próprios", "Outros candidatos", "Outros"];

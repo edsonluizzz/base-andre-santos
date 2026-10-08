@@ -146,3 +146,61 @@ label select { max-width: 100%; }
   .cartao.ampliado .mapa { height: 70vh; }
   #dica { max-width: calc(100vw - 16px); }
 }
+
+/* Barra de escolha: cargo, candidato e comparados */
+.escolha { display: flex; gap: 10px 18px; align-items: center; flex-wrap: wrap; padding: 10px 24px; border-bottom: 1px solid var(--borda); font-size: 14px; }
+.escolha .campo { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; color: var(--suave); }
+.escolha input { background: var(--cartao); color: var(--texto); border: 1px solid var(--borda); border-radius: 8px; padding: 6px 10px; font: inherit; font-size: 14px; min-width: 300px; }
+.escolha #es-vs { min-width: 200px; }
+.ficha { display: inline-flex; align-items: center; gap: 2px; background: var(--cartao); border: 1px solid var(--borda); border-radius: 999px; padding: 3px 4px 3px 10px; color: var(--texto); }
+.ficha button { border: 0; background: none; padding: 0 6px; font-size: 12px; color: var(--suave); }
+.ficha button:hover { color: var(--texto); }
+.inicio p { max-width: 760px; }
+
+/* Relatório: folhas A4 brancas na tela e no papel */
+.rel-acoes { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 16px; }
+button.principal { background: var(--laranja); color: #fff; border-color: var(--laranja); font-weight: 700; padding: 10px 18px; }
+.relatorio { display: flex; flex-direction: column; align-items: center; gap: 24px; }
+.folha { width: 210mm; min-height: 297mm; background: #fff; color: #131a26; padding: 14mm 14mm 12mm; box-shadow: 0 4px 24px rgba(0, 0, 0, .25); font-size: 10.5pt; line-height: 1.5; }
+.folha .enche { transition: none !important; }
+.folha .mapa-botoes { display: none; }
+.folha .mapa svg { cursor: default; }
+.folha-topo { display: flex; justify-content: space-between; gap: 12px; font-size: 8.5pt; color: #57647a; border-bottom: 2px solid var(--laranja); padding-bottom: 6px; margin-bottom: 14px; text-transform: uppercase; letter-spacing: 1px; }
+.folha h2 { font-size: 13pt; margin: 18px 0 8px; }
+.folha h3 { font-size: 10.5pt; margin-bottom: 6px; color: #131a26; }
+.folha table { font-size: 9pt; }
+.folha th { position: static; background: none; }
+.folha tr.foco td { color: var(--laranja); }
+.folha tr.suave td { color: #57647a; font-style: italic; }
+.folha .nota { font-size: 8.5pt; color: #57647a; margin-top: 6px; }
+.rel-capa { padding: 8mm 0 6mm; border-bottom: 1px solid #d5dce7; margin-bottom: 14px; }
+.rel-capa h1 { font-size: 30pt; font-weight: 800; letter-spacing: 0; white-space: normal; color: #131a26; margin: 6px 0; }
+.rel-sobre { color: #57647a; font-size: 11pt; }
+.rel-kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.rel-kpi { border: 1px solid #d5dce7; border-radius: 10px; padding: 10px 12px; }
+.rel-kpi b { display: block; font-size: 18pt; color: var(--laranja); }
+.rel-kpi small { display: block; color: #57647a; font-size: 8.5pt; }
+.rel-conclusoes { padding-left: 18px; display: flex; flex-direction: column; gap: 8px; }
+.rel-metodo { padding-left: 18px; font-size: 9.5pt; display: flex; flex-direction: column; gap: 4px; }
+.rel-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
+.folha .barra { grid-template-columns: 80px 1fr auto; }
+
+@media print {
+  @page { size: A4; margin: 0; }
+  body { background: #fff; min-height: 0; }
+  header, .escolha, footer, .rel-acoes, #dica, #erros { display: none !important; }
+  main { padding: 0; animation: none; }
+  .relatorio { gap: 0; display: block; }
+  .folha { box-shadow: none; width: 210mm; height: 297mm; min-height: 0; overflow: hidden; break-after: page; }
+  .folha:last-child { break-after: auto; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+@media screen and (max-width: 860px) {
+  .relatorio { align-items: stretch; }
+  .folha { width: 100%; min-height: 0; padding: 16px; overflow-x: auto; }
+  .folha .rel-2 > div, .folha > table { min-width: 0; }
+  .rel-2, .rel-kpis { grid-template-columns: 1fr; }
+  .escolha { padding: 10px 12px; }
+  .escolha .campo, .escolha label { width: 100%; }
+  .escolha input { min-width: 0; flex: 1; }
+}

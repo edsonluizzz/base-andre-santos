@@ -3,10 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Análise Eleição 2026 PR</title>
+  <title>Raio-X Eleição 2026</title>
   <link rel="stylesheet" href="css/estilo.css">
   <!-- baixa tudo em paralelo em vez de descobrir os arquivos um a um -->
-  <link rel="preload" href="dados.json" as="fetch" crossorigin>
   <link rel="preload" href="mapa.geo.json" as="fetch" crossorigin>
   <link rel="modulepreload" href="js/main.mjs">
   <link rel="modulepreload" href="js/animar.mjs">
@@ -19,21 +18,23 @@
   <link rel="modulepreload" href="js/rota.mjs">
   <link rel="modulepreload" href="js/seletor.mjs">
   <link rel="modulepreload" href="js/tabela.mjs">
-  <link rel="modulepreload" href="js/telas/andre.mjs">
+  <link rel="modulepreload" href="js/telas/candidato.mjs">
   <link rel="modulepreload" href="js/telas/comparador.mjs">
+  <link rel="modulepreload" href="js/telas/concorrentes.mjs">
   <link rel="modulepreload" href="js/telas/custo.mjs">
-  <link rel="modulepreload" href="js/telas/igreja.mjs">
   <link rel="modulepreload" href="js/telas/panorama.mjs">
+  <link rel="modulepreload" href="js/telas/relatorio.mjs">
   <script src="vendor/d3.v7.min.js"></script>
   <script type="module" src="js/main.mjs"></script>
 </head>
 <body>
   <header>
     <a id="voltar" href="../../dashboard" hidden>← sistema</a>
-    <h1>ELEIÇÃO 2026 <b>PR</b> · análise</h1>
+    <h1>ELEIÇÃO 2026 <b id="cargo-titulo">PR</b> · análise</h1>
     <nav id="abas"></nav>
     <button id="tema" title="Alternar tema (T)">◐ tema</button>
   </header>
+  <div id="escolha" class="escolha"></div>
   <main id="tela"><p class="carregando">Carregando dados…</p></main>
   <footer id="rodape"></footer>
   <div id="dica" hidden></div>

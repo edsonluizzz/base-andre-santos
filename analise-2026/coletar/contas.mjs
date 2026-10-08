@@ -1,6 +1,5 @@
 // Soma receitas e despesas contratadas por candidato (CSV de prestação de contas do TSE).
 // O mesmo SQ_DESPESA/SQ_RECEITA aparece em várias linhas com valores diferentes (parcelas/itens): soma tudo.
-export const CARGO_CONTAS = "Deputado Estadual";
 
 export function valorBR(s) {
   const t = String(s ?? "").trim();
@@ -20,12 +19,12 @@ export function categoriaReceita(fonte, origem) {
   return "Outros";
 }
 
-export function criarSomaContas() {
+export function criarSomaContas(cargoContas = "Deputado Estadual") {
   const receitas = new Map();
   const despesas = new Map();
   return {
     receita({ sq, cargo, fonte, origem, valor }) {
-      if (cargo !== CARGO_CONTAS) return;
+      if (cargo !== cargoContas) return;
       let r = receitas.get(sq);
       if (!r) receitas.set(sq, (r = { total: 0, porOrigem: {} }));
       const v = valorBR(valor);
@@ -34,7 +33,7 @@ export function criarSomaContas() {
       r.porOrigem[cat] = (r.porOrigem[cat] ?? 0) + v;
     },
     despesa({ sq, cargo, valor }) {
-      if (cargo !== CARGO_CONTAS) return;
+      if (cargo !== cargoContas) return;
       despesas.set(sq, (despesas.get(sq) ?? 0) + valorBR(valor));
     },
     resultado: () => ({ receitas, despesas }),

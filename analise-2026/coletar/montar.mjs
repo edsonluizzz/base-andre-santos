@@ -14,7 +14,7 @@ function esparso(mapa, indice, oQue) {
   return out.sort((a, b) => b[1] - a[1]);
 }
 
-export function montarDados({ oficial, municipios, agregado, locais, contas, focoLocal, meta }) {
+export function montarDados({ oficial, municipios, agregado, locais, contas, focoLocal = null, meta, cargo = {} }) {
   const { votosMun, votosLocal, totalLocal, validosMun } = agregado;
   const idxMun = new Map(municipios.map((m, i) => [m.cd, i]));
   // Votos em município fora da lista abortam, mesmo de candidato fora do foco.
@@ -44,9 +44,9 @@ export function montarDados({ oficial, municipios, agregado, locais, contas, foc
       despesa: d != null ? centavos(d) : null,
       receitaPorOrigem: r ? Object.fromEntries(Object.entries(r.porOrigem).map(([k, v]) => [k, centavos(v)])) : null,
       mun: esparso(votosMun.get(c.n) ?? new Map(), idxMun, "Município"),
-      loc: focoLocal.has(c.n) ? esparso(votosLocal.get(c.n) ?? new Map(), idxLoc, "Local") : null,
+      loc: !focoLocal || focoLocal.has(c.n) ? esparso(votosLocal.get(c.n) ?? new Map(), idxLoc, "Local") : null,
     };
   });
 
-  return { meta, cargo: oficial.cargo, agremiacoes: oficial.agremiacoes, municipios: municipiosOut, locais: locaisOut, candidatos };
+  return { meta, cargo: { ...cargo, ...oficial.cargo }, agremiacoes: oficial.agremiacoes, municipios: municipiosOut, locais: locaisOut, candidatos };
 }

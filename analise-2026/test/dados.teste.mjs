@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { chapa, comparaveis, escolherB, indexar, percentuais, porBairro, porRegiao, posicaoGeral, serie } from "../public/js/dados.mjs";
+import { buscarCandidato, chapa, comparaveis, coresDe, escolherB, garantirLocais, indexar, lerComparados, nomeCurto, sugerirConcorrentes, percentuais, porBairro, porRegiao, posicaoGeral, serie } from "../public/js/dados.mjs";
 import { dadosMini } from "./fx.mjs";
 
 const D = indexar(dadosMini());
@@ -19,17 +19,50 @@ test("séries e percentuais", () => {
 });
 
 test("chapa, posição geral e comparáveis", () => {
-  assert.deepEqual(chapa(D, "NOVO").map((c) => c.n), ["30123", "30777", "30300"]);
+  assert.deepEqual(chapa(D, andre).map((c) => c.n), ["30123", "30777", "30300"]);
   assert.equal(posicaoGeral(D, "30777"), 3);
-  assert.deepEqual(comparaveis(D).map((c) => c.n), ["30123", "30300", "10456", "22622"]);
+  assert.deepEqual(comparaveis(D, andre).map((c) => c.n), ["55555", "30123", "30300", "10456", "22622"]);
 });
 
-test("escolherB cai no padrão quando o pedido não serve", () => {
-  assert.equal(escolherB(D, "10456").n, "10456");
-  assert.equal(escolherB(D, "30777").n, "30300");
-  assert.equal(escolherB(D, "55555").n, "30300");
-  assert.equal(escolherB(D, "00000").n, "30300");
-  assert.equal(escolherB(D, undefined).n, "30300");
+test("escolherB: pedido, senão o 1º comparado, senão o mais votado", () => {
+  const fabio = D.porNumero.get("30300");
+  assert.equal(escolherB(D, andre, [fabio], "10456").n, "10456");
+  assert.equal(escolherB(D, andre, [fabio], "30777").n, "30300");
+  assert.equal(escolherB(D, andre, [fabio], undefined).n, "30300");
+  assert.equal(escolherB(D, andre, [], "00000").n, "55555");
+});
+
+test("nome curto e busca de candidato", () => {
+  assert.equal(nomeCurto(andre), "André Santos");
+  assert.equal(nomeCurto({ nm: "JOÃO DA SILVA" }), "João da Silva");
+  assert.equal(buscarCandidato(D, "30777").n, "30777");
+  assert.equal(buscarCandidato(D, "ANDRÉ SANTOS · 30777 · NOVO").n, "30777");
+  assert.equal(buscarCandidato(D, "andre santos").n, "30777");
+  assert.equal(buscarCandidato(D, "mara").n, "10456");
+  assert.equal(buscarCandidato(D, "o"), null); // vários
+  assert.equal(buscarCandidato(D, ""), null);
+});
+
+test("comparados: da URL, sugeridos ou nenhum", () => {
+  assert.deepEqual(lerComparados(D, andre, "10456,30777,xx,10456").map((c) => c.n), ["10456"]);
+  assert.deepEqual(lerComparados(D, andre, "-"), []);
+  assert.deepEqual(lerComparados(D, andre, "55555,30123,30300,10456").map((c) => c.n), ["55555", "30123", "30300"]);
+  const sug = sugerirConcorrentes(D, andre).map((c) => c.n);
+  assert.equal(sug.length, 3);
+  assert.ok(!sug.includes("30777") && !sug.includes("22622")); // ele mesmo e quem tem menos de ¼ dos votos ficam fora
+  assert.deepEqual(lerComparados(D, andre, undefined).map((c) => c.n), sug);
+  assert.deepEqual([...coresDe(andre, [D.porNumero.get("10456")])], [["30777", "var(--laranja)"], ["10456", "var(--azul)"]]);
+});
+
+test("garantirLocais busca só quem falta e só quem teve voto", async () => {
+  const E = indexar(dadosMini());
+  for (const c of E.candidatos) c.loc = undefined;
+  E.cargo.id = "estadual";
+  const pedidos = [];
+  await garantirLocais(E, ["30777", "22622", "nao-existe", "30777"], async (u) => { pedidos.push(u); return [[0, 1]]; });
+  assert.deepEqual(pedidos, ["dados/estadual/30777.json"]);
+  assert.deepEqual(E.porNumero.get("30777").loc, [[0, 1]]);
+  assert.deepEqual(E.porNumero.get("22622").loc, []);
 });
 
 test("região e bairro", () => {

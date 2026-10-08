@@ -1,15 +1,14 @@
-import { FOCO } from "../config.mjs";
-import { comparaveis, escolherB, idxMunicipio, locaisDoMunicipio, percentuais, serie } from "../dados.mjs";
+import { comparaveis, escolherB, idxMunicipio, nomeCurto, locaisDoMunicipio, percentuais, serie } from "../dados.mjs";
 import { seletorMunicipio } from "../seletor.mjs";
 import { concentracao, diferenca, pearson, quantil, rsPorVoto, sobreposicao } from "../calc.mjs";
 import { cor, criarMapa, escalaDiv, escalaSeq, legenda } from "../mapa.mjs";
 import { tabela } from "../tabela.mjs";
 import { esc, inteiro, pct, pp, reais } from "../fmt.mjs";
-import { dicaLocal, dicaMunicipio } from "./andre.mjs";
+import { dicaLocal, dicaMunicipio } from "./candidato.mjs";
 
-export function montar(el, { D, geo, params, navegar }) {
-  const a = D.porNumero.get(FOCO);
-  const b = escolherB(D, params.b);
+export function montar(el, { D, geo, params, navegar, foco: a, comparados }) {
+  const b = escolherB(D, a, comparados, params.b);
+  const na = nomeCurto(a), nb = nomeCurto(b);
   const sel = idxMunicipio(D, params.mun);
   const nomeSel = sel == null ? null : D.municipios[sel].nm;
   const irPara = (i) => navegar({ mun: i == null ? null : D.municipios[i].cd });
@@ -28,7 +27,7 @@ export function montar(el, { D, geo, params, navegar }) {
 
   el.innerHTML = `
     <div class="controles">
-      <label>Comparar André com <select id="cp-b">${comparaveis(D).map((c) =>
+      <label>Comparar ${esc(na)} com <select id="cp-b">${comparaveis(D, a).map((c) =>
         `<option value="${c.n}" ${c.n === b.n ? "selected" : ""}>${esc(c.nm)} (${esc(c.sg)}) — ${inteiro(c.votos)}</option>`).join("")}</select></label>
       ${sel == null ? `<span class="seg"><button data-nivel="mun" class="${nivel === "mun" ? "on" : ""}">Municípios</button><button data-nivel="loc" class="${nivel === "loc" ? "on" : ""}">Locais de votação</button></span>` : ""}
       <span id="cp-sel"></span>
@@ -37,7 +36,7 @@ export function montar(el, { D, geo, params, navegar }) {
     <div class="grade g2">
       <div class="cartao">${modo === "lado"
         ? `<div class="grade mapas-lado"><div><h2 class="destaque">${esc(a.nm)}</h2><div id="cp-ma"></div></div><div><h2>${esc(b.nm)}</h2><div id="cp-mb"></div></div></div>`
-        : `<h2>Diferença em pontos percentuais · laranja = André mais forte · azul = ${esc(b.nm)} mais forte</h2><div id="cp-md"></div>`}
+        : `<h2>Diferença em pontos percentuais · laranja = ${esc(na)} mais forte · azul = ${esc(nb)} mais forte</h2><div id="cp-md"></div>`}
         <div id="cp-leg"></div></div>
       <div class="cartao"><h2>Números</h2>
         <table><thead><tr><th></th><th class="n">${esc(a.nm)}</th><th class="n">${esc(b.nm)}</th></tr></thead><tbody>
@@ -59,8 +58,8 @@ export function montar(el, { D, geo, params, navegar }) {
       </div>
     </div>
     <div class="grade g2 espaco">
-      <div class="cartao"><h2>Onde ${esc(b.nm)} foi forte e André fraco${nomeSel ? ` · ${esc(nomeSel)}` : ""}</h2><div id="cp-tb" class="rolagem"></div></div>
-      <div class="cartao"><h2>Onde André foi forte e ${esc(b.nm)} fraco${nomeSel ? ` · ${esc(nomeSel)}` : ""}</h2><div id="cp-ta" class="rolagem"></div></div>
+      <div class="cartao"><h2>Onde ${esc(nb)} foi forte e ${esc(na)} fraco${nomeSel ? ` · ${esc(nomeSel)}` : ""}</h2><div id="cp-tb" class="rolagem"></div></div>
+      <div class="cartao"><h2>Onde ${esc(na)} foi forte e ${esc(nb)} fraco${nomeSel ? ` · ${esc(nomeSel)}` : ""}</h2><div id="cp-ta" class="rolagem"></div></div>
     </div>`;
   el.querySelector("#cp-b").onchange = (e) => navegar({ b: e.target.value });
   el.querySelectorAll("[data-nivel]").forEach((x) => { x.onclick = () => navegar({ nivel: x.dataset.nivel }); });
@@ -107,7 +106,7 @@ export function montar(el, { D, geo, params, navegar }) {
     ligarDicas(m);
     m.aoClicar(irPara);
     if (sel != null) m.focar(sel);
-    legenda(el.querySelector("#cp-leg"), { cores: [cor("--azul"), cor("--mapa-vazio"), cor("--laranja")], min: `${b.nm} +${pp(lim, 1)}`, max: `André +${pp(lim, 1)}`, titulo: "diferença em pontos percentuais" });
+    legenda(el.querySelector("#cp-leg"), { cores: [cor("--azul"), cor("--mapa-vazio"), cor("--laranja")], min: `${nb} +${pp(lim, 1)}`, max: `${na} +${pp(lim, 1)}`, titulo: "diferença em pontos percentuais" });
   }
 
   const nomeArea = (k) => (nivel === "loc" ? D.locais[k].nm : D.municipios[k].nm);
@@ -125,7 +124,6 @@ export function montar(el, { D, geo, params, navegar }) {
       { rotulo: `Votos ${ny}`, valor: (l) => vy.get(l.k) ?? 0, formato: inteiro, num: true },
     ],
   });
-  const curto = (c) => c.nm.split(" ")[0];
-  tabelaDif(el.querySelector("#cp-tb"), pb, pa, vb, va, curto(b), "André");
-  tabelaDif(el.querySelector("#cp-ta"), pa, pb, va, vb, "André", curto(b));
+  tabelaDif(el.querySelector("#cp-tb"), pb, pa, vb, va, nb, na);
+  tabelaDif(el.querySelector("#cp-ta"), pa, pb, va, vb, na, nb);
 }

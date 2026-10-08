@@ -7,8 +7,9 @@ describe("resolverArquivo", () => {
     expect(resolverArquivo(raiz, undefined)).toEqual({ caminho: "/app/analise-2026/public/index.html", tipo: "text/html; charset=utf-8", rel: "index.html" });
   });
   it("arquivos do painel com o tipo certo", () => {
-    expect(resolverArquivo(raiz, ["js", "telas", "andre.mjs"])?.tipo).toMatch(/javascript/);
-    expect(resolverArquivo(raiz, ["dados.json"])?.tipo).toMatch(/json/);
+    expect(resolverArquivo(raiz, ["js", "telas", "candidato.mjs"])?.tipo).toMatch(/javascript/);
+    expect(resolverArquivo(raiz, ["dados", "estadual.json"])?.tipo).toMatch(/json/);
+    expect(resolverArquivo(raiz, ["dados", "federal", "3030.json"])?.caminho).toBe("/app/analise-2026/public/dados/federal/3030.json");
     expect(resolverArquivo(raiz, ["css", "estilo.css"])?.caminho).toBe("/app/analise-2026/public/css/estilo.css");
   });
   it("bloqueia gasto interno, fuga da pasta e tipos desconhecidos", () => {

@@ -1,13 +1,14 @@
 #!/usr/bin/env node
-// Coleta única: baixa os dados abertos do TSE e a malha do IBGE, confere com o resultado oficial
-// e grava public/dados.json + public/mapa.geo.json.
+// Coleta única: baixa os dados abertos do TSE e a malha do IBGE, confere cada cargo com o resultado
+// oficial e grava public/dados/<cargo>.json (base), public/dados/<cargo>/<número>.json (votos por
+// local de cada candidato, carregados sob demanda) e public/mapa.geo.json.
 // Uso (da raiz do repo): node analise-2026/coletar/coletar.mjs [--refazer] [--aceitar-divergencia]
-import { createWriteStream, existsSync, mkdirSync, readFileSync, renameSync, statSync, writeFileSync } from "node:fs";
+import { createWriteStream, existsSync, mkdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import { fileURLToPath } from "node:url";
-import { FOCO, PARTIDO, RIVAIS_IGREJA } from "../public/js/config.mjs";
+import { CARGOS } from "../public/js/config.mjs";
 import { criarAgregador } from "./agregar.mjs";
 import { conferir } from "./conferir.mjs";
 import { criarSomaContas } from "./contas.mjs";
@@ -27,7 +28,8 @@ const FONTES = {
   secao: { url: `${ODSELE}/votacao_secao/votacao_secao_2026_PR.zip`, arquivo: "secao.zip" },
   locais: { url: `${ODSELE}/eleitorado_locais_votacao/eleitorado_local_votacao_2026.zip`, arquivo: "locais.zip" },
   contas: { url: `${ODSELE}/prestacao_contas/prestacao_de_contas_eleitorais_candidatos_2026.zip`, arquivo: "contas.zip" },
-  oficial: { url: `${RES}/dados/pr/pr-c0007-e006259-u.json`, arquivo: "oficial.json" },
+  ...Object.fromEntries(Object.entries(CARGOS).map(([id, c]) => [`oficial-${id}`,
+    { url: `${RES}/dados/pr/pr-${c.oficial}-e006259-u.json`, arquivo: id === "estadual" ? "oficial.json" : `oficial-${id}.json` }])),
   municipios: { url: `${RES}/config/mun-e006259-cm.json`, arquivo: "municipios.json" },
   malha: { url: "https://servicodados.ibge.gov.br/api/v3/malhas/estados/41?formato=application/vnd.geo+json&qualidade=minima&intrarregiao=municipio", arquivo: "malha.geojson" },
 };
@@ -56,26 +58,30 @@ async function main() {
   const arq = {};
   for (const [nome, fonte] of Object.entries(FONTES)) arq[nome] = await baixar(fonte);
 
-  const oficial = parseOficial(lerJson(arq.oficial));
   const municipios = parseMunicipiosCfg(lerJson(arq.municipios));
   const faltam = conferirRegioes(municipios.map((m) => m.nm));
   if (faltam.length) throw new Error(`Municípios das listas de região não encontrados no TSE: ${faltam.join(", ")}`);
-  for (const n of [FOCO, ...RIVAIS_IGREJA]) {
-    if (!oficial.candidatos.some((c) => c.n === n)) throw new Error(`Candidato ${n} não está no resultado oficial`);
-  }
 
-  const validos = new Set(oficial.candidatos.filter((c) => c.valido).map((c) => c.n));
-  const focoLocal = new Set([...oficial.candidatos.filter((c) => c.sg === PARTIDO).map((c) => c.n), FOCO, ...RIVAIS_IGREJA]);
-  const fontes = { oficial: oficial.geradoEm };
+  const fontes = {};
+  const cargos = Object.entries(CARGOS).map(([id, cfg]) => {
+    const oficial = parseOficial(lerJson(arq[`oficial-${id}`]));
+    const validos = new Set(oficial.candidatos.filter((c) => c.valido).map((c) => c.n));
+    return {
+      id, cfg, oficial,
+      ag: criarAgregador({ validos, legendas: new Set(oficial.legendasValidas), digitos: cfg.digitos }),
+      soma: criarSomaContas(cfg.nome),
+    };
+  });
+  const porCodigo = new Map(cargos.map((c) => [c.cfg.cd, c]));
 
   console.log("lendo votação por seção (830 MB; leva alguns minutos)...");
-  const ag = criarAgregador({ validos, legendas: new Set(oficial.legendasValidas), focoLocal });
   const nSecao = await percorrerCsvDoZip(arq.secao, "votacao_secao_2026_PR.csv",
     ["DT_GERACAO", "HH_GERACAO", "CD_CARGO", "CD_MUNICIPIO", "NR_ZONA", "NR_LOCAL_VOTACAO", "NR_VOTAVEL", "QT_VOTOS"],
     (c, i) => {
-      if (c[i.CD_CARGO] !== "7") return;
+      const cargo = porCodigo.get(c[i.CD_CARGO]);
+      if (!cargo) return;
       fontes.secao ??= geracao(c, i);
-      ag.adicionar({ mun: c[i.CD_MUNICIPIO], zona: c[i.NR_ZONA], local: c[i.NR_LOCAL_VOTACAO], votavel: c[i.NR_VOTAVEL], votos: Number(c[i.QT_VOTOS]) });
+      cargo.ag.adicionar({ mun: c[i.CD_MUNICIPIO], zona: c[i.NR_ZONA], local: c[i.NR_LOCAL_VOTACAO], votavel: c[i.NR_VOTAVEL], votos: Number(c[i.QT_VOTOS]) });
     });
   console.log(`  ${nSecao.toLocaleString("pt-BR")} linhas lidas`);
 
@@ -91,51 +97,66 @@ async function main() {
         localOriginal: c[i.NR_LOCAL_VOTACAO_ORIGINAL], nomeOriginal: c[i.NM_LOCAL_VOTACAO_ORIGINAL],
       });
     });
+  const locais = leitorLocais.resultado();
 
   console.log("lendo prestação de contas...");
-  const soma = criarSomaContas();
   await percorrerCsvDoZip(arq.contas, "receitas_candidatos_2026_PR.csv",
     ["DT_GERACAO", "HH_GERACAO", "SQ_CANDIDATO", "DS_CARGO", "DS_FONTE_RECEITA", "DS_ORIGEM_RECEITA", "VR_RECEITA"],
     (c, i) => {
       fontes.contas ??= geracao(c, i);
-      soma.receita({ sq: c[i.SQ_CANDIDATO], cargo: c[i.DS_CARGO], fonte: c[i.DS_FONTE_RECEITA], origem: c[i.DS_ORIGEM_RECEITA], valor: c[i.VR_RECEITA] });
+      const r = { sq: c[i.SQ_CANDIDATO], cargo: c[i.DS_CARGO], fonte: c[i.DS_FONTE_RECEITA], origem: c[i.DS_ORIGEM_RECEITA], valor: c[i.VR_RECEITA] };
+      for (const cargo of cargos) cargo.soma.receita(r);
     });
   await percorrerCsvDoZip(arq.contas, "despesas_contratadas_candidatos_2026_PR.csv",
     ["SQ_CANDIDATO", "DS_CARGO", "VR_DESPESA_CONTRATADA"],
-    (c, i) => soma.despesa({ sq: c[i.SQ_CANDIDATO], cargo: c[i.DS_CARGO], valor: c[i.VR_DESPESA_CONTRATADA] }));
+    (c, i) => {
+      const d = { sq: c[i.SQ_CANDIDATO], cargo: c[i.DS_CARGO], valor: c[i.VR_DESPESA_CONTRATADA] };
+      for (const cargo of cargos) cargo.soma.despesa(d);
+    });
 
-  const agregado = ag.resultado();
-  const conf = conferir(oficial.candidatos, agregado.votosMun);
-  console.log("conferência (oficial × CSV de seção):");
-  for (const n of [FOCO, ...RIVAIS_IGREJA]) {
-    const c = oficial.candidatos.find((x) => x.n === n);
-    const csv = [...(agregado.votosMun.get(n)?.values() ?? [])].reduce((a, b) => a + b, 0);
-    console.log(`  ${c.nm.padEnd(22)} oficial ${String(c.votos).padStart(7)}   csv ${String(csv).padStart(7)}`);
-  }
-  if (conf.desconhecidos.length) {
-    const total = conf.desconhecidos.reduce((s, d) => s + d.votos, 0);
-    console.log(`  ${conf.desconhecidos.length} número(s) fora do oficial (registro indeferido → nulo técnico): ${total} votos — ${conf.desconhecidos.map((d) => `${d.n}=${d.votos}`).join(", ")}`);
-  }
-  console.log(`  ${oficial.candidatos.length - conf.divergentes.length} de ${oficial.candidatos.length} candidatos batem com o oficial`);
-  if (!conf.ok) {
-    console.error(`Conferência falhou: ${conf.divergentes.length} candidato(s) divergente(s).`);
-    for (const d of conf.divergentes.slice(0, 30)) console.error(`  ${d.n} ${d.nm}: oficial ${d.oficial}, csv ${d.csv}`);
-    if (!ACEITAR) {
-      console.error("Nada foi gravado. Para gravar mesmo assim: --aceitar-divergencia");
-      process.exitCode = 1;
-      return;
+  // Confere tudo antes de gravar qualquer coisa: ou saem os dois cargos, ou nenhum.
+  const prontos = [];
+  for (const { id, cfg, oficial, ag, soma } of cargos) {
+    const agregado = ag.resultado();
+    const conf = conferir(oficial.candidatos, agregado.votosMun);
+    console.log(`conferência ${cfg.nome} (oficial × CSV de seção):`);
+    if (conf.desconhecidos.length) {
+      const total = conf.desconhecidos.reduce((s, d) => s + d.votos, 0);
+      console.log(`  ${conf.desconhecidos.length} número(s) fora do oficial (registro indeferido → nulo técnico): ${total} votos — ${conf.desconhecidos.map((d) => `${d.n}=${d.votos}`).join(", ")}`);
     }
+    console.log(`  ${oficial.candidatos.length - conf.divergentes.length} de ${oficial.candidatos.length} candidatos batem com o oficial`);
+    if (!conf.ok) {
+      console.error(`Conferência de ${cfg.nome} falhou: ${conf.divergentes.length} candidato(s) divergente(s).`);
+      for (const d of conf.divergentes.slice(0, 30)) console.error(`  ${d.n} ${d.nm}: oficial ${d.oficial}, csv ${d.csv}`);
+      if (!ACEITAR) {
+        console.error("Nada foi gravado. Para gravar mesmo assim: --aceitar-divergencia");
+        process.exitCode = 1;
+        return;
+      }
+    }
+    const dados = montarDados({
+      oficial, municipios, agregado, locais, contas: soma.resultado(),
+      cargo: { id, nome: cfg.nome },
+      meta: { geradoEm: new Date().toISOString(), fontes: { ...fontes, oficial: oficial.geradoEm }, divergencias: conf.divergentes.length },
+    });
+    prontos.push({ id, dados });
   }
 
-  const dados = montarDados({
-    oficial, municipios, agregado, locais: leitorLocais.resultado(), contas: soma.resultado(), focoLocal,
-    meta: { geradoEm: new Date().toISOString(), fontes, divergencias: conf.divergentes.length },
-  });
-  const semCoord = dados.locais.filter((l) => l.lat == null).length;
-  writeFileSync(join(PUBLICO, "dados.json"), JSON.stringify(dados));
+  const pasta = join(PUBLICO, "dados");
+  for (const { id, dados } of prontos) {
+    const dir = join(pasta, id);
+    rmSync(dir, { recursive: true, force: true });
+    mkdirSync(dir, { recursive: true });
+    for (const c of dados.candidatos) {
+      if (c.loc?.length) writeFileSync(join(dir, `${c.n}.json`), JSON.stringify(c.loc));
+      c.loc = undefined;
+    }
+    writeFileSync(join(pasta, `${id}.json`), JSON.stringify(dados));
+    const semCoord = dados.locais.filter((l) => l.lat == null).length;
+    console.log(`${id}: ${dados.candidatos.length} candidatos, ${dados.municipios.length} municípios, ${dados.locais.length} locais (${semCoord} sem coordenada) — ${tamanho(join(pasta, `${id}.json`))}`);
+  }
   writeFileSync(join(PUBLICO, "mapa.geo.json"), JSON.stringify(orientarParaD3(lerJson(arq.malha))));
-  console.log(`${dados.candidatos.length} candidatos, ${dados.municipios.length} municípios, ${dados.locais.length} locais (${semCoord} sem coordenada)`);
-  console.log(`gravado public/dados.json (${tamanho(join(PUBLICO, "dados.json"))}) e public/mapa.geo.json (${tamanho(join(PUBLICO, "mapa.geo.json"))})`);
+  console.log("gravado public/dados/ e public/mapa.geo.json");
 }
 
 main().catch((e) => {

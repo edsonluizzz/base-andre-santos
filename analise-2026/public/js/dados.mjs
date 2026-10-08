@@ -1,4 +1,5 @@
-import { FOCO, PADRAO_B, PARTIDO, RIVAIS_IGREJA } from "./config.mjs";
+import { CORES_SERIE, MAX_COMPARADOS } from "./config.mjs";
+import { pearson } from "./calc.mjs";
 
 const normal = (s) => String(s ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().trim();
 
@@ -47,7 +48,7 @@ export function lerSelecao(param, opcoes) {
 
 export const restringir = (mapa, chaves) => (chaves ? new Map([...mapa].filter(([k]) => chaves.has(k))) : mapa);
 
-// Índice (município ou local) → votos. "loc" só existe para NOVO + rivais; para os outros vem vazio.
+// Índice (município ou local) → votos. "loc" vem do arquivo do candidato (garantirLocais); antes disso, vazio.
 export const serie = (c, nivel) => new Map((nivel === "loc" ? c.loc : c.mun) ?? []);
 
 export function percentuais(D, c, nivel) {
@@ -59,18 +60,82 @@ export function percentuais(D, c, nivel) {
   return out;
 }
 
-export const chapa = (D, sg) => D.candidatos.filter((c) => c.sg === sg).sort((a, b) => b.votos - a.votos);
+// Partido ou federação do candidato; a chapa é a agremiação inteira (federação = vários partidos).
+export const agremiacaoDe = (D, c) => D.agremiacoes.find((a) => a.siglas.includes(c.sg)) ?? null;
+export function chapa(D, c) {
+  const siglas = agremiacaoDe(D, c)?.siglas ?? [c.sg];
+  return D.candidatos.filter((x) => siglas.includes(x.sg)).sort((a, b) => b.votos - a.votos);
+}
 
 export function posicaoGeral(D, n) {
   return [...D.candidatos].sort((a, b) => b.votos - a.votos).findIndex((c) => c.n === n) + 1;
 }
 
-export const comparaveis = (D) =>
-  D.candidatos.filter((c) => c.n !== FOCO && (c.sg === PARTIDO || RIVAIS_IGREJA.includes(c.n))).sort((a, b) => b.votos - a.votos);
+// "ANDRÉ SANTOS" → "André Santos" (nome de urna, para textos e cabeçalhos).
+const MINUSC = new Set(["DA", "DE", "DO", "DAS", "DOS", "E"]);
+export const nomeCurto = (c) => String(c?.nm ?? "").toLowerCase().split(/\s+/)
+  .map((p, i) => (i && MINUSC.has(p.toUpperCase()) ? p : p.charAt(0).toUpperCase() + p.slice(1))).join(" ");
 
-export function escolherB(D, n) {
-  const ops = comparaveis(D);
-  return ops.find((c) => c.n === n) ?? ops.find((c) => c.n === PADRAO_B) ?? ops[0];
+// Texto do campo de busca: número, "NOME · número · PARTIDO" (opção da lista) ou nome único.
+export function buscarCandidato(D, texto) {
+  const t = String(texto ?? "").trim();
+  if (!t) return null;
+  const num = t.match(/(?:^|·\s*)(\d{2,5})(?:\s*·|$)/)?.[1];
+  if (num && D.porNumero.has(num)) return D.porNumero.get(num);
+  const n = normal(t);
+  const exato = D.candidatos.find((c) => normal(c.nm) === n);
+  if (exato) return exato;
+  const parte = D.candidatos.filter((c) => normal(c.nm).includes(n));
+  return parte.length === 1 ? parte[0] : null;
+}
+export const rotuloCandidato = (c) => `${c.nm} · ${c.n} · ${c.sg}`;
+
+// Concorrentes sugeridos: tamanho parecido (¼ a 4× os votos) e mesma geografia (correlação do % por município).
+export function sugerirConcorrentes(D, foco, k = MAX_COMPARADOS) {
+  if (!foco.votos) return [];
+  const pf = percentuais(D, foco, "mun");
+  return D.candidatos
+    .filter((c) => c.n !== foco.n && c.votos >= foco.votos / 4 && c.votos <= foco.votos * 4)
+    .map((c) => ({ c, r: pearson(pf, percentuais(D, c, "mun")) ?? -1 }))
+    .sort((a, b) => b.r - a.r)
+    .slice(0, k)
+    .map((x) => x.c);
+}
+
+// "vs" da URL: lista de números; ausente = sugestão automática; "-" = nenhum.
+export function lerComparados(D, foco, param) {
+  if (param == null) return sugerirConcorrentes(D, foco);
+  const vistos = new Set([foco.n]);
+  const out = [];
+  for (const n of String(param).split(",")) {
+    const c = D.porNumero.get(n.trim());
+    if (c && !vistos.has(c.n) && out.length < MAX_COMPARADOS) { vistos.add(c.n); out.push(c); }
+  }
+  return out;
+}
+
+// Cor de cada candidato em todas as telas: principal laranja, comparados na ordem.
+export function coresDe(foco, comparados) {
+  return new Map([foco, ...comparados].map((c, i) => [c.n, `var(${CORES_SERIE[i]})`]));
+}
+export const varCorDe = (foco, comparados) => new Map([foco, ...comparados].map((c, i) => [c.n, CORES_SERIE[i]]));
+
+export const comparaveis = (D, foco) => D.candidatos.filter((c) => c.n !== foco.n).sort((a, b) => b.votos - a.votos);
+
+// Candidato B do comparador: o pedido, senão o 1º comparado, senão o mais votado.
+export function escolherB(D, foco, comparados, n) {
+  const ops = comparaveis(D, foco);
+  return ops.find((c) => c.n === n) ?? comparados[0] ?? ops[0];
+}
+
+// Votos por local de cada candidato vêm de um arquivo próprio (dados/<cargo>/<número>.json).
+// Candidato sem voto não tem arquivo: fica com lista vazia.
+export async function garantirLocais(D, numeros, buscar) {
+  await Promise.all([...new Set(numeros)].map(async (n) => {
+    const c = D.porNumero.get(n);
+    if (!c || c.loc) return;
+    c.loc = (c.votos ? await buscar(`dados/${D.cargo.id}/${n}.json`) : null) ?? [];
+  }));
 }
 
 export function porRegiao(D, c) {

@@ -1,4 +1,4 @@
-// Resultado oficial de Deputado Estadual (arquivo pr-c0007-e006259-u.json do TSE).
+// Resultado oficial de um cargo (arquivo pr-c000X-e006259-u.json do TSE).
 const num = (s) => {
   const v = Number(String(s ?? "").replace(/\./g, "").replace(",", "."));
   return Number.isFinite(v) ? v : 0;
