@@ -64,9 +64,10 @@ export default function DiagnosticosPage() {
     if (r.ok) setVendas(await r.json());
   }, []);
   useEffect(() => { carregar(); }, [carregar]);
+  // a lista de 2024 serve para 2020 também: as 399 cidades são as mesmas
   useEffect(() => {
     if (!municipal || cidades.length) return;
-    fetch(`${BASE}/2024/municipios.json`) // mesmas 399 cidades em 2020 e 2024.then((r) => r.json()).then(setCidades).catch(() => toast.error("Não consegui carregar as cidades"));
+    fetch(`${BASE}/2024/municipios.json`).then((r) => r.json()).then(setCidades).catch(() => toast.error("Não consegui carregar as cidades"));
   }, [municipal, cidades.length]);
   useEffect(() => {
     if (cands[chaveLista] || (municipal && !cidade)) return;
