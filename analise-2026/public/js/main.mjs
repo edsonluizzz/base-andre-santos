@@ -123,7 +123,7 @@ async function iniciar() {
   let geo, interno, acesso;
   try {
     // acesso.json só existe no sistema (online); rodando local, tudo liberado.
-    [geo, interno, acesso] = await Promise.all([carregar("mapa.geo.json"), carregar("interno.json", true), carregar("acesso.json", true)]);
+    [geo, interno, acesso] = await Promise.all([carregar("mapa.geo.json"), (location.hostname.startsWith("diagnostico.") ? null : carregar("interno.json", true)), carregar("acesso.json", true)]);
   } catch (e) {
     tela.innerHTML = `<div class="aviso">Não consegui carregar o mapa (${esc(e.message)}).</div>`;
     return;
