@@ -12,7 +12,7 @@ export function estaLiberado(acesso, cargo, n) {
 
 export function linkCompra(venda, foco, cargoNome) {
   if (!venda?.whatsapp) return null;
-  const texto = `Olá! Quero o Ovile Diagnóstico 2026 de ${foco.nm} (número ${foco.n}, ${cargoNome}).`;
+  const texto = `Olá! Quero comprar o Ovile Diagnóstico 2026 de ${foco.nm} (número ${foco.n}, ${cargoNome}).`;
   return `https://wa.me/${String(venda.whatsapp).replace(/\D/g, "")}?text=${encodeURIComponent(texto)}`;
 }
 
@@ -34,8 +34,8 @@ export function oferta(foco, D, venda, { compacta = false } = {}) {
     </div>
     <div class="oferta-compra">
       <b class="oferta-preco">R$ ${inteiro(preco)}</b>
-      <small>pagamento único por Pix · acesso imediato ao painel e ao PDF</small>
-      ${link ? `<a class="botao-compra" href="${esc(link)}" target="_blank" rel="noopener">Quero o diagnóstico</a>` : ""}
+      <small>Você chama no WhatsApp, paga por Pix e recebe o link do seu candidato.</small>
+      ${link ? `<a class="botao-compra" href="${esc(link)}" target="_blank" rel="noopener">Comprar diagnóstico · R$ ${inteiro(preco)}</a>` : ""}
       <small>Já comprou? Abra o link exclusivo que você recebeu no WhatsApp.</small>
     </div>
   </div>`;

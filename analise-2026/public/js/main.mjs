@@ -4,7 +4,7 @@ import { esc } from "./fmt.mjs";
 import { escreverRota, lerRota } from "./rota.mjs";
 import { esconderDica } from "./dica.mjs";
 import { TELAS_LIVRES, estaLiberado, oferta } from "./oferta.mjs";
-import { animarLanding, landing, ligarBusca } from "./landing.mjs";
+import { animarLanding, landing, ligarBarra, ligarBusca } from "./landing.mjs";
 import { aplicarDemo } from "./demo.mjs";
 
 // ?demo na URL: nomes, números e partidos fictícios (telas de divulgação).
@@ -112,8 +112,10 @@ function telaInicial(el, { D, geo, acesso }) {
     cargoInicial: D.cargo.id,
     carregarCargo: dadosDoCargo,
     abrir: (cargo, n) => { location.hash = escreverRota("panorama", { cargo, c: n }); },
+    venda: acesso?.venda,
   });
-  desfazerLanding = animarLanding(el, { geo, D });
+  const desfazerAnim = animarLanding(el, { geo, D }), desfazerBarra = ligarBarra(el);
+  desfazerLanding = () => { desfazerAnim(); desfazerBarra(); };
 }
 
 async function iniciar() {

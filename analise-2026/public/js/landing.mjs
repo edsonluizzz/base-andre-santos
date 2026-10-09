@@ -5,6 +5,7 @@
 import { UF } from "./config.mjs";
 import { esc, inteiro } from "./fmt.mjs";
 import { percentuais } from "./dados.mjs";
+import { linkCompra } from "./oferta.mjs";
 
 const EXEMPLO = {
   nome: "Simone Gonçalves", partido: "FAROL", votos: 12672, rpv: "R$ 6,01", mediana: "R$ 33,88",
@@ -15,7 +16,7 @@ const MAPA_HERO = "30777";
 
 export function linkContato(venda) {
   if (!venda?.whatsapp) return null;
-  const texto = "Olá! Quero saber mais sobre o Ovile Diagnóstico da eleição 2026.";
+  const texto = "Olá! Quero comprar o Ovile Diagnóstico da eleição 2026. Meu candidato é: ";
   return `https://wa.me/${String(venda.whatsapp).replace(/\D/g, "")}?text=${encodeURIComponent(texto)}`;
 }
 
@@ -38,6 +39,8 @@ const FAQ = [
 export function landing({ venda }) {
   const preco = Number(venda?.preco ?? 297);
   const contato = linkContato(venda);
+  // Compra: um rótulo só em toda a página, sempre direto para o WhatsApp.
+  const COMPRAR = `Comprar diagnóstico · R$ ${inteiro(preco)}`;
   const whats = (rotulo, classe = "lp-btn lp-btn-whats") => (contato ? `<a class="${classe}" href="${esc(contato)}" target="_blank" rel="noopener">${rotulo}</a>` : "");
   const ex = EXEMPLO;
 
@@ -50,7 +53,7 @@ export function landing({ venda }) {
         <button type="button" data-rolar="lp-exemplo">Exemplo</button>
         <button type="button" data-rolar="lp-preco">Preço</button>
       </span>
-      <button type="button" class="lp-btn lp-btn-mini" data-rolar="escolher">Ver meu resultado</button>
+      ${whats(`Comprar · R$ ${inteiro(preco)}`, "lp-btn lp-btn-whats lp-btn-mini")}
     </nav>
 
     <section class="lp-hero">
@@ -59,8 +62,8 @@ export function landing({ venda }) {
         <h1 class="lp-h1" data-palavras>Você sabe onde ganhou <em>cada voto?</em></h1>
         <p class="lp-hero-sub">O diagnóstico da sua eleição para deputado: mapa até o local de votação, custo de cada voto e quem disputa a sua base.</p>
         <div class="lp-ctas">
-          <button type="button" class="lp-btn lp-btn-laranja" data-rolar="escolher">Ver meu resultado grátis</button>
-          ${whats("Pedir pelo WhatsApp", "lp-btn lp-btn-vidro")}
+          ${whats(COMPRAR, "lp-btn lp-btn-whats lp-btn-grande")}
+          <button type="button" class="lp-btn lp-btn-vidro" data-rolar="escolher">Ver prévia grátis</button>
         </div>
       </div>
       <div class="lp-hero-vis">
@@ -106,8 +109,8 @@ export function landing({ venda }) {
     </section>
 
     <section class="lp-exemplo" id="lp-exemplo">
-      <h2 class="lp-h2">Um diagnóstico de verdade, com nomes trocados.</h2>
-      <p class="lp-texto">Candidata fictícia a deputada estadual, construída sobre dados reais do TSE. Nomes, números e partidos foram trocados.</p>
+      <h2 class="lp-h2">O que um diagnóstico revela.</h2>
+      <p class="lp-texto">Os números de uma candidata a deputada estadual que ficou na suplência.</p>
       <div class="lp-bento">
         <div class="lp-cel lp-cel-grande">
           <small>custo de cada voto de ${esc(ex.nome)}</small>
@@ -119,6 +122,7 @@ export function landing({ venda }) {
         <div class="lp-cel"><small>base dividida</small><b class="lp-num"><span data-conta="${ex.sobreposicao}">0</span>%</b><span>dos votos em locais onde ${esc(ex.rival)} também teve voto</span></div>
         <div class="lp-cel lp-cel-larga"><small>espaço para crescer</small><b class="lp-num">+<span data-conta="${ex.crescer}">0</span></b><span>votos possíveis nas 10 maiores cidades onde ela ficou abaixo da própria média</span></div>
       </div>
+      <p class="lp-nota">Exemplo ilustrativo, com nomes e números alterados.</p>
     </section>
 
     <section class="lp-como">
@@ -144,7 +148,8 @@ export function landing({ venda }) {
           <li>Relatório PDF de 5 páginas</li>
           <li>Atualização com a prestação de contas final</li>
         </ul>
-        ${whats("Pedir pelo WhatsApp", "lp-btn lp-btn-whats lp-btn-largo")}
+        ${whats(COMPRAR, "lp-btn lp-btn-whats lp-btn-largo lp-btn-grande")}
+        <p class="lp-preco-como">Você chama no WhatsApp, paga por Pix e recebe o link do seu candidato.</p>
       </div>
     </section>
 
@@ -166,6 +171,11 @@ export function landing({ venda }) {
       </div>
     </section>
 
+    ${contato ? `<div class="lp-barra-compra" id="lp-barra" aria-hidden="true">
+      <span><b>Diagnóstico completo</b> do seu candidato por R$ ${inteiro(preco)}</span>
+      ${whats("Comprar pelo WhatsApp", "lp-btn lp-btn-whats")}
+    </div>` : ""}
+
     <footer class="lp-rodape">
       <span class="lp-marca">OVILE <b>DIAGNÓSTICO</b></span>
       <span>Dados públicos do TSE e do IBGE. Sem dados pessoais de eleitores.</span>
@@ -173,10 +183,25 @@ export function landing({ venda }) {
   </div>`;
 }
 
+// Barra de compra: visível depois do topo; some quando o topo, o preço ou a busca estão na tela.
+export function ligarBarra(el) {
+  const barra = el.querySelector("#lp-barra");
+  if (!barra || !("IntersectionObserver" in window)) return () => {};
+  const vistos = new Set();
+  const io = new IntersectionObserver((entradas) => {
+    for (const e of entradas) e.isIntersecting ? vistos.add(e.target) : vistos.delete(e.target);
+    const mostrar = vistos.size === 0;
+    barra.classList.toggle("visivel", mostrar);
+    barra.setAttribute("aria-hidden", String(!mostrar));
+  }, { threshold: 0.15 });
+  for (const sel of [".lp-hero", "#lp-preco", "#escolher"]) { const alvo = el.querySelector(sel); if (alvo) io.observe(alvo); }
+  return () => io.disconnect();
+}
+
 const normal = (s) => String(s ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toUpperCase().trim();
 
 // Busca do candidato: sugestões na hora, troca de cargo sem sair da página.
-export function ligarBusca(el, { cargoInicial, carregarCargo, abrir }) {
+export function ligarBusca(el, { cargoInicial, carregarCargo, abrir, venda }) {
   const campo = el.querySelector("#lp-q");
   const lista = el.querySelector("#lp-sugestoes");
   let cargo = cargoInicial, D = null;
@@ -185,9 +210,16 @@ export function ligarBusca(el, { cargoInicial, carregarCargo, abrir }) {
     const t = normal(campo.value);
     const res = !t ? D.candidatos.slice(0, 6)
       : D.candidatos.filter((c) => c.n.startsWith(t) || normal(c.nm).includes(t)).slice(0, 8);
-    lista.innerHTML = res.length ? res.map((c) => `<li><button type="button" data-n="${c.n}">
-        <span class="lp-sug-nome">${esc(c.nm)}</span><span class="lp-sug-meta">${c.n} · ${esc(c.sg)}</span>
-        <span class="lp-sug-votos">${inteiro(c.votos)} votos</span></button></li>`).join("")
+    // Cada candidato: ver a prévia grátis ou comprar direto (a mensagem já leva nome, número e cargo).
+    lista.innerHTML = res.length ? res.map((c) => {
+      const compra = linkCompra(venda, c, D.cargo.nome);
+      return `<li class="lp-sug">
+        <button type="button" class="lp-sug-ver" data-n="${c.n}">
+          <span class="lp-sug-nome">${esc(c.nm)}</span><span class="lp-sug-meta">${c.n} · ${esc(c.sg)} · ${inteiro(c.votos)} votos</span></button>
+        <button type="button" class="lp-sug-acao" data-n="${c.n}">Ver prévia</button>
+        ${compra ? `<a class="lp-sug-acao lp-sug-comprar" href="${esc(compra)}" target="_blank" rel="noopener">Comprar</a>` : ""}
+      </li>`;
+    }).join("")
       : `<li class="lp-sug-vazio">Nenhum candidato com esse nome ou número em ${esc(D.cargo.nome.toLowerCase())}.</li>`;
     lista.querySelectorAll("button[data-n]").forEach((b) => { b.onclick = () => abrir(cargo, b.dataset.n); });
   };
