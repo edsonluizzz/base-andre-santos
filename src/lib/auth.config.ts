@@ -85,7 +85,13 @@ export const authConfig: NextAuthConfig = {
       return session;
     },
 
-    authorized({ auth, request: { nextUrl } }) {
+    authorized({ auth, request }) {
+      const { nextUrl } = request;
+      // Diagnóstico Eleitoral (produto à parte): todo caminho de diagnostico.ovile.com.br é reescrito pelo
+      // next.config para o painel de análise — nenhuma página/API do sistema é alcançável por esse host, e o
+      // cliente nunca é mandado ao login do sistema. Usa o cabeçalho Host (o mesmo que a regra de rewrite usa):
+      // nextUrl aqui já vem com o domínio do AUTH_URL, e x-forwarded-host pode ser forjado.
+      if ((request.headers.get("host") ?? "").split(":")[0].toLowerCase() === "diagnostico.ovile.com.br") return true;
       const session = auth as Session | null;
       const isLoggedIn = !!session?.user;
       const { pathname } = nextUrl;
@@ -108,11 +114,8 @@ export const authConfig: NextAuthConfig = {
         pathname.startsWith("/api/cep/") ||
         pathname.startsWith("/api/n8n/") ||
         pathname === "/privacidade" ||
-        // Diagnóstico Eleitoral (produto à parte): só existe em diagnostico.ovile.com.br. O next.config
-        // reescreve TODO caminho desse host para o painel de análise, então nenhuma página ou API do
-        // sistema é alcançável por ele. No domínio do sistema, /eleicao-2026/analise é só para ADMIN
-        // (cai na regra de cargo abaixo). Host fixo aqui: este arquivo roda no edge.
-        nextUrl.hostname === "diagnostico.ovile.com.br" ||
+        // /eleicao-2026/analise no domínio do sistema é só para ADMIN (regra de cargo abaixo); o produto
+        // público é o host diagnostico.ovile.com.br, tratado no início desta função.
         pathname === "/api/onboarding";
 
       if (isPublic) return true;

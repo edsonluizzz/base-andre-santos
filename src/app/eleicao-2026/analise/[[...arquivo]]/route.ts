@@ -5,7 +5,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { cabecalhosCache, prepararIndex, resolverArquivo } from "@/lib/analise-2026";
 import {
-  COOKIE_DIAGNOSTICO, arquivoDeCandidato, chaveCandidato, ehHostDiagnostico, juntarToken, lerTokens, tokenValido,
+  COOKIE_DIAGNOSTICO, HOST_DIAGNOSTICO, arquivoDeCandidato, chaveCandidato, ehHostDiagnostico, juntarToken, lerTokens, tokenValido,
 } from "@/lib/diagnostico";
 
 // Diagnóstico Eleitoral: arquivos de analise-2026/public (dados públicos do TSE/IBGE).
@@ -26,7 +26,8 @@ async function acessosAtivos(tokens: string[]) {
 
 export async function GET(req: NextRequest, { params }: { params: { arquivo?: string[] } }) {
   try {
-    const noSubdominio = ehHostDiagnostico(req.headers.get("x-forwarded-host") ?? req.headers.get("host"));
+    // Cabeçalho Host, o mesmo da regra de rewrite (x-forwarded-host pode ser forjado pelo cliente).
+    const noSubdominio = ehHostDiagnostico(req.headers.get("host"));
     const base = noSubdominio ? "/" : "/eleicao-2026/analise/";
     // Produto à parte: fora do subdomínio, o painel é ferramenta interna (só ADMIN do sistema).
     // O middleware já barra; esta checagem é a segunda trava, caso a regra de lá mude.
@@ -35,9 +36,8 @@ export async function GET(req: NextRequest, { params }: { params: { arquivo?: st
     // Entrada pelo link vendido (?k=token): grava o token no cookie e limpa a URL (o #hash continua).
     const k = req.nextUrl.searchParams.get("k");
     if (k != null) {
-      const destino = new URL(req.nextUrl.toString());
-      destino.searchParams.delete("k");
-      if (noSubdominio) destino.pathname = "/";
+      const destino = new URL(noSubdominio ? `https://${HOST_DIAGNOSTICO}/` : req.nextUrl.toString());
+      if (!noSubdominio) destino.searchParams.delete("k");
       const res = NextResponse.redirect(destino, 303);
       if (tokenValido(k) && (await acessosAtivos([k])).length) {
         res.cookies.set(COOKIE_DIAGNOSTICO, juntarToken(req.cookies.get(COOKIE_DIAGNOSTICO)?.value, k), {
