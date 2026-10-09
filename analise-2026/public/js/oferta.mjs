@@ -2,7 +2,8 @@
 import { esc, inteiro } from "./fmt.mjs";
 import { nomeCurto } from "./dados.mjs";
 
-export const TELAS_LIVRES = ["panorama", "relatorio"];
+// Sem compra: Panorama inteiro e "Votos do candidato" em prévia (mapa borrado, sem números). O resto, oferta.
+export const TELAS_LIVRES = ["panorama", "candidato"];
 
 // Candidato liberado: comprou (cargo:número), é admin do sistema, ou está rodando local (sem acesso.json).
 export function estaLiberado(acesso, cargo, n) {

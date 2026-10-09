@@ -225,3 +225,13 @@ button.principal { background: var(--laranja); color: #fff; border-color: var(--
 .folha-oferta { min-height: 0 !important; }
 .rel-mais { margin-top: 10px; padding: 10px 12px; border: 1px dashed var(--laranja); border-radius: 10px; color: #57647a; }
 @media (max-width: 860px) { .oferta { grid-template-columns: 1fr; } }
+
+/* Prévia de "Votos do candidato": mapa borrado e inerte, oferta por cima */
+.previa-mapa { position: relative; overflow: hidden; }
+.previa-borrado { filter: blur(9px) saturate(1.1); pointer-events: none; user-select: none; opacity: .85; max-width: 980px; margin: 0 auto; }
+.previa-borrado .mapa-botoes { display: none; }
+.previa-sobre { position: absolute; inset: 48px 16px 16px; display: flex; align-items: center; justify-content: center; }
+.previa-sobre .oferta { background: var(--cartao); border: 1px solid var(--borda); border-radius: 16px; padding: 22px; max-width: 860px; box-shadow: 0 12px 40px rgba(0, 0, 0, .35); }
+@media (max-width: 860px) {
+  .previa-sobre { position: relative; z-index: 1; inset: auto; margin-top: -30%; }
+}

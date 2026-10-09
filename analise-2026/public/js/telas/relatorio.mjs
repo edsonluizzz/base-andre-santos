@@ -6,7 +6,6 @@ import { cor, criarMapa, escalaSeq, legenda } from "../mapa.mjs";
 import { barras } from "../animar.mjs";
 import { esc, inteiro, pct, reais, reaisCurto } from "../fmt.mjs";
 import { folgaQuociente } from "./panorama.mjs";
-import { oferta } from "../oferta.mjs";
 import { eficienciaVoto, medianaChapa } from "./custo.mjs";
 
 const nf2 = (v) => v.toLocaleString("pt-BR", { maximumFractionDigits: 2 });
@@ -86,16 +85,10 @@ function folha(titulo, corpo, sub = "") {
   return `<section class="folha"><div class="folha-topo"><span>${titulo}</span><span>${sub}</span></div>${corpo}</section>`;
 }
 
-// Quantas conclusões a prévia (sem compra) mostra; o resto fica para o diagnóstico completo.
-const CONCLUSOES_PREVIA = 4;
-
-export function montar(el, { D, geo, foco, comparados, cores, liberado = true, venda }) {
+export function montar(el, { D, geo, foco, comparados, cores }) {
   // O relatório é sempre claro (vira papel); a tela volta ao tema do usuário na próxima navegação.
   document.documentElement.dataset.tema = "claro";
-  // Na prévia não há votos por local nem comparados: só o que sai dos dados por município.
-  const x = diagnostico(D, foco, liberado ? comparados : []);
-  const todas = conclusoes(D, foco, x);
-  const visiveis = liberado ? todas : todas.slice(0, CONCLUSOES_PREVIA);
+  const x = diagnostico(D, foco, comparados);
   const nome = esc(nomeCurto(foco));
   const hoje = new Date().toLocaleDateString("pt-BR");
   const assinatura = `${esc(foco.nm)} · ${foco.n} · ${esc(D.cargo.nome)} ${UF.sigla} 2026`;
@@ -117,8 +110,7 @@ export function montar(el, { D, geo, foco, comparados, cores, liberado = true, v
       ${kpi("Eficiência", x.ef ? `${nf2(x.ef.razao)}×` : "—", "votos ÷ esperado p/ a receita")}
     </div>
     <h2>Principais conclusões</h2>
-    <ol class="rel-conclusoes">${visiveis.map((t) => `<li>${t}</li>`).join("")}</ol>
-    ${liberado ? "" : `<p class="rel-mais">+ ${todas.length - visiveis.length + 1} conclusões no diagnóstico completo: concorrentes que disputam a sua base, cidades com espaço para crescer e a conta do quociente.</p>`}`, hoje);
+    <ol class="rel-conclusoes">${conclusoes(D, foco, x).map((t) => `<li>${t}</li>`).join("")}</ol>`, hoje);
 
   const geografia = folha("Onde vieram os votos", `
     <div class="rel-2">
@@ -177,13 +169,6 @@ export function montar(el, { D, geo, foco, comparados, cores, liberado = true, v
       <li>A curva receita × votos mostra associação entre candidatos, não prova que mais dinheiro causa mais voto.</li>
     </ul>
     <p class="nota espaco">Fontes: votação por seção (${esc(D.meta.fontes.secao)}), locais (${esc(D.meta.fontes.locais)}), resultado oficial (${esc(D.meta.fontes.oficial)}). Relatório gerado em ${hoje}.</p>`, assinatura);
-
-  if (!liberado) {
-    el.innerHTML = `
-      <div class="rel-acoes"><small>Prévia grátis: a capa do relatório. O diagnóstico completo tem 5 páginas e o painel inteiro.</small></div>
-      <div class="relatorio">${capa}<div class="folha folha-oferta">${oferta(foco, D, venda)}</div></div>`;
-    return;
-  }
 
   el.innerHTML = `
     <div class="rel-acoes">

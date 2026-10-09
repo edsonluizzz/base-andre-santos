@@ -188,10 +188,11 @@ async function iniciar() {
     const garantir = (nums) => garantirLocais(D, nums, (u) => carregar(u, true));
     if (!liberado && !TELAS_LIVRES.includes(id)) {
       tela.innerHTML = `<div class="cartao">${oferta(foco, D, acesso?.venda)}</div>`;
+    } else if (!liberado && id === "candidato") {
+      candidato.montarPrevia(tela, { D, geo, foco, venda: acesso?.venda });
     } else {
       TELAS.find((t) => t.id === id).mod.montar(tela, {
         D, geo, params, navegar, interno, foco, comparados, cores, varCor: varCorDe(foco, comparados), garantir,
-        liberado, venda: acesso?.venda,
       });
     }
     for (const m of ampliados) document.getElementById(m)?.closest(".cartao")?.classList.add("ampliado");

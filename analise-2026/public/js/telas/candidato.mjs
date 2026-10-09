@@ -5,6 +5,7 @@ import { barras } from "../animar.mjs";
 import { tabela } from "../tabela.mjs";
 import { seletorMunicipio } from "../seletor.mjs";
 import { esc, inteiro, pct } from "../fmt.mjs";
+import { oferta } from "../oferta.mjs";
 
 // Dica de um local de votação com uma linha por candidato.
 export function dicaLocal(D, j, linhas) {
@@ -35,6 +36,21 @@ export function cartaoCidade(D, a, i, vMun, pMun) {
     ${pos ? `<b>${pos}º</b> de ${rk.length} candidatos na cidade · ${posChapa}º da chapa ${esc(ag?.rotulo ?? a.sg)}` : "nenhum voto aqui"} ·
     voto em ${comVoto} de ${locais.length} locais</p>
     <div class="ranking-mun espaco">${top.map((x) => `<div class="${x.c.n === a.n ? "destaque" : ""}">${rk.indexOf(x) + 1}º ${esc(x.c.nm)} <small>(${esc(x.c.sg)})</small> — ${inteiro(x.v)}</div>`).join("")}</div>`;
+}
+
+// Prévia sem compra: o mapa por município aparece borrado, sem números, sem dica e sem clique; a oferta fica por cima.
+// Os votos por local nem são carregados (a rota responde 403 a quem não comprou).
+export function montarPrevia(el, { D, geo, foco: a, venda }) {
+  el.innerHTML = `
+    <div class="cartao previa-mapa">
+      <h2>${esc(nomeCurto(a))} · mapa dos votos por município e local de votação</h2>
+      <div class="previa-borrado" aria-hidden="true"><div id="pv-mapa"></div></div>
+      <div class="previa-sobre">${oferta(a, D, venda, { compacta: true })}</div>
+    </div>`;
+  const p = percentuais(D, a, "mun");
+  const max = Math.max(1e-9, ...p.values());
+  const escala = escalaSeq(max, "--laranja");
+  criarMapa(el.querySelector("#pv-mapa"), { geo, D }).colorir((i) => (p.get(i) ? escala(p.get(i)) : null));
 }
 
 export function montar(el, { D, geo, params, navegar, foco: a }) {
