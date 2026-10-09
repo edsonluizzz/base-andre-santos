@@ -72,6 +72,7 @@ const cidadesDoAno = (ano) => {
   if (!cacheCidades.has(chave)) cacheCidades.set(chave, carregar(`${raizDados()}${ano}/municipios.json`));
   return cacheCidades.get(chave);
 };
+let mapaBrasil = null; // hero da landing (img/brasil.json), carregado só quando a landing aparece
 const cacheMapas = new Map();
 const mapaDaUF = () => {
   if (!cacheMapas.has(UF.sigla)) cacheMapas.set(UF.sigla, carregar(arquivoMapa()));
@@ -164,7 +165,7 @@ function telaCandidatosCidade(el, { D, mudar }) {
 }
 
 let desfazerLanding = () => {};
-function telaInicial(el, { D, geo, acesso }) {
+function telaInicial(el, { D, brasil, acesso }) {
   el.innerHTML = landing({ venda: acesso?.venda });
   // chave comprada: "<cargo>:<número>" (PR) ou "<uf>/<cargo>:<número>"; municipais com "<cidade>-<número>"
   const meus = (acesso?.liberados ?? []).map((k) => { const [cc, n] = k.split(":"); return { ...lerChaveCargo(cc), n }; });
@@ -184,7 +185,7 @@ function telaInicial(el, { D, geo, acesso }) {
     trocarUF: (sigla) => definirUF(sigla),
     venda: acesso?.venda,
   });
-  const desfazerAnim = animarLanding(el, { geo, D }), desfazerBarra = ligarBarra(el);
+  const desfazerAnim = animarLanding(el, { brasil }), desfazerBarra = ligarBarra(el);
   desfazerLanding = () => { desfazerAnim(); desfazerBarra(); };
 }
 
@@ -207,6 +208,7 @@ async function iniciar() {
     let D = null, cidades = null, geo;
     try {
       geo = await mapaDaUF();
+      if (!params.c && !municipal) await (mapaBrasil ??= carregar("img/brasil.json"));
       if (municipal) {
         cidades = await cidadesDoAno(CARGOS[cargo].ano);
         if (params.m) D = await dadosDoCargo(cargo, params.m);
@@ -264,7 +266,7 @@ async function iniciar() {
         document.body.dataset.pronta = "lista";
         return;
       }
-      telaInicial(tela, { D, geo, acesso });
+      telaInicial(tela, { D, brasil: await mapaBrasil, acesso });
       document.body.dataset.pronta = "inicio";
       return;
     }

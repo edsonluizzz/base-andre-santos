@@ -10,7 +10,7 @@ import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import { fileURLToPath } from "node:url";
 import { CARGOS_GERAIS } from "../public/js/config.mjs";
-import { criarAgregador } from "./agregar.mjs";
+import { cdMun, criarAgregador } from "./agregar.mjs";
 import { conferir } from "./conferir.mjs";
 import { criarSomaContas } from "./contas.mjs";
 import { criarLeitorLocais } from "./locais.mjs";
@@ -90,7 +90,7 @@ async function main() {
       const cargo = porCodigo.get(c[i.CD_CARGO]);
       if (!cargo) return;
       fontes.secao ??= geracao(c, i);
-      cargo.ag.adicionar({ mun: c[i.CD_MUNICIPIO], zona: c[i.NR_ZONA], local: c[i.NR_LOCAL_VOTACAO], votavel: c[i.NR_VOTAVEL], votos: Number(c[i.QT_VOTOS]) });
+      cargo.ag.adicionar({ mun: cdMun(c[i.CD_MUNICIPIO]), zona: c[i.NR_ZONA], local: c[i.NR_LOCAL_VOTACAO], votavel: c[i.NR_VOTAVEL], votos: Number(c[i.QT_VOTOS]) });
     });
   console.log(`  ${nSecao.toLocaleString("pt-BR")} linhas lidas`);
 
@@ -101,7 +101,7 @@ async function main() {
     (c, i) => {
       fontes.locais ??= geracao(c, i);
       leitorLocais.adicionar({
-        mun: c[i.CD_MUNICIPIO], zona: c[i.NR_ZONA], local: c[i.NR_LOCAL_VOTACAO], nome: c[i.NM_LOCAL_VOTACAO],
+        mun: cdMun(c[i.CD_MUNICIPIO]), zona: c[i.NR_ZONA], local: c[i.NR_LOCAL_VOTACAO], nome: c[i.NM_LOCAL_VOTACAO],
         bairro: c[i.NM_BAIRRO], lat: c[i.NR_LATITUDE], lon: c[i.NR_LONGITUDE], eleitores: c[i.QT_ELEITOR_SECAO],
         localOriginal: c[i.NR_LOCAL_VOTACAO_ORIGINAL], nomeOriginal: c[i.NM_LOCAL_VOTACAO_ORIGINAL],
       });

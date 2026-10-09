@@ -1,4 +1,7 @@
 // Agrega a votação por seção de um cargo por município e por local de votação.
+// Código TSE do município sempre com 5 dígitos: o CSV traz "1066", a lista de municípios "01066"
+// (no PR todos têm 5 dígitos; no Norte/Nordeste, não).
+export const cdMun = (s) => String(Number(s)).padStart(5, "0");
 export const idLocal = (mun, zona, local) => `${mun}-${Number(zona)}-${Number(local)}`;
 
 // `digitos` = candidato (5 no estadual, 4 no federal; válido ou anulado sub judice); 2 dígitos = legenda

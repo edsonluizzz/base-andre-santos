@@ -4,15 +4,12 @@
 // Animações: GSAP + ScrollTrigger auto-hospedados (vendor/); tudo desliga com prefers-reduced-motion.
 import { UF, UFS, anosDoCargo, idCargo } from "./config.mjs";
 import { esc, inteiro } from "./fmt.mjs";
-import { percentuais } from "./dados.mjs";
 import { linkCompra } from "./oferta.mjs";
 
 const EXEMPLO = {
   nome: "Simone Gonçalves", partido: "FAROL", votos: 12672, rpv: "R$ 6,01", mediana: "R$ 33,88",
   eficiencia: "5,25", sobreposicao: 99, rival: "Silvana Teixeira", crescer: 2029,
 };
-// Mapa do hero: geografia de um candidato estadual real, sem nome nem número na tela.
-const MAPA_HERO = "30777";
 
 export function linkContato(venda) {
   if (!venda?.whatsapp) return null;
@@ -32,8 +29,8 @@ const FAQ = [
   ["De onde vêm os dados?", "Dos dados abertos do TSE: votação por seção eleitoral, locais de votação, resultado oficial e prestação de contas. A soma por seção de cada candidato é conferida com o resultado oficial, e todas batem."],
   ["Posso escolher com quem comparar?", "Sim. O sistema sugere os 3 concorrentes mais parecidos com você em tamanho e geografia, e você troca por qualquer candidato do mesmo cargo, quantas vezes quiser."],
   ["E a prestação de contas, que ainda não é a final?", "O custo do voto usa a prestação parcial publicada pelo TSE. Quando a final sair, em novembro, os números são atualizados no seu link sem custo."],
-  ["Quais cargos e eleições estão disponíveis?", "No Paraná: deputado estadual, deputado federal, senador e governador em 2022 e 2026; presidente em 2022 (votos no Paraná); vereador e prefeito em 2020 e 2024, nas 399 cidades. Presidente 2026 entra depois do 2º turno, e outros estados estão a caminho."],
-  ["Vou disputar em 2028. Serve para mim?", "Serve. Veja onde os vereadores e prefeitos da sua cidade tiveram voto em 2020 e 2024, bairro por bairro e escola por escola, e onde existe eleitor que ninguém conquistou."],
+  ["Quais cargos e eleições estão disponíveis?", "Em todos os estados e no Distrito Federal: deputado estadual (distrital no DF), deputado federal, senador e governador em 2022 e 2026, e presidente em 2022 (os votos no seu estado). No Paraná, também vereador e prefeito em 2020 e 2024, nas 399 cidades. Presidente 2026 entra depois do 2º turno."],
+  ["Vou disputar em 2028. Serve para mim?", "Serve. No Paraná, veja onde os vereadores e prefeitos da sua cidade tiveram voto em 2020 e 2024, bairro por bairro e escola por escola, e onde existe eleitor que ninguém conquistou. Nos demais estados, os mapas de 2022 e 2026 mostram até o local de votação onde cada partido e cada candidato tem eleitor na sua cidade."],
   ["Posso analisar um adversário?", "Pode. Qualquer candidato de qualquer cargo e eleição disponível: o diagnóstico mostra a base dele, quanto custou cada voto e onde ele foi mais forte que você."],
   ["Usa dados pessoais de eleitores?", "Não. Só resultados públicos agregados por seção e local de votação, os mesmos que o TSE publica para qualquer pessoa."],
 ];
@@ -61,7 +58,7 @@ export function landing({ venda }) {
 
     <section class="lp-hero">
       <div class="lp-hero-txt">
-        <p class="lp-eyebrow">Eleições no ${UF.nome}</p>
+        <p class="lp-eyebrow">Eleições em todo o Brasil</p>
         <h1 class="lp-h1" data-palavras>Você sabe onde ganhou <em>cada voto?</em></h1>
         <p class="lp-hero-sub">De vereador a presidente: o mapa dos seus votos até a escola, o custo de cada voto e quem disputa a sua base.</p>
         <div class="lp-ctas">
@@ -78,7 +75,7 @@ export function landing({ venda }) {
     </section>
 
     <div class="lp-faixa" aria-hidden="true"><div class="lp-faixa-trilho">${
-      Array(2).fill(["Mais de 67 mil candidatos conferidos voto a voto", "399 cidades do Paraná", "4 eleições: 2020, 2022, 2024 e 2026", "De vereador a presidente", "Dados oficiais do TSE", "Relatório em PDF"]
+      Array(2).fill(["Mais de 100 mil candidatos conferidos voto a voto", "Todos os 26 estados e o DF", "5.570 municípios até o local de votação", "Eleições 2022 e 2026", "De vereador a presidente", "Dados oficiais do TSE", "Relatório em PDF"]
         .map((t) => `<span>${t}</span>`).join("")).join("")}</div></div>
 
     <section class="lp-perguntas">
@@ -96,7 +93,7 @@ export function landing({ venda }) {
         <article class="lp-quem-cel lp-quem-destaque">
           <small>Vai disputar em 2028</small>
           <h3>Conheça a sua cidade antes de pedir o primeiro voto.</h3>
-          <p>Onde os vereadores e prefeitos tiveram voto em 2020 e 2024, bairro por bairro e escola por escola, e quanto cada um gastou para chegar lá.</p>
+          <p>No Paraná, onde os vereadores e prefeitos tiveram voto em 2020 e 2024, bairro por bairro e escola por escola, e quanto cada um gastou para chegar lá.</p>
         </article>
         <article class="lp-quem-cel">
           <small>Acabou de disputar 2026</small>
@@ -314,22 +311,26 @@ export function ligarBusca(el, { cargoInicial, carregarCargo, carregarCidades, a
   trocar(cargo);
 }
 
-// Mapa do hero: municípios desenhados a traço e depois acesos pela votação de um candidato.
-function desenharMapa(svg, { geo, D }) {
-  const d3 = globalThis.d3;
-  const proj = d3.geoMercator().fitSize([800, 600], geo);
-  const caminho = d3.geoPath(proj);
-  const c = D.porNumero.get(MAPA_HERO) ?? D.candidatos[150];
-  const p = percentuais(D, c, "mun");
-  const max = Math.max(1e-9, ...p.values());
-  const g = d3.select(svg).append("g");
-  g.selectAll("path").data(geo.features).join("path")
-    .attr("d", caminho).attr("pathLength", 1)
-    .attr("data-forca", (f) => {
-      const i = D.munPorIbge.get(f.properties.codarea);
-      return i == null ? 0 : Math.sqrt((p.get(i) ?? 0) / max).toFixed(3);
-    });
-  return g.selectAll("path").nodes();
+// Mapa do hero: o Brasil (img/brasil.json, gerado por coletar/mapa-brasil.mjs). Contorno de cada estado
+// desenhado a traço; dentro, os municípios em 8 tons pelo total de votos (mais voto, mais aceso).
+function desenharMapa(svg, brasil) {
+  const NS = "http://www.w3.org/2000/svg";
+  const novo = (tag, attrs) => { const e = document.createElementNS(NS, tag); for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v); return e; };
+  svg.setAttribute("viewBox", `0 0 ${brasil.largura} ${brasil.altura}`);
+  const fundos = [], contornos = [];
+  for (const e of brasil.estados) {
+    const g = novo("g", { class: "lp-uf-fundo", "data-uf": e.uf });
+    e.niveis.forEach((d, k) => { if (d) g.append(novo("path", { d, class: "lp-nv", style: `--nv:${Math.round(8 + (92 * k) / (brasil.niveis - 1))}%` })); });
+    svg.append(g);
+    fundos.push(g);
+  }
+  // contornos por cima de todos os fundos
+  for (const e of brasil.estados) {
+    const c = novo("path", { d: e.contorno, class: "lp-contorno", pathLength: 1 });
+    svg.append(c);
+    contornos.push(c);
+  }
+  return { fundos, contornos };
 }
 
 function contar(el, gsap) {
@@ -339,13 +340,11 @@ function contar(el, gsap) {
   return gsap.to(o, { v: alvo, duration: 1.6, ease: "power2.out", onUpdate: () => { el.textContent = fmt(o.v); } });
 }
 
-export function animarLanding(el, { geo, D }) {
+export function animarLanding(el, { brasil }) {
   const gsap = globalThis.gsap, ST = globalThis.ScrollTrigger;
-  const paths = desenharMapa(el.querySelector("#lp-mapa"), { geo, D });
+  const { fundos, contornos } = desenharMapa(el.querySelector("#lp-mapa"), brasil);
   const reduzido = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const pintar = (path, k = 1) => { path.style.fill = `color-mix(in srgb, var(--laranja) ${Math.round(100 * k * Number(path.dataset.forca))}%, var(--lp-mapa-base))`; };
   if (!gsap || !ST || reduzido) {
-    paths.forEach((pth) => pintar(pth));
     el.querySelectorAll("[data-conta]").forEach((n) => {
       const c = Number(n.dataset.casas ?? 0);
       n.textContent = Number(n.dataset.conta).toLocaleString("pt-BR", { minimumFractionDigits: c, maximumFractionDigits: c });
@@ -355,17 +354,15 @@ export function animarLanding(el, { geo, D }) {
   }
   gsap.registerPlugin(ST);
   const ctx = gsap.context(() => {
-    // Hero: título palavra a palavra, mapa se desenha e acende pela votação, cartões flutuam.
+    // Hero: título palavra a palavra, o Brasil se desenha e acende estado a estado, cartões flutuam.
     const h1 = el.querySelector("[data-palavras]");
     h1.innerHTML = h1.innerHTML.replace(/(<em>.*?<\/em>|[^\s<]+)/g, (m) => `<span class="lp-pal"><span>${m}</span></span>`);
-    paths.forEach((pth) => { pth.style.fill = "var(--lp-mapa-base)"; });
-    const brilho = { k: 0 };
     const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
     tl.from(".lp-pal > span", { yPercent: 110, duration: 0.9, stagger: 0.07 })
       .from(".lp-eyebrow, .lp-hero-sub", { opacity: 0, y: 18, duration: 0.7 }, 0.35)
       .from(".lp-ctas > *", { opacity: 0, y: 18, duration: 0.6, stagger: 0.08 }, 0.5)
-      .fromTo(paths, { strokeDashoffset: 1, strokeDasharray: 1 }, { strokeDashoffset: 0, duration: 1.6, ease: "power2.inOut", stagger: { amount: 0.8, from: "random" } }, 0.2)
-      .to(brilho, { k: 1, duration: 1.4, ease: "power2.out", onUpdate: () => paths.forEach((pth) => pintar(pth, brilho.k)) }, 1.5)
+      .fromTo(contornos, { strokeDashoffset: 1, strokeDasharray: 1 }, { strokeDashoffset: 0, duration: 1.6, ease: "power2.inOut", stagger: { amount: 0.8, from: "random" } }, 0.2)
+      .from(fundos, { opacity: 0, duration: 0.9, ease: "power2.out", stagger: { amount: 1.2, from: "random" } }, 1.1)
       .from(".lp-flutua", { opacity: 0, y: 40, scale: 0.9, duration: 0.7, stagger: 0.15, ease: "back.out(1.7)" }, 1.7)
       .add(() => el.querySelectorAll(".lp-hero [data-conta]").forEach((n) => contar(n, gsap)), 1.8);
     gsap.to(".lp-flutua", { y: "-=10", duration: 2.6, ease: "sine.inOut", yoyo: true, repeat: -1, stagger: 0.5, delay: 2.6 });

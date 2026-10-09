@@ -14,7 +14,7 @@
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { idLocal } from "./agregar.mjs";
+import { cdMun, idLocal } from "./agregar.mjs";
 import { dadosUF, gravarMalha, regioesUF } from "./uf.mjs";
 import { criarSomaContas } from "./contas.mjs";
 import { criarLeitorLocais } from "./locais.mjs";
@@ -78,13 +78,13 @@ async function main() {
     (c, i) => {
       if (!CARGOS[c[i.CD_CARGO]] || c[i.SG_UF] !== UF || !!CARGOS[c[i.CD_CARGO]].nacional !== soNacional) return;
       geracao ??= `${c[i.DT_GERACAO]} ${c[i.HH_GERACAO]}`;
-      const chave = `${c[i.CD_CARGO]}:${area(c[i.CD_MUNICIPIO])}`;
+      const chave = `${c[i.CD_CARGO]}:${area(cdMun(c[i.CD_MUNICIPIO]))}`;
       const cand = filho(filho(oficial, chave, () => new Map()), c[i.SQ_CANDIDATO], () => ({
         sq: c[i.SQ_CANDIDATO], n: c[i.NR_CANDIDATO], nm: c[i.NM_URNA_CANDIDATO], sg: c[i.SG_PARTIDO],
         fed: c[i.NR_FEDERACAO] !== "-1" ? { nm: c[i.NM_FEDERACAO], sg: c[i.SG_FEDERACAO] } : null,
         valido: false, votos: 0, votos2: null, st: null,
       }));
-      partidoPorNumero.set(`${area(c[i.CD_MUNICIPIO])}:${c[i.NR_PARTIDO]}`, c[i.SG_PARTIDO]);
+      partidoPorNumero.set(`${area(cdMun(c[i.CD_MUNICIPIO]))}:${c[i.NR_PARTIDO]}`, c[i.SG_PARTIDO]);
       if (c[i.NR_TURNO] === "1") {
         cand.votos += num(c[i.QT_VOTOS_NOMINAIS]);
         cand.valido ||= c[i.NM_TIPO_DESTINACAO_VOTOS].startsWith("Válido");
@@ -105,7 +105,7 @@ async function main() {
     (c, i) => {
       if (c[i.SG_UF] !== UF || c[i.NR_TURNO] !== "1") return;
       leitor.adicionar({
-        mun: c[i.CD_MUNICIPIO], zona: c[i.NR_ZONA], local: c[i.NR_LOCAL_VOTACAO], nome: c[i.NM_LOCAL_VOTACAO], bairro: c[i.NM_BAIRRO],
+        mun: cdMun(c[i.CD_MUNICIPIO]), zona: c[i.NR_ZONA], local: c[i.NR_LOCAL_VOTACAO], nome: c[i.NM_LOCAL_VOTACAO], bairro: c[i.NM_BAIRRO],
         lat: c[i.NR_LATITUDE], lon: c[i.NR_LONGITUDE], eleitores: c[i.QT_ELEITOR_SECAO],
         localOriginal: c[i.NR_LOCAL_VOTACAO_ORIGINAL], nomeOriginal: c[i.NM_LOCAL_VOTACAO_ORIGINAL],
       });
@@ -121,7 +121,7 @@ async function main() {
     (c, i) => {
       if (c[i.NR_TURNO] !== "1" || !CARGOS[c[i.CD_CARGO]] || c[i.SG_UF] !== UF || !!CARGOS[c[i.CD_CARGO]].nacional !== soNacional) return;
       geracaoSecao ??= `${c[i.DT_GERACAO]} ${c[i.HH_GERACAO]}`;
-      const cd = c[i.CD_MUNICIPIO], chave = `${c[i.CD_CARGO]}:${area(cd)}`;
+      const cd = cdMun(c[i.CD_MUNICIPIO]), chave = `${c[i.CD_CARGO]}:${area(cd)}`;
       const a = filho(ag, chave, novoAg);
       const id = idLocal(cd, c[i.NR_ZONA], c[i.NR_LOCAL_VOTACAO]);
       const v = num(c[i.QT_VOTOS]), nr = c[i.NR_VOTAVEL], sq = c[i.SQ_CANDIDATO];
@@ -207,6 +207,9 @@ async function main() {
         lat: l?.lat == null ? null : Math.round(l.lat * 1e5) / 1e5, lon: l?.lon == null ? null : Math.round(l.lon * 1e5) / 1e5,
         aptos: l?.aptos ?? 0, total: a.nominalLocal.get(id) ?? 0 };
     });
+    // trava: todo local precisa cair numa unidade (município/bairro); senão o código do município não bateu
+    const orfao = locaisOut.find((l) => l.mun == null);
+    if (orfao) throw new Error(`Local ${orfao.id} (${cargo.id}) sem município na lista do TSE`);
     const contasCargo = contas[cdCargo]?.resultado();
     const loc = {};
     const candidatos = [...cands.values()].filter((c) => c.valido).sort((x, y) => y.votos - x.votos).map((c) => {

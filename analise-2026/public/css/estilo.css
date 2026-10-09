@@ -294,7 +294,9 @@ body[data-tela="inicio"] main { padding: 0; }
 .lp-ctas { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 36px; }
 .lp-hero-vis { position: relative; perspective: 1400px; transform-style: preserve-3d; }
 .lp-mapa { width: 100%; height: auto; display: block; overflow: visible; filter: drop-shadow(0 40px 60px rgba(0,0,0,.35)); }
-.lp-mapa path { fill: var(--lp-mapa-base); stroke: color-mix(in srgb, var(--laranja) 55%, var(--texto)); stroke-width: .6; vector-effect: non-scaling-stroke; stroke-opacity: .55; }
+.lp-mapa { max-height: min(78vh, 720px); }
+.lp-mapa .lp-nv { fill: color-mix(in srgb, var(--laranja) var(--nv), var(--lp-mapa-base)); stroke: none; }
+.lp-mapa .lp-contorno { fill: none; stroke: color-mix(in srgb, var(--laranja) 45%, var(--texto)); stroke-width: .8; vector-effect: non-scaling-stroke; stroke-opacity: .6; stroke-linejoin: round; }
 .lp-flutua { position: absolute; left: var(--x); top: var(--y); padding: 14px 18px; border-radius: 14px; background: var(--lp-vidro); border: 1px solid var(--lp-linha);
   backdrop-filter: blur(14px); box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 20px 40px -20px rgba(0,0,0,.6); min-width: 150px; }
 .lp-flutua small { display: block; font-size: 13px; color: var(--suave); }
