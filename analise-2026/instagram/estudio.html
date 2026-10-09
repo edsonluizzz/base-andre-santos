@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Ovile Diagnóstico · estúdio de peças</title>
+<!-- Estúdio da identidade visual e dos posts do Instagram do Ovile Diagnóstico.
+     Cada peça é aberta com ?peca=<nome> e fotografada por renderizar.mjs (servidor local na pasta analise-2026).
+     Telas e números vêm do modo demonstração (nomes e números fictícios); nenhum candidato real aparece. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300..800&family=Geist+Mono:wght@500;700&display=swap">
+<script src="../public/vendor/d3.v7.min.js"></script>
+<style>
+  :root {
+    --fundo: #07090f; --fundo-2: #0b0f17; --cartao: #141a26; --linha: #232c3d; --texto: #f2f5fa; --suave: #8b97ad;
+    --laranja: #ff6a13; --laranja-2: #ffb074; --azul: #4c8dff; --verde: #1fa855;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body { background: var(--fundo); color: var(--texto); font-family: "Geist", -apple-system, Arial, sans-serif; }
+  .peca { position: relative; overflow: hidden; background: var(--fundo); }
+  .brilho { position: absolute; border-radius: 50%; filter: blur(140px); pointer-events: none; }
+  .k { color: var(--laranja); }
+  .mono { font-family: "Geist Mono", monospace; }
+
+  /* marca */
+  .marca { display: inline-flex; align-items: center; gap: .32em; line-height: 1; }
+  .marca svg { width: 1.15em; height: 1.15em; flex: none; }
+  .marca .nome { font-weight: 800; letter-spacing: -0.045em; }
+  .marca .marca-sub { font-family: "Geist Mono", monospace; font-weight: 500; font-size: .22em; letter-spacing: .2em; color: var(--laranja); text-transform: uppercase; margin-top: .25em; display: block; }
+  .marca .bloco { display: flex; flex-direction: column; }
+
+  /* posts 1080 × 1350 */
+  .post { width: 1080px; height: 1350px; padding: 84px 80px; display: flex; flex-direction: column; }
+  .post .topo { display: flex; justify-content: space-between; align-items: center; font-size: 44px; position: relative; z-index: 2; }
+  .post .topo .contador { font: 500 22px "Geist Mono", monospace; color: var(--suave); letter-spacing: .1em; }
+  .post h1 { font-size: 96px; line-height: 1.0; letter-spacing: -0.045em; font-weight: 750; margin-top: 64px; position: relative; z-index: 2; }
+  .post .sub { font-size: 34px; line-height: 1.4; color: var(--suave); margin-top: 26px; max-width: 24ch; position: relative; z-index: 2; }
+  .post .rodape { margin-top: auto; display: flex; justify-content: space-between; align-items: center; font-size: 26px; color: var(--suave); position: relative; z-index: 2; }
+  .post .rodape b { color: var(--texto); }
+  .pilula { display: inline-flex; align-items: center; gap: 12px; padding: 18px 30px; border-radius: 999px; background: var(--laranja); color: #fff; font-weight: 700; font-size: 28px; }
+  .pilula.vidro { background: rgba(20, 26, 38, .8); color: var(--texto); border: 1px solid var(--linha); }
+  .tela-img { border-radius: 26px; border: 1px solid var(--linha); display: block; box-shadow: 0 40px 90px -30px rgba(0,0,0,.8); }
+  .fone { position: absolute; width: 470px; height: 980px; border-radius: 70px; background: #000; border: 13px solid #1d222c; box-shadow: 0 0 0 3px #3a4252, 0 60px 120px rgba(0,0,0,.75); overflow: hidden; }
+  .fone .ilha { position: absolute; top: 16px; left: 50%; width: 140px; height: 38px; margin-left: -70px; border-radius: 22px; background: #000; z-index: 3; }
+  .fone .barra { position: absolute; top: 0; left: 0; right: 0; height: 64px; background: #0b0f17; z-index: 2; }
+  .fone img { position: absolute; left: 0; width: 100%; }
+  .cartao-num { position: absolute; padding: 26px 32px; border-radius: 26px; background: rgba(16,21,31,.92); border: 1px solid #34405a; box-shadow: 0 30px 70px rgba(0,0,0,.6); z-index: 3; }
+  .cartao-num small { display: block; font-size: 22px; color: var(--suave); }
+  .cartao-num b { font: 700 64px/1.05 "Geist Mono", monospace; color: var(--laranja); letter-spacing: -0.02em; }
+</style>
+</head>
+<body>
+<template id="simbolo"><svg viewBox="0 0 100 100" aria-hidden="true"><path d="M 83.87 47.04 A 34 34 0 1 1 58.80 17.16" fill="none" stroke="#ff6a13" stroke-width="13" stroke-linecap="round"/><circle cx="76.05" cy="28.14" r="8.5" fill="#ff6a13"/></svg></template>
+<div id="raiz"></div>
+<script>
+const SIMBOLO = document.getElementById("simbolo").innerHTML;
+const marca = (tam, sub = "diagnóstico", cor = "var(--texto)") =>
+  `<span class="marca" style="font-size:${tam}px;color:${cor}">${SIMBOLO}<span class="bloco"><span class="nome">ovile</span>${sub ? `<span class="marca-sub">${sub}</span>` : ""}</span></span>`;
+const brilhos = (lista) => lista.map(([x, y, t, c, o]) => `<div class="brilho" style="left:${x}px;top:${y}px;width:${t}px;height:${t}px;background:${c};opacity:${o}"></div>`).join("");
+const rodape = (esq = "Eleição 2026 · Paraná", dir = "diagnostico.ovile.com.br") => `<div class="rodape"><span>${esq}</span><b>${dir}</b></div>`;
+const IMG = "../public/img/", TELAS = "../video/telas/";
+
+// Mapa do Paraná aceso pela votação de um candidato estadual (mesmo desenho do topo da landing).
+async function mapa(alvo, { largura, altura, linha = .9 }) {
+  const [geo, dados] = await Promise.all([fetch("../public/mapa.geo.json").then((r) => r.json()), fetch("../public/dados/estadual.json").then((r) => r.json())]);
+  const c = dados.candidatos.find((x) => x.n === "30777");
+  const validos = new Map(dados.municipios.map((m, i) => [m.ibge, m.validos ? (c.mun.find(([k]) => k === i)?.[1] ?? 0) / m.validos : 0]));
+  const max = Math.max(...validos.values());
+  const proj = d3.geoMercator().fitSize([largura, altura], geo), caminho = d3.geoPath(proj);
+  const svg = d3.select(alvo).append("svg").attr("viewBox", `0 0 ${largura} ${altura}`).attr("width", largura).attr("height", altura).style("overflow", "visible");
+  svg.selectAll("path").data(geo.features).join("path").attr("d", caminho)
+    .attr("fill", (f) => d3.interpolateRgb("#1a2130", "#ff6a13")(Math.sqrt((validos.get(f.properties.codarea) ?? 0) / max)))
+    .attr("stroke", "#ff9a5a").attr("stroke-opacity", .45).attr("stroke-width", linha);
+}
+
+const BIO = ["Diagnóstico da sua eleição a deputado no PR", "Mapa até o local de votação, custo do voto e concorrentes", "Veja a prévia grátis 👇"];
+const CORES = [["Fundo", "#07090F"], ["Superfície", "#141A26"], ["Laranja Ovile", "#FF6A13"], ["Laranja claro", "#FFB074"], ["Texto", "#F2F5FA"], ["Texto suave", "#8B97AD"], ["Compra (WhatsApp)", "#1FA855"]];
+const GRADE = ["post-1-reel-capa", "post-2-pergunta", "post-3-local", "post-4-custo", "post-5-concorrentes", "post-6-relatorio"];
+
+const PECAS = {
+  // Prancha da identidade: logo, cores, tipografia, bio e a grade do perfil como vai aparecer.
+  identidade: { w: 1600, h: 2680, html: () => `<div class="peca" style="width:1600px;height:2680px;padding:90px">
+      ${brilhos([[-300, -300, 900, "#ff6a13", .25]])}
+      <div style="position:relative;display:flex;justify-content:space-between;align-items:flex-end">
+        <div><p class="mono" style="color:var(--laranja);letter-spacing:.2em;font-size:20px">IDENTIDADE VISUAL</p><div style="margin-top:28px">${marca(150)}</div></div>
+        <div style="text-align:right;color:var(--suave);font-size:22px;line-height:1.6">@ovilediagnostico<br>diagnostico.ovile.com.br</div>
+      </div>
+      <div style="display:grid;grid-template-columns:300px 1fr;gap:60px;margin-top:80px;align-items:center">
+        <div style="width:300px;height:300px;border-radius:50%;overflow:hidden;border:2px solid var(--linha)"><img src="pecas/avatar.png" style="width:100%"></div>
+        <div style="font-size:28px;line-height:1.5">
+          <p class="mono" style="color:var(--suave);font-size:18px;letter-spacing:.15em">PERFIL</p>
+          <p style="font-weight:700;margin-top:10px">Ovile Diagnóstico | Eleição 2026</p>
+          ${BIO.map((l) => `<p>${l}</p>`).join("")}
+          <p style="color:#7fb2ff">diagnostico.ovile.com.br</p>
+        </div>
+      </div>
+      <p class="mono" style="color:var(--suave);font-size:18px;letter-spacing:.15em;margin-top:80px">CORES</p>
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:14px;margin-top:20px">${CORES.map(([n, c]) =>
+        `<div><div style="height:150px;border-radius:16px;background:${c};border:1px solid var(--linha)"></div><p style="font-size:19px;margin-top:12px">${n}</p><p class="mono" style="font-size:17px;color:var(--suave)">${c}</p></div>`).join("")}</div>
+      <p class="mono" style="color:var(--suave);font-size:18px;letter-spacing:.15em;margin-top:70px">TIPOGRAFIA</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:30px;margin-top:20px">
+        <div style="padding:34px;border-radius:20px;background:var(--cartao)"><p style="font-size:64px;font-weight:750;letter-spacing:-0.04em">Geist</p><p style="color:var(--suave);font-size:22px;margin-top:8px">Títulos e textos · 400 a 800</p></div>
+        <div style="padding:34px;border-radius:20px;background:var(--cartao)"><p class="mono" style="font-size:64px;font-weight:700;color:var(--laranja)">R$ 6,01</p><p style="color:var(--suave);font-size:22px;margin-top:8px">Geist Mono · números e rótulos</p></div>
+      </div>
+      <p class="mono" style="color:var(--suave);font-size:18px;letter-spacing:.15em;margin-top:70px">GRADE DO PERFIL</p>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:20px;width:100%">${GRADE.map((g) =>
+        `<div style="aspect-ratio:3/4;overflow:hidden;background:#000"><img src="pecas/${g}.png" style="width:100%;height:100%;object-fit:cover"></div>`).join("")}</div>
+    </div>` },
+
+
+  // Foto de perfil: só o símbolo, centrado com folga para o recorte redondo.
+  avatar: { w: 1080, h: 1080, html: () => `<div class="peca" style="width:1080px;height:1080px;display:grid;place-items:center;background:radial-gradient(circle at 50% 40%, #151c2b, #07090f 70%)">
+      <div style="width:560px;height:560px">${SIMBOLO}</div></div>` },
+  "logo-escuro": { w: 2400, h: 900, html: () => `<div class="peca" style="width:2400px;height:900px;display:grid;place-items:center">${marca(300)}</div>` },
+  "logo-claro": { w: 2400, h: 900, html: () => `<div class="peca" style="width:2400px;height:900px;display:grid;place-items:center;background:#f4f6f9">${marca(300, "diagnóstico", "#0b0f17")}</div>` },
+
+  // Capa do Reel (1080 × 1920; o miolo 1080 × 1440 é o que aparece na grade do perfil).
+  "post-1-reel-capa": { w: 1080, h: 1920, html: () => `<div class="peca" style="width:1080px;height:1920px">
+      ${brilhos([[-300, 1150, 900, "#ff6a13", .45], [600, 200, 700, "#4c8dff", .2]])}
+      <div style="position:absolute;top:300px;left:0;right:0;text-align:center;font-size:150px;line-height:.98;font-weight:750;letter-spacing:-0.05em">Sua eleição,<br><span class="k">voto a voto.</span></div>
+      <div class="fone" style="left:305px;top:640px;height:820px"><div class="ilha"></div><div class="barra"></div><img src="${TELAS}m-mapa.jpg" style="top:64px;transform:translateY(-375px)"></div>
+      <div style="position:absolute;top:1510px;left:0;right:0;display:flex;justify-content:center"><span class="pilula">▶ Assista ao lançamento</span></div>
+      <div style="position:absolute;bottom:110px;left:0;right:0;display:flex;justify-content:center">${marca(64)}</div></div>` },
+
+  "post-2-pergunta": { w: 1080, h: 1350, mapa: true, html: () => `<div class="peca post">
+      ${brilhos([[480, 520, 800, "#ff6a13", .35]])}
+      <div class="topo">${marca(44)}</div>
+      <h1>Você sabe onde ganhou <span class="k">cada voto?</span></h1>
+      <div id="mapa-alvo" style="position:absolute;left:90px;top:560px"></div>
+      ${rodape()}</div>`,
+    depois: async () => mapa(document.getElementById("mapa-alvo"), { largura: 900, altura: 640 }) },
+
+  "post-3-local": { w: 1080, h: 1350, html: () => `<div class="peca post">
+      ${brilhos([[-260, 700, 800, "#ff6a13", .4]])}
+      <div class="topo">${marca(44)}</div>
+      <h1>Do estado inteiro até <span class="k">cada escola.</span></h1>
+      <p class="sub" style="max-width:15ch">Cidade, bairro e local de votação, com o seu percentual em cada um.</p>
+      <div class="fone" style="right:70px;top:600px;height:860px"><div class="ilha"></div><div class="barra"></div><img src="${TELAS}m-cidade.jpg" style="top:64px;transform:translateY(-385px)"></div>
+      <div class="cartao-num" style="left:80px;top:900px"><small>locais com voto</small><b>386</b><small>só na capital</small></div>
+      <div class="cartao-num" style="left:80px;top:1110px"><small>posição na cidade</small><b>53º</b></div>
+      </div>` },
+
+  "post-4-custo": { w: 1080, h: 1350, html: () => `<div class="peca post">
+      ${brilhos([[500, -200, 800, "#ff6a13", .3]])}
+      <div class="topo">${marca(44)}</div>
+      <h1>Quanto custou <span class="k">cada voto?</span></h1>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:56px;position:relative;z-index:2">
+        <div style="padding:34px;border-radius:26px;background:linear-gradient(140deg,#3a1d0e,#141a26 70%);border:1px solid #5a2e15">
+          <small style="font-size:24px;color:var(--suave)">o seu voto</small><div class="mono" style="font-size:104px;font-weight:700;color:var(--laranja);letter-spacing:-0.04em;line-height:1.05">R$&nbsp;6</div><small style="font-size:24px;color:var(--suave)">receita declarada ÷ votos</small></div>
+        <div style="padding:34px;border-radius:26px;background:var(--cartao);border:1px solid var(--linha)">
+          <small style="font-size:24px;color:var(--suave)">média da chapa</small><div class="mono" style="font-size:104px;font-weight:700;letter-spacing:-0.04em;line-height:1.05">R$&nbsp;34</div><small style="font-size:24px;color:var(--suave)">mediana dos colegas</small></div>
+      </div>
+      <img class="tela-img" src="${IMG}custo-barras.jpg" style="width:100%;margin-top:28px;position:relative;z-index:2">
+      ${rodape("Prestação de contas oficial do TSE")}</div>` },
+
+  "post-5-concorrentes": { w: 1080, h: 1350, html: () => `<div class="peca post">
+      ${brilhos([[-200, 900, 700, "#ff6a13", .3], [700, 600, 600, "#4c8dff", .25]])}
+      <div class="topo">${marca(44)}</div>
+      <h1>Quem disputa <span class="k">o seu eleitor?</span></h1>
+      <img class="tela-img" src="${IMG}concorrentes-calor.jpg" style="width:820px;margin-top:40px;position:relative;z-index:2;background:#141a26;padding:16px">
+      <div class="rodape"><span style="max-width:20ch;line-height:1.35">Compare mapa a mapa com até 3 adversários, de qualquer partido.</span><span class="cartao-num" style="position:static;padding:18px 26px"><small>base dividida com a maior rival</small><b style="font-size:52px">99%</b></span></div>
+      </div>` },
+
+  "post-6-relatorio": { w: 1080, h: 1350, html: () => `<div class="peca post">
+      ${brilhos([[100, 700, 900, "#ff6a13", .3]])}
+      <div class="topo">${marca(44)}</div>
+      <h1>Tudo num relatório <span class="k">pronto para o partido.</span></h1>
+      <div style="position:absolute;left:0;right:0;top:600px;height:560px">
+        ${[["relatorio-2", -16, -300, 30], ["relatorio-4", 16, 300, 30], ["relatorio-1", 0, 0, 0]].map(([f, r, x, y]) =>
+          `<img src="${IMG}${f}.jpg" style="position:absolute;left:50%;width:380px;margin-left:-190px;top:${y}px;transform:translateX(${x}px) rotate(${r}deg);border-radius:12px;box-shadow:0 40px 80px -20px rgba(0,0,0,.8)">`).join("")}
+      </div>
+      <div class="rodape"><span class="pilula">Prévia grátis no link da bio</span><b>diagnostico.ovile.com.br</b></div></div>` },
+};
+
+(async () => {
+  const nome = new URLSearchParams(location.search).get("peca");
+  const p = PECAS[nome];
+  if (!p) { document.getElementById("raiz").innerHTML = `<pre style="padding:40px">peças: ${Object.keys(PECAS).join(", ")}</pre>`; window.__pronto = true; return; }
+  document.body.style.width = `${p.w}px`;
+  document.getElementById("raiz").innerHTML = p.html();
+  if (p.depois) await p.depois();
+  await Promise.all([...document.images].map((i) => (i.complete ? null : new Promise((r) => { i.onload = i.onerror = r; }))));
+  await document.fonts.ready;
+  window.__tamanho = { w: p.w, h: p.h };
+  window.__pronto = true;
+})();
+</script>
+</body>
+</html>
