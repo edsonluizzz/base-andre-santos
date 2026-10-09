@@ -204,3 +204,24 @@ button.principal { background: var(--laranja); color: #fff; border-color: var(--
   .escolha .campo, .escolha label { width: 100%; }
   .escolha input { min-width: 0; flex: 1; }
 }
+
+/* Vitrine e oferta (Diagnóstico Eleitoral) */
+.vitrine { max-width: 860px; padding: 12px 0 8px; }
+.vitrine h1 { font-size: clamp(24px, 3.4vw, 38px); font-weight: 800; letter-spacing: 0; white-space: normal; line-height: 1.2; margin: 8px 0 12px; }
+.vitrine p { font-size: 16px; line-height: 1.6; color: var(--suave); margin-top: 8px; }
+.vitrine p b { color: var(--texto); }
+.oferta-selo { text-transform: uppercase; letter-spacing: 1.5px; font-size: 12px; font-weight: 700; color: var(--laranja) !important; }
+.meus { display: flex; flex-wrap: wrap; gap: 8px; }
+.meus a { color: var(--texto); text-decoration: none; border: 1px solid var(--borda); border-radius: 10px; padding: 8px 12px; }
+.meus a:hover { border-color: var(--laranja); }
+.oferta { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(220px, 1fr); gap: 24px; align-items: center; }
+.oferta h2 { font-size: 22px !important; text-transform: none !important; letter-spacing: 0 !important; color: inherit !important; margin: 6px 0 10px !important; }
+.oferta ul { padding-left: 18px; display: flex; flex-direction: column; gap: 6px; font-size: 15px; line-height: 1.5; }
+.oferta-compra { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; border: 1px solid var(--borda); border-radius: 14px; padding: 18px; }
+.oferta-preco { font-size: 36px; font-weight: 800; color: var(--laranja); }
+.botao-compra { background: #1fa855; color: #fff; text-decoration: none; font-weight: 700; padding: 12px 20px; border-radius: 10px; font-size: 16px; }
+.botao-compra:hover { filter: brightness(1.08); }
+.folha .oferta-compra { border-color: #d5dce7; }
+.folha-oferta { min-height: 0 !important; }
+.rel-mais { margin-top: 10px; padding: 10px 12px; border: 1px dashed var(--laranja); border-radius: 10px; color: #57647a; }
+@media (max-width: 860px) { .oferta { grid-template-columns: 1fr; } }

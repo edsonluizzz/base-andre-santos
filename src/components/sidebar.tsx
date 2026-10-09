@@ -7,7 +7,7 @@ import { signOut, useSession } from "next-auth/react";
 import {
   LayoutDashboard, Users, Calendar,
   Megaphone, Settings, LogOut, Shield, Star, Map, BarChart2, Network, Target, ClipboardList, Award, Building2, Plus, UserPlus, Link2, Church,
-  ChevronLeft, ChevronRight, Sun, Moon, GraduationCap, Send, IdCard, Wallet, Package, Mail, PieChart,
+  ChevronLeft, ChevronRight, Sun, Moon, GraduationCap, Send, IdCard, Wallet, Package, Mail, PieChart, FileBarChart,
 } from "lucide-react";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { useTheme } from "next-themes";
@@ -51,6 +51,7 @@ const navItems = [
   { href: "/mala-direta",    icon: Mail,             label: "Mala direta",     minRole: "ADMIN",  superAdminOnly: false, financeAdminOnly: true,  leadsOnly: false },
   { href: "/configuracoes",  icon: Settings,         label: "Configurações",   minRole: "ADMIN",  superAdminOnly: false, financeAdminOnly: false, leadsOnly: false },
   { href: "/financeiro",     icon: Wallet,           label: "Financeiro",      minRole: "ADMIN",  superAdminOnly: false, financeAdminOnly: true,  leadsOnly: false },
+  { href: "/diagnosticos",   icon: FileBarChart,     label: "Diagnósticos",    minRole: "ADMIN",  superAdminOnly: true,  financeAdminOnly: false, leadsOnly: false },
   { href: "/super-admin",    icon: Shield,           label: "Super Admin",     minRole: "ADMIN",  superAdminOnly: true,  financeAdminOnly: false, leadsOnly: false },
   { href: "/campanhas",      icon: Building2,        label: "Campanhas",       minRole: "ADMIN",  superAdminOnly: true,  financeAdminOnly: false, leadsOnly: false },
   { href: "/nova-campanha",  icon: Plus,             label: "Nova Campanha",   minRole: "ADMIN",  superAdminOnly: true,  financeAdminOnly: false, leadsOnly: false },

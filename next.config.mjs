@@ -24,6 +24,8 @@ const nextConfig = {
       "/api/materiais/": ["./node_modules/pdfkit/js/data/**/*"],
       // Painel de análise da eleição: a rota lê os arquivos estáticos via fs.
       "/eleicao-2026/analise/": ["./analise-2026/public/**/*"],
+      // Tela de vendas do diagnóstico confere o candidato no dados/<cargo>.json.
+      "/api/diagnosticos": ["./analise-2026/public/dados/*.json"],
     },
   },
   async rewrites() {
@@ -33,6 +35,12 @@ const nextConfig = {
           source: "/",
           has: [{ type: "host", value: "leads.prandresantos.com.br" }],
           destination: "/ebook/quem-sou-eu",
+        },
+        // Diagnóstico Eleitoral: o subdomínio inteiro vira o painel de análise (nada do sistema passa por ele).
+        {
+          source: "/:caminho*",
+          has: [{ type: "host", value: "diagnostico.ovile.com.br" }],
+          destination: "/eleicao-2026/analise/:caminho*",
         },
       ],
       afterFiles: [],

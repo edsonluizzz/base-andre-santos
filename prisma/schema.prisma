@@ -1102,3 +1102,23 @@ model EmailCampaignSend {
   @@index([campaignId, sentAt])
   @@index([providerId])
 }
+
+/// Diagnóstico Eleitoral (produto vendido por candidato): cada venda gera um link com token
+/// que libera o painel completo e o relatório PDF daquele candidato (diagnostico.ovile.com.br).
+/// Não pertence a uma campanha: é venda da Ovile para qualquer candidato.
+model DiagnosticoAcesso {
+  id        String    @id @default(cuid())
+  token     String    @unique
+  cargo     String    // "estadual" | "federal" (chave de CARGOS em analise-2026/public/js/config.mjs)
+  numero    String    // número do candidato na urna
+  candidato String    // nome de urna no momento da venda
+  cliente   String
+  telefone  String?
+  valor     Float
+  ativo     Boolean   @default(true)
+  criadoPor String?
+  ultimoUso DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([cargo, numero])
+}

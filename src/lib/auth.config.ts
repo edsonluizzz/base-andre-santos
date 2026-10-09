@@ -111,6 +111,9 @@ export const authConfig: NextAuthConfig = {
         // Painel de análise da eleição: público, só leitura, só esta pasta (dados TSE/IBGE).
         pathname === "/eleicao-2026/analise" ||
         pathname.startsWith("/eleicao-2026/analise/") ||
+        // Diagnóstico Eleitoral: o subdomínio inteiro é reescrito para o painel acima (next.config),
+        // então nenhuma página do sistema é alcançável por ele. Host fixo aqui: este arquivo roda no edge.
+        nextUrl.hostname === "diagnostico.ovile.com.br" ||
         pathname === "/api/onboarding";
 
       if (isPublic) return true;
