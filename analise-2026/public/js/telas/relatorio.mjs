@@ -70,7 +70,7 @@ export function conclusoes(D, foco, x) {
   if (reg && foco.votos) out.push(`Por região, <b>${reg}</b> respondeu por ${pct(vr / foco.votos, 1)} dos votos${x.regioes[1]?.[1] ? `, seguida de ${x.regioes[1][0]} (${pct(x.regioes[1][1] / foco.votos, 1)})` : ""}.`);
   if (x.rpv != null) {
     const comp = x.mediana ? (x.rpv < x.mediana ? `abaixo da mediana da chapa (${reais(x.mediana)})` : `acima da mediana da chapa (${reais(x.mediana)})`) : "";
-    out.push(`Cada voto custou <b>${reais(x.rpv)}</b> de receita declarada, ${comp}${x.posCusto ? ` — o ${x.posCusto}º mais barato de ${x.nCusto} na chapa` : ""}.${x.ef ? ` Pela curva receita × votos do ${UF.sigla}, um candidato médio com ${reaisCurto(foco.receita)} faria ${inteiro(x.ef.previsto)} votos: o resultado foi <b>${nf2(x.ef.razao)}× o esperado</b>.` : ""}`);
+    out.push(`Cada voto custou <b>${reais(x.rpv)}</b> de receita declarada, ${comp}${x.posCusto ? `, o ${x.posCusto}º mais barato de ${x.nCusto} na chapa` : ""}.${x.ef ? ` Pela curva receita × votos do ${UF.sigla}, um candidato médio com ${reaisCurto(foco.receita)} faria ${inteiro(x.ef.previsto)} votos: o resultado foi <b>${nf2(x.ef.razao)}× o esperado</b>.` : ""}`);
   } else {
     out.push("Não há receita declarada na prestação de contas parcial do TSE, então o custo por voto não pôde ser calculado.");
   }

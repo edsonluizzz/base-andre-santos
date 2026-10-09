@@ -130,11 +130,12 @@ export function escolherB(D, foco, comparados, n) {
 
 // Votos por local de cada candidato vêm de um arquivo próprio (dados/<cargo>/<número>.json).
 // Candidato sem voto não tem arquivo: fica com lista vazia.
+// No modo demonstração o arquivo é o do número real (nOrig) e os votos são multiplicados pelo fator do candidato.
 export async function garantirLocais(D, numeros, buscar) {
-  await Promise.all([...new Set(numeros)].map(async (n) => {
-    const c = D.porNumero.get(n);
-    if (!c || c.loc) return;
-    c.loc = (c.votos ? await buscar(`dados/${D.cargo.id}/${n}.json`) : null) ?? [];
+  const cands = [...new Set(numeros.map((n) => D.porNumero.get(n)).filter((c) => c && !c.loc))];
+  await Promise.all(cands.map(async (c) => {
+    const loc = (c.votos ? await buscar(`dados/${D.cargo.id}/${c.nOrig ?? c.n}.json`) : null) ?? [];
+    c.loc = c.fatorVotos ? loc.map(([j, v]) => [j, Math.max(1, Math.round(v * c.fatorVotos))]) : loc;
   }));
 }
 

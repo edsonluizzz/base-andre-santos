@@ -1,11 +1,14 @@
 import { CARGOS, CARGO_PADRAO, MAX_COMPARADOS, UF } from "./config.mjs";
 import { buscarCandidato, coresDe, garantirLocais, indexar, lerComparados, nomeCurto, rotuloCandidato, varCorDe } from "./dados.mjs";
-import { esc, inteiro } from "./fmt.mjs";
+import { esc } from "./fmt.mjs";
 import { escreverRota, lerRota } from "./rota.mjs";
 import { esconderDica } from "./dica.mjs";
-import { tabela } from "./tabela.mjs";
 import { TELAS_LIVRES, estaLiberado, oferta } from "./oferta.mjs";
-import { landing } from "./landing.mjs";
+import { animarLanding, landing, ligarBusca } from "./landing.mjs";
+import { aplicarDemo } from "./demo.mjs";
+
+// ?demo na URL: nomes, números e partidos fictícios (telas de divulgação).
+const DEMO = new URLSearchParams(location.search).has("demo");
 import * as panorama from "./telas/panorama.mjs";
 import * as candidato from "./telas/candidato.mjs";
 import * as custo from "./telas/custo.mjs";
@@ -55,7 +58,7 @@ async function carregar(url, opcional = false) {
 // Cada cargo é carregado uma vez e guardado (os votos por local vão sendo acrescentados nele).
 const cacheCargos = new Map();
 function dadosDoCargo(id) {
-  if (!cacheCargos.has(id)) cacheCargos.set(id, carregar(`dados/${id}.json`).then(indexar));
+  if (!cacheCargos.has(id)) cacheCargos.set(id, carregar(`dados/${id}.json`).then(indexar).then((D) => (DEMO ? aplicarDemo(D) : D)));
   return cacheCargos.get(id);
 }
 
@@ -92,28 +95,25 @@ function barraEscolha(el, { D, cargo, foco, comparados, cores, mudar }) {
 }
 
 // Sem candidato escolhido: lista de todos para escolher.
-function telaInicial(el, D, mudar, acesso) {
-  const meus = (acesso?.liberados ?? []).filter((k) => k.startsWith(`${D.cargo.id}:`)).map((k) => D.porNumero.get(k.split(":")[1])).filter(Boolean);
-  el.innerHTML = `
-    ${meus.length ? `<div class="cartao"><h2>Seus diagnósticos</h2><div class="meus">${meus.map((c) =>
-      `<a href="#relatorio?cargo=${D.cargo.id}&c=${c.n}">${esc(c.nm)} <small>${c.n} · ${esc(c.sg)}</small></a>`).join("")}</div></div>` : ""}
-    ${landing({ D, venda: acesso?.venda, totalCandidatos: 995 })}
-    <div class="cartao inicio espaco"><h2>${esc(D.cargo.nome)} · ${UF.nome} · ${inteiro(D.candidatos.length)} candidatos</h2>
-    <div id="in-lista" class="rolagem" style="max-height:none"></div></div>`;
+// Raiz do site: landing de venda. Busca troca de cargo sem recarregar; o clique abre a prévia do candidato.
+let desfazerLanding = () => {};
+function telaInicial(el, { D, geo, acesso }) {
+  el.innerHTML = landing({ venda: acesso?.venda });
+  const meus = (acesso?.liberados ?? []).map((k) => k.split(":"));
+  if (meus.length) {
+    el.querySelector(".lp-busca-caixa").insertAdjacentHTML("beforebegin", `<div class="lp-meus"><span>Seus diagnósticos</span>${meus.map(([cargo, n]) =>
+      `<a href="#relatorio?cargo=${cargo}&c=${n}">${esc(CARGOS[cargo]?.curto ?? cargo)} ${esc(n)}</a>`).join("")}</div>`);
+  }
   // O # da URL é a rota das telas: âncora vira rolagem por script.
   el.querySelectorAll("[data-rolar]").forEach((b) => {
     b.onclick = () => document.getElementById(b.dataset.rolar)?.scrollIntoView({ behavior: "smooth", block: "start" });
   });
-  tabela(el.querySelector("#in-lista"), {
-    linhas: D.candidatos, ordem: 3, busca: "Buscar candidato…", aoClicar: (c) => mudar({ c: c.n, vs: null }),
-    colunas: [
-      { rotulo: "Candidato", valor: (c) => c.nm },
-      { rotulo: "Número", valor: (c) => c.n },
-      { rotulo: "Partido", valor: (c) => c.sg },
-      { rotulo: "Votos", valor: (c) => c.votos, formato: inteiro, num: true },
-      { rotulo: "Situação", valor: (c) => c.st },
-    ],
+  ligarBusca(el, {
+    cargoInicial: D.cargo.id,
+    carregarCargo: dadosDoCargo,
+    abrir: (cargo, n) => { location.hash = escreverRota("panorama", { cargo, c: n }); },
   });
+  desfazerLanding = animarLanding(el, { geo, D });
 }
 
 async function iniciar() {
@@ -174,13 +174,15 @@ async function iniciar() {
     const cheio = document.fullscreenElement?.querySelector(".mapa[id]")?.id;
     const ampliados = [...tela.querySelectorAll(".cartao.ampliado .mapa[id]")].map((m) => m.id);
     document.documentElement.dataset.tema = lerTema() ?? "escuro"; // o relatório força o claro só enquanto aberto
+    desfazerLanding(); // tira os gatilhos de rolagem da landing antes de trocar de tela
+    desfazerLanding = () => {};
     tela.replaceChildren();
     tela.style.animation = "none";
     tela.offsetWidth;
     tela.style.animation = "";
     document.body.dataset.tela = foco ? id : "inicio";
     if (!foco) {
-      telaInicial(tela, D, mudar, acesso);
+      telaInicial(tela, { D, geo, acesso });
       document.body.dataset.pronta = "inicio";
       return;
     }
