@@ -3,18 +3,22 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { ehCargo, gerarToken, linkDiagnostico } from "@/lib/diagnostico";
+import { ehCargo, ehMunicipal, gerarToken, linkDiagnostico } from "@/lib/diagnostico";
 
 // Vendas do Diagnóstico Eleitoral: cada venda (Pix recebido) gera o link do cliente. Só super admin.
 
 type Candidato = { n: string; nm: string; sg: string; votos: number };
 const candidatos = new Map<string, Promise<Map<string, Candidato>>>();
-function candidatosDo(cargo: string) {
-  if (!candidatos.has(cargo)) {
-    const arq = join(process.cwd(), "analise-2026", "public", "dados", `${cargo}.json`);
-    candidatos.set(cargo, readFile(arq, "utf8").then((t) => new Map((JSON.parse(t).candidatos as Candidato[]).map((c) => [c.n, c]))));
+// Gerais: dados/<cargo>.json. Municipais ("vereador-2024"): dados/2024/vereador/<cd da cidade>.json.
+function candidatosDo(cargo: string, cidade: string | null) {
+  const chave = `${cargo}:${cidade ?? ""}`;
+  if (!candidatos.has(chave)) {
+    const base = join(process.cwd(), "analise-2026", "public", "dados");
+    const [nome, ano] = cargo.split("-");
+    const arq = ehMunicipal(cargo) ? join(base, ano, nome, `${cidade}.json`) : join(base, `${cargo}.json`);
+    candidatos.set(chave, readFile(arq, "utf8").then((t) => new Map((JSON.parse(t).candidatos as Candidato[]).map((c) => [c.n, c]))).catch(() => new Map()));
   }
-  return candidatos.get(cargo)!;
+  return candidatos.get(chave)!;
 }
 
 async function superAdmin() {
@@ -40,18 +44,23 @@ export async function POST(req: NextRequest) {
     const b = await req.json().catch(() => ({}));
     const cargo = b.cargo;
     const numero = String(b.numero ?? "").trim();
+    const cidade = String(b.cidade ?? "").trim();
     const cliente = String(b.cliente ?? "").trim().slice(0, 120);
     const telefone = String(b.telefone ?? "").trim().slice(0, 30) || null;
     const valor = Number(b.valor);
     if (!ehCargo(cargo)) return NextResponse.json({ error: "Cargo inválido" }, { status: 400 });
     if (!cliente) return NextResponse.json({ error: "Informe o cliente" }, { status: 400 });
     if (!Number.isFinite(valor) || valor < 0) return NextResponse.json({ error: "Valor inválido" }, { status: 400 });
-    const c = (await candidatosDo(cargo)).get(numero);
-    if (!c) return NextResponse.json({ error: `Não há candidato ${numero} para deputado ${cargo} no PR` }, { status: 400 });
+    const municipal = ehMunicipal(cargo);
+    if (municipal && !/^\d{5}$/.test(cidade)) return NextResponse.json({ error: "Escolha a cidade" }, { status: 400 });
+    const c = (await candidatosDo(cargo, municipal ? cidade : null)).get(numero);
+    if (!c) return NextResponse.json({ error: `Não há candidato ${numero} para ${cargo}${municipal ? " nessa cidade" : " no PR"}` }, { status: 400 });
+    // municipais: o número se repete entre cidades, então o acesso guarda "cidade-número"
+    const chave = municipal ? `${cidade}-${numero}` : numero;
     const venda = await db.diagnosticoAcesso.create({
-      data: { token: gerarToken(), cargo, numero, candidato: c.nm, cliente, telefone, valor, criadoPor: session.user?.email ?? null },
+      data: { token: gerarToken(), cargo, numero: chave, candidato: c.nm, cliente, telefone, valor, criadoPor: session.user?.email ?? null },
     });
-    return NextResponse.json({ ...venda, link: linkDiagnostico(venda.token, cargo, numero) }, { status: 201 });
+    return NextResponse.json({ ...venda, link: linkDiagnostico(venda.token, cargo, chave) }, { status: 201 });
   } catch (err) {
     console.error("[api/diagnosticos] POST:", err);
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });

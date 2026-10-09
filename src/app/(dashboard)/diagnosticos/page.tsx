@@ -18,12 +18,24 @@ type Venda = {
 type Candidato = { n: string; nm: string; sg: string; votos: number };
 
 const PRECO = 297;
-const CARGOS = [{ id: "estadual", nome: "Deputado Estadual" }, { id: "federal", nome: "Deputado Federal" }];
+// Municipais: um arquivo por cidade (dados/2024/<cargo>/<cd>.json) e o acesso guarda "cidade-número".
+const CARGOS = [
+  { id: "estadual", nome: "Deputado Estadual 2026", municipal: false },
+  { id: "federal", nome: "Deputado Federal 2026", municipal: false },
+  { id: "vereador-2024", nome: "Vereador 2024", municipal: true },
+  { id: "prefeito-2024", nome: "Prefeito 2024", municipal: true },
+];
+type Cidade = { cd: string; nm: string };
+const BASE = "/eleicao-2026/analise/dados";
+const urlCandidatos = (cargo: string, cidade: string) => {
+  const [nome, ano] = cargo.split("-");
+  return ano ? `${BASE}/${ano}/${nome}/${cidade}.json` : `${BASE}/${cargo}.json`;
+};
 const reais = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 const data = (s: string | null) => (s ? new Date(s).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" }) : "—");
 
 function mensagem(v: Venda) {
-  return `Olá, ${v.cliente.split(" ")[0]}! Seu Ovile Diagnóstico 2026 de ${v.candidato} (${v.numero}) está pronto.\n\n` +
+  return `Olá, ${v.cliente.split(" ")[0]}! Seu Ovile Diagnóstico de ${v.candidato} (${v.numero}) está pronto.\n\n` +
     `Acesse pelo link (é exclusivo, não compartilhe):\n${v.link}\n\n` +
     `No menu "Relatório PDF" você baixa o relatório completo.`;
 }
@@ -39,6 +51,11 @@ export default function DiagnosticosPage() {
   const [telefone, setTelefone] = useState("");
   const [valor, setValor] = useState(String(PRECO));
   const [salvando, setSalvando] = useState(false);
+  const [cidades, setCidades] = useState<Cidade[]>([]);
+  const [cidadeTexto, setCidadeTexto] = useState("");
+  const municipal = CARGOS.find((c) => c.id === cargo)?.municipal ?? false;
+  const cidade = municipal ? cidades.find((c) => c.nm.toUpperCase() === cidadeTexto.trim().toUpperCase())?.cd ?? "" : "";
+  const chaveLista = municipal ? `${cargo}:${cidade}` : cargo;
 
   const carregar = useCallback(async () => {
     const r = await fetch("/api/diagnosticos");
@@ -46,13 +63,17 @@ export default function DiagnosticosPage() {
   }, []);
   useEffect(() => { carregar(); }, [carregar]);
   useEffect(() => {
-    if (cands[cargo]) return;
-    fetch(`/eleicao-2026/analise/dados/${cargo}.json`).then((r) => r.json())
-      .then((d) => setCands((x) => ({ ...x, [cargo]: d.candidatos })))
+    if (!municipal || cidades.length) return;
+    fetch(`${BASE}/2024/municipios.json`).then((r) => r.json()).then(setCidades).catch(() => toast.error("Não consegui carregar as cidades"));
+  }, [municipal, cidades.length]);
+  useEffect(() => {
+    if (cands[chaveLista] || (municipal && !cidade)) return;
+    fetch(urlCandidatos(cargo, cidade)).then((r) => r.json())
+      .then((d) => setCands((x) => ({ ...x, [chaveLista]: d.candidatos })))
       .catch(() => toast.error("Não consegui carregar a lista de candidatos"));
-  }, [cargo, cands]);
+  }, [cargo, cidade, chaveLista, municipal, cands]);
 
-  const lista = cands[cargo] ?? [];
+  const lista = cands[chaveLista] ?? [];
   const numero = busca.match(/·\s*(\d{2,5})\s*·/)?.[1] ?? (/^\d{2,5}$/.test(busca.trim()) ? busca.trim() : "");
   const escolhido = useMemo(() => lista.find((c) => c.n === numero), [lista, numero]);
   const total = vendas.filter((v) => v.ativo).reduce((s, v) => s + v.valor, 0);
@@ -63,7 +84,7 @@ export default function DiagnosticosPage() {
     try {
       const r = await fetch("/api/diagnosticos", {
         method: "POST", headers: { "content-type": "application/json" },
-        body: JSON.stringify({ cargo, numero: escolhido.n, cliente, telefone, valor: Number(valor.replace(",", ".")) }),
+        body: JSON.stringify({ cargo, cidade, numero: escolhido.n, cliente, telefone, valor: Number(valor.replace(",", ".")) }),
       });
       const j = await r.json();
       if (!r.ok) { toast.error(j.error ?? "Erro ao registrar"); return; }
@@ -101,10 +122,14 @@ export default function DiagnosticosPage() {
           <select value={cargo} onChange={(e) => { setCargo(e.target.value); setBusca(""); }} className="h-10 w-full rounded-md border bg-background px-2 text-sm">
             {CARGOS.map((c) => <option key={c.id} value={c.id}>{c.nome}</option>)}
           </select>
+          {municipal && (<>
+            <Input list="diag-cidades" value={cidadeTexto} onChange={(e) => { setCidadeTexto(e.target.value); setBusca(""); }} placeholder="Cidade" className="mt-2" />
+            <datalist id="diag-cidades">{cidades.map((c) => <option key={c.cd} value={c.nm} />)}</datalist>
+          </>)}
         </div>
         <div className="space-y-1">
           <Label>Candidato</Label>
-          <Input list="diag-cands" value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Nome ou número" />
+          <Input list="diag-cands" value={busca} onChange={(e) => setBusca(e.target.value)} placeholder={municipal && !cidade ? "Escolha a cidade antes" : "Nome ou número"} disabled={municipal && !cidade} />
           <datalist id="diag-cands">{lista.map((c) => <option key={c.n} value={`${c.nm} · ${c.n} · ${c.sg}`} />)}</datalist>
           <p className="h-4 text-xs text-muted-foreground">{escolhido ? `${escolhido.votos.toLocaleString("pt-BR")} votos` : ""}</p>
         </div>
@@ -138,7 +163,7 @@ export default function DiagnosticosPage() {
               const wa = telefoneWhatsApp(v.telefone);
               return (
                 <tr key={v.id} className={`border-t ${v.ativo ? "" : "opacity-50"}`}>
-                  <td className="p-3"><b>{v.candidato}</b><div className="text-xs text-muted-foreground">{v.numero} · {v.cargo === "federal" ? "Federal" : "Estadual"}</div></td>
+                  <td className="p-3"><b>{v.candidato}</b><div className="text-xs text-muted-foreground">{v.numero.split("-").pop()} · {CARGOS.find((c) => c.id === v.cargo)?.nome ?? v.cargo}</div></td>
                   <td className="p-3">{v.cliente}<div className="text-xs text-muted-foreground">{v.telefone ?? ""}</div></td>
                   <td className="p-3 text-right">{reais(v.valor)}</td>
                   <td className="p-3 whitespace-nowrap">{data(v.createdAt)}</td>

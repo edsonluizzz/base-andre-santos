@@ -30,6 +30,9 @@ describe("rotas e links", () => {
     expect(arquivoDeCandidato("dados/federal/3030.json")).toEqual({ cargo: "federal", numero: "3030" });
     expect(arquivoDeCandidato("dados/estadual.json")).toBeNull();
     expect(arquivoDeCandidato("dados/senado/123.json")).toBeNull();
+    expect(arquivoDeCandidato("dados/2024/vereador/75353/loc.json")).toEqual({ cargo: "vereador-2024", numero: "75353" });
+    expect(arquivoDeCandidato("dados/2024/vereador/75353.json")).toBeNull(); // base da cidade é pública
+    expect(arquivoDeCandidato("dados/2024/senador/75353/loc.json")).toBeNull();
   });
   it("host do produto, com ou sem porta", () => {
     expect(ehHostDiagnostico("diagnostico.ovile.com.br")).toBe(true);
@@ -39,6 +42,7 @@ describe("rotas e links", () => {
   });
   it("link do cliente abre no relatório do candidato", () => {
     expect(linkDiagnostico("T".repeat(24), "federal", "3030")).toBe(`https://diagnostico.ovile.com.br/?k=${"T".repeat(24)}#relatorio?cargo=federal&c=3030`);
+    expect(linkDiagnostico("T".repeat(24), "vereador-2024", "75353-30300")).toBe(`https://diagnostico.ovile.com.br/?k=${"T".repeat(24)}#relatorio?cargo=vereador-2024&m=75353&c=30300`);
   });
   it("telefone para wa.me", () => {
     expect(telefoneWhatsApp("(41) 99999-1234")).toBe("5541999991234");

@@ -8,7 +8,7 @@ import { dirname, join } from "node:path";
 import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import { fileURLToPath } from "node:url";
-import { CARGOS } from "../public/js/config.mjs";
+import { CARGOS_GERAIS as CARGOS } from "../public/js/config.mjs";
 import { criarAgregador } from "./agregar.mjs";
 import { conferir } from "./conferir.mjs";
 import { criarSomaContas } from "./contas.mjs";

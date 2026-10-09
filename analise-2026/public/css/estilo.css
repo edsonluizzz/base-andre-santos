@@ -406,9 +406,10 @@ body[data-tela="inicio"] main { padding: 0; }
 .lp-meus { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; align-items: center; margin-top: 28px; color: var(--suave); }
 .lp-meus a { color: var(--texto); text-decoration: none; border: 1px solid var(--laranja); border-radius: 999px; padding: 6px 14px; }
 .lp-busca-caixa { width: min(680px, 100%); margin: 40px auto 0; text-align: left; }
-.lp-busca-cargos { display: inline-flex; padding: 4px; border-radius: 999px; background: var(--cartao); border: 1px solid var(--lp-linha); margin-bottom: 20px; }
+.lp-busca-cargos { display: inline-flex; flex-wrap: wrap; gap: 2px; padding: 4px; border-radius: 22px; background: var(--cartao); border: 1px solid var(--lp-linha); margin-bottom: 20px; }
 .lp-busca-cargos button { border: 0; background: none; border-radius: 999px; padding: 10px 18px; font: 600 15px "Geist", sans-serif; color: var(--suave); transition: background .25s, color .25s; }
 .lp-busca-cargos button.on { background: var(--texto); color: var(--fundo); }
+.lp-busca-cidade { margin-bottom: 18px; }
 .lp-busca-rotulo { display: block; font-size: 15px; color: var(--suave); margin-bottom: 8px; }
 .lp-busca-campo { width: 100%; font: 500 22px "Geist", sans-serif; padding: 20px 24px; border-radius: 14px; background: var(--cartao); color: var(--texto);
   border: 1px solid var(--lp-linha); outline: none; transition: border-color .25s, box-shadow .25s; }

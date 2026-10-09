@@ -12,7 +12,7 @@ export function estaLiberado(acesso, cargo, n) {
 
 export function linkCompra(venda, foco, cargoNome) {
   if (!venda?.whatsapp) return null;
-  const texto = `Olá! Quero comprar o Ovile Diagnóstico 2026 de ${foco.nm} (número ${foco.n}, ${cargoNome}).`;
+  const texto = `Olá! Quero comprar o Ovile Diagnóstico de ${foco.nm} (número ${foco.n}, ${cargoNome}).`;
   return `https://wa.me/${String(venda.whatsapp).replace(/\D/g, "")}?text=${encodeURIComponent(texto)}`;
 }
 

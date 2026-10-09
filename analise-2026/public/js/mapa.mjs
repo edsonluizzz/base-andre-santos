@@ -25,7 +25,7 @@ export function legenda(el, { cores, min, max, titulo }) {
 function botoes(el, zerar, escalar) {
   const barra = document.createElement("div");
   barra.className = "mapa-botoes";
-  barra.innerHTML = `<button type="button" data-acao="mais" title="Aproximar">+</button><button type="button" data-acao="menos" title="Afastar">−</button><button type="button" data-acao="ampliar" title="Ampliar o mapa">⤢</button><button type="button" data-acao="cheia" title="Tela cheia">⛶</button><button type="button" data-acao="zerar" title="Ver o Paraná inteiro">⟲</button>`;
+  barra.innerHTML = `<button type="button" data-acao="mais" title="Aproximar">+</button><button type="button" data-acao="menos" title="Afastar">−</button><button type="button" data-acao="ampliar" title="Ampliar o mapa">⤢</button><button type="button" data-acao="cheia" title="Tela cheia">⛶</button><button type="button" data-acao="zerar" title="Ver tudo">⟲</button>`;
   barra.addEventListener("click", (ev) => {
     const acao = ev.target.closest("button")?.dataset.acao;
     const cartao = el.closest(".cartao") ?? el;
@@ -100,8 +100,11 @@ export function criarMapa(el, { geo, D }) {
     // Zoom no município (null = Paraná inteiro) e contorno em destaque.
     focar(i) {
       const f = destacar(i);
-      if (!f) { irPara(d3.zoomIdentity); return; }
-      const [[x0, y0], [x1, y1]] = caminho.bounds(f);
+      // Sem contorno (bairro, nas municipais): zoom no retângulo dos locais de votação daquela unidade.
+      const pts = f || i == null ? [] : D.locais.filter((l) => l.mun === i && l.lat != null).map((l) => proj([l.lon, l.lat]));
+      if (!f && !pts.length) { irPara(d3.zoomIdentity); return; }
+      const [[x0, y0], [x1, y1]] = f ? caminho.bounds(f)
+        : [[Math.min(...pts.map((p) => p[0])) - 20, Math.min(...pts.map((p) => p[1])) - 20], [Math.max(...pts.map((p) => p[0])) + 20, Math.max(...pts.map((p) => p[1])) + 20]];
       const kz = Math.min(40, 0.85 / Math.max((x1 - x0) / L, (y1 - y0) / A));
       irPara(d3.zoomIdentity.translate(L / 2, A / 2).scale(kz).translate(-(x0 + x1) / 2, -(y0 + y1) / 2));
     },
@@ -113,7 +116,7 @@ export function criarMapa(el, { geo, D }) {
       });
     },
     pontos(lista, opcoes = {}) {
-      semLimiar = !!opcoes.semLimiar;
+      semLimiar = !!opcoes.semLimiar || D.cargo?.escopo === "municipio";
       pontos = lista.filter((p) => D.locais[p.j].lat != null).sort((a, b) => b.raio - a.raio);
       desenharPontos();
       return lista.length - pontos.length;

@@ -1,5 +1,5 @@
-import { CATEGORIAS_RECEITA, UF } from "../config.mjs";
-import { agremiacaoDe, chapa, nomeCurto } from "../dados.mjs";
+import { CATEGORIAS_RECEITA } from "../config.mjs";
+import { agremiacaoDe, chapa, nomeCurto, unidade } from "../dados.mjs";
 import { folgaQuociente } from "./panorama.mjs";
 import { projetar, quantil, regressaoLog, rsPorVoto } from "../calc.mjs";
 import { tabela } from "../tabela.mjs";
@@ -80,7 +80,9 @@ function cenarios(el, D, andre, eixo, fitPR, fitNovo) {
   const eficiencia = andre.votos / previsto(fitPR, r0);
   const b = (fitNovo ?? fitPR).b;
   const ag = agremiacaoDe(D, andre);
-  const faltaNovo = folgaQuociente(D, ag).falta;
+  const U = unidade(D);
+  // Majoritário não tem quociente: a frase da cadeira seguinte só vale no proporcional.
+  const faltaNovo = D.cargo.majoritario ? null : folgaQuociente(D, ag).falta;
   const nome = esc(nomeCurto(andre));
   const mais10 = (fit) => `${nf2((Math.pow(1.1, fit.b) - 1) * 100)}%`;
   const linhas = [r0, ...MULTIPLOS_CENARIO.map((m) => r0 * m)].map((r) => ({
@@ -89,13 +91,13 @@ function cenarios(el, D, andre, eixo, fitPR, fitNovo) {
   el.innerHTML = `
     <div class="grade g2">
       <div>
-        <p>Entre os ${inteiro(fitPR.n)} candidatos a ${esc(D.cargo.nome.toLowerCase())} do ${UF.sigla} com ${eixo} declarada, <b>cada 10% a mais de ${eixo} veio com ${mais10(fitPR)} a mais de votos</b>
+        <p>Entre os ${inteiro(fitPR.n)} candidatos a ${esc(D.cargo.nome.toLowerCase())} ${esc(U.daArea)} com ${eixo} declarada, <b>cada 10% a mais de ${eixo} veio com ${mais10(fitPR)} a mais de votos</b>
           (elasticidade ${nf2(fitPR.b)}; a curva explica ${pct(fitPR.r2, 0)} da variação).${fitNovo ? ` Só na chapa ${esc(ag.rotulo)} (${fitNovo.n} candidatos): ${mais10(fitNovo)} (elasticidade ${nf2(fitNovo.b)}).` : ""}</p>
-        <p class="espaco">Com ${reais(r0, 0)}, um candidato médio do ${UF.sigla} faria cerca de <b>${inteiro(previsto(fitPR, r0))}</b> votos.
-          ${nome} fez <b class="destaque">${inteiro(andre.votos)}</b> — <b class="destaque">${nf2(eficiencia)}× o esperado</b> para o dinheiro que teve.</p>
+        <p class="espaco">Com ${reais(r0, 0)}, um candidato médio ${esc(U.daArea)} faria cerca de <b>${inteiro(previsto(fitPR, r0))}</b> votos.
+          ${nome} fez <b class="destaque">${inteiro(andre.votos)}</b>: <b class="destaque">${nf2(eficiencia)}× o esperado</b> para o dinheiro que teve.</p>
         <p class="espaco"><small>Os cenários ao lado partem dessa relação entre os candidatos — ela não prova que mais dinheiro causa mais voto
           (candidato com mais base também arrecada mais). Use o intervalo, não um número só.
-          Para a ${ag.vagas + 1}ª cadeira, ${esc(ag.rotulo)} precisava de ${inteiro(faltaNovo)} votos a mais na legenda.</small></p>
+          ${faltaNovo == null ? "" : `Para a ${ag.vagas + 1}ª cadeira, ${esc(ag.rotulo)} precisava de ${inteiro(faltaNovo)} votos a mais na legenda.`}</small></p>
       </div>
       <div id="cu-cen-tab"></div>
     </div>`;
@@ -109,7 +111,7 @@ function cenarios(el, D, andre, eixo, fitPR, fitNovo) {
       { rotulo: "Otimista", valor: (l) => l.otim, formato: inteiro, num: true },
     ],
   });
-  el.querySelector("#cu-cen-tab").insertAdjacentHTML("beforeend", `<small>Conservador: metade da elasticidade ${fitNovo ? `da chapa ${esc(ag.rotulo)}` : `do ${UF.sigla}`}, mantendo a base de ${nome}. Otimista: elasticidade inteira, mantendo a eficiência atual. Piso: o que a curva do ${UF.sigla} dá para essa receita.</small>`);
+  el.querySelector("#cu-cen-tab").insertAdjacentHTML("beforeend", `<small>Conservador: metade da elasticidade ${fitNovo ? `da chapa ${esc(ag.rotulo)}` : esc(U.daArea)}, mantendo a base de ${nome}. Otimista: elasticidade inteira, mantendo a eficiência atual. Piso: o que a curva ${esc(U.daArea)} dá para essa receita.</small>`);
 }
 
 function origem(el, cands) {
@@ -140,7 +142,7 @@ export function montar(el, { D, params, navegar, interno, foco, comparados, core
   // Gasto do módulo financeiro (interno.json, só no Mac), por número do candidato.
   const gi = interno?.[foco.n]?.gastoInterno;
   el.innerHTML = `
-    <div class="aviso">Custo do voto = <b>receita declarada ÷ votos</b>, assumindo que cada candidato gasta tudo o que arrecadou. Valores da prestação de contas parcial ao TSE (arquivo gerado em ${esc(D.meta.fontes.contas)}); a prestação final sai em novembro. A despesa contratada fica como comparação.</div>
+    <div class="aviso">Custo do voto = <b>receita declarada ÷ votos</b>, assumindo que cada candidato gasta tudo o que arrecadou. ${D.cargo.escopo === "municipio" ? `Valores da prestação de contas final ao TSE (arquivo gerado em ${esc(D.meta.fontes.contas ?? "sem dado")}).` : `Valores da prestação de contas parcial ao TSE (arquivo gerado em ${esc(D.meta.fontes.contas)}); a prestação final sai em novembro.`} A despesa contratada fica como comparação.</div>
     <div class="controles espaco">
       <span class="seg"><button data-eixo="receita" class="${eixo === "receita" ? "on" : ""}">Receita</button><button data-eixo="despesa" class="${eixo === "despesa" ? "on" : ""}">Despesa contratada</button></span>
       ${gi ? `<small>Gasto de ${nome} no módulo financeiro: <b>${reais(gi)}</b> (${reais(rsPorVoto(gi, foco.votos))} por voto) — ${esc(interno[foco.n].fonte)}, ${esc(interno[foco.n].data)}</small>` : ""}

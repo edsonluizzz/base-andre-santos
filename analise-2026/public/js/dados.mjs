@@ -1,4 +1,4 @@
-import { CORES_SERIE, MAX_COMPARADOS } from "./config.mjs";
+import { CORES_SERIE, MAX_COMPARADOS, UF } from "./config.mjs";
 import { pearson } from "./calc.mjs";
 
 const normal = (s) => String(s ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().trim();
@@ -28,6 +28,20 @@ export function acharMunicipio(D, texto) {
   const pref = nomes.flatMap((n, i) => (n.startsWith(t) ? [i] : []));
   return pref.length === 1 ? pref[0] : null;
 }
+
+// Unidade geográfica das séries "mun": nas eleições gerais é o município do estado; nas municipais
+// (cargo.escopo = "municipio") é o bairro da cidade. Telas e relatório escrevem os textos a partir daqui.
+const tituloNome = (s) => String(s ?? "").toLowerCase().replace(/(^|[\s-])(\S)/g, (m, a, b) => a + b.toUpperCase())
+  .replace(/\s(Da|De|Do|Das|Dos|E)\s/g, (w) => w.toLowerCase());
+export function unidade(D) {
+  if (D.cargo?.escopo === "municipio") {
+    const cidade = tituloNome(D.cargo.municipio.nm);
+    return { municipal: true, um: "bairro", uns: "bairros", Um: "Bairro", Uns: "Bairros", area: cidade, naArea: `em ${cidade}`, daArea: `de ${cidade}`, todo: "Cidade inteira", ano: D.cargo.ano };
+  }
+  return { municipal: false, um: "município", uns: "municípios", Um: "Município", Uns: "Municípios", area: UF.nome, naArea: `no ${UF.sigla}`, daArea: `do ${UF.sigla}`, todo: `${UF.nome} inteiro`, ano: 2026 };
+}
+// "BAIRRO · MUNICÍPIO" do local (nas municipais a unidade já é o bairro: só ele).
+export const ondeLocal = (D, l) => (D.cargo?.escopo === "municipio" ? (l.bairro ?? D.municipios[l.mun]?.nm ?? "") : `${l.bairro ?? ""} · ${D.municipios[l.mun].nm}`);
 
 export const idxMunicipio = (D, cd) => D.munPorCd.get(cd) ?? null;
 export const locaisDoMunicipio = (D, i) => D.locaisPorMun.get(i) ?? [];
@@ -132,6 +146,14 @@ export function escolherB(D, foco, comparados, n) {
 // Candidato sem voto não tem arquivo: fica com lista vazia.
 // No modo demonstração o arquivo é o do número real (nOrig) e os votos são multiplicados pelo fator do candidato.
 export async function garantirLocais(D, numeros, buscar) {
+  // Municipais: um arquivo com os votos por local de todos os candidatos da cidade (dados/<ano>/<cargo>/<cd>/loc.json).
+  if (D.cargo?.escopo === "municipio") {
+    if (D.candidatos.some((c) => c.loc)) return;
+    const [cargo, ano] = D.cargo.id.split("-");
+    const tudo = (await buscar(`dados/${ano}/${cargo}/${D.cargo.municipio.cd}/loc.json`)) ?? {};
+    for (const c of D.candidatos) c.loc = tudo[c.n] ?? [];
+    return;
+  }
   const cands = [...new Set(numeros.map((n) => D.porNumero.get(n)).filter((c) => c && !c.loc))];
   await Promise.all(cands.map(async (c) => {
     const loc = (c.votos ? await buscar(`dados/${D.cargo.id}/${c.nOrig ?? c.n}.json`) : null) ?? [];
@@ -139,7 +161,9 @@ export async function garantirLocais(D, numeros, buscar) {
   }));
 }
 
+// Regiões do estado (Curitiba, RMC, Litoral, Interior); nas municipais não se aplica (objeto vazio).
 export function porRegiao(D, c) {
+  if (D.cargo?.escopo === "municipio") return {};
   const r = { Curitiba: 0, RMC: 0, Litoral: 0, Interior: 0 };
   for (const [i, v] of c.mun) r[D.municipios[i].regiao] += v;
   return r;

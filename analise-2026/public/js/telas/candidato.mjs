@@ -1,4 +1,4 @@
-import { agremiacaoDe, idxMunicipio, nomeCurto, locaisDoMunicipio, percentuais, porBairro, porRegiao, rankingNoMunicipio, serie } from "../dados.mjs";
+import { agremiacaoDe, idxMunicipio, nomeCurto, locaisDoMunicipio, ondeLocal, percentuais, porBairro, porRegiao, rankingNoMunicipio, serie, unidade } from "../dados.mjs";
 import { concentracao } from "../calc.mjs";
 import { cor, criarMapa, escalaSeq, legenda } from "../mapa.mjs";
 import { barras } from "../animar.mjs";
@@ -10,17 +10,17 @@ import { oferta } from "../oferta.mjs";
 // Dica de um local de votação com uma linha por candidato.
 export function dicaLocal(D, j, linhas) {
   const l = D.locais[j];
-  return `<b>${esc(l.nm)}</b><small>${esc(l.bairro ?? "sem bairro")} · ${esc(D.municipios[l.mun].nm)} · ${inteiro(l.aptos)} eleitores · ${inteiro(l.total)} votos nominais</small><br>` +
+  return `<b>${esc(l.nm)}</b><small>${esc(ondeLocal(D, l) || "sem bairro")} · ${inteiro(l.aptos)} eleitores · ${inteiro(l.total)} votos nominais</small><br>` +
     linhas.map((x) => `<span class="${x.destaque ? "destaque" : ""}">${esc(x.nm)}: ${inteiro(x.v.get(j) ?? 0)} (${pct(x.p.get(j) ?? 0)})</span>`).join("<br>");
 }
 
 export function dicaMunicipio(D, i, linhas) {
   const m = D.municipios[i];
-  return `<b>${esc(m.nm)}</b><small>${m.regiao} · ${inteiro(m.validos)} votos válidos · clique para ver os locais</small><br>` +
+  return `<b>${esc(m.nm)}</b><small>${m.regiao ? `${m.regiao} · ` : ""}${inteiro(m.validos)} votos válidos · clique para ver os locais</small><br>` +
     linhas.map((x) => `<span class="${x.destaque ? "destaque" : ""}">${esc(x.nm)}: ${inteiro(x.v.get(i) ?? 0)} (${pct(x.p.get(i) ?? 0)})</span>`).join("<br>");
 }
 
-const nomeLocal = (D, j) => `${esc(D.locais[j].nm)}<br><small>${esc(D.locais[j].bairro ?? "")} · ${esc(D.municipios[D.locais[j].mun].nm)}</small>`;
+const nomeLocal = (D, j) => `${esc(D.locais[j].nm)}<br><small>${esc(ondeLocal(D, D.locais[j]))}</small>`;
 
 // Cartão da cidade escolhida: votos, posição e os mais votados ali.
 export function cartaoCidade(D, a, i, vMun, pMun) {
@@ -33,7 +33,7 @@ export function cartaoCidade(D, a, i, vMun, pMun) {
   const top = rk.slice(0, 8);
   if (pos > 8) top.push(rk[pos - 1]);
   return `<p><b class="destaque">${inteiro(vMun.get(i) ?? 0)}</b> votos · ${pct(pMun.get(i) ?? 0)} dos válidos ·
-    ${pos ? `<b>${pos}º</b> de ${rk.length} candidatos na cidade · ${posChapa}º da chapa ${esc(ag?.rotulo ?? a.sg)}` : "nenhum voto aqui"} ·
+    ${pos ? `<b>${pos}º</b> de ${rk.length} candidatos ${unidade(D).municipal ? "no bairro" : "na cidade"} · ${posChapa}º da chapa ${esc(ag?.rotulo ?? a.sg)}` : "nenhum voto aqui"} ·
     voto em ${comVoto} de ${locais.length} locais</p>
     <div class="ranking-mun espaco">${top.map((x) => `<div class="${x.c.n === a.n ? "destaque" : ""}">${rk.indexOf(x) + 1}º ${esc(x.c.nm)} <small>(${esc(x.c.sg)})</small> — ${inteiro(x.v)}</div>`).join("")}</div>`;
 }
@@ -43,7 +43,7 @@ export function cartaoCidade(D, a, i, vMun, pMun) {
 export function montarPrevia(el, { D, geo, foco: a, venda }) {
   el.innerHTML = `
     <div class="cartao previa-mapa">
-      <h2>${esc(nomeCurto(a))} · mapa dos votos por município e local de votação</h2>
+      <h2>${esc(nomeCurto(a))} · mapa dos votos por ${unidade(D).um} e local de votação</h2>
       <div class="previa-borrado" aria-hidden="true"><div id="pv-mapa"></div></div>
       <div class="previa-sobre">${oferta(a, D, venda, { compacta: true })}</div>
     </div>`;
@@ -55,6 +55,7 @@ export function montarPrevia(el, { D, geo, foco: a, venda }) {
 
 export function montar(el, { D, geo, params, navegar, foco: a }) {
   const modo = params.modo === "pct" ? "pct" : "abs";
+  const U = unidade(D);
   const sel = idxMunicipio(D, params.mun);
   const nomeSel = sel == null ? null : D.municipios[sel].nm;
   const irPara = (i) => navegar({ mun: i == null ? null : D.municipios[i].cd });
@@ -70,23 +71,24 @@ export function montar(el, { D, geo, params, navegar, foco: a }) {
     <div class="controles">
       <span class="seg"><button data-modo="abs" class="${modo === "abs" ? "on" : ""}">Votos</button><button data-modo="pct" class="${modo === "pct" ? "on" : ""}">% dos válidos</button></span>
       <span id="an-sel"></span>
-      <small>Clique num município (no mapa ou na tabela) para ver os locais de votação dele.</small>
+      <small>Clique num ${U.um} (${U.municipal ? "na tabela" : "no mapa ou na tabela"}) para ver os locais de votação dele.</small>
     </div>
     <div class="grade g2">
-      <div class="cartao"><h2>${esc(nomeCurto(a))} · ${inteiro(a.votos)} votos${nomeSel ? ` · ${esc(nomeSel)}` : " por município"}</h2><div id="an-mapa"></div><div id="an-leg"></div><small id="an-semcoord"></small></div>
+      <div class="cartao"><h2>${esc(nomeCurto(a))} · ${inteiro(a.votos)} votos${nomeSel ? ` · ${esc(nomeSel)}` : U.municipal ? ` · ${esc(U.area)}` : " por município"}</h2><div id="an-mapa"></div><div id="an-leg"></div><small id="an-semcoord"></small></div>
       <div class="grade" style="align-content:start">
         ${sel == null ? "" : `<div class="cartao"><h2>${esc(nomeSel)}</h2>${cartaoCidade(D, a, sel, vMun, pMun)}</div>`}
-        <div class="cartao"><h2>Por região</h2><div id="an-reg"></div></div>
+        ${U.municipal ? "" : `<div class="cartao"><h2>Por região</h2><div id="an-reg"></div></div>`}
         <div class="cartao"><h2>Concentração</h2><p>
-          <b>${cMun.p50}</b> municípios fazem 50% dos votos e <b>${cMun.p80}</b> fazem 80% (de ${cMun.n} com voto).<br>
+          <b>${cMun.p50}</b> ${U.uns} fazem 50% dos votos e <b>${cMun.p80}</b> fazem 80% (de ${cMun.n} com voto).<br>
           <b>${cLoc.p50}</b> locais de votação fazem 50% e <b>${cLoc.p80}</b> fazem 80% (de ${cLoc.n} com voto).<br>
-          <b>${zeros}</b> dos ${D.municipios.length} municípios não deram nenhum voto.</p></div>
+          <b>${zeros}</b> dos ${D.municipios.length} ${U.uns} não deram nenhum voto.</p></div>
       </div>
     </div>
     <div class="grade g3 espaco">
-      <div class="cartao"><h2>Todos os ${D.municipios.length} municípios</h2><div id="an-tmun" class="rolagem"></div></div>
+      <div class="cartao"><h2>Todos os ${D.municipios.length} ${U.uns}</h2><div id="an-tmun" class="rolagem"></div></div>
       <div class="cartao"><h2>${sel == null ? "Top 50 locais de votação" : `Locais de votação em ${esc(nomeSel)} (${locaisSel.length})`}</h2><div id="an-tloc" class="rolagem"></div></div>
-      <div class="cartao"><h2>Bairros de ${esc(cidadeBairros)}</h2><div id="an-bairros" class="rolagem"></div></div>
+      ${U.municipal ? `<div class="cartao"><h2>Ranking ${esc(U.naArea)}</h2><div id="an-ranking" class="ranking-mun rolagem"></div></div>`
+        : `<div class="cartao"><h2>Bairros de ${esc(cidadeBairros)}</h2><div id="an-bairros" class="rolagem"></div></div>`}
     </div>`;
   el.querySelectorAll("[data-modo]").forEach((b) => { b.onclick = () => navegar({ modo: b.dataset.modo }); });
   seletorMunicipio(el.querySelector("#an-sel"), D, sel, irPara);
@@ -107,15 +109,15 @@ export function montar(el, { D, geo, params, navegar, foco: a }) {
   mapa.aoClicar(irPara);
   if (sel != null) mapa.focar(sel);
 
-  barras(el.querySelector("#an-reg"), Object.entries(porRegiao(D, a)).map(([k, v]) => ({ rotulo: k, valor: v, classe: "foco" })),
+  if (!U.municipal) barras(el.querySelector("#an-reg"), Object.entries(porRegiao(D, a)).map(([k, v]) => ({ rotulo: k, valor: v, classe: "foco" })),
     { formato: (v) => `${inteiro(v)} · ${a.votos ? pct(v / a.votos, 1) : "—"}` });
 
   tabela(el.querySelector("#an-tmun"), {
     linhas: D.municipios.map((m, i) => ({ i, v: vMun.get(i) ?? 0, p: pMun.get(i) ?? 0 })), ordem: 2,
-    busca: "Buscar município…", aoClicar: (l) => irPara(l.i), classe: (l) => (l.i === sel ? "sel" : ""),
+    busca: `Buscar ${U.um}…`, aoClicar: (l) => irPara(l.i), classe: (l) => (l.i === sel ? "sel" : ""),
     colunas: [
-      { rotulo: "Município", valor: (l) => D.municipios[l.i].nm },
-      { rotulo: "Região", valor: (l) => D.municipios[l.i].regiao },
+      { rotulo: U.Um, valor: (l) => D.municipios[l.i].nm },
+      ...(U.municipal ? [] : [{ rotulo: "Região", valor: (l) => D.municipios[l.i].regiao }]),
       { rotulo: "Votos", valor: (l) => l.v, formato: inteiro, num: true },
       { rotulo: "% válidos", valor: (l) => l.p, formato: (v) => pct(v), num: true },
     ],
@@ -132,6 +134,16 @@ export function montar(el, { D, geo, params, navegar, foco: a }) {
       { rotulo: "Nominais", valor: (l) => D.locais[l.j].total, formato: inteiro, num: true },
     ],
   });
+  if (U.municipal) {
+    // Ranking da cidade: os 10 mais votados e, se estiver fora, a posição do candidato.
+    const pos = D.candidatos.indexOf(a);
+    const lista = D.candidatos.slice(0, 10);
+    if (pos >= 10) lista.push(a);
+    el.querySelector("#an-ranking").innerHTML = lista.map((c) =>
+      `<div class="${c === a ? "destaque" : ""}">${D.candidatos.indexOf(c) + 1}º ${esc(c.nm)} <small>(${esc(c.sg)}) ${esc(c.st ?? "")}</small> · ${inteiro(c.votos)}</div>`).join("")
+      + `<small>${inteiro(D.candidatos.length)} candidatos · ${D.cargo.vagas} ${D.cargo.vagas === 1 ? "vaga" : "vagas"}</small>`;
+    return;
+  }
   tabela(el.querySelector("#an-bairros"), {
     linhas: porBairro(D, a, cidadeBairros), ordem: 1,
     colunas: [

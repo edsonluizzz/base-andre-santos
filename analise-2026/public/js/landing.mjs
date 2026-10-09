@@ -32,7 +32,7 @@ const FAQ = [
   ["De onde vêm os dados?", "Dos dados abertos do TSE: votação por seção eleitoral, locais de votação, resultado oficial e prestação de contas. A soma por seção de cada candidato é conferida com o resultado oficial, e todas batem."],
   ["Posso escolher com quem comparar?", "Sim. O sistema sugere os 3 concorrentes mais parecidos com você em tamanho e geografia, e você troca por qualquer candidato do mesmo cargo, quantas vezes quiser."],
   ["E a prestação de contas, que ainda não é a final?", "O custo do voto usa a prestação parcial publicada pelo TSE. Quando a final sair, em novembro, os números são atualizados no seu link sem custo."],
-  ["Quais cargos estão disponíveis?", "Deputado estadual e deputado federal do Paraná. Outros cargos e estados estão a caminho."],
+  ["Quais cargos estão disponíveis?", "No Paraná: deputado estadual e federal (eleição de 2026) e vereador e prefeito (eleição de 2024) nas 399 cidades. Outros estados e eleições estão a caminho."],
   ["Usa dados pessoais de eleitores?", "Não. Só resultados públicos agregados por seção e local de votação, os mesmos que o TSE publica para qualquer pessoa."],
 ];
 
@@ -59,9 +59,9 @@ export function landing({ venda }) {
 
     <section class="lp-hero">
       <div class="lp-hero-txt">
-        <p class="lp-eyebrow">Eleição 2026 no ${UF.nome}</p>
+        <p class="lp-eyebrow">Eleições no ${UF.nome}</p>
         <h1 class="lp-h1" data-palavras>Você sabe onde ganhou <em>cada voto?</em></h1>
-        <p class="lp-hero-sub">O diagnóstico da sua eleição para deputado: mapa até o local de votação, custo de cada voto e quem disputa a sua base.</p>
+        <p class="lp-hero-sub">O diagnóstico da sua eleição: mapa até o local de votação, custo de cada voto e quem disputa a sua base.</p>
         <div class="lp-ctas">
           ${whats(COMPRAR, "lp-btn lp-btn-whats lp-btn-grande")}
           <button type="button" class="lp-btn lp-btn-vidro" data-rolar="escolher">Ver prévia grátis</button>
@@ -76,7 +76,7 @@ export function landing({ venda }) {
     </section>
 
     <div class="lp-faixa" aria-hidden="true"><div class="lp-faixa-trilho">${
-      Array(2).fill(["995 candidatos conferidos voto a voto", "399 municípios", "4.815 locais de votação", "Dados oficiais do TSE", "Deputado estadual e federal", "Relatório em PDF"]
+      Array(2).fill(["32.725 candidatos conferidos voto a voto", "399 cidades", "Deputados 2026", "Vereadores e prefeitos 2024", "Dados oficiais do TSE", "Relatório em PDF"]
         .map((t) => `<span>${t}</span>`).join("")).join("")}</div></div>
 
     <section class="lp-perguntas">
@@ -138,8 +138,15 @@ export function landing({ venda }) {
       <h2 class="lp-h2">Veja a prévia grátis do seu resultado</h2>
       <div class="lp-busca-caixa">
         <div class="lp-busca-cargos" role="tablist">
-          <button type="button" data-cargo-busca="estadual" class="on">Deputado estadual</button>
-          <button type="button" data-cargo-busca="federal">Deputado federal</button>
+          <button type="button" data-cargo-busca="estadual" class="on">Dep. estadual 2026</button>
+          <button type="button" data-cargo-busca="federal">Dep. federal 2026</button>
+          <button type="button" data-cargo-busca="vereador-2024">Vereador 2024</button>
+          <button type="button" data-cargo-busca="prefeito-2024">Prefeito 2024</button>
+        </div>
+        <div class="lp-busca-cidade" hidden>
+          <label class="lp-busca-rotulo" for="lp-cidade">Cidade</label>
+          <input id="lp-cidade" class="lp-busca-campo" list="lp-cidades" autocomplete="off" placeholder="Digite a cidade">
+          <datalist id="lp-cidades"></datalist>
         </div>
         <label class="lp-busca-rotulo" for="lp-q">Nome de urna ou número</label>
         <input id="lp-q" class="lp-busca-campo" type="search" autocomplete="off" placeholder="Ex.: 30123 ou Maria Souza">
@@ -203,18 +210,22 @@ export function ligarBarra(el) {
 const normal = (s) => String(s ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toUpperCase().trim();
 
 // Busca do candidato: sugestões na hora, troca de cargo sem sair da página.
-export function ligarBusca(el, { cargoInicial, carregarCargo, abrir, venda }) {
+// Municipais (vereador/prefeito): primeiro a cidade, depois o candidato daquela cidade.
+export function ligarBusca(el, { cargoInicial, carregarCargo, carregarCidades, abrir, venda }) {
   const campo = el.querySelector("#lp-q");
   const lista = el.querySelector("#lp-sugestoes");
-  let cargo = cargoInicial, D = null;
+  const caixaCidade = el.querySelector(".lp-busca-cidade"), campoCidade = el.querySelector("#lp-cidade");
+  let cargo = cargoInicial, D = null, cidades = [], cidade = null;
+  const municipal = () => /-\d{4}$/.test(cargo);
   const mostrar = () => {
+    if (municipal() && !cidade) { lista.innerHTML = `<li class="lp-sug-vazio">Escolha a cidade para ver os candidatos.</li>`; return; }
     if (!D) return;
     const t = normal(campo.value);
     const res = !t ? D.candidatos.slice(0, 6)
       : D.candidatos.filter((c) => c.n.startsWith(t) || normal(c.nm).includes(t)).slice(0, 8);
     // Cada candidato: ver a prévia grátis ou comprar direto (a mensagem já leva nome, número e cargo).
     lista.innerHTML = res.length ? res.map((c) => {
-      const compra = linkCompra(venda, c, D.cargo.nome);
+      const compra = linkCompra(venda, c, municipal() ? `${D.cargo.nome} ${D.cargo.ano}, ${D.cargo.municipio.nm}` : D.cargo.nome);
       return `<li class="lp-sug">
         <button type="button" class="lp-sug-ver" data-n="${c.n}">
           <span class="lp-sug-nome">${esc(c.nm)}</span><span class="lp-sug-meta">${c.n} · ${esc(c.sg)} · ${inteiro(c.votos)} votos</span></button>
@@ -223,15 +234,32 @@ export function ligarBusca(el, { cargoInicial, carregarCargo, abrir, venda }) {
       </li>`;
     }).join("")
       : `<li class="lp-sug-vazio">Nenhum candidato com esse nome ou número em ${esc(D.cargo.nome.toLowerCase())}.</li>`;
-    lista.querySelectorAll("button[data-n]").forEach((b) => { b.onclick = () => abrir(cargo, b.dataset.n); });
+    lista.querySelectorAll("button[data-n]").forEach((b) => { b.onclick = () => abrir(cargo, b.dataset.n, cidade); });
   };
   const trocar = async (id) => {
     cargo = id;
     el.querySelectorAll("[data-cargo-busca]").forEach((b) => b.classList.toggle("on", b.dataset.cargoBusca === id));
-    lista.innerHTML = `<li class="lp-sug-vazio">Carregando…</li>`;
-    D = await carregarCargo(id);
+    caixaCidade.hidden = !municipal();
+    D = null;
+    if (municipal()) {
+      if (!cidades.length) {
+        cidades = await carregarCidades(id.split("-")[1]);
+        el.querySelector("#lp-cidades").innerHTML = cidades.map((x) => `<option value="${esc(x.nm)}">`).join("");
+      }
+      if (cidade) D = await carregarCargo(id, cidade);
+    } else {
+      lista.innerHTML = `<li class="lp-sug-vazio">Carregando…</li>`;
+      D = await carregarCargo(id);
+    }
     mostrar();
   };
+  campoCidade.addEventListener("change", async () => {
+    const x = cidades.find((k) => normal(k.nm) === normal(campoCidade.value));
+    cidade = x?.cd ?? null;
+    D = cidade ? await carregarCargo(cargo, cidade) : null;
+    mostrar();
+    if (cidade) campo.focus();
+  });
   el.querySelectorAll("[data-cargo-busca]").forEach((b) => { b.onclick = () => trocar(b.dataset.cargoBusca); });
   campo.addEventListener("input", mostrar);
   trocar(cargo);

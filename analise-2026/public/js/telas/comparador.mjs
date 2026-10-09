@@ -1,4 +1,4 @@
-import { comparaveis, escolherB, idxMunicipio, nomeCurto, locaisDoMunicipio, percentuais, serie } from "../dados.mjs";
+import { comparaveis, escolherB, idxMunicipio, nomeCurto, locaisDoMunicipio, ondeLocal, percentuais, serie, unidade } from "../dados.mjs";
 import { seletorMunicipio } from "../seletor.mjs";
 import { concentracao, diferenca, pearson, quantil, rsPorVoto, sobreposicao } from "../calc.mjs";
 import { cor, criarMapa, escalaDiv, escalaSeq, legenda } from "../mapa.mjs";
@@ -9,14 +9,16 @@ import { dicaLocal, dicaMunicipio } from "./candidato.mjs";
 export function montar(el, { D, geo, params, navegar, foco: a, comparados }) {
   const b = escolherB(D, a, comparados, params.b);
   const na = nomeCurto(a), nb = nomeCurto(b);
+  const U = unidade(D);
   const sel = idxMunicipio(D, params.mun);
   const nomeSel = sel == null ? null : D.municipios[sel].nm;
   const irPara = (i) => navegar({ mun: i == null ? null : D.municipios[i].cd });
   // Com uma cidade escolhida, a comparação desce para os locais de votação dela.
-  const nivel = sel != null || params.nivel === "loc" ? "loc" : "mun";
+  // municipais: bairro não tem contorno no mapa, então a comparação é sempre por local de votação
+  const nivel = sel != null || params.nivel === "loc" || D.cargo.escopo === "municipio" ? "loc" : "mun";
   const daCidade = sel == null ? null : new Set(locaisDoMunicipio(D, sel));
   const modo = params.modo === "dif" ? "dif" : "lado";
-  const un = nivel === "loc" ? "locais" : "municípios";
+  const un = nivel === "loc" ? "locais" : U.uns;
   const va = serie(a, nivel), vb = serie(b, nivel);
   const pa = percentuais(D, a, nivel), pb = percentuais(D, b, nivel);
   const sob = sobreposicao(va, vb);
@@ -29,7 +31,7 @@ export function montar(el, { D, geo, params, navegar, foco: a, comparados }) {
     <div class="controles">
       <label>Comparar ${esc(na)} com <select id="cp-b">${comparaveis(D, a).map((c) =>
         `<option value="${c.n}" ${c.n === b.n ? "selected" : ""}>${esc(c.nm)} (${esc(c.sg)}) — ${inteiro(c.votos)}</option>`).join("")}</select></label>
-      ${sel == null ? `<span class="seg"><button data-nivel="mun" class="${nivel === "mun" ? "on" : ""}">Municípios</button><button data-nivel="loc" class="${nivel === "loc" ? "on" : ""}">Locais de votação</button></span>` : ""}
+      ${sel == null && !U.municipal ? `<span class="seg"><button data-nivel="mun" class="${nivel === "mun" ? "on" : ""}">${U.Uns}</button><button data-nivel="loc" class="${nivel === "loc" ? "on" : ""}">Locais de votação</button></span>` : ""}
       <span id="cp-sel"></span>
       <span class="seg"><button data-modo="lado" class="${modo === "lado" ? "on" : ""}">Lado a lado</button><button data-modo="dif" class="${modo === "dif" ? "on" : ""}">Diferença</button></span>
     </div>
@@ -53,7 +55,7 @@ export function montar(el, { D, geo, params, navegar, foco: a, comparados }) {
             return linha(`Em ${esc(nomeSel)}`, `${inteiro(ma)} (${pct(val ? ma / val : 0)})`, `${inteiro(mb)} (${pct(val ? mb / val : 0)})`);
           })()}
         </tbody></table>
-        <p class="espaco">${inteiro(sob.areas)} ${un} com voto dos dois. Correlação geográfica do % por ${nivel === "loc" ? "local" : "município"}:
+        <p class="espaco">${inteiro(sob.areas)} ${un} com voto dos dois. Correlação geográfica do % por ${nivel === "loc" ? "local" : U.um}:
           <b>${r == null ? "—" : r.toLocaleString("pt-BR", { maximumFractionDigits: 2 })}</b> <small>(1 = mesma base; 0 = sem relação; negativo = bases opostas)</small></p>
       </div>
     </div>
@@ -111,12 +113,12 @@ export function montar(el, { D, geo, params, navegar, foco: a, comparados }) {
 
   const nomeArea = (k) => (nivel === "loc" ? D.locais[k].nm : D.municipios[k].nm);
   const htmlArea = (v, l) => (nivel === "loc"
-    ? `${esc(v)}<br><small>${esc(D.locais[l.k].bairro ?? "")} · ${esc(D.municipios[D.locais[l.k].mun].nm)}</small>`
+    ? `${esc(v)}<br><small>${esc(ondeLocal(D, D.locais[l.k]))}</small>`
     : esc(v));
   const tabelaDif = (alvo, x, y, vx, vy, nx, ny) => tabela(alvo, {
     linhas: diferenca(x, y).filter((l) => l.d > 0 && (!daCidade || daCidade.has(l.k))), ordem: 1, limite: daCidade ? Infinity : 30,
     colunas: [
-      { rotulo: nivel === "loc" ? "Local" : "Município", valor: (l) => nomeArea(l.k), formato: htmlArea },
+      { rotulo: nivel === "loc" ? "Local" : U.Um, valor: (l) => nomeArea(l.k), formato: htmlArea },
       { rotulo: "Diferença", valor: (l) => l.d, formato: (v) => pp(v), num: true },
       { rotulo: `% ${nx}`, valor: (l) => l.x, formato: (v) => pct(v), num: true },
       { rotulo: `% ${ny}`, valor: (l) => l.y, formato: (v) => pct(v), num: true },

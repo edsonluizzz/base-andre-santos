@@ -1,4 +1,4 @@
-import { idxMunicipio, lerSelecao, nomeCurto, locaisDoMunicipio, percentuais, porRegiao, rankingNoMunicipio, restringir, serie } from "../dados.mjs";
+import { idxMunicipio, lerSelecao, nomeCurto, locaisDoMunicipio, ondeLocal, percentuais, porRegiao, rankingNoMunicipio, restringir, serie, unidade } from "../dados.mjs";
 import { quantil, sobreposicao, vencedor } from "../calc.mjs";
 import { cor, criarMapa, escalaSeq, legenda } from "../mapa.mjs";
 import { barras } from "../animar.mjs";
@@ -15,14 +15,16 @@ export function montar(el, { D, geo, params, navegar, foco, comparados, cores: C
     el.innerHTML = `<div class="aviso">Escolha pelo menos um candidato em “Comparar com”, na barra acima.</div>`;
     return;
   }
-  const nivel = params.nivel === "loc" ? "loc" : "mun";
+  // municipais: bairro não tem contorno no mapa, então os mapas são sempre por local de votação
+  const nivel = params.nivel === "loc" || D.cargo.escopo === "municipio" ? "loc" : "mun";
   const vista = params.vista === "calor" ? "calor" : "lider";
   const escalaComum = params.escala === "comum";
   const ver = lerSelecao(params.ver, TODOS);
+  const U = unidade(D);
   const sel = idxMunicipio(D, params.mun);
   const nomeSel = sel == null ? null : D.municipios[sel].nm;
   const irPara = (i) => navegar({ mun: i == null ? null : D.municipios[i].cd });
-  const un = nivel === "loc" ? "locais" : "municípios";
+  const un = nivel === "loc" ? "locais" : U.uns;
   const cands = ver.map((n) => D.porNumero.get(n));
   const series = cands.map((c) => ({ n: c.n, mapa: serie(c, nivel) }));
   const venc = vencedor(series);
@@ -35,19 +37,19 @@ export function montar(el, { D, geo, params, navegar, foco, comparados, cores: C
     </div>
     <div class="controles">
       <span class="seg"><button data-vista="lider" class="${vista === "lider" ? "on" : ""}">Quem lidera</button><button data-vista="calor" class="${vista === "calor" ? "on" : ""}">Mapa de calor</button></span>
-      <span class="seg"><button data-nivel="mun" class="${nivel === "mun" ? "on" : ""}">Municípios</button><button data-nivel="loc" class="${nivel === "loc" ? "on" : ""}">Locais de votação</button></span>
+      ${U.municipal ? "" : `<span class="seg"><button data-nivel="mun" class="${nivel === "mun" ? "on" : ""}">${U.Uns}</button><button data-nivel="loc" class="${nivel === "loc" ? "on" : ""}">Locais de votação</button></span>`}
       ${vista === "calor" ? `<span class="seg"><button data-escala="propria" class="${escalaComum ? "" : "on"}">Escala de cada um</button><button data-escala="comum" class="${escalaComum ? "on" : ""}">Mesma escala</button></span>` : ""}
       <span id="ig-sel"></span>
     </div>
     <div class="grade g2">
       <div class="cartao">
-        <h2>${vista === "lider" ? `Quem teve mais votos em cada ${nivel === "loc" ? "local" : "município"}` : `Mapa de calor · % ${nivel === "loc" ? "no local" : "dos válidos"} de cada um`}${nomeSel ? ` · ${esc(nomeSel)}` : ""}</h2>
+        <h2>${vista === "lider" ? `Quem teve mais votos em cada ${nivel === "loc" ? "local" : U.um}` : `Mapa de calor · % ${nivel === "loc" ? "no local" : "dos válidos"} de cada um`}${nomeSel ? ` · ${esc(nomeSel)}` : ""}</h2>
         ${vista === "lider" ? `<div id="ig-mapa"></div><small>${cands.map((c) => `<span class="chip" style="background:${CORES[c.n]}"></span>${esc(curto(c))} lidera em ${inteiro(vitorias(c.n))} ${un}`).join(" · ")}. Sem cor: nenhum dos escolhidos teve voto. Cinza: empate.</small>`
           : `<div class="mapas-grade">${cands.map((c) => `<div><h3 style="color:${CORES[c.n]}">${esc(c.nm)} · ${inteiro(c.votos)}</h3><div id="ig-m-${c.n}"></div></div>`).join("")}</div><div id="ig-leg"></div>`}
       </div>
       <div class="grade" style="align-content:start">
         ${sel == null ? "" : `<div class="cartao"><h2>${esc(nomeSel)}</h2><div id="ig-cidade" class="ranking-mun"></div></div>`}
-        <div class="cartao"><h2>Votos por região</h2><div id="ig-reg"></div></div>
+        ${U.municipal ? "" : `<div class="cartao"><h2>Votos por região</h2><div id="ig-reg"></div></div>`}
         <div class="cartao"><h2>Sobreposição de bases (locais de votação)</h2><div id="ig-sob"></div>
           <small>Cada linha: % dos votos daquele candidato que estão em locais onde o da coluna também teve voto.</small></div>
       </div>
@@ -67,7 +69,7 @@ export function montar(el, { D, geo, params, navegar, foco, comparados, cores: C
   seletorMunicipio(el.querySelector("#ig-sel"), D, sel, irPara);
 
   const linhasDica = cands.map((c) => ({ nm: c.nm, v: serie(c, nivel), p: percentuais(D, c, nivel), destaque: c.n === FOCO }));
-  const dicaMun = (i) => (nivel === "mun" ? dicaMunicipio(D, i, linhasDica) : `<b>${esc(D.municipios[i].nm)}</b><small>clique para ver só esta cidade</small>`);
+  const dicaMun = (i) => (nivel === "mun" ? dicaMunicipio(D, i, linhasDica) : `<b>${esc(D.municipios[i].nm)}</b><small>clique para ver só ${U.municipal ? "este bairro" : "esta cidade"}</small>`);
   const dicaLoc = (j) => dicaLocal(D, j, linhasDica);
   const ligar = (m) => { m.dicas(dicaMun, nivel === "loc" ? dicaLoc : null); m.aoClicar(irPara); };
 
@@ -121,7 +123,7 @@ export function montar(el, { D, geo, params, navegar, foco, comparados, cores: C
 
   const regioes = cands.map((c) => porRegiao(D, c));
   const maxReg = Math.max(1, ...regioes.flatMap((r) => Object.values(r)));
-  barras(el.querySelector("#ig-reg"), Object.keys(regioes[0] ?? {}).flatMap((reg) => cands.map((c, k) => ({
+  if (!U.municipal) barras(el.querySelector("#ig-reg"), Object.keys(regioes[0] ?? {}).flatMap((reg) => cands.map((c, k) => ({
     rotulo: `${reg} · ${curto(c)}`, valor: regioes[k][reg], cor: CORES[c.n], titulo: `${c.nm} em ${reg}`,
   }))), { formato: inteiro, max: maxReg });
 
@@ -137,7 +139,7 @@ export function montar(el, { D, geo, params, navegar, foco, comparados, cores: C
     tabela(el.querySelector(`#ig-top-${c.n}`), {
       linhas: [...restringir(serie(c, "loc"), daCidade)].map(([j, v]) => ({ j, v, p: p.get(j), a: vFoco.get(j) ?? 0 })), ordem: 1, limite: sel == null ? 15 : Infinity,
       colunas: [
-        { rotulo: "Local", valor: (l) => D.locais[l.j].nm, formato: (v, l) => `${esc(v)}<br><small>${esc(D.locais[l.j].bairro ?? "")} · ${esc(D.municipios[D.locais[l.j].mun].nm)}</small>` },
+        { rotulo: "Local", valor: (l) => D.locais[l.j].nm, formato: (v, l) => `${esc(v)}<br><small>${esc(ondeLocal(D, D.locais[l.j]))}</small>` },
         { rotulo: `Votos ${curto(c)}`, valor: (l) => l.v, formato: inteiro, num: true },
         { rotulo: "% no local", valor: (l) => l.p, formato: (v) => pct(v), num: true },
         { rotulo: `Votos ${curto(foco)}`, valor: (l) => l.a, formato: inteiro, num: true },

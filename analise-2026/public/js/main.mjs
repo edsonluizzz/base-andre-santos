@@ -4,6 +4,7 @@ import { esc } from "./fmt.mjs";
 import { escreverRota, lerRota } from "./rota.mjs";
 import { esconderDica } from "./dica.mjs";
 import { TELAS_LIVRES, estaLiberado, oferta } from "./oferta.mjs";
+import { tabela } from "./tabela.mjs";
 import { animarLanding, landing, ligarBarra, ligarBusca } from "./landing.mjs";
 import { aplicarDemo } from "./demo.mjs";
 
@@ -25,7 +26,7 @@ const TELAS = [
   { id: "relatorio", nome: "Relatório PDF", mod: relatorio },
 ];
 // Escolhas que valem para todas as telas e acompanham a troca de aba.
-const GLOBAIS = ["cargo", "c", "vs"];
+const GLOBAIS = ["cargo", "m", "c", "vs"];
 
 let erros = 0;
 function registrarErro(msg) {
@@ -56,28 +57,46 @@ async function carregar(url, opcional = false) {
 }
 
 // Cada cargo é carregado uma vez e guardado (os votos por local vão sendo acrescentados nele).
+// Municipais: um arquivo por cidade (dados/<ano>/<cargo>/<cd>.json); `m` é o código TSE da cidade.
 const cacheCargos = new Map();
-function dadosDoCargo(id) {
-  if (!cacheCargos.has(id)) cacheCargos.set(id, carregar(`dados/${id}.json`).then(indexar).then((D) => (DEMO ? aplicarDemo(D) : D)));
-  return cacheCargos.get(id);
+function dadosDoCargo(id, m = null) {
+  const cfg = CARGOS[id], chave = cfg?.municipal ? `${id}:${m}` : id;
+  const url = cfg?.municipal ? `dados/${cfg.arquivo}/${m}.json` : `dados/${id}.json`;
+  if (!cacheCargos.has(chave)) cacheCargos.set(chave, carregar(url).then(indexar).then((D) => (DEMO ? aplicarDemo(D) : D)));
+  return cacheCargos.get(chave);
 }
+const cacheCidades = new Map();
+const cidadesDoAno = (ano) => {
+  if (!cacheCidades.has(ano)) cacheCidades.set(ano, carregar(`dados/${ano}/municipios.json`));
+  return cacheCidades.get(ano);
+};
 
 const globais = (params) => Object.fromEntries(GLOBAIS.filter((k) => params[k] != null).map((k) => [k, params[k]]));
 
 // Barra fixa: cargo, candidato principal e quem entra na comparação.
-function barraEscolha(el, { D, cargo, foco, comparados, cores, mudar }) {
-  const opcoes = D.candidatos.map((c) => `<option value="${esc(rotuloCandidato(c))}">`).join("");
+function barraEscolha(el, { D, cargo, foco, comparados, cores, mudar, cidades }) {
+  const opcoes = (D?.candidatos ?? []).map((c) => `<option value="${esc(rotuloCandidato(c))}">`).join("");
+  const municipal = CARGOS[cargo].municipal;
   el.innerHTML = `
     <span class="seg">${Object.entries(CARGOS).map(([id, c]) => `<button data-cargo="${id}" class="${id === cargo ? "on" : ""}">${c.curto}</button>`).join("")}</span>
-    <label class="campo">Candidato <input id="es-c" list="es-lista" placeholder="Nome ou número" value="${foco ? esc(rotuloCandidato(foco)) : ""}"></label>
+    ${municipal ? `<label class="campo">Cidade <input id="es-m" list="es-cidades" placeholder="Digite a cidade" value="${D ? esc(D.cargo.municipio.nm) : ""}"></label>
+      <datalist id="es-cidades">${(cidades ?? []).map((x) => `<option value="${esc(x.nm)}">`).join("")}</datalist>` : ""}
+    ${D ? `<label class="campo">Candidato <input id="es-c" list="es-lista" placeholder="Nome ou número" value="${foco ? esc(rotuloCandidato(foco)) : ""}"></label>
     ${foco ? `<span class="campo">Comparar com
       ${comparados.map((c) => `<span class="ficha"><span class="chip" style="background:${cores.get(c.n)}"></span>${esc(nomeCurto(c))}<button data-tirar="${c.n}" title="Tirar da comparação">✕</button></span>`).join("")}
       ${comparados.length < MAX_COMPARADOS ? `<input id="es-vs" list="es-lista" placeholder="+ adicionar">` : ""}
     </span>` : ""}
-    <datalist id="es-lista">${opcoes}</datalist>`;
+    <datalist id="es-lista">${opcoes}</datalist>` : ""}`;
   el.querySelectorAll("[data-cargo]").forEach((b) => {
-    b.onclick = () => { if (b.dataset.cargo !== cargo) mudar({ cargo: b.dataset.cargo, c: null, vs: null }); };
+    // troca de cargo: mantém a cidade entre vereador e prefeito do mesmo ano
+    b.onclick = () => { if (b.dataset.cargo !== cargo) mudar({ cargo: b.dataset.cargo, m: CARGOS[b.dataset.cargo].municipal && municipal ? D?.cargo.municipio.cd : null, c: null, vs: null }); };
   });
+  const cidade = el.querySelector("#es-m");
+  cidade?.addEventListener("change", () => {
+    const t = normalTexto(cidade.value), x = (cidades ?? []).find((k) => normalTexto(k.nm) === t);
+    if (x) mudar({ m: x.cd, c: null, vs: null });
+  });
+  if (!D) return;
   const campo = el.querySelector("#es-c");
   campo.addEventListener("change", () => {
     const c = buscarCandidato(D, campo.value);
@@ -96,13 +115,35 @@ function barraEscolha(el, { D, cargo, foco, comparados, cores, mudar }) {
 
 // Sem candidato escolhido: lista de todos para escolher.
 // Raiz do site: landing de venda. Busca troca de cargo sem recarregar; o clique abre a prévia do candidato.
+const normalTexto = (s) => String(s ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().trim();
+
+// Municipais sem cidade: escolha da cidade. Com cidade e sem candidato: lista dos candidatos dela.
+function telaCidades(el, { cargo, cidades, mudar }) {
+  const cfg = CARGOS[cargo];
+  el.innerHTML = `<div class="cartao"><h2>${esc(cfg.nome)} ${cfg.ano} · ${UF.nome} · escolha a cidade</h2><div id="in-cidades"></div></div>`;
+  tabela(el.querySelector("#in-cidades"), {
+    linhas: cidades, ordem: 1, busca: "Buscar cidade…", aoClicar: (x) => mudar({ m: x.cd, c: null, vs: null }),
+    colunas: [{ rotulo: "Cidade", valor: (x) => x.nm }, { rotulo: "Candidatos", valor: (x) => x[cargo.split("-")[0]] ?? 0, formato: (v) => String(v), num: true }],
+  });
+}
+function telaCandidatosCidade(el, { D, mudar }) {
+  el.innerHTML = `<div class="cartao"><h2>${esc(D.cargo.nome)} ${D.cargo.ano} · ${esc(D.cargo.municipio.nm)} · ${D.candidatos.length} candidatos</h2><div id="in-cands"></div></div>`;
+  tabela(el.querySelector("#in-cands"), {
+    linhas: D.candidatos, ordem: 3, busca: "Buscar candidato…", aoClicar: (c) => mudar({ c: c.n, vs: null }),
+    colunas: [
+      { rotulo: "Candidato", valor: (c) => c.nm }, { rotulo: "Número", valor: (c) => c.n }, { rotulo: "Partido", valor: (c) => c.sg },
+      { rotulo: "Votos", valor: (c) => c.votos, formato: (v) => v.toLocaleString("pt-BR"), num: true }, { rotulo: "Situação", valor: (c) => c.st },
+    ],
+  });
+}
+
 let desfazerLanding = () => {};
 function telaInicial(el, { D, geo, acesso }) {
   el.innerHTML = landing({ venda: acesso?.venda });
   const meus = (acesso?.liberados ?? []).map((k) => k.split(":"));
   if (meus.length) {
     el.querySelector(".lp-busca-caixa").insertAdjacentHTML("beforebegin", `<div class="lp-meus"><span>Seus diagnósticos</span>${meus.map(([cargo, n]) =>
-      `<a href="#relatorio?cargo=${cargo}&c=${n}">${esc(CARGOS[cargo]?.curto ?? cargo)} ${esc(n)}</a>`).join("")}</div>`);
+      `<a href="#relatorio?cargo=${cargo}&${n.includes("-") ? `m=${n.split("-")[0]}&c=${n.split("-")[1]}` : `c=${n}`}">${esc(CARGOS[cargo]?.curto ?? cargo)} ${esc(n.split("-").pop())}</a>`).join("")}</div>`);
   }
   // O # da URL é a rota das telas: âncora vira rolagem por script.
   el.querySelectorAll("[data-rolar]").forEach((b) => {
@@ -111,7 +152,8 @@ function telaInicial(el, { D, geo, acesso }) {
   ligarBusca(el, {
     cargoInicial: D.cargo.id,
     carregarCargo: dadosDoCargo,
-    abrir: (cargo, n) => { location.hash = escreverRota("panorama", { cargo, c: n }); },
+    carregarCidades: cidadesDoAno,
+    abrir: (cargo, n, m) => { location.hash = escreverRota("panorama", { cargo, m, c: n }); },
     venda: acesso?.venda,
   });
   const desfazerAnim = animarLanding(el, { geo, D }), desfazerBarra = ligarBarra(el);
@@ -138,14 +180,18 @@ async function iniciar() {
     const minha = ++vez;
     const { tela: id, params } = lerRota(location.hash, ids);
     const cargo = CARGOS[params.cargo] ? params.cargo : CARGO_PADRAO;
-    let D;
+    const municipal = !!CARGOS[cargo].municipal;
+    let D = null, cidades = null;
     try {
-      D = await dadosDoCargo(cargo);
+      if (municipal) {
+        cidades = await cidadesDoAno(CARGOS[cargo].ano);
+        if (params.m) D = await dadosDoCargo(cargo, params.m);
+      } else D = await dadosDoCargo(cargo);
     } catch (e) {
       tela.innerHTML = `<div class="aviso">Não consegui carregar os dados (${esc(e.message)}). Rode <code>node analise-2026/coletar/coletar.mjs</code> na raiz do repositório e recarregue.</div>`;
       return;
     }
-    const foco = D.porNumero.get(params.c) ?? null;
+    const foco = D?.porNumero.get(params.c) ?? null;
     const comparados = foco ? lerComparados(D, foco, params.vs) : [];
     const cores = foco ? coresDe(foco, comparados) : new Map();
     // Troca de cargo/candidato: mantém a tela e o município, descarta escolhas que dependem do candidato.
@@ -154,17 +200,20 @@ async function iniciar() {
       if (params.mun && !("cargo" in novos && novos.cargo !== cargo)) p.mun = params.mun;
       location.hash = escreverRota(id, p);
     };
-    const liberado = foco ? estaLiberado(acesso, cargo, foco.n) : false;
+    // chave do candidato: número (gerais) ou cidade-número (municipais, o número se repete entre cidades)
+    const liberado = foco ? estaLiberado(acesso, cargo, municipal ? `${params.m}-${foco.n}` : foco.n) : false;
     // Votos por local só para quem comprou (a rota responde 403 aos demais).
     if (foco && liberado) await garantirLocais(D, [foco.n, ...comparados.map((c) => c.n), params.b ?? ""], (u) => carregar(u, true));
     if (minha !== vez) return; // outra navegação começou enquanto carregava
 
-    document.title = foco ? `${nomeCurto(foco)} · Ovile Diagnóstico` : `Ovile Diagnóstico · Eleição 2026 ${UF.sigla}`;
-    document.getElementById("cargo-titulo").textContent = `${CARGOS[cargo].curto.toUpperCase()} ${UF.sigla}`;
-    const f = D.meta.fontes;
-    document.getElementById("rodape").textContent =
-      `Fontes: TSE — votação por seção (${f.secao}), locais de votação (${f.locais}), resultado oficial (${f.oficial}), prestação de contas (${f.contas}); IBGE — malha municipal. Gerado em ${new Date(D.meta.geradoEm).toLocaleString("pt-BR")}.`;
-    barraEscolha(barra, { D, cargo, foco, comparados, cores, mudar });
+    document.title = foco ? `${nomeCurto(foco)} · Ovile Diagnóstico` : `Ovile Diagnóstico · Eleição ${CARGOS[cargo].ano} ${UF.sigla}`;
+    document.getElementById("cargo-titulo").textContent = `${CARGOS[cargo].curto.toUpperCase()} ${D?.cargo.municipio?.nm ?? UF.sigla}`;
+    const f = D?.meta.fontes;
+    document.getElementById("rodape").textContent = !f ? "" :
+      `Fontes: TSE, votação por seção (${f.secao}), locais de votação (${f.locais}), resultado oficial (${f.oficial}), prestação de contas (${f.contas ?? "sem dado"}); IBGE, malha municipal. Gerado em ${new Date(D.meta.geradoEm).toLocaleString("pt-BR")}.`;
+    barraEscolha(barra, { D, cargo, foco, comparados, cores, mudar, cidades });
+    // municipais: o mapa é só a cidade (os locais de votação aparecem por cima)
+    const geoTela = municipal && D ? { ...geo, features: geo.features.filter((ft) => ft.properties.codarea === D.cargo.municipio.ibge) } : geo;
     const g = escreverRota("x", { ...globais(params), cargo }).slice(2);
     nav.innerHTML = foco ? TELAS.map((t, k) => `<a href="#${t.id}${g}" data-id="${t.id}"><kbd>${k + 1}</kbd>${t.nome}${liberado || TELAS_LIVRES.includes(t.id) ? "" : " 🔒"}</a>`).join("") : "";
     nav.querySelectorAll("a").forEach((a) => a.classList.toggle("ativa", a.dataset.id === id));
@@ -184,6 +233,12 @@ async function iniciar() {
     tela.style.animation = "";
     document.body.dataset.tela = foco ? id : "inicio";
     if (!foco) {
+      if (municipal) {
+        document.body.dataset.tela = "lista";
+        if (D) telaCandidatosCidade(tela, { D, mudar }); else telaCidades(tela, { cargo, cidades, mudar });
+        document.body.dataset.pronta = "lista";
+        return;
+      }
       telaInicial(tela, { D, geo, acesso });
       document.body.dataset.pronta = "inicio";
       return;
@@ -193,10 +248,10 @@ async function iniciar() {
     if (!liberado && !TELAS_LIVRES.includes(id)) {
       tela.innerHTML = `<div class="cartao">${oferta(foco, D, acesso?.venda)}</div>`;
     } else if (!liberado && id === "candidato") {
-      candidato.montarPrevia(tela, { D, geo, foco, venda: acesso?.venda });
+      candidato.montarPrevia(tela, { D, geo: geoTela, foco, venda: acesso?.venda });
     } else {
       TELAS.find((t) => t.id === id).mod.montar(tela, {
-        D, geo, params, navegar, interno, foco, comparados, cores, varCor: varCorDe(foco, comparados), garantir,
+        D, geo: geoTela, params, navegar, interno, foco, comparados, cores, varCor: varCorDe(foco, comparados), garantir,
       });
     }
     for (const m of ampliados) document.getElementById(m)?.closest(".cartao")?.classList.add("ampliado");

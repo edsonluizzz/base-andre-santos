@@ -3,7 +3,9 @@
 
 export const COOKIE_DIAGNOSTICO = "diag_acesso";
 export const HOST_DIAGNOSTICO = "diagnostico.ovile.com.br";
-export const CARGOS_DIAGNOSTICO = ["estadual", "federal"] as const;
+// Gerais 2026 (número do candidato) e municipais (número = "<cd da cidade>-<número>", porque o número se repete entre cidades).
+export const CARGOS_DIAGNOSTICO = ["estadual", "federal", "vereador-2024", "prefeito-2024"] as const;
+export const ehMunicipal = (cargo: string) => /-\d{4}$/.test(cargo);
 export type CargoDiagnostico = (typeof CARGOS_DIAGNOSTICO)[number];
 const MAX_TOKENS = 20; // um cliente pode comprar vários candidatos no mesmo navegador
 
@@ -26,17 +28,22 @@ export function juntarToken(cookie: string | undefined | null, novo: string): st
 export const ehHostDiagnostico = (host: string | null | undefined) =>
   String(host ?? "").split(":")[0].toLowerCase() === HOST_DIAGNOSTICO;
 
-// Arquivo de votos por local de um candidato: dados/<cargo>/<número>.json.
+// Arquivos pagos (votos por local): dados/<cargo>/<número>.json (gerais) ou dados/<ano>/<cargo>/<cd>/loc.json
+// (municipais: todos os candidatos da cidade num arquivo; numero = código da cidade).
 export function arquivoDeCandidato(rel: string): { cargo: CargoDiagnostico; numero: string } | null {
-  const m = rel.match(/^dados\/([a-z]+)\/(\d{2,5})\.json$/);
-  return m && ehCargo(m[1]) ? { cargo: m[1], numero: m[2] } : null;
+  const g = rel.match(/^dados\/([a-z]+)\/(\d{2,5})\.json$/);
+  if (g && ehCargo(g[1])) return { cargo: g[1], numero: g[2] };
+  const m = rel.match(/^dados\/(\d{4})\/([a-z]+)\/(\d{5})\/loc\.json$/);
+  const cargo = m ? `${m[2]}-${m[1]}` : null;
+  return m && ehCargo(cargo) ? { cargo, numero: m[3] } : null;
 }
 
 export const chaveCandidato = (cargo: string, numero: string) => `${cargo}:${numero}`;
 
 // Link enviado ao cliente: já abre no relatório do candidato comprado.
 export function linkDiagnostico(token: string, cargo: string, numero: string, base = `https://${HOST_DIAGNOSTICO}/`) {
-  return `${base}?k=${token}#relatorio?cargo=${cargo}&c=${numero}`;
+  const [cidade, n] = ehMunicipal(cargo) ? numero.split("-") : [null, numero];
+  return `${base}?k=${token}#relatorio?cargo=${cargo}${cidade ? `&m=${cidade}` : ""}&c=${n}`;
 }
 
 // Só dígitos, com DDI 55 quando vier no formato nacional (para wa.me).

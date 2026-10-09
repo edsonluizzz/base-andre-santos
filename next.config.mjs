@@ -25,7 +25,7 @@ const nextConfig = {
       // Painel de análise da eleição: a rota lê os arquivos estáticos via fs.
       "/eleicao-2026/analise/": ["./analise-2026/public/**/*"],
       // Tela de vendas do diagnóstico confere o candidato no dados/<cargo>.json.
-      "/api/diagnosticos": ["./analise-2026/public/dados/*.json"],
+      "/api/diagnosticos": ["./analise-2026/public/dados/*.json", "./analise-2026/public/dados/*/*/*.json"],
     },
   },
   async rewrites() {
