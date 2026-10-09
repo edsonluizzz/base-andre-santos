@@ -33,6 +33,7 @@ describe("rotas e links", () => {
     expect(arquivoDeCandidato("dados/2024/vereador/75353/loc.json")).toEqual({ cargo: "vereador-2024", numero: "75353" });
     expect(arquivoDeCandidato("dados/2024/vereador/75353.json")).toBeNull(); // base da cidade é pública
     expect(arquivoDeCandidato("dados/2024/senador/75353/loc.json")).toBeNull();
+    expect(arquivoDeCandidato("dados/2020/prefeito/75353/loc.json")).toEqual({ cargo: "prefeito-2020", numero: "75353" });
   });
   it("host do produto, com ou sem porta", () => {
     expect(ehHostDiagnostico("diagnostico.ovile.com.br")).toBe(true);

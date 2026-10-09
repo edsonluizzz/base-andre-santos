@@ -2,7 +2,7 @@
 // O exemplo é fictício: telas geradas com ?demo (nomes, números e partidos inventados; ver demo.mjs).
 // Números do exemplo abaixo saem do relatório da candidata fictícia "Simone Gonçalves" (demo de 09/10/2026).
 // Animações: GSAP + ScrollTrigger auto-hospedados (vendor/); tudo desliga com prefers-reduced-motion.
-import { UF } from "./config.mjs";
+import { ANOS_MUNICIPAIS, UF } from "./config.mjs";
 import { esc, inteiro } from "./fmt.mjs";
 import { percentuais } from "./dados.mjs";
 import { linkCompra } from "./oferta.mjs";
@@ -32,7 +32,7 @@ const FAQ = [
   ["De onde vêm os dados?", "Dos dados abertos do TSE: votação por seção eleitoral, locais de votação, resultado oficial e prestação de contas. A soma por seção de cada candidato é conferida com o resultado oficial, e todas batem."],
   ["Posso escolher com quem comparar?", "Sim. O sistema sugere os 3 concorrentes mais parecidos com você em tamanho e geografia, e você troca por qualquer candidato do mesmo cargo, quantas vezes quiser."],
   ["E a prestação de contas, que ainda não é a final?", "O custo do voto usa a prestação parcial publicada pelo TSE. Quando a final sair, em novembro, os números são atualizados no seu link sem custo."],
-  ["Quais cargos estão disponíveis?", "No Paraná: deputado estadual e federal (eleição de 2026) e vereador e prefeito (eleição de 2024) nas 399 cidades. Outros estados e eleições estão a caminho."],
+  ["Quais cargos estão disponíveis?", "No Paraná: deputado estadual e federal (eleição de 2026) e vereador e prefeito (eleições de 2020 e 2024) nas 399 cidades. Outros estados e eleições estão a caminho."],
   ["Usa dados pessoais de eleitores?", "Não. Só resultados públicos agregados por seção e local de votação, os mesmos que o TSE publica para qualquer pessoa."],
 ];
 
@@ -76,7 +76,7 @@ export function landing({ venda }) {
     </section>
 
     <div class="lp-faixa" aria-hidden="true"><div class="lp-faixa-trilho">${
-      Array(2).fill(["32.725 candidatos conferidos voto a voto", "399 cidades", "Deputados 2026", "Vereadores e prefeitos 2024", "Dados oficiais do TSE", "Relatório em PDF"]
+      Array(2).fill(["66.644 candidatos conferidos voto a voto", "399 cidades", "Deputados 2026", "Vereadores e prefeitos 2020 e 2024", "Dados oficiais do TSE", "Relatório em PDF"]
         .map((t) => `<span>${t}</span>`).join("")).join("")}</div></div>
 
     <section class="lp-perguntas">
@@ -140,10 +140,11 @@ export function landing({ venda }) {
         <div class="lp-busca-cargos" role="tablist">
           <button type="button" data-cargo-busca="estadual" class="on">Dep. estadual 2026</button>
           <button type="button" data-cargo-busca="federal">Dep. federal 2026</button>
-          <button type="button" data-cargo-busca="vereador-2024">Vereador 2024</button>
-          <button type="button" data-cargo-busca="prefeito-2024">Prefeito 2024</button>
+          <button type="button" data-cargo-busca="vereador">Vereador</button>
+          <button type="button" data-cargo-busca="prefeito">Prefeito</button>
         </div>
         <div class="lp-busca-cidade" hidden>
+          <div class="lp-busca-anos">${ANOS_MUNICIPAIS.map((a, i) => `<button type="button" data-ano-busca="${a}" class="${i ? "" : "on"}">Eleição ${a}</button>`).join("")}</div>
           <label class="lp-busca-rotulo" for="lp-cidade">Cidade</label>
           <input id="lp-cidade" class="lp-busca-campo" list="lp-cidades" autocomplete="off" placeholder="Digite a cidade">
           <datalist id="lp-cidades"></datalist>
@@ -215,7 +216,7 @@ export function ligarBusca(el, { cargoInicial, carregarCargo, carregarCidades, a
   const campo = el.querySelector("#lp-q");
   const lista = el.querySelector("#lp-sugestoes");
   const caixaCidade = el.querySelector(".lp-busca-cidade"), campoCidade = el.querySelector("#lp-cidade");
-  let cargo = cargoInicial, D = null, cidades = [], cidade = null;
+  let cargo = cargoInicial, D = null, cidades = [], cidade = null, ano = ANOS_MUNICIPAIS[0], anoCidades = null;
   const municipal = () => /-\d{4}$/.test(cargo);
   const mostrar = () => {
     if (municipal() && !cidade) { lista.innerHTML = `<li class="lp-sug-vazio">Escolha a cidade para ver os candidatos.</li>`; return; }
@@ -236,20 +237,24 @@ export function ligarBusca(el, { cargoInicial, carregarCargo, carregarCidades, a
       : `<li class="lp-sug-vazio">Nenhum candidato com esse nome ou número em ${esc(D.cargo.nome.toLowerCase())}.</li>`;
     lista.querySelectorAll("button[data-n]").forEach((b) => { b.onclick = () => abrir(cargo, b.dataset.n, cidade); });
   };
-  const trocar = async (id) => {
-    cargo = id;
-    el.querySelectorAll("[data-cargo-busca]").forEach((b) => b.classList.toggle("on", b.dataset.cargoBusca === id));
+  // aba "vereador"/"prefeito" vira o cargo do ano escolhido ("vereador-2024")
+  const trocar = async (aba) => {
+    const base = aba.split("-")[0];
+    cargo = ["vereador", "prefeito"].includes(base) ? `${base}-${ano}` : aba;
+    el.querySelectorAll("[data-cargo-busca]").forEach((b) => b.classList.toggle("on", b.dataset.cargoBusca === base));
+    el.querySelectorAll("[data-ano-busca]").forEach((b) => b.classList.toggle("on", Number(b.dataset.anoBusca) === ano));
     caixaCidade.hidden = !municipal();
     D = null;
     if (municipal()) {
-      if (!cidades.length) {
-        cidades = await carregarCidades(id.split("-")[1]);
+      if (anoCidades !== ano) {
+        cidades = await carregarCidades(ano);
+        anoCidades = ano;
         el.querySelector("#lp-cidades").innerHTML = cidades.map((x) => `<option value="${esc(x.nm)}">`).join("");
       }
-      if (cidade) D = await carregarCargo(id, cidade);
+      if (cidade) D = await carregarCargo(cargo, cidade);
     } else {
       lista.innerHTML = `<li class="lp-sug-vazio">Carregando…</li>`;
-      D = await carregarCargo(id);
+      D = await carregarCargo(cargo);
     }
     mostrar();
   };
@@ -261,6 +266,7 @@ export function ligarBusca(el, { cargoInicial, carregarCargo, carregarCidades, a
     if (cidade) campo.focus();
   });
   el.querySelectorAll("[data-cargo-busca]").forEach((b) => { b.onclick = () => trocar(b.dataset.cargoBusca); });
+  el.querySelectorAll("[data-ano-busca]").forEach((b) => { b.onclick = () => { ano = Number(b.dataset.anoBusca); trocar(cargo); }; });
   campo.addEventListener("input", mostrar);
   trocar(cargo);
 }

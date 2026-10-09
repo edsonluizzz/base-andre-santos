@@ -1,4 +1,4 @@
-import { CARGOS, CARGO_PADRAO, MAX_COMPARADOS, UF } from "./config.mjs";
+import { ANOS_MUNICIPAIS, CARGOS, CARGO_PADRAO, MAX_COMPARADOS, UF } from "./config.mjs";
 import { buscarCandidato, coresDe, garantirLocais, indexar, lerComparados, nomeCurto, rotuloCandidato, varCorDe } from "./dados.mjs";
 import { esc } from "./fmt.mjs";
 import { escreverRota, lerRota } from "./rota.mjs";
@@ -77,8 +77,15 @@ const globais = (params) => Object.fromEntries(GLOBAIS.filter((k) => params[k] !
 function barraEscolha(el, { D, cargo, foco, comparados, cores, mudar, cidades }) {
   const opcoes = (D?.candidatos ?? []).map((c) => `<option value="${esc(rotuloCandidato(c))}">`).join("");
   const municipal = CARGOS[cargo].municipal;
+  // Gerais: um botão por cargo. Municipais: "Vereador"/"Prefeito" (no ano em uso) + seletor de ano.
+  const anoAtual = municipal ? CARGOS[cargo].ano : ANOS_MUNICIPAIS[0];
+  const botoesCargo = [
+    ...Object.entries(CARGOS).filter(([, c]) => !c.municipal).map(([id, c]) => [id, c.curto]),
+    [`vereador-${anoAtual}`, "Vereador"], [`prefeito-${anoAtual}`, "Prefeito"],
+  ];
   el.innerHTML = `
-    <span class="seg">${Object.entries(CARGOS).map(([id, c]) => `<button data-cargo="${id}" class="${id === cargo ? "on" : ""}">${c.curto}</button>`).join("")}</span>
+    <span class="seg">${botoesCargo.map(([id, rot]) => `<button data-cargo="${id}" class="${(municipal ? id.split("-")[0] === cargo.split("-")[0] : id === cargo) ? "on" : ""}">${rot}</button>`).join("")}</span>
+    ${municipal ? `<span class="seg">${ANOS_MUNICIPAIS.map((a) => `<button data-ano="${a}" class="${CARGOS[cargo].ano === a ? "on" : ""}">${a}</button>`).join("")}</span>` : ""}
     ${municipal ? `<label class="campo">Cidade <input id="es-m" list="es-cidades" placeholder="Digite a cidade" value="${D ? esc(D.cargo.municipio.nm) : ""}"></label>
       <datalist id="es-cidades">${(cidades ?? []).map((x) => `<option value="${esc(x.nm)}">`).join("")}</datalist>` : ""}
     ${D ? `<label class="campo">Candidato <input id="es-c" list="es-lista" placeholder="Nome ou número" value="${foco ? esc(rotuloCandidato(foco)) : ""}"></label>
@@ -90,6 +97,10 @@ function barraEscolha(el, { D, cargo, foco, comparados, cores, mudar, cidades })
   el.querySelectorAll("[data-cargo]").forEach((b) => {
     // troca de cargo: mantém a cidade entre vereador e prefeito do mesmo ano
     b.onclick = () => { if (b.dataset.cargo !== cargo) mudar({ cargo: b.dataset.cargo, m: CARGOS[b.dataset.cargo].municipal && municipal ? D?.cargo.municipio.cd : null, c: null, vs: null }); };
+  });
+  // troca de ano: mesmo cargo e mesma cidade, candidato de novo (os números mudam entre eleições)
+  el.querySelectorAll("[data-ano]").forEach((b) => {
+    b.onclick = () => { if (Number(b.dataset.ano) !== CARGOS[cargo].ano) mudar({ cargo: `${cargo.split("-")[0]}-${b.dataset.ano}`, m: D?.cargo.municipio.cd ?? null, c: null, vs: null }); };
   });
   const cidade = el.querySelector("#es-m");
   cidade?.addEventListener("change", () => {

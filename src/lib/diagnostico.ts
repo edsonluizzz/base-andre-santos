@@ -4,7 +4,7 @@
 export const COOKIE_DIAGNOSTICO = "diag_acesso";
 export const HOST_DIAGNOSTICO = "diagnostico.ovile.com.br";
 // Gerais 2026 (número do candidato) e municipais (número = "<cd da cidade>-<número>", porque o número se repete entre cidades).
-export const CARGOS_DIAGNOSTICO = ["estadual", "federal", "vereador-2024", "prefeito-2024"] as const;
+export const CARGOS_DIAGNOSTICO = ["estadual", "federal", "vereador-2024", "prefeito-2024", "vereador-2020", "prefeito-2020"] as const;
 export const ehMunicipal = (cargo: string) => /-\d{4}$/.test(cargo);
 export type CargoDiagnostico = (typeof CARGOS_DIAGNOSTICO)[number];
 const MAX_TOKENS = 20; // um cliente pode comprar vários candidatos no mesmo navegador

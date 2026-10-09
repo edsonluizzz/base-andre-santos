@@ -6,7 +6,11 @@ export const CARGOS = {
   federal: { nome: "Deputado Federal", curto: "Federal", cd: "6", digitos: 4, oficial: "c0006", ano: 2026 },
   "vereador-2024": { nome: "Vereador", curto: "Vereador 2024", municipal: true, ano: 2024, arquivo: "2024/vereador" },
   "prefeito-2024": { nome: "Prefeito", curto: "Prefeito 2024", municipal: true, ano: 2024, arquivo: "2024/prefeito" },
+  "vereador-2020": { nome: "Vereador", curto: "Vereador 2020", municipal: true, ano: 2020, arquivo: "2020/vereador" },
+  "prefeito-2020": { nome: "Prefeito", curto: "Prefeito 2020", municipal: true, ano: 2020, arquivo: "2020/prefeito" },
 };
+// Anos com eleição municipal coletada (o mais recente primeiro).
+export const ANOS_MUNICIPAIS = [2024, 2020];
 // Cargos das eleições gerais (a coleta estadual percorre só estes).
 export const CARGOS_GERAIS = Object.fromEntries(Object.entries(CARGOS).filter(([, c]) => !c.municipal));
 export const CARGO_PADRAO = "estadual";

@@ -463,3 +463,6 @@ body[data-tela="inicio"] main { padding: 0; }
   .lp-sug-acao { text-align: center; }
 }
 @media (prefers-reduced-motion: reduce) { .lp-faixa-trilho { animation: none; } .lp-fone-tela img { transition: none; } }
+.lp-busca-anos { display: inline-flex; gap: 6px; margin-bottom: 14px; }
+.lp-busca-anos button { border: 1px solid var(--lp-linha); background: none; color: var(--suave); border-radius: 999px; padding: 7px 14px; font: 600 14px "Geist", sans-serif; cursor: pointer; }
+.lp-busca-anos button.on { border-color: var(--laranja); color: var(--texto); }

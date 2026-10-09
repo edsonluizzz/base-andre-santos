@@ -24,6 +24,8 @@ const CARGOS = [
   { id: "federal", nome: "Deputado Federal 2026", municipal: false },
   { id: "vereador-2024", nome: "Vereador 2024", municipal: true },
   { id: "prefeito-2024", nome: "Prefeito 2024", municipal: true },
+  { id: "vereador-2020", nome: "Vereador 2020", municipal: true },
+  { id: "prefeito-2020", nome: "Prefeito 2020", municipal: true },
 ];
 type Cidade = { cd: string; nm: string };
 const BASE = "/eleicao-2026/analise/dados";
@@ -64,7 +66,7 @@ export default function DiagnosticosPage() {
   useEffect(() => { carregar(); }, [carregar]);
   useEffect(() => {
     if (!municipal || cidades.length) return;
-    fetch(`${BASE}/2024/municipios.json`).then((r) => r.json()).then(setCidades).catch(() => toast.error("Não consegui carregar as cidades"));
+    fetch(`${BASE}/2024/municipios.json`) // mesmas 399 cidades em 2020 e 2024.then((r) => r.json()).then(setCidades).catch(() => toast.error("Não consegui carregar as cidades"));
   }, [municipal, cidades.length]);
   useEffect(() => {
     if (cands[chaveLista] || (municipal && !cidade)) return;
