@@ -4,201 +4,189 @@
 <meta charset="utf-8">
 <title>Ovile Diagnóstico · lançamento 9:16</title>
 <!-- Dados do exemplo: candidata fictícia do modo demonstração (?demo), nenhum candidato real.
-     Vídeo de lançamento (prompt 03 "Lançamento de App", adaptado para 9:16, 30 s).
-     A linha do tempo fica pausada: window.__seek(t) posiciona o quadro (renderizar.mjs grava 30 fps).
-     Aberto direto no navegador, ?play toca em tempo real para revisar. -->
+     Vídeo de lançamento 9:16, 30 s, 120 BPM (1 compasso = 2 s): cada cena dura 2 compassos e troca no tempo da trilha (trilha.mjs).
+     Telas: capturas reais do painel no celular (video/telas/, 390 px CSS × 2,5). O celular fica reto e centrado; a tela rola por dentro.
+     A linha do tempo fica pausada: window.__seek(t) posiciona o quadro (renderizar.mjs grava 30 fps). ?play toca em tempo real. -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300..800&family=Geist+Mono:wght@500;700&display=swap">
 <style>
-  :root { --laranja: #ff6a13; --fundo: #07090f; --texto: #f2f5fa; --suave: #8b97ad; --cartao: #141a26; --borda: #232c3d; }
+  :root { --laranja: #ff6a13; --fundo: #07090f; --texto: #f2f5fa; --suave: #8b97ad; --cartao: #141a26; --borda: #2a3446; }
   * { box-sizing: border-box; margin: 0; }
-  html, body { width: 1080px; height: 1920px; overflow: hidden; background: var(--fundo); font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; color: var(--texto); }
+  html, body { width: 1080px; height: 1920px; overflow: hidden; background: var(--fundo); font-family: "Geist", -apple-system, Arial, sans-serif; color: var(--texto); }
   #palco { position: relative; width: 1080px; height: 1920px; overflow: hidden; }
-  .brilho { position: absolute; border-radius: 50%; filter: blur(140px); opacity: .55; }
-  #b1 { width: 900px; height: 900px; background: #ff6a13; left: -260px; top: 980px; }
-  #b2 { width: 760px; height: 760px; background: #4c8dff; right: -280px; top: 160px; opacity: .35; }
-  #b3 { width: 600px; height: 600px; background: #b06cff; left: 240px; top: -320px; opacity: .25; }
+  .brilho { position: absolute; border-radius: 50%; filter: blur(150px); }
+  #b1 { width: 900px; height: 900px; background: #ff6a13; left: -300px; top: 1100px; opacity: .45; }
+  #b2 { width: 700px; height: 700px; background: #4c8dff; right: -300px; top: 250px; opacity: .22; }
 
-  .logo { position: absolute; left: 0; right: 0; text-align: center; font-weight: 300; letter-spacing: 10px; font-size: 64px; }
-  .logo b { color: var(--laranja); font-weight: 800; letter-spacing: 6px; }
-  #logo-abre { top: 860px; }
+  .logo { position: absolute; left: 0; right: 0; text-align: center; font-weight: 300; letter-spacing: 12px; font-size: 62px; }
+  .logo b { color: var(--laranja); font-weight: 800; letter-spacing: 8px; }
+  #logo-abre { top: 880px; }
 
-  .titulo { position: absolute; left: 70px; right: 70px; top: 150px; font-size: 92px; line-height: 1.04; font-weight: 800; letter-spacing: -1.5px; }
+  /* títulos: sempre no mesmo lugar, centralizados acima do celular */
+  .titulo { position: absolute; left: 60px; right: 60px; top: 130px; text-align: center; font-size: 84px; line-height: 1.04; font-weight: 750; letter-spacing: -2.5px; }
   .titulo .k { color: var(--laranja); }
   .titulo .p { display: inline-block; }
+  .linha { overflow: hidden; display: block; padding-bottom: 6px; }
 
-  /* celular em 3D */
-  .cena3d { position: absolute; left: 0; right: 0; top: 560px; height: 1280px; perspective: 2200px; }
-  .fone { position: absolute; left: 50%; top: 0; width: 600px; height: 1240px; margin-left: -300px; border-radius: 88px; background: #0d1018;
-    border: 14px solid #262b36; box-shadow: 0 0 0 3px #3a4150, 0 60px 120px rgba(0,0,0,.7), inset 0 0 0 2px #000; transform-style: preserve-3d; overflow: hidden; }
-  .fone::before { content: ""; position: absolute; top: 22px; left: 50%; width: 170px; height: 46px; margin-left: -85px; border-radius: 30px; background: #000; z-index: 5; }
-  .tela { position: absolute; inset: 0; padding: 92px 26px 26px; background: var(--fundo); display: flex; flex-direction: column; gap: 20px; }
-  .app-topo { font-size: 22px; letter-spacing: 4px; font-weight: 300; }
-  .app-topo b { color: var(--laranja); font-weight: 800; letter-spacing: 3px; }
-  .app-nome { font-size: 40px; font-weight: 800; line-height: 1.1; }
-  .app-sub { font-size: 22px; color: var(--suave); margin-top: -10px; }
-  .tela img { width: 100%; border-radius: 18px; border: 1px solid var(--borda); display: block; }
-  .tela .img-alta { height: 640px; object-fit: cover; object-position: top; }
-  .kpi-app { background: var(--cartao); border: 1px solid var(--borda); border-radius: 18px; padding: 18px 22px; }
-  .kpi-app small { display: block; color: var(--suave); font-size: 20px; }
-  .kpi-app b { font-size: 50px; color: var(--laranja); }
+  /* celular: reto, centrado, mesma posição em todas as cenas */
+  .cena3d { position: absolute; left: 0; right: 0; top: 420px; height: 1400px; perspective: 2600px; }
+  .fone { position: absolute; left: 50%; top: 0; width: 620px; height: 1290px; margin-left: -310px; border-radius: 92px; background: #000;
+    border: 16px solid #1d222c; box-shadow: 0 0 0 3px #3a4252, 0 80px 140px rgba(0,0,0,.75); overflow: hidden; transform-style: preserve-3d; }
+  .ilha { position: absolute; top: 20px; left: 50%; width: 180px; height: 50px; margin-left: -90px; border-radius: 30px; background: #000; z-index: 6; }
+  .status { position: absolute; top: 0; left: 0; right: 0; height: 82px; z-index: 5; background: #0b0f17; display: flex; justify-content: space-between; align-items: center;
+    padding: 6px 54px 0; font: 600 26px "Geist", sans-serif; }
+  .status i { width: 46px; height: 22px; border: 3px solid #f2f5fa; border-radius: 7px; position: relative; opacity: .9; }
+  .status i::after { content: ""; position: absolute; inset: 3px 8px 3px 3px; background: #f2f5fa; border-radius: 2px; }
+  .tela { position: absolute; left: 0; right: 0; top: 82px; bottom: 0; overflow: hidden; background: #0b0f17; }
+  .tela img { position: absolute; left: 0; top: 0; width: 100%; display: block; will-change: transform; transform-origin: 0 0; }
 
-  /* cards que saltam do celular */
-  .card { position: absolute; background: rgba(20,26,38,.92); border: 1px solid #2f3a50; border-radius: 26px; padding: 26px 30px; box-shadow: 0 30px 60px rgba(0,0,0,.55);
-    backdrop-filter: blur(8px); min-width: 330px; }
-  .card b { display: block; font-size: 62px; font-weight: 800; color: var(--laranja); line-height: 1.05; }
-  .card span { font-size: 26px; color: #c8d0de; line-height: 1.3; display: block; margin-top: 6px; }
-  .esq { left: 40px; } .dir { right: 40px; }
+  /* cartões: duas posições fixas, uma de cada lado */
+  .card { position: absolute; width: 360px; padding: 24px 28px; border-radius: 26px; background: rgba(16,21,31,.9); border: 1px solid #34405a;
+    box-shadow: 0 30px 70px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.08); backdrop-filter: blur(10px); }
+  .card b { display: block; font: 700 58px/1.05 "Geist Mono", monospace; color: var(--laranja); letter-spacing: -1px; white-space: nowrap; }
+  .card span { display: block; font-size: 26px; line-height: 1.3; color: #c8d0de; margin-top: 8px; }
+  .c-esq { left: 28px; top: 900px; } .c-dir { right: 28px; top: 1440px; }
 
-  /* leque final */
-  .leque { position: absolute; left: 0; right: 0; top: 520px; height: 1200px; }
-  .mini { position: absolute; left: 50%; top: 80px; width: 420px; height: 868px; margin-left: -210px; border-radius: 64px; border: 10px solid #262b36; background: var(--fundo); overflow: hidden;
-    box-shadow: 0 40px 90px rgba(0,0,0,.7); transform-origin: 50% 120%; }
-  .mini img { width: 100%; height: 100%; object-fit: cover; object-position: top; }
-
-  #fim { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 34px; }
-  #fim .logo { position: static; font-size: 76px; }
-  #fim .tag { font-size: 60px; font-weight: 800; line-height: 1.1; padding: 0 60px; }
+  #fim { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 44px; }
+  #fim .logo { position: static; font-size: 70px; }
+  #fim .tag { font-size: 104px; font-weight: 750; line-height: 1.02; letter-spacing: -3px; }
   #fim .tag .k { color: var(--laranja); }
-  #fim .url { font-size: 38px; color: var(--texto); background: var(--cartao); border: 1px solid var(--borda); border-radius: 999px; padding: 20px 40px; }
-  #fim .preco { font-size: 30px; color: var(--suave); }
+  #fim .url { font: 600 40px "Geist", sans-serif; background: var(--cartao); border: 1px solid var(--borda); border-radius: 999px; padding: 22px 46px; }
+  #anel { position: absolute; left: 50%; top: 50%; width: 1600px; height: 1600px; margin: -800px 0 0 -800px; border-radius: 50%; border: 3px solid var(--laranja); opacity: 0; }
 </style>
 </head>
 <body>
 <div id="palco">
-  <div class="brilho" id="b1"></div><div class="brilho" id="b2"></div><div class="brilho" id="b3"></div>
-
+  <div class="brilho" id="b1"></div><div class="brilho" id="b2"></div>
   <div class="logo" id="logo-abre">OVILE <b>DIAGNÓSTICO</b></div>
 
-  <!-- títulos das cenas -->
-  <h1 class="titulo" id="t1"><span class="p">Você</span> <span class="p">sabe</span> <span class="p">onde</span> <span class="p">ganhou</span> <span class="p k">cada voto?</span></h1>
-  <h1 class="titulo" id="t2"><span class="p">Quanto</span> <span class="p">custou</span> <span class="p k">cada voto?</span></h1>
-  <h1 class="titulo" id="t3"><span class="p">Quem</span> <span class="p">disputa</span> <span class="p">a</span> <span class="p k">sua base?</span></h1>
-  <h1 class="titulo" id="t4"><span class="p">Onde</span> <span class="p">dá</span> <span class="p">para</span> <span class="p k">crescer?</span></h1>
-  <h1 class="titulo" id="t5"><span class="p">Tudo</span> <span class="p">num</span> <span class="p k">relatório PDF.</span></h1>
+  <h1 class="titulo" id="t1a"><span class="linha"><span class="p">Do</span> <span class="p">estado</span></span><span class="linha"><span class="p">inteiro…</span></span></h1>
+  <h1 class="titulo" id="t1b"><span class="linha"><span class="p">…até</span> <span class="p">cada</span></span><span class="linha"><span class="p k">local</span> <span class="p k">de</span> <span class="p k">votação.</span></span></h1>
+  <h1 class="titulo" id="t2"><span class="linha"><span class="p">Cidade,</span> <span class="p">bairro,</span></span><span class="linha"><span class="p k">escola.</span></span></h1>
+  <h1 class="titulo" id="t3"><span class="linha"><span class="p">Quem</span> <span class="p">disputa</span></span><span class="linha"><span class="p k">o</span> <span class="p k">seu</span> <span class="p k">eleitor?</span></span></h1>
+  <h1 class="titulo" id="t4"><span class="linha"><span class="p">Compare</span></span><span class="linha"><span class="p k">mapa</span> <span class="p k">a</span> <span class="p k">mapa.</span></span></h1>
+  <h1 class="titulo" id="t5"><span class="linha"><span class="p">Quanto</span> <span class="p">custou</span></span><span class="linha"><span class="p k">cada</span> <span class="p k">voto?</span></span></h1>
+  <h1 class="titulo" id="t6"><span class="linha"><span class="p">E</span> <span class="p">um</span> <span class="p">relatório</span></span><span class="linha"><span class="p k">pronto</span> <span class="p k">para</span> <span class="p k">o</span> <span class="p k">partido.</span></span></h1>
 
-  <div class="cena3d">
+  <div class="cena3d" id="cena">
     <div class="fone" id="fone">
-      <div class="tela" id="s1">
-        <div class="app-topo">OVILE <b>DIAGNÓSTICO</b></div>
-        <div class="app-nome">Simone Gonçalves</div><div class="app-sub">Deputada Estadual · FAROL · 12.672 votos</div>
-        <img src="../public/img/mapa-estado.jpg" alt="">
-        <div class="kpi-app"><small>Municípios com voto</small><b>216 de 399</b></div>
-        <div class="kpi-app"><small>Locais de votação com voto</small><b>1.669</b></div>
-      </div>
-      <div class="tela" id="s2">
-        <div class="app-topo">OVILE <b>DIAGNÓSTICO</b></div>
-        <div class="app-nome">Custo do voto</div><div class="app-sub">Receita declarada ao TSE ÷ votos</div>
-        <img src="../public/img/custo-barras.jpg" alt="">
-        <div class="kpi-app"><small>Simone Gonçalves</small><b>R$ 6,01 por voto</b></div>
-      </div>
-      <div class="tela" id="s3">
-        <div class="app-topo">OVILE <b>DIAGNÓSTICO</b></div>
-        <div class="app-nome">Concorrentes</div><div class="app-sub">Mapa de calor, lado a lado</div>
-        <img src="../public/img/concorrentes-calor.jpg" alt="">
-      </div>
-      <div class="tela" id="s4">
-        <div class="app-topo">OVILE <b>DIAGNÓSTICO</b></div>
-        <div class="app-nome">Espaço para crescer</div><div class="app-sub">Cidades grandes abaixo da sua média</div>
-        <img src="../public/img/relatorio-5.jpg" alt="">
-      </div>
-      <div class="tela" id="s5">
-        <div class="app-topo">OVILE <b>DIAGNÓSTICO</b></div>
-        <img src="../public/img/relatorio-1.jpg" alt="">
+      <div class="ilha"></div>
+      <div class="status"><span>9:41</span><i></i></div>
+      <div class="tela" id="tela">
+        <img id="i-mapa" src="telas/m-mapa.jpg" alt="">
+        <img id="i-cidade" src="telas/m-cidade.jpg" alt="">
+        <img id="i-calor" src="telas/m-calor.jpg" alt="">
+        <img id="i-lado" src="telas/m-lado.jpg" alt="">
+        <img id="i-custo" src="telas/m-custo.jpg" alt="">
+        <img id="i-pdf" src="../public/img/relatorio-1.jpg" alt="" style="top:36px;left:22px;width:calc(100% - 44px);border-radius:10px">
       </div>
     </div>
   </div>
 
-  <!-- cards de cada cena (posições em relação ao palco) -->
-  <div class="card esq" id="c1a" style="top:760px"><b>399</b><span>municípios no mapa</span></div>
-  <div class="card dir" id="c1b" style="top:1380px"><b>4.815</b><span>locais de votação</span></div>
-  <div class="card dir" id="c2a" style="top:800px"><b>R$ 6,01</b><span>por voto, contra<br>R$ 33,88 da chapa</span></div>
-  <div class="card esq" id="c2b" style="top:1420px"><b>5,25×</b><span>mais votos que o<br>esperado pelo dinheiro</span></div>
-  <div class="card esq" id="c3a" style="top:820px"><b>99%</b><span>da base dividida com<br>a maior concorrente</span></div>
-  <div class="card dir" id="c3b" style="top:1440px"><b>até 3</b><span>concorrentes,<br>de qualquer partido</span></div>
-  <div class="card dir" id="c4a" style="top:860px"><b>+2.029</b><span>votos possíveis<br>em 10 cidades</span></div>
-  <div class="card esq" id="c5a" style="top:860px"><b>5</b><span>páginas prontas<br>para o partido</span></div>
-  <div class="card dir" id="c5b" style="top:1450px"><b>100%</b><span>dados oficiais<br>do TSE</span></div>
+  <div class="card c-esq" id="c1a"><b>399</b><span>municípios no mapa</span></div>
+  <div class="card c-dir" id="c1b"><b>4.815</b><span>locais de votação</span></div>
+  <div class="card c-esq" id="c2a"><b>53º</b><span>lugar na capital,<br>com o ranking da cidade</span></div>
+  <div class="card c-dir" id="c2b"><b>386</b><span>locais com voto<br>só em Curitiba</span></div>
+  <div class="card c-esq" id="c3a"><b>até 3</b><span>concorrentes,<br>de qualquer partido</span></div>
+  <div class="card c-dir" id="c3b"><b>99%</b><span>da base dividida<br>com a maior rival</span></div>
+  <div class="card c-esq" id="c4a"><b>193</b><span>cidades em disputa<br>direta, uma a uma</span></div>
+  <div class="card c-esq" id="c5a"><b>R$ 6,01</b><span>por voto, contra<br>R$ 33,88 da chapa</span></div>
+  <div class="card c-dir" id="c5b"><b>5,25×</b><span>mais votos que o<br>esperado pelo dinheiro</span></div>
+  <div class="card c-esq" id="c6a"><b>+2.029</b><span>votos possíveis<br>em 10 cidades</span></div>
+  <div class="card c-dir" id="c6b"><b>5 páginas</b><span>em PDF, prontas<br>para apresentar</span></div>
 
-  <div class="leque" id="leque">
-    <div class="mini" id="m1"><img src="../public/img/relatorio-2.jpg" alt=""></div>
-    <div class="mini" id="m2"><img src="../public/img/relatorio-4.jpg" alt=""></div>
-    <div class="mini" id="m3"><img src="../public/img/relatorio-1.jpg" alt=""></div>
-  </div>
-
+  <div id="anel"></div>
   <div id="fim">
     <div class="logo">OVILE <b>DIAGNÓSTICO</b></div>
     <div class="tag">Sua eleição,<br><span class="k">voto a voto.</span></div>
     <div class="url">diagnostico.ovile.com.br</div>
-    <div class="preco">Deputado estadual e federal · PR · R$ 297</div>
   </div>
 </div>
 
 <script>
+// 1 px CSS da captura do celular = ESC px na tela do vídeo (tela de 588 px; captura de 390 px CSS).
+const ESC = 588 / 390;
+const y = (cssY) => -cssY * ESC; // deslocamento para mostrar a captura a partir da altura cssY
+
 const tl = gsap.timeline({ paused: true, defaults: { ease: "power3.out" } });
-const telas = ["#s1", "#s2", "#s3", "#s4", "#s5"];
-gsap.set(["#t1", "#t2", "#t3", "#t4", "#t5", ".card", ".cena3d", "#leque", "#fim"], { autoAlpha: 0 });
-gsap.set(telas.slice(1), { autoAlpha: 0 });
-gsap.set(".titulo .p", { yPercent: 60, autoAlpha: 0, filter: "blur(14px)" });
-gsap.set("#fone", { rotationY: -24, rotationX: 8, y: 260 });
-gsap.set(".mini", { autoAlpha: 0, y: 300 });
+const imgs = ["#i-mapa", "#i-cidade", "#i-calor", "#i-lado", "#i-custo", "#i-pdf"];
+gsap.set(imgs.slice(1), { autoAlpha: 0 });
+gsap.set([".titulo", ".card", "#cena", "#fim"], { autoAlpha: 0 });
+gsap.set(".titulo .p", { yPercent: 110 });
+gsap.set("#fone", { y: 300, rotationX: 18 });
 
-// fundo vivo durante o vídeo inteiro
-tl.to("#b1", { x: 260, y: -220, duration: 30, ease: "sine.inOut" }, 0)
-  .to("#b2", { x: -200, y: 380, duration: 30, ease: "sine.inOut" }, 0)
-  .to("#b3", { x: 180, y: 120, duration: 30, ease: "sine.inOut" }, 0);
+// fundo vivo, bem lento
+tl.to("#b1", { x: 300, y: -260, duration: 30, ease: "sine.inOut" }, 0).to("#b2", { x: -220, y: 420, duration: 30, ease: "sine.inOut" }, 0);
 
-// 0–1,8 s: logo
-tl.from("#logo-abre", { scale: .6, autoAlpha: 0, filter: "blur(24px)", duration: .9 }, .1)
-  .to("#logo-abre", { autoAlpha: 0, y: -80, filter: "blur(18px)", duration: .5, ease: "power2.in" }, 1.4);
+// 0–2 s: logo
+tl.from("#logo-abre", { scale: .7, autoAlpha: 0, filter: "blur(24px)", duration: .9 }, .1)
+  .to("#logo-abre", { autoAlpha: 0, scale: 1.15, filter: "blur(18px)", duration: .45, ease: "power2.in" }, 1.55);
 
-// celular entra e flutua até o fim das cenas
-tl.to(".cena3d", { autoAlpha: 1, duration: .01 }, 1.6)
-  .to("#fone", { y: 0, rotationY: -14, rotationX: 4, duration: 1.1 }, 1.6)
-  .to("#fone", { rotationY: 14, rotationX: -3, duration: 5, ease: "sine.inOut", yoyo: true, repeat: 3 }, 2.7)
-  .to("#fone", { y: -18, duration: 2.5, ease: "sine.inOut", yoyo: true, repeat: 8 }, 2.7);
+// celular entra reto no tempo 2 e balança de leve até o fim das cenas
+tl.to("#cena", { autoAlpha: 1, duration: .01 }, 1.75)
+  .to("#fone", { y: 0, rotationX: 0, duration: 1, ease: "power4.out" }, 1.75)
+  .to("#fone", { rotationY: 4, duration: 4, ease: "sine.inOut", yoyo: true, repeat: 5 }, 2.8);
 
-function titulo(sel, t) {
+function titulo(sel, t, sai) {
   tl.to(sel, { autoAlpha: 1, duration: .01 }, t)
-    .to(`${sel} .p`, { yPercent: 0, autoAlpha: 1, filter: "blur(0px)", duration: .55, stagger: .09 }, t)
-    .to(sel, { autoAlpha: 0, y: -40, filter: "blur(16px)", duration: .4, ease: "power2.in" }, t + 4.1);
+    .to(`${sel} .p`, { yPercent: 0, duration: .55, stagger: .06 }, t)
+    .to(sel, { autoAlpha: 0, y: -30, filter: "blur(14px)", duration: .3, ease: "power2.in" }, sai);
 }
-function cards(sels, t) {
+function cards(sels, t, sai) {
   sels.forEach((s, i) => {
-    tl.fromTo(s, { autoAlpha: 0, scale: .4, x: s.includes("a") ? 140 : -140, y: 120, filter: "blur(12px)" },
-      { autoAlpha: 1, scale: 1, x: 0, y: 0, filter: "blur(0px)", duration: .6, ease: "back.out(1.8)" }, t + .9 + i * .45)
-      .to(s, { autoAlpha: 0, scale: .85, filter: "blur(12px)", duration: .35, ease: "power2.in" }, t + 4.1);
+    const esq = document.querySelector(s).classList.contains("c-esq");
+    tl.fromTo(s, { autoAlpha: 0, x: esq ? -120 : 120, scale: .85 }, { autoAlpha: 1, x: 0, scale: 1, duration: .55, ease: "back.out(1.6)" }, t + .5 + i * .5)
+      .to(s, { autoAlpha: 0, x: esq ? -60 : 60, duration: .3, ease: "power2.in" }, sai);
   });
 }
-function trocaTela(de, para, t) {
-  tl.to(de, { autoAlpha: 0, scale: 1.08, filter: "blur(16px)", duration: .45, ease: "power2.in" }, t)
-    .fromTo(para, { autoAlpha: 0, scale: .92, filter: "blur(16px)" }, { autoAlpha: 1, scale: 1, filter: "blur(0px)", duration: .55 }, t + .3);
+function troca(de, para, t, paraY = 0) {
+  tl.set(para, { y: y(paraY), scale: 1 }, t - .01)
+    .to(de, { autoAlpha: 0, filter: "blur(10px)", duration: .35, ease: "power2.in" }, t - .2)
+    .fromTo(para, { autoAlpha: 0, filter: "blur(10px)" }, { autoAlpha: 1, filter: "blur(0px)", duration: .4 }, t);
 }
 
-// cenas de ~4,5 s
-const C = [2.0, 6.6, 11.2, 15.8, 20.4];
-titulo("#t1", C[0]); cards(["#c1a", "#c1b"], C[0]);
-trocaTela("#s1", "#s2", C[1] - .2); titulo("#t2", C[1]); cards(["#c2a", "#c2b"], C[1]);
-trocaTela("#s2", "#s3", C[2] - .2); titulo("#t3", C[2]); cards(["#c3a", "#c3b"], C[2]);
-trocaTela("#s3", "#s4", C[3] - .2); titulo("#t4", C[3]); cards(["#c4a"], C[3]);
-trocaTela("#s4", "#s5", C[4] - .2); titulo("#t5", C[4]); cards(["#c5a", "#c5b"], C[4]);
-// zoom na tela do relatório
-tl.to("#fone", { scale: 1.08, duration: 3, ease: "sine.inOut" }, C[4] + .6);
+// 2–6 s: mapa do estado → zoom em Curitiba → mapa da cidade com os locais
+// Curitiba na captura m-mapa: x = 300, y = 607 (px CSS, medido no SVG do mapa).
+const CX = 300 * ESC, CY = 607 * ESC, Y0 = 250, Z = 3;
+tl.set("#i-mapa", { y: y(Y0) }, 0);
+titulo("#t1a", 2.0, 3.75); cards(["#c1a"], 2.0, 5.75);
+// leva Curitiba para o centro da tela (588 × 1208) enquanto aproxima
+tl.to("#i-mapa", { scale: Z, x: 294 - CX * Z, y: 604 - CY * Z, duration: 1.1, ease: "power2.in" }, 3.0);
+troca("#i-mapa", "#i-cidade", 4.0, 265);
+titulo("#t1b", 4.0, 5.75); cards(["#c1b"], 3.6, 5.75);
 
-// 25 s: celulares em leque
-tl.to(".cena3d", { autoAlpha: 0, y: 200, filter: "blur(20px)", duration: .5, ease: "power2.in" }, 25.0)
-  .to("#leque", { autoAlpha: 1, duration: .01 }, 25.2)
-  .to(".mini", { autoAlpha: 1, y: 0, duration: .6, stagger: .08 }, 25.2)
-  .to("#m1", { rotation: -18, x: -250, duration: .8, ease: "back.out(1.4)" }, 25.6)
-  .to("#m2", { rotation: 18, x: 250, duration: .8, ease: "back.out(1.4)" }, 25.6)
-  .to("#m3", { y: -40, scale: 1.06, duration: .8, ease: "back.out(1.4)" }, 25.6)
-  .to("#leque", { autoAlpha: 0, scale: .9, filter: "blur(20px)", duration: .5, ease: "power2.in" }, 27.3);
+// 6–10 s: cidade, ranking, locais e bairros (rolagem)
+titulo("#t2", 6.0, 9.75); cards(["#c2a", "#c2b"], 6.0, 9.75);
+tl.to("#i-cidade", { y: y(1700), duration: 3.6, ease: "power1.inOut" }, 6.0);
 
-// 27,6–30 s: logo + tagline + endereço
-tl.to("#fim", { autoAlpha: 1, duration: .01 }, 27.6)
-  .from("#fim .logo", { autoAlpha: 0, y: 60, filter: "blur(18px)", duration: .6 }, 27.6)
-  .from("#fim .tag", { autoAlpha: 0, y: 60, filter: "blur(18px)", duration: .6 }, 27.85)
-  .from("#fim .url", { autoAlpha: 0, scale: .7, duration: .6, ease: "back.out(2)" }, 28.2)
-  .from("#fim .preco", { autoAlpha: 0, duration: .5 }, 28.5)
+// 10–14 s: mapas de calor dos concorrentes
+troca("#i-cidade", "#i-calor", 10.0, 385);
+titulo("#t3", 10.0, 13.75); cards(["#c3a", "#c3b"], 10.0, 13.75);
+tl.to("#i-calor", { y: y(2150), duration: 3.6, ease: "power1.inOut" }, 10.2);
+
+// 14–18 s: comparador lado a lado
+troca("#i-calor", "#i-lado", 14.0, 300);
+titulo("#t4", 14.0, 17.75); cards(["#c4a"], 14.0, 17.75);
+tl.to("#i-lado", { y: y(1100), duration: 3.4, ease: "power1.inOut" }, 14.3);
+
+// 18–22 s: custo do voto
+troca("#i-lado", "#i-custo", 18.0, 300);
+titulo("#t5", 18.0, 21.75); cards(["#c5a", "#c5b"], 18.0, 21.75);
+tl.to("#i-custo", { y: y(1100), duration: 3.4, ease: "power1.inOut" }, 18.3);
+
+// 22–26 s: onde crescer + relatório
+troca("#i-custo", "#i-pdf", 22.0, 0);
+titulo("#t6", 22.0, 25.75); cards(["#c6a", "#c6b"], 22.0, 25.75);
+tl.fromTo("#i-pdf", { scale: 1 }, { scale: 1.06, transformOrigin: "50% 0%", duration: 3.5, ease: "sine.inOut" }, 22.2);
+
+// 26 s: impacto da trilha → celular sai, anel se abre, slogan
+tl.to("#cena", { autoAlpha: 0, scale: .85, filter: "blur(20px)", duration: .4, ease: "power2.in" }, 25.6)
+  .fromTo("#anel", { autoAlpha: .9, scale: .05 }, { autoAlpha: 0, scale: 1.2, duration: 1.2, ease: "power2.out" }, 26.0)
+  .to("#fim", { autoAlpha: 1, duration: .01 }, 26.0)
+  .from("#fim .logo", { autoAlpha: 0, y: 50, filter: "blur(16px)", duration: .6 }, 26.0)
+  .from("#fim .tag", { autoAlpha: 0, scale: .9, filter: "blur(16px)", duration: .7 }, 26.25)
+  .from("#fim .url", { autoAlpha: 0, y: 30, duration: .6, ease: "back.out(2)" }, 26.9)
+  .to("#palco", { autoAlpha: 0, duration: .6, ease: "power1.in" }, 29.4)
   .set({}, {}, 30);
 
 window.__duracao = 30;

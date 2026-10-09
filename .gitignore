@@ -71,3 +71,4 @@ apuracao-v2/data/
 
 # vídeos renderizados (pesados; o código-fonte do vídeo fica no git)
 analise-2026/video/*.mp4
+analise-2026/video/*.wav
