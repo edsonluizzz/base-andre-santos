@@ -1,4 +1,6 @@
+import { readFile } from "node:fs/promises";
 import { extname, join, normalize, sep } from "node:path";
+import { gunzipSync } from "node:zlib";
 
 // Painel de análise da eleição 2026: mini-app estático em analise-2026/public, servido pelo sistema.
 
@@ -41,4 +43,17 @@ export function prepararIndex(html: string, base: string, mostrarVoltar: boolean
 export function cabecalhosCache(rel: string, versao: string): Record<string, string> {
   if (rel.startsWith("vendor/")) return { "cache-control": "private, max-age=86400, immutable" };
   return { "cache-control": "private, no-cache", etag: `"${versao}-${rel}"` };
+}
+
+// Lê um arquivo do painel: do disco (código e dados do PR, que vão no deploy) ou, para as demais UFs
+// (dados/uf/<uf>/…, grandes demais para o repositório), do Blob, gravado comprimido (.gz) sob um prefixo
+// secreto (DIAGNOSTICO_DADOS_URL). O endereço do Blob nunca chega ao navegador: a rota busca e entrega.
+export async function lerArquivoAnalise(raiz: string, rel: string): Promise<Buffer<ArrayBuffer> | null> {
+  const local = await readFile(join(raiz, rel)).catch(() => null);
+  if (local || !rel.startsWith("dados/uf/")) return local;
+  const base = process.env.DIAGNOSTICO_DADOS_URL;
+  if (!base) return null;
+  const r = await fetch(`${base.replace(/\/?$/, "/")}${rel}.gz`, { cache: "no-store" }).catch(() => null);
+  if (!r?.ok) return null;
+  return gunzipSync(Buffer.from(await r.arrayBuffer())) as Buffer<ArrayBuffer>;
 }

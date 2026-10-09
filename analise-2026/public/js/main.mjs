@@ -1,4 +1,4 @@
-import { CARGOS, CARGO_PADRAO, MAX_COMPARADOS, UF, anosDoCargo, idCargo } from "./config.mjs";
+import { CARGOS, CARGO_PADRAO, MAX_COMPARADOS, UF, UFS, anosDoCargo, arquivoMapa, cargoNaUF, chaveCargo, definirUF, idCargo, lerChaveCargo, raizDados } from "./config.mjs";
 import { buscarCandidato, coresDe, garantirLocais, indexar, lerComparados, nomeCurto, rotuloCandidato, varCorDe } from "./dados.mjs";
 import { esc } from "./fmt.mjs";
 import { escreverRota, lerRota } from "./rota.mjs";
@@ -26,7 +26,7 @@ const TELAS = [
   { id: "relatorio", nome: "Relatório PDF", mod: relatorio },
 ];
 // Escolhas que valem para todas as telas e acompanham a troca de aba.
-const GLOBAIS = ["cargo", "m", "c", "vs"];
+const GLOBAIS = ["uf", "cargo", "m", "c", "vs"];
 
 let erros = 0;
 function registrarErro(msg) {
@@ -58,17 +58,24 @@ async function carregar(url, opcional = false) {
 
 // Cada cargo é carregado uma vez e guardado (os votos por local vão sendo acrescentados nele).
 // Municipais: um arquivo por cidade (dados/<ano>/<cargo>/<cd>.json); `m` é o código TSE da cidade.
+// Cada UF tem a sua pasta (raizDados): o PR em dados/, as demais em dados/uf/<uf>/.
 const cacheCargos = new Map();
 function dadosDoCargo(id, m = null) {
-  const cfg = CARGOS[id], chave = cfg?.municipal ? `${id}:${m}` : id;
-  const url = cfg?.municipal ? `dados/${cfg.arquivo}/${m}.json` : `dados/${cfg?.arquivo ?? id}.json`;
+  const cfg = CARGOS[id], chave = `${UF.sigla}:${id}${cfg?.municipal ? `:${m}` : ""}`;
+  const url = raizDados() + (cfg?.municipal ? `${cfg.arquivo}/${m}.json` : `${cfg?.arquivo ?? id}.json`);
   if (!cacheCargos.has(chave)) cacheCargos.set(chave, carregar(url).then(indexar).then((D) => (DEMO ? aplicarDemo(D) : D)));
   return cacheCargos.get(chave);
 }
 const cacheCidades = new Map();
 const cidadesDoAno = (ano) => {
-  if (!cacheCidades.has(ano)) cacheCidades.set(ano, carregar(`dados/${ano}/municipios.json`));
-  return cacheCidades.get(ano);
+  const chave = `${UF.sigla}:${ano}`;
+  if (!cacheCidades.has(chave)) cacheCidades.set(chave, carregar(`${raizDados()}${ano}/municipios.json`));
+  return cacheCidades.get(chave);
+};
+const cacheMapas = new Map();
+const mapaDaUF = () => {
+  if (!cacheMapas.has(UF.sigla)) cacheMapas.set(UF.sigla, carregar(arquivoMapa()));
+  return cacheMapas.get(UF.sigla);
 };
 
 const globais = (params) => Object.fromEntries(GLOBAIS.filter((k) => params[k] != null).map((k) => [k, params[k]]));
@@ -86,6 +93,7 @@ function barraEscolha(el, { D, cargo, foco, comparados, cores, mudar, cidades })
   });
   const anos = anosDoCargo(base);
   el.innerHTML = `
+    <label class="campo campo-uf">Estado <select id="es-uf">${Object.entries(UFS).map(([s, u]) => `<option value="${s}"${s === UF.sigla ? " selected" : ""}>${s} · ${esc(u.nome)}</option>`).join("")}</select></label>
     <span class="seg">${botoesCargo.map(([id, rot]) => `<button data-cargo="${id}" class="${id.split("-")[0] === base ? "on" : ""}">${rot}</button>`).join("")}</span>
     <span class="seg">${anos.map((a) => `<button data-ano="${a}" class="${ano === a ? "on" : ""}">${a}</button>`).join("")}</span>
     ${municipal ? `<label class="campo">Cidade <input id="es-m" list="es-cidades" placeholder="Digite a cidade" value="${D ? esc(D.cargo.municipio.nm) : ""}"></label>
@@ -96,6 +104,11 @@ function barraEscolha(el, { D, cargo, foco, comparados, cores, mudar, cidades })
       ${comparados.length < MAX_COMPARADOS ? `<input id="es-vs" list="es-lista" placeholder="+ adicionar">` : ""}
     </span>` : ""}
     <datalist id="es-lista">${opcoes}</datalist>` : ""}`;
+  // troca de estado: mesmo cargo quando ele existe lá (as municipais, por enquanto, só no PR)
+  el.querySelector("#es-uf").onchange = (e) => {
+    const uf = e.target.value;
+    mudar({ uf: uf === "PR" ? null : uf, cargo: cargoNaUF(cargo, uf) ? cargo : CARGO_PADRAO, m: null, c: null, vs: null });
+  };
   el.querySelectorAll("[data-cargo]").forEach((b) => {
     // troca de cargo: mantém a cidade entre vereador e prefeito do mesmo ano
     b.onclick = () => { if (b.dataset.cargo !== cargo) mudar({ cargo: b.dataset.cargo, m: CARGOS[b.dataset.cargo].municipal && municipal ? D?.cargo.municipio.cd : null, c: null, vs: null }); };
@@ -153,10 +166,11 @@ function telaCandidatosCidade(el, { D, mudar }) {
 let desfazerLanding = () => {};
 function telaInicial(el, { D, geo, acesso }) {
   el.innerHTML = landing({ venda: acesso?.venda });
-  const meus = (acesso?.liberados ?? []).map((k) => k.split(":"));
+  // chave comprada: "<cargo>:<número>" (PR) ou "<uf>/<cargo>:<número>"; municipais com "<cidade>-<número>"
+  const meus = (acesso?.liberados ?? []).map((k) => { const [cc, n] = k.split(":"); return { ...lerChaveCargo(cc), n }; });
   if (meus.length) {
-    el.querySelector(".lp-busca-caixa").insertAdjacentHTML("beforebegin", `<div class="lp-meus"><span>Seus diagnósticos</span>${meus.map(([cargo, n]) =>
-      `<a href="#relatorio?cargo=${cargo}&${n.includes("-") ? `m=${n.split("-")[0]}&c=${n.split("-")[1]}` : `c=${n}`}">${esc(CARGOS[cargo]?.curto ?? cargo)} ${esc(n.split("-").pop())}</a>`).join("")}</div>`);
+    el.querySelector(".lp-busca-caixa").insertAdjacentHTML("beforebegin", `<div class="lp-meus"><span>Seus diagnósticos</span>${meus.map(({ uf, cargo, n }) =>
+      `<a href="${escreverRota("relatorio", { uf: uf === "PR" ? null : uf, cargo, m: n.includes("-") ? n.split("-")[0] : null, c: n.split("-").pop() })}">${esc(CARGOS[cargo]?.curto ?? cargo)}${uf === "PR" ? "" : ` ${uf}`} ${esc(n.split("-").pop())}</a>`).join("")}</div>`);
   }
   // O # da URL é a rota das telas: âncora vira rolagem por script.
   el.querySelectorAll("[data-rolar]").forEach((b) => {
@@ -166,7 +180,8 @@ function telaInicial(el, { D, geo, acesso }) {
     cargoInicial: D.cargo.id,
     carregarCargo: dadosDoCargo,
     carregarCidades: cidadesDoAno,
-    abrir: (cargo, n, m) => { location.hash = escreverRota("panorama", { cargo, m, c: n }); },
+    abrir: (cargo, n, m) => { location.hash = escreverRota("panorama", { uf: UF.sigla === "PR" ? null : UF.sigla, cargo, m, c: n }); },
+    trocarUF: (sigla) => definirUF(sigla),
     venda: acesso?.venda,
   });
   const desfazerAnim = animarLanding(el, { geo, D }), desfazerBarra = ligarBarra(el);
@@ -177,14 +192,8 @@ async function iniciar() {
   aplicarTema(lerTema() ?? "escuro");
   const tela = document.getElementById("tela");
   const barra = document.getElementById("escolha");
-  let geo, interno, acesso;
-  try {
-    // acesso.json só existe no sistema (online); rodando local, tudo liberado.
-    [geo, interno, acesso] = await Promise.all([carregar("mapa.geo.json"), (location.hostname.startsWith("diagnostico.") ? null : carregar("interno.json", true)), carregar("acesso.json", true)]);
-  } catch (e) {
-    tela.innerHTML = `<div class="aviso">Não consegui carregar o mapa (${esc(e.message)}).</div>`;
-    return;
-  }
+  // acesso.json só existe no sistema (online); rodando local, tudo liberado.
+  const [interno, acesso] = await Promise.all([(location.hostname.startsWith("diagnostico.") ? null : carregar("interno.json", true)), carregar("acesso.json", true)]);
   const nav = document.getElementById("abas");
   const ids = TELAS.map((t) => t.id);
   let vez = 0;
@@ -192,16 +201,18 @@ async function iniciar() {
   const render = async () => {
     const minha = ++vez;
     const { tela: id, params } = lerRota(location.hash, ids);
-    const cargo = CARGOS[params.cargo] ? params.cargo : CARGO_PADRAO;
+    definirUF(params.uf);
+    const cargo = cargoNaUF(params.cargo) ? params.cargo : CARGO_PADRAO;
     const municipal = !!CARGOS[cargo].municipal;
-    let D = null, cidades = null;
+    let D = null, cidades = null, geo;
     try {
+      geo = await mapaDaUF();
       if (municipal) {
         cidades = await cidadesDoAno(CARGOS[cargo].ano);
         if (params.m) D = await dadosDoCargo(cargo, params.m);
       } else D = await dadosDoCargo(cargo);
     } catch (e) {
-      tela.innerHTML = `<div class="aviso">Não consegui carregar os dados (${esc(e.message)}). Rode <code>node analise-2026/coletar/coletar.mjs</code> na raiz do repositório e recarregue.</div>`;
+      tela.innerHTML = `<div class="aviso">Não consegui carregar os dados (${esc(e.message)}). Tente recarregar a página.</div>`;
       return;
     }
     const foco = D?.porNumero.get(params.c) ?? null;
@@ -210,11 +221,12 @@ async function iniciar() {
     // Troca de cargo/candidato: mantém a tela e o município, descarta escolhas que dependem do candidato.
     const mudar = (novos) => {
       const p = { ...globais(params), cargo, ...novos };
+      if (p.uf === "PR") p.uf = null;
       if (params.mun && !("cargo" in novos && novos.cargo !== cargo)) p.mun = params.mun;
       location.hash = escreverRota(id, p);
     };
     // chave do candidato: número (gerais) ou cidade-número (municipais, o número se repete entre cidades)
-    const liberado = foco ? estaLiberado(acesso, cargo, municipal ? `${params.m}-${foco.n}` : foco.n) : false;
+    const liberado = foco ? estaLiberado(acesso, chaveCargo(cargo), municipal ? `${params.m}-${foco.n}` : foco.n) : false;
     // Votos por local só para quem comprou (a rota responde 403 aos demais).
     if (foco && liberado) await garantirLocais(D, [foco.n, ...comparados.map((c) => c.n), params.b ?? ""], (u) => carregar(u, true));
     if (minha !== vez) return; // outra navegação começou enquanto carregava

@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { telefoneWhatsApp } from "@/lib/diagnostico";
+import { UFS_DIAGNOSTICO, separarCargo, telefoneWhatsApp } from "@/lib/diagnostico";
 
 // Vendas do Diagnóstico Eleitoral: recebeu o Pix → registra aqui → manda o link pelo WhatsApp.
 
@@ -28,18 +28,25 @@ const CARGOS = [
   { id: "federal-2022", nome: "Deputado Federal 2022", municipal: false },
   { id: "senador-2022", nome: "Senador 2022", municipal: false },
   { id: "governador-2022", nome: "Governador 2022", municipal: false },
-  { id: "presidente-2022", nome: "Presidente 2022 (votos no PR)", municipal: false },
+  { id: "presidente-2022", nome: "Presidente 2022 (votos no estado)", municipal: false },
   { id: "vereador-2024", nome: "Vereador 2024", municipal: true },
   { id: "prefeito-2024", nome: "Prefeito 2024", municipal: true },
   { id: "vereador-2020", nome: "Vereador 2020", municipal: true },
   { id: "prefeito-2020", nome: "Prefeito 2020", municipal: true },
 ];
 type Cidade = { cd: string; nm: string };
-const BASE = "/eleicao-2026/analise/dados";
-const urlCandidatos = (cargo: string, cidade: string) => {
-  const [nome, ano] = cargo.split("-");
-  if (!ano) return `${BASE}/${cargo}.json`;
-  return CARGOS.find((c) => c.id === cargo)?.municipal ? `${BASE}/${ano}/${nome}/${cidade}.json` : `${BASE}/${ano}/${nome}.json`;
+// Dados do PR na raiz de dados/; as demais UFs em dados/uf/<uf>/ (municipais, por enquanto, só no PR).
+const pastaUF = (uf: string) => `/eleicao-2026/analise/dados${uf === "pr" ? "" : `/uf/${uf}`}`;
+const urlCandidatos = (uf: string, cargo: string, cidade: string) => {
+  const [nome, ano] = cargo.split("-"), base = pastaUF(uf);
+  if (!ano) return `${base}/${cargo}.json`;
+  return CARGOS.find((c) => c.id === cargo)?.municipal ? `${base}/${ano}/${nome}/${cidade}.json` : `${base}/${ano}/${nome}.json`;
+};
+// "sc/estadual-2022" → "Deputado Estadual 2022 · SC"
+const nomeCargo = (chave: string) => {
+  const x = separarCargo(chave);
+  if (!x) return chave;
+  return `${CARGOS.find((c) => c.id === x.cargo)?.nome ?? x.cargo}${x.uf === "pr" ? "" : ` · ${x.uf.toUpperCase()}`}`;
 };
 const reais = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 const data = (s: string | null) => (s ? new Date(s).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" }) : "—");
@@ -55,6 +62,7 @@ export default function DiagnosticosPage() {
   const superAdmin = (session?.user as { isSuperAdmin?: boolean } | undefined)?.isSuperAdmin;
   const [vendas, setVendas] = useState<Venda[]>([]);
   const [cands, setCands] = useState<Record<string, Candidato[]>>({});
+  const [uf, setUf] = useState("pr");
   const [cargo, setCargo] = useState("estadual");
   const [busca, setBusca] = useState("");
   const [cliente, setCliente] = useState("");
@@ -65,7 +73,8 @@ export default function DiagnosticosPage() {
   const [cidadeTexto, setCidadeTexto] = useState("");
   const municipal = CARGOS.find((c) => c.id === cargo)?.municipal ?? false;
   const cidade = municipal ? cidades.find((c) => c.nm.toUpperCase() === cidadeTexto.trim().toUpperCase())?.cd ?? "" : "";
-  const chaveLista = municipal ? `${cargo}:${cidade}` : cargo;
+  const chaveCargo = uf === "pr" ? cargo : `${uf}/${cargo}`;
+  const chaveLista = municipal ? `${chaveCargo}:${cidade}` : chaveCargo;
 
   const carregar = useCallback(async () => {
     const r = await fetch("/api/diagnosticos");
@@ -75,14 +84,14 @@ export default function DiagnosticosPage() {
   // a lista de 2024 serve para 2020 também: as 399 cidades são as mesmas
   useEffect(() => {
     if (!municipal || cidades.length) return;
-    fetch(`${BASE}/2024/municipios.json`).then((r) => r.json()).then(setCidades).catch(() => toast.error("Não consegui carregar as cidades"));
+    fetch(`${pastaUF("pr")}/2024/municipios.json`).then((r) => r.json()).then(setCidades).catch(() => toast.error("Não consegui carregar as cidades"));
   }, [municipal, cidades.length]);
   useEffect(() => {
     if (cands[chaveLista] || (municipal && !cidade)) return;
-    fetch(urlCandidatos(cargo, cidade)).then((r) => r.json())
+    fetch(urlCandidatos(uf, cargo, cidade)).then((r) => r.json())
       .then((d) => setCands((x) => ({ ...x, [chaveLista]: d.candidatos })))
       .catch(() => toast.error("Não consegui carregar a lista de candidatos"));
-  }, [cargo, cidade, chaveLista, municipal, cands]);
+  }, [uf, cargo, cidade, chaveLista, municipal, cands]);
 
   const lista = cands[chaveLista] ?? [];
   const numero = busca.match(/·\s*(\d{2,5})\s*·/)?.[1] ?? (/^\d{2,5}$/.test(busca.trim()) ? busca.trim() : "");
@@ -95,7 +104,7 @@ export default function DiagnosticosPage() {
     try {
       const r = await fetch("/api/diagnosticos", {
         method: "POST", headers: { "content-type": "application/json" },
-        body: JSON.stringify({ cargo, cidade, numero: escolhido.n, cliente, telefone, valor: Number(valor.replace(",", ".")) }),
+        body: JSON.stringify({ cargo: chaveCargo, cidade, numero: escolhido.n, cliente, telefone, valor: Number(valor.replace(",", ".")) }),
       });
       const j = await r.json();
       if (!r.ok) { toast.error(j.error ?? "Erro ao registrar"); return; }
@@ -129,9 +138,12 @@ export default function DiagnosticosPage() {
 
       <div className="grid gap-3 rounded-xl border p-4 md:grid-cols-[160px_1fr_1fr_160px_110px_auto] md:items-end">
         <div className="space-y-1">
-          <Label>Cargo</Label>
+          <Label>Estado e cargo</Label>
+          <select value={uf} onChange={(e) => { const u = e.target.value; setUf(u); if (u !== "pr" && municipal) setCargo("estadual"); setBusca(""); }} className="mb-2 h-10 w-full rounded-md border bg-background px-2 text-sm">
+            {UFS_DIAGNOSTICO.map((u) => <option key={u} value={u}>{u.toUpperCase()}</option>)}
+          </select>
           <select value={cargo} onChange={(e) => { setCargo(e.target.value); setBusca(""); }} className="h-10 w-full rounded-md border bg-background px-2 text-sm">
-            {CARGOS.map((c) => <option key={c.id} value={c.id}>{c.nome}</option>)}
+            {CARGOS.filter((c) => uf === "pr" || !c.municipal).map((c) => <option key={c.id} value={c.id}>{c.nome}</option>)}
           </select>
           {municipal && (<>
             <Input list="diag-cidades" value={cidadeTexto} onChange={(e) => { setCidadeTexto(e.target.value); setBusca(""); }} placeholder="Cidade" className="mt-2" />
@@ -174,7 +186,7 @@ export default function DiagnosticosPage() {
               const wa = telefoneWhatsApp(v.telefone);
               return (
                 <tr key={v.id} className={`border-t ${v.ativo ? "" : "opacity-50"}`}>
-                  <td className="p-3"><b>{v.candidato}</b><div className="text-xs text-muted-foreground">{v.numero.split("-").pop()} · {CARGOS.find((c) => c.id === v.cargo)?.nome ?? v.cargo}</div></td>
+                  <td className="p-3"><b>{v.candidato}</b><div className="text-xs text-muted-foreground">{v.numero.split("-").pop()} · {nomeCargo(v.cargo)}</div></td>
                   <td className="p-3">{v.cliente}<div className="text-xs text-muted-foreground">{v.telefone ?? ""}</div></td>
                   <td className="p-3 text-right">{reais(v.valor)}</td>
                   <td className="p-3 whitespace-nowrap">{data(v.createdAt)}</td>

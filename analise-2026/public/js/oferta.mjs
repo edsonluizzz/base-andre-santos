@@ -1,6 +1,7 @@
 // Oferta do Diagnóstico Eleitoral para quem ainda não comprou o candidato aberto.
 import { esc, inteiro } from "./fmt.mjs";
 import { nomeCurto } from "./dados.mjs";
+import { UF } from "./config.mjs";
 
 // Sem compra: Panorama inteiro e "Votos do candidato" em prévia (mapa borrado, sem números). O resto, oferta.
 export const TELAS_LIVRES = ["panorama", "candidato"];
@@ -12,7 +13,7 @@ export function estaLiberado(acesso, cargo, n) {
 
 export function linkCompra(venda, foco, cargoNome) {
   if (!venda?.whatsapp) return null;
-  const texto = `Olá! Quero comprar o Ovile Diagnóstico de ${foco.nm} (número ${foco.n}, ${cargoNome}).`;
+  const texto = `Olá! Quero comprar o Ovile Diagnóstico de ${foco.nm} (número ${foco.n}, ${cargoNome}, ${UF.sigla}).`;
   return `https://wa.me/${String(venda.whatsapp).replace(/\D/g, "")}?text=${encodeURIComponent(texto)}`;
 }
 

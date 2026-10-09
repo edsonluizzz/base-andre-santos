@@ -5,6 +5,7 @@ import { barras } from "../animar.mjs";
 import { tabela } from "../tabela.mjs";
 import { seletorMunicipio } from "../seletor.mjs";
 import { esc, inteiro, pct } from "../fmt.mjs";
+import { UF } from "../config.mjs";
 import { oferta } from "../oferta.mjs";
 
 // Dica de um local de votação com uma linha por candidato.
@@ -66,7 +67,7 @@ export function montar(el, { D, geo, params, navegar, foco: a }) {
   const zeros = D.municipios.length - cMun.n;
   const locaisSel = sel == null ? null : locaisDoMunicipio(D, sel);
   // Bairros: da cidade escolhida, senão da cidade onde o candidato teve mais votos.
-  const cidadeBairros = nomeSel ?? (a.mun[0] ? D.municipios[a.mun[0][0]].nm : "CURITIBA");
+  const cidadeBairros = nomeSel ?? (a.mun[0] ? D.municipios[a.mun[0][0]].nm : UF.capital);
   el.innerHTML = `
     <div class="controles">
       <span class="seg"><button data-modo="abs" class="${modo === "abs" ? "on" : ""}">Votos</button><button data-modo="pct" class="${modo === "pct" ? "on" : ""}">% dos válidos</button></span>

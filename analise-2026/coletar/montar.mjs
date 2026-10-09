@@ -14,14 +14,14 @@ function esparso(mapa, indice, oQue) {
   return out.sort((a, b) => b[1] - a[1]);
 }
 
-export function montarDados({ oficial, municipios, agregado, locais, contas, focoLocal = null, meta, cargo = {} }) {
+export function montarDados({ oficial, municipios, agregado, locais, contas, focoLocal = null, meta, cargo = {}, regiao = (m) => regiaoDe(m.nm) }) {
   const { votosMun, votosLocal, totalLocal, validosMun } = agregado;
   const idxMun = new Map(municipios.map((m, i) => [m.cd, i]));
   // Votos em município fora da lista abortam, mesmo de candidato fora do foco.
   for (const porMun of votosMun.values()) {
     for (const cd of porMun.keys()) if (!idxMun.has(cd)) throw new Error(`Município ${cd} da votação não está na lista do TSE`);
   }
-  const municipiosOut = municipios.map((m) => ({ cd: m.cd, ibge: m.ibge, nm: m.nm, regiao: regiaoDe(m.nm), validos: validosMun.get(m.cd) ?? 0 }));
+  const municipiosOut = municipios.map((m) => ({ cd: m.cd, ibge: m.ibge, nm: m.nm, regiao: regiao(m), validos: validosMun.get(m.cd) ?? 0 }));
 
   const ids = [...totalLocal.keys()].sort();
   const idxLoc = new Map(ids.map((id, j) => [id, j]));

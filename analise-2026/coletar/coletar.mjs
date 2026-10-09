@@ -2,38 +2,44 @@
 // Coleta única: baixa os dados abertos do TSE e a malha do IBGE, confere cada cargo com o resultado
 // oficial e grava public/dados/<cargo>.json (base), public/dados/<cargo>/<número>.json (votos por
 // local de cada candidato, carregados sob demanda) e public/mapa.geo.json.
-// Uso (da raiz do repo): node analise-2026/coletar/coletar.mjs [--refazer] [--aceitar-divergencia]
+// Uso (da raiz do repo): node analise-2026/coletar/coletar.mjs [UF=PR] [--refazer] [--aceitar-divergencia]
+// PR grava em public/dados/ e public/mapa.geo.json; as demais UFs em public/dados/uf/<uf>/ (com o próprio mapa.geo.json).
 import { createWriteStream, existsSync, mkdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import { fileURLToPath } from "node:url";
-import { CARGOS_GERAIS as CARGOS } from "../public/js/config.mjs";
+import { CARGOS_GERAIS } from "../public/js/config.mjs";
 import { criarAgregador } from "./agregar.mjs";
 import { conferir } from "./conferir.mjs";
 import { criarSomaContas } from "./contas.mjs";
 import { criarLeitorLocais } from "./locais.mjs";
-import { orientarParaD3 } from "./malha.mjs";
 import { montarDados } from "./montar.mjs";
 import { parseMunicipiosCfg, parseOficial } from "./oficial.mjs";
 import { conferirRegioes } from "./regioes.mjs";
+import { dadosUF, gravarMalha, regioesUF } from "./uf.mjs";
 import { percorrerCsvDoZip } from "./zip.mjs";
 
 const AQUI = dirname(fileURLToPath(import.meta.url));
 const CACHE = join(AQUI, "cache");
-const PUBLICO = join(AQUI, "..", "public");
 const ODSELE = "https://cdn.tse.jus.br/estatistica/sead/odsele";
 const RES = "https://resultados.tse.jus.br/oficial/ele2026/6259";
+const ARGS = new Set(process.argv.slice(2));
+const UF = dadosUF([...ARGS].find((a) => !a.startsWith("--")) ?? "PR");
+const uf = UF.sigla.toLowerCase(), PR = UF.sigla === "PR";
+// No DF, o "estadual" é deputado distrital (código 8, arquivo c0008).
+const cargoDaUF = (id, c) => (UF.sigla === "DF" && id === "estadual" ? { ...c, nome: "Deputado Distrital", cd: "8", oficial: "c0008" } : c);
+const CARGOS = Object.fromEntries(Object.entries(CARGOS_GERAIS).map(([id, c]) => [id, cargoDaUF(id, c)]));
+// Cache: o PR mantém os nomes da primeira coleta; as demais UFs ficam em cache/2026/.
+const noCache = (prNome, nome) => (PR ? prNome : `2026/${nome}`);
 const FONTES = {
-  secao: { url: `${ODSELE}/votacao_secao/votacao_secao_2026_PR.zip`, arquivo: "secao.zip" },
+  secao: { url: `${ODSELE}/votacao_secao/votacao_secao_2026_${UF.sigla}.zip`, arquivo: noCache("secao.zip", `votacao_secao_2026_${UF.sigla}.zip`) },
   locais: { url: `${ODSELE}/eleitorado_locais_votacao/eleitorado_local_votacao_2026.zip`, arquivo: "locais.zip" },
   contas: { url: `${ODSELE}/prestacao_contas/prestacao_de_contas_eleitorais_candidatos_2026.zip`, arquivo: "contas.zip" },
   ...Object.fromEntries(Object.entries(CARGOS).map(([id, c]) => [`oficial-${id}`,
-    { url: `${RES}/dados/pr/pr-${c.oficial}-e006259-u.json`, arquivo: id === "estadual" ? "oficial.json" : `oficial-${id}.json` }])),
+    { url: `${RES}/dados/${uf}/${uf}-${c.oficial}-e006259-u.json`, arquivo: noCache(id === "estadual" ? "oficial.json" : `oficial-${id}.json`, `oficial-${uf}-${id}.json`) }])),
   municipios: { url: `${RES}/config/mun-e006259-cm.json`, arquivo: "municipios.json" },
-  malha: { url: "https://servicodados.ibge.gov.br/api/v3/malhas/estados/41?formato=application/vnd.geo+json&qualidade=minima&intrarregiao=municipio", arquivo: "malha.geojson" },
 };
-const ARGS = new Set(process.argv.slice(2));
 const REFAZER = ARGS.has("--refazer");
 const ACEITAR = ARGS.has("--aceitar-divergencia");
 
@@ -58,9 +64,12 @@ async function main() {
   const arq = {};
   for (const [nome, fonte] of Object.entries(FONTES)) arq[nome] = await baixar(fonte);
 
-  const municipios = parseMunicipiosCfg(lerJson(arq.municipios));
-  const faltam = conferirRegioes(municipios.map((m) => m.nm));
-  if (faltam.length) throw new Error(`Municípios das listas de região não encontrados no TSE: ${faltam.join(", ")}`);
+  const municipios = parseMunicipiosCfg(lerJson(arq.municipios), uf);
+  if (PR) {
+    const faltam = conferirRegioes(municipios.map((m) => m.nm));
+    if (faltam.length) throw new Error(`Municípios das listas de região não encontrados no TSE: ${faltam.join(", ")}`);
+  }
+  const regiao = await regioesUF(UF.sigla);
 
   const fontes = {};
   const cargos = Object.entries(CARGOS).map(([id, cfg]) => {
@@ -74,8 +83,8 @@ async function main() {
   });
   const porCodigo = new Map(cargos.map((c) => [c.cfg.cd, c]));
 
-  console.log("lendo votação por seção (830 MB; leva alguns minutos)...");
-  const nSecao = await percorrerCsvDoZip(arq.secao, "votacao_secao_2026_PR.csv",
+  console.log(`lendo votação por seção ${UF.sigla} (leva alguns minutos)...`);
+  const nSecao = await percorrerCsvDoZip(arq.secao, `votacao_secao_2026_${UF.sigla}.csv`,
     ["DT_GERACAO", "HH_GERACAO", "CD_CARGO", "CD_MUNICIPIO", "NR_ZONA", "NR_LOCAL_VOTACAO", "NR_VOTAVEL", "QT_VOTOS"],
     (c, i) => {
       const cargo = porCodigo.get(c[i.CD_CARGO]);
@@ -87,7 +96,7 @@ async function main() {
 
   console.log("lendo locais de votação...");
   const leitorLocais = criarLeitorLocais();
-  await percorrerCsvDoZip(arq.locais, "eleitorado_local_votacao_2026_PR.csv",
+  await percorrerCsvDoZip(arq.locais, `eleitorado_local_votacao_2026_${UF.sigla}.csv`,
     ["DT_GERACAO", "HH_GERACAO", "CD_MUNICIPIO", "NR_ZONA", "NR_LOCAL_VOTACAO", "NM_LOCAL_VOTACAO", "NM_BAIRRO", "NR_LATITUDE", "NR_LONGITUDE", "QT_ELEITOR_SECAO", "NR_LOCAL_VOTACAO_ORIGINAL", "NM_LOCAL_VOTACAO_ORIGINAL"],
     (c, i) => {
       fontes.locais ??= geracao(c, i);
@@ -100,14 +109,14 @@ async function main() {
   const locais = leitorLocais.resultado();
 
   console.log("lendo prestação de contas...");
-  await percorrerCsvDoZip(arq.contas, "receitas_candidatos_2026_PR.csv",
+  await percorrerCsvDoZip(arq.contas, `receitas_candidatos_2026_${UF.sigla}.csv`,
     ["DT_GERACAO", "HH_GERACAO", "SQ_CANDIDATO", "DS_CARGO", "DS_FONTE_RECEITA", "DS_ORIGEM_RECEITA", "VR_RECEITA"],
     (c, i) => {
       fontes.contas ??= geracao(c, i);
       const r = { sq: c[i.SQ_CANDIDATO], cargo: c[i.DS_CARGO], fonte: c[i.DS_FONTE_RECEITA], origem: c[i.DS_ORIGEM_RECEITA], valor: c[i.VR_RECEITA] };
       for (const cargo of cargos) cargo.soma.receita(r);
     });
-  await percorrerCsvDoZip(arq.contas, "despesas_contratadas_candidatos_2026_PR.csv",
+  await percorrerCsvDoZip(arq.contas, `despesas_contratadas_candidatos_2026_${UF.sigla}.csv`,
     ["SQ_CANDIDATO", "DS_CARGO", "VR_DESPESA_CONTRATADA"],
     (c, i) => {
       const d = { sq: c[i.SQ_CANDIDATO], cargo: c[i.DS_CARGO], valor: c[i.VR_DESPESA_CONTRATADA] };
@@ -135,14 +144,14 @@ async function main() {
       }
     }
     const dados = montarDados({
-      oficial, municipios, agregado, locais, contas: soma.resultado(),
-      cargo: { id, nome: cfg.nome, ano: cfg.ano, majoritario: !!cfg.majoritario },
+      oficial, municipios, agregado, locais, contas: soma.resultado(), regiao,
+      cargo: { id, nome: cfg.nome, ano: cfg.ano, majoritario: !!cfg.majoritario, uf: UF.sigla },
       meta: { geradoEm: new Date().toISOString(), fontes: { ...fontes, oficial: oficial.geradoEm }, divergencias: conf.divergentes.length },
     });
     prontos.push({ id, dados });
   }
 
-  const pasta = join(PUBLICO, "dados");
+  const pasta = UF.pasta;
   for (const { id, dados } of prontos) {
     const dir = join(pasta, id);
     rmSync(dir, { recursive: true, force: true });
@@ -155,8 +164,7 @@ async function main() {
     const semCoord = dados.locais.filter((l) => l.lat == null).length;
     console.log(`${id}: ${dados.candidatos.length} candidatos, ${dados.municipios.length} municípios, ${dados.locais.length} locais (${semCoord} sem coordenada) — ${tamanho(join(pasta, `${id}.json`))}`);
   }
-  writeFileSync(join(PUBLICO, "mapa.geo.json"), JSON.stringify(orientarParaD3(lerJson(arq.malha))));
-  console.log("gravado public/dados/ e public/mapa.geo.json");
+  console.log(`gravado ${pasta} e ${await gravarMalha(UF.sigla)}`);
 }
 
 main().catch((e) => {

@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { cabecalhosCache, prepararIndex, resolverArquivo } from "@/lib/analise-2026";
+import { cabecalhosCache, lerArquivoAnalise, prepararIndex, resolverArquivo } from "@/lib/analise-2026";
 import {
   COOKIE_DIAGNOSTICO, HOST_DIAGNOSTICO, arquivoDeCandidato, chaveCandidato, ehHostDiagnostico, juntarToken, lerTokens, tokenValido,
 } from "@/lib/diagnostico";
@@ -11,7 +10,7 @@ import {
 // Diagnóstico Eleitoral: arquivos de analise-2026/public (dados públicos do TSE/IBGE).
 // Produto à parte, público só em diagnostico.ovile.com.br (rewrite no next.config); em ovile.com.br/eleicao-2026/analise
 // é ferramenta interna, só para ADMIN.
-// Quem não comprou vê a prévia; os votos por local de cada candidato (dados/<cargo>/<nº>.json) só saem para
+// Quem não comprou vê a prévia; os votos por local de cada candidato (dados/[uf/<uf>/]<cargo>/<nº>.json) só saem para
 // quem tem token ativo (link vendido) ou é ADMIN do sistema. O gasto interno (interno.json) nunca sai.
 export const dynamic = "force-dynamic";
 
@@ -73,14 +72,14 @@ export async function GET(req: NextRequest, { params }: { params: { arquivo?: st
         db.diagnosticoAcesso.updateMany({ where: { id: { in: acessos.map((a) => a.id) } }, data: { ultimoUso: new Date() } })
           .catch((e) => console.error("[eleicao-2026/analise] ultimoUso:", e));
       }
-      const corpo = await readFile(alvo.caminho).catch(() => null);
+      const corpo = await lerArquivoAnalise(RAIZ, alvo.rel);
       if (!corpo) return new NextResponse("não encontrado", { status: 404 });
       return new NextResponse(corpo, { headers: { "content-type": alvo.tipo, "cache-control": "private, no-store", "x-robots-tag": "noindex, nofollow" } });
     }
 
     const cache = cabecalhosCache(alvo.rel, VERSAO);
     if (cache.etag && req.headers.get("if-none-match") === cache.etag) return new NextResponse(null, { status: 304, headers: cache });
-    const corpo = await readFile(alvo.caminho).catch(() => null);
+    const corpo = await lerArquivoAnalise(RAIZ, alvo.rel);
     if (!corpo) return new NextResponse("não encontrado", { status: 404 });
 
     // O link "← sistema" só faz sentido no endereço do sistema, não no subdomínio do produto.

@@ -10,20 +10,22 @@
 // No modo municipal o BAIRRO ocupa o lugar do "município" das eleições gerais (séries `mun`, lista `municipios`).
 // Confere a soma por seção de cada candidato com o total oficial do TSE (votacao_candidato_munzona) antes de gravar.
 // Uso (da raiz do repo): node analise-2026/coletar/coletar-municipal.mjs [ano=2024] [UF=PR] [--aceitar-divergencia]
+// Saída: PR em public/dados/<ano>/; as demais UFs em public/dados/uf/<uf>/<ano>/ (e a malha em public/dados/uf/<uf>/mapa.geo.json).
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { idLocal } from "./agregar.mjs";
-import { regiaoDe } from "./regioes.mjs";
+import { dadosUF, gravarMalha, regioesUF } from "./uf.mjs";
 import { criarSomaContas } from "./contas.mjs";
 import { criarLeitorLocais } from "./locais.mjs";
 import { percorrerCsvDoZip } from "./zip.mjs";
 
-const [ANO = "2024", UF = "PR"] = process.argv.slice(2).filter((a) => !a.startsWith("--"));
+const [ANO = "2024", ufArg = "PR"] = process.argv.slice(2).filter((a) => !a.startsWith("--"));
+const UF = ufArg.toUpperCase();
 const ACEITAR = process.argv.includes("--aceitar-divergencia");
 const AQUI = dirname(fileURLToPath(import.meta.url));
 const CACHE = join(AQUI, "cache", ANO);
-const PUBLICO = join(AQUI, "..", "public", "dados", ANO);
+const PUBLICO = join(dadosUF(UF).pasta, ANO); // PR: public/dados/<ano>; demais: public/dados/uf/<uf>/<ano>
 const GERAL = Number(ANO) % 4 === 2; // 2018, 2022: eleições gerais; 2016, 2020, 2024: municipais
 const CARGOS = GERAL
   ? {
@@ -32,6 +34,7 @@ const CARGOS = GERAL
     5: { id: "senador", nome: "Senador", majoritario: true },
     6: { id: "federal", nome: "Deputado Federal", majoritario: false },
     7: { id: "estadual", nome: "Deputado Estadual", majoritario: false },
+    8: { id: "estadual", nome: "Deputado Distrital", majoritario: false }, // DF (no lugar do estadual)
   }
   : { 11: { id: "prefeito", nome: "Prefeito", majoritario: true }, 13: { id: "vereador", nome: "Vereador", majoritario: false } };
 // "área" de uma eleição: a cidade (municipais) ou a UF inteira (gerais)
@@ -57,6 +60,8 @@ async function main() {
   const cfg = JSON.parse(readFileSync(join(AQUI, "cache", "municipios.json"), "utf8"));
   const uf = cfg.abr.find((a) => a.cd.toLowerCase() === UF.toLowerCase());
   const MUN = new Map(uf.mu.map((m) => [m.cd, { cd: m.cd, ibge: m.cdi, nm: m.nm }]));
+  const regiao = await regioesUF(UF);
+  if (GERAL) await gravarMalha(UF);
 
   console.log("vagas...");
   const vagas = new Map(); // `${cargo}:${cd}` → vagas
@@ -192,7 +197,7 @@ async function main() {
     const validosBairro = new Map();
     for (const id of ids) somar(validosBairro, bairroNome(id), a.validoLocal.get(id));
     const bairros = GERAL
-      ? [...MUN.values()].map((x) => ({ cd: x.cd, ibge: x.ibge, nm: x.nm, regiao: regiaoDe(x.nm), validos: validosBairro.get(x.cd) ?? 0 }))
+      ? [...MUN.values()].map((x) => ({ cd: x.cd, ibge: x.ibge, nm: x.nm, regiao: regiao(x), validos: validosBairro.get(x.cd) ?? 0 }))
       : [...validosBairro].sort((x, y) => y[1] - x[1]).map(([nm, validos], k) => ({ cd: String(k), ibge: null, nm, regiao: null, validos }));
     const idxBairro = new Map(bairros.map((b, k) => [GERAL ? b.cd : b.nm, k]));
     const idxLocal = new Map(ids.map((id, j) => [id, j]));

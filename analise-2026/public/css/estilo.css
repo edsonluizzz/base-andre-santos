@@ -409,6 +409,8 @@ body[data-tela="inicio"] main { padding: 0; }
 .lp-busca-cargos { display: inline-flex; flex-wrap: wrap; gap: 2px; padding: 4px; border-radius: 22px; background: var(--cartao); border: 1px solid var(--lp-linha); margin-bottom: 20px; }
 .lp-busca-cargos button { border: 0; background: none; border-radius: 999px; padding: 10px 18px; font: 600 15px "Geist", sans-serif; color: var(--suave); transition: background .25s, color .25s; }
 .lp-busca-cargos button.on { background: var(--texto); color: var(--fundo); }
+.lp-busca-cargos button:disabled { opacity: .35; cursor: not-allowed; }
+.lp-busca-uf { font-size: 17px; padding: 14px 18px; margin-bottom: 16px; width: auto; min-width: 260px; max-width: 100%; }
 .lp-busca-cidade { margin-bottom: 18px; }
 .lp-busca-rotulo { display: block; font-size: 15px; color: var(--suave); margin-bottom: 8px; }
 .lp-busca-campo { width: 100%; font: 500 22px "Geist", sans-serif; padding: 20px 24px; border-radius: 14px; background: var(--cartao); color: var(--texto);

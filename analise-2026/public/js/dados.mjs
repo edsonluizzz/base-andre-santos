@@ -1,4 +1,4 @@
-import { CORES_SERIE, MAX_COMPARADOS, UF } from "./config.mjs";
+import { CORES_SERIE, MAX_COMPARADOS, UF, raizDados } from "./config.mjs";
 import { pearson } from "./calc.mjs";
 
 const normal = (s) => String(s ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().trim();
@@ -38,7 +38,9 @@ export function unidade(D) {
     const cidade = tituloNome(D.cargo.municipio.nm);
     return { municipal: true, um: "bairro", uns: "bairros", Um: "Bairro", Uns: "Bairros", area: cidade, naArea: `em ${cidade}`, daArea: `de ${cidade}`, todo: "Cidade inteira", ano: D.cargo.ano };
   }
-  return { municipal: false, um: "município", uns: "municípios", Um: "Município", Uns: "Municípios", area: UF.nome, naArea: `no ${UF.sigla}`, daArea: `do ${UF.sigla}`, todo: `${UF.nome} inteiro`, ano: D.cargo?.ano ?? 2026 };
+  // "no PR"/"do PR", "na BA"/"da BA", "em SC"/"de SC"; "Paraná inteiro", "Bahia inteira"
+  const de = { no: "do", na: "da", em: "de" }[UF.em];
+  return { municipal: false, um: "município", uns: "municípios", Um: "Município", Uns: "Municípios", area: UF.nome, naArea: `${UF.em} ${UF.sigla}`, daArea: `${de} ${UF.sigla}`, todo: `${UF.nome} ${UF.em === "na" ? "inteira" : "inteiro"}`, ano: D.cargo?.ano ?? 2026 };
 }
 // "BAIRRO · MUNICÍPIO" do local (nas municipais a unidade já é o bairro: só ele).
 export const ondeLocal = (D, l) => (D.cargo?.escopo === "municipio" ? (l.bairro ?? D.municipios[l.mun]?.nm ?? "") : `${l.bairro ?? ""} · ${D.municipios[l.mun].nm}`);
@@ -152,26 +154,28 @@ export async function garantirLocais(D, numeros, buscar) {
   if (D.cargo?.escopo === "municipio") {
     if (D.candidatos.some((c) => c.loc)) return;
     const [cargo, ano] = D.cargo.id.split("-");
-    const tudo = (await buscar(`dados/${ano}/${cargo}/${D.cargo.municipio.cd}/loc.json`)) ?? {};
+    const tudo = (await buscar(`${raizDados()}${ano}/${cargo}/${D.cargo.municipio.cd}/loc.json`)) ?? {};
     for (const c of D.candidatos) c.loc = tudo[c.n] ?? [];
     return;
   }
   const cands = [...new Set(numeros.map((n) => D.porNumero.get(n)).filter((c) => c && !c.loc))];
   await Promise.all(cands.map(async (c) => {
-    const loc = (c.votos ? await buscar(`dados/${pastaCargo(D)}/${c.nOrig ?? c.n}.json`) : null) ?? [];
+    const loc = (c.votos ? await buscar(`${raizDados()}${pastaCargo(D)}/${c.nOrig ?? c.n}.json`) : null) ?? [];
     c.loc = c.fatorVotos ? loc.map(([j, v]) => [j, Math.max(1, Math.round(v * c.fatorVotos))]) : loc;
   }));
 }
 
-// Regiões do estado (Curitiba, RMC, Litoral, Interior); nas municipais não se aplica (objeto vazio).
+// Regiões do estado: no PR, Curitiba/RMC/Litoral/Interior; nas demais UFs, as regiões intermediárias do IBGE
+// (todas aparecem, mesmo com zero, na ordem em que surgem). Nas municipais não se aplica (objeto vazio).
 export function porRegiao(D, c) {
   if (D.cargo?.escopo === "municipio") return {};
-  const r = { Curitiba: 0, RMC: 0, Litoral: 0, Interior: 0 };
+  const r = UF.sigla === "PR" ? { Curitiba: 0, RMC: 0, Litoral: 0, Interior: 0 } : {};
+  for (const m of D.municipios) r[m.regiao] ??= 0;
   for (const [i, v] of c.mun) r[D.municipios[i].regiao] += v;
   return r;
 }
 
-export function porBairro(D, c, municipio = "CURITIBA") {
+export function porBairro(D, c, municipio = UF.capital) {
   const daCidade = (l) => D.municipios[l.mun].nm === municipio;
   const acc = new Map();
   for (const [j, v] of c.loc ?? []) {

@@ -35,8 +35,9 @@ test("parseOficial sem cargo: erro claro", () => {
   assert.throws(() => parseOficial({}), /sem cargo/);
 });
 
-test("parseMunicipiosCfg: só PR, com código IBGE", () => {
+test("parseMunicipiosCfg: só a UF pedida (PR por padrão), com código IBGE", () => {
   const cfg = { abr: [{ cd: "SC", mu: [{ cd: "1", cdi: "2", nm: "X" }] }, { cd: "PR", mu: [{ cd: "75353", cdi: "4106902", nm: "CURITIBA", c: "s", z: ["1"] }] }] };
   assert.deepEqual(parseMunicipiosCfg(cfg), [{ cd: "75353", ibge: "4106902", nm: "CURITIBA" }]);
-  assert.throws(() => parseMunicipiosCfg({ abr: [] }), /PR não encontrada/);
+  assert.deepEqual(parseMunicipiosCfg(cfg, "sc"), [{ cd: "1", ibge: "2", nm: "X" }]);
+  assert.throws(() => parseMunicipiosCfg({ abr: [] }), /UF pr não encontrada/);
 });

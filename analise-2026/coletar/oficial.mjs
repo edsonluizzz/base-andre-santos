@@ -45,8 +45,8 @@ export function parseOficial(json) {
   };
 }
 
-export function parseMunicipiosCfg(cfg) {
-  const pr = (cfg?.abr ?? []).find((a) => a.cd.toLowerCase() === "pr");
-  if (!pr) throw new Error("UF PR não encontrada na lista de municípios do TSE");
+export function parseMunicipiosCfg(cfg, uf = "pr") {
+  const pr = (cfg?.abr ?? []).find((a) => a.cd.toLowerCase() === uf.toLowerCase());
+  if (!pr) throw new Error(`UF ${uf} não encontrada na lista de municípios do TSE`);
   return pr.mu.map((m) => ({ cd: m.cd, ibge: m.cdi, nm: m.nm }));
 }

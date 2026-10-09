@@ -9,7 +9,19 @@ export const CARGOS_DIAGNOSTICO = [
   "estadual-2022", "federal-2022", "governador-2022", "senador-2022", "presidente-2022",
   "vereador-2024", "prefeito-2024", "vereador-2020", "prefeito-2020",
 ] as const;
-export const ehMunicipal = (cargo: string) => /^(vereador|prefeito)-\d{4}$/.test(cargo);
+export const ehMunicipal = (cargo: string) => /^(?:[a-z]{2}\/)?(vereador|prefeito)-\d{4}$/.test(cargo);
+// Estados com dados: as gerais em todos; as municipais (vereador/prefeito) por enquanto só no PR.
+export const UFS_DIAGNOSTICO = ["ac", "al", "am", "ap", "ba", "ce", "df", "es", "go", "ma", "mg", "ms", "mt", "pa", "pb", "pe", "pi", "pr", "rj", "rn", "ro", "rr", "rs", "sc", "se", "sp", "to"];
+// Cargo vendido: o id do cargo no PR ("estadual-2022") ou "<uf>/<id>" nas demais UFs ("sc/estadual-2022").
+export function separarCargo(chave: string): { uf: string; cargo: CargoDiagnostico } | null {
+  const [a, b] = String(chave ?? "").split("/");
+  const uf = b ? a : "pr", cargo = b ?? a;
+  if (!UFS_DIAGNOSTICO.includes(uf) || (b && uf === "pr") || !ehCargo(cargo) || (ehMunicipal(cargo) && uf !== "pr")) return null;
+  return { uf, cargo };
+}
+export const ehCargoVendido = (c: unknown): c is string => typeof c === "string" && separarCargo(c) != null;
+// Pasta dos dados da UF (como em config.mjs): PR na raiz de dados/, as demais em dados/uf/<uf>/.
+export const raizDadosUF = (uf: string) => (uf === "pr" ? "dados/" : `dados/uf/${uf}/`);
 export type CargoDiagnostico = (typeof CARGOS_DIAGNOSTICO)[number];
 const MAX_TOKENS = 20; // um cliente pode comprar vários candidatos no mesmo navegador
 
@@ -33,8 +45,18 @@ export const ehHostDiagnostico = (host: string | null | undefined) =>
   String(host ?? "").split(":")[0].toLowerCase() === HOST_DIAGNOSTICO;
 
 // Arquivos pagos (votos por local): dados/<cargo>/<número>.json (gerais) ou dados/<ano>/<cargo>/<cd>/loc.json
-// (municipais: todos os candidatos da cidade num arquivo; numero = código da cidade).
-export function arquivoDeCandidato(rel: string): { cargo: CargoDiagnostico; numero: string } | null {
+// (municipais: todos os candidatos da cidade num arquivo; numero = código da cidade). Nas demais UFs, os mesmos
+// caminhos dentro de dados/uf/<uf>/ (cargo devolvido como "<uf>/<id>").
+export function arquivoDeCandidato(rel: string): { cargo: string; numero: string } | null {
+  const u = rel.match(/^dados\/uf\/([a-z]{2})\/(.+)$/);
+  if (u) {
+    if (u[1] === "pr" || !UFS_DIAGNOSTICO.includes(u[1])) return null;
+    const x = arquivoDeCandidatoPR(`dados/${u[2]}`);
+    return x ? { cargo: `${u[1]}/${x.cargo}`, numero: x.numero } : null;
+  }
+  return arquivoDeCandidatoPR(rel);
+}
+function arquivoDeCandidatoPR(rel: string): { cargo: CargoDiagnostico; numero: string } | null {
   const g = rel.match(/^dados\/([a-z]+)\/(\d{2,5})\.json$/);
   if (g && ehCargo(g[1])) return { cargo: g[1], numero: g[2] };
   // gerais de anos anteriores: dados/<ano>/<cargo geral>/<número>.json
@@ -48,9 +70,10 @@ export function arquivoDeCandidato(rel: string): { cargo: CargoDiagnostico; nume
 export const chaveCandidato = (cargo: string, numero: string) => `${cargo}:${numero}`;
 
 // Link enviado ao cliente: já abre no relatório do candidato comprado.
-export function linkDiagnostico(token: string, cargo: string, numero: string, base = `https://${HOST_DIAGNOSTICO}/`) {
+export function linkDiagnostico(token: string, chave: string, numero: string, base = `https://${HOST_DIAGNOSTICO}/`) {
+  const { uf, cargo } = separarCargo(chave) ?? { uf: "pr", cargo: chave };
   const [cidade, n] = ehMunicipal(cargo) ? numero.split("-") : [null, numero];
-  return `${base}?k=${token}#relatorio?cargo=${cargo}${cidade ? `&m=${cidade}` : ""}&c=${n}`;
+  return `${base}?k=${token}#relatorio?${uf === "pr" ? "" : `uf=${uf.toUpperCase()}&`}cargo=${cargo}${cidade ? `&m=${cidade}` : ""}&c=${n}`;
 }
 
 // Só dígitos, com DDI 55 quando vier no formato nacional (para wa.me).

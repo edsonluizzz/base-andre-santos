@@ -72,3 +72,6 @@ apuracao-v2/data/
 # vídeos renderizados (pesados; o código-fonte do vídeo fica no git)
 analise-2026/video/*.mp4
 analise-2026/video/*.wav
+
+# Diagnóstico: dados das UFs fora do PR vão para o Vercel Blob (coletar/enviar-blob.mjs), não para o repositório
+/analise-2026/public/dados/uf/

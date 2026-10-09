@@ -2,7 +2,7 @@
 // O exemplo é fictício: telas geradas com ?demo (nomes, números e partidos inventados; ver demo.mjs).
 // Números do exemplo abaixo saem do relatório da candidata fictícia "Simone Gonçalves" (demo de 09/10/2026).
 // Animações: GSAP + ScrollTrigger auto-hospedados (vendor/); tudo desliga com prefers-reduced-motion.
-import { UF, anosDoCargo, idCargo } from "./config.mjs";
+import { UF, UFS, anosDoCargo, idCargo } from "./config.mjs";
 import { esc, inteiro } from "./fmt.mjs";
 import { percentuais } from "./dados.mjs";
 import { linkCompra } from "./oferta.mjs";
@@ -160,6 +160,8 @@ export function landing({ venda }) {
     <section class="lp-busca" id="escolher">
       <h2 class="lp-h2">Veja a prévia grátis do seu resultado</h2>
       <div class="lp-busca-caixa">
+        <label class="lp-busca-rotulo" for="lp-uf">Estado</label>
+        <select id="lp-uf" class="lp-busca-campo lp-busca-uf">${Object.entries(UFS).map(([s, u]) => `<option value="${s}"${s === UF.sigla ? " selected" : ""}>${esc(u.nome)}</option>`).join("")}</select>
         <div class="lp-busca-cargos" role="tablist">
           <button type="button" data-cargo-busca="estadual" class="on">Dep. estadual</button>
           <button type="button" data-cargo-busca="federal">Dep. federal</button>
@@ -239,7 +241,7 @@ const normal = (s) => String(s ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").t
 
 // Busca do candidato: sugestões na hora, troca de cargo sem sair da página.
 // Municipais (vereador/prefeito): primeiro a cidade, depois o candidato daquela cidade.
-export function ligarBusca(el, { cargoInicial, carregarCargo, carregarCidades, abrir, venda }) {
+export function ligarBusca(el, { cargoInicial, carregarCargo, carregarCidades, abrir, venda, trocarUF }) {
   const campo = el.querySelector("#lp-q");
   const lista = el.querySelector("#lp-sugestoes");
   const caixaCidade = el.querySelector(".lp-busca-cidade"), campoCidade = el.querySelector("#lp-cidade");
@@ -269,7 +271,11 @@ export function ligarBusca(el, { cargoInicial, carregarCargo, carregarCidades, a
   };
   // aba "vereador"/"prefeito" vira o cargo do ano escolhido ("vereador-2024")
   const trocar = async (aba) => {
-    const base = aba.split("-")[0], t = tipo(base), anosB = anosDoCargo(base);
+    // cargos sem dados na UF (municipais fora do PR) ficam desligados; o escolhido cai para o estadual
+    el.querySelectorAll("[data-cargo-busca]").forEach((b) => { b.disabled = !anosDoCargo(b.dataset.cargoBusca).length; });
+    let base = aba.split("-")[0];
+    if (!anosDoCargo(base).length) base = "estadual";
+    const t = tipo(base), anosB = anosDoCargo(base);
     const ano = anosB.includes(anos[t]) ? anos[t] : anosB[0];
     cargo = idCargo(base, ano);
     el.querySelectorAll("[data-cargo-busca]").forEach((b) => b.classList.toggle("on", b.dataset.cargoBusca === base));
@@ -299,6 +305,11 @@ export function ligarBusca(el, { cargoInicial, carregarCargo, carregarCidades, a
     if (cidade) campo.focus();
   });
   el.querySelectorAll("[data-cargo-busca]").forEach((b) => { b.onclick = () => trocar(b.dataset.cargoBusca); });
+  el.querySelector("#lp-uf").addEventListener("change", (e) => {
+    trocarUF(e.target.value);
+    cidade = null; anoCidades = null; campoCidade.value = "";
+    trocar(cargo);
+  });
   campo.addEventListener("input", mostrar);
   trocar(cargo);
 }

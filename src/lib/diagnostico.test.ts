@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { arquivoDeCandidato, ehHostDiagnostico, gerarToken, juntarToken, lerTokens, linkDiagnostico, telefoneWhatsApp, tokenValido } from "./diagnostico";
+import { arquivoDeCandidato, ehCargoVendido, ehHostDiagnostico, separarCargo, gerarToken, juntarToken, lerTokens, linkDiagnostico, telefoneWhatsApp, tokenValido } from "./diagnostico";
 
 describe("tokens do diagnóstico", () => {
   it("gera tokens de 24 caracteres base64url, diferentes a cada vez", () => {
@@ -55,5 +55,26 @@ describe("rotas e links", () => {
     expect(telefoneWhatsApp("+55 41 3333-1234")).toBe("554133331234");
     expect(telefoneWhatsApp("123")).toBeNull();
     expect(telefoneWhatsApp(null)).toBeNull();
+  });
+});
+
+describe("outros estados", () => {
+  it("cargo vendido: id no PR, <uf>/<id> nas demais; municipais só no PR", () => {
+    expect(separarCargo("estadual")).toEqual({ uf: "pr", cargo: "estadual" });
+    expect(separarCargo("sc/federal-2022")).toEqual({ uf: "sc", cargo: "federal-2022" });
+    expect(ehCargoVendido("pr/estadual")).toBe(false); // o PR não leva prefixo
+    expect(ehCargoVendido("sc/vereador-2024")).toBe(false);
+    expect(ehCargoVendido("xx/estadual")).toBe(false);
+    expect(ehCargoVendido("sc/inventado")).toBe(false);
+  });
+  it("arquivos pagos dentro de dados/uf/<uf>/", () => {
+    expect(arquivoDeCandidato("dados/uf/sc/estadual/22222.json")).toEqual({ cargo: "sc/estadual", numero: "22222" });
+    expect(arquivoDeCandidato("dados/uf/df/2022/presidente/13.json")).toEqual({ cargo: "df/presidente-2022", numero: "13" });
+    expect(arquivoDeCandidato("dados/uf/sc/estadual.json")).toBeNull(); // base pública
+    expect(arquivoDeCandidato("dados/uf/sc/mapa.geo.json")).toBeNull();
+    expect(arquivoDeCandidato("dados/uf/pr/estadual/30777.json")).toBeNull();
+  });
+  it("link do cliente leva a UF", () => {
+    expect(linkDiagnostico("t".repeat(24), "sc/estadual-2022", "22822")).toBe(`https://diagnostico.ovile.com.br/?k=${"t".repeat(24)}#relatorio?uf=SC&cargo=estadual-2022&c=22822`);
   });
 });

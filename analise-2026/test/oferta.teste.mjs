@@ -15,5 +15,5 @@ test("link de compra pelo WhatsApp só com número configurado", () => {
   assert.equal(linkCompra({ preco: 297, whatsapp: null }, foco, "Deputado Estadual"), null);
   const l = linkCompra({ preco: 297, whatsapp: "+55 (41) 99999-0000" }, foco, "Deputado Estadual");
   assert.ok(l.startsWith("https://wa.me/5541999990000?text="));
-  assert.ok(decodeURIComponent(l).includes("ANDRÉ SANTOS (número 30777, Deputado Estadual)"));
+  assert.ok(decodeURIComponent(l).includes("ANDRÉ SANTOS (número 30777, Deputado Estadual, PR)"));
 });
