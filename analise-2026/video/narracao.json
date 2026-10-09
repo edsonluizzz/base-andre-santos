@@ -1,0 +1,13 @@
+{
+  "comentario": "Roteiro da narração do vídeo de lançamento: uma fala por cena (cenas a cada 4 s, ver lancamento.html). 'inicio' em segundos.",
+  "falas": [
+    { "inicio": 0.3, "texto": "A eleição acabou." },
+    { "inicio": 2.2, "texto": "Do estado inteiro até cada local de votação." },
+    { "inicio": 6.2, "texto": "Sua cidade, seu bairro, cada escola." },
+    { "inicio": 10.2, "texto": "Descubra quem disputa o seu eleitor." },
+    { "inicio": 14.2, "texto": "Compare mapa a mapa com qualquer adversário." },
+    { "inicio": 18.2, "texto": "Saiba quanto custou cada voto." },
+    { "inicio": 22.2, "texto": "E um relatório pronto pro partido." },
+    { "inicio": 26.1, "texto": "Ovile Diagnóstico. Sua eleição, voto a voto." }
+  ]
+}
