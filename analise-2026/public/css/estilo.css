@@ -466,3 +466,14 @@ body[data-tela="inicio"] main { padding: 0; }
 .lp-busca-anos { display: inline-flex; gap: 6px; margin-bottom: 14px; }
 .lp-busca-anos button { border: 1px solid var(--lp-linha); background: none; color: var(--suave); border-radius: 999px; padding: 7px 14px; font: 600 14px "Geist", sans-serif; cursor: pointer; }
 .lp-busca-anos button.on { border-color: var(--laranja); color: var(--texto); }
+
+/* Landing: para quem é (1 destaque + 2) */
+.lp-quem-grade { display: grid; grid-template-columns: 1.3fr 1fr; grid-template-rows: auto auto; gap: 16px; margin-top: 48px; }
+.lp-quem-cel { border-radius: 14px; padding: 30px; background: var(--cartao); border: 1px solid var(--lp-linha); display: flex; flex-direction: column; gap: 10px; }
+.lp-quem-cel small { font-family: "Geist Mono", monospace; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--laranja); }
+.lp-quem-cel h3 { font-size: 26px; letter-spacing: -0.02em; line-height: 1.15; }
+.lp-quem-cel p { color: var(--suave); font-size: 17px; line-height: 1.55; }
+.lp-quem-destaque { grid-row: span 2; justify-content: flex-end; min-height: 380px;
+  background: radial-gradient(120% 90% at 100% 0%, color-mix(in srgb, var(--laranja) 28%, var(--cartao)), var(--cartao) 62%); }
+.lp-quem-destaque h3 { font-size: clamp(30px, 3.2vw, 42px); }
+@media (max-width: 899px) { .lp-quem-grade { grid-template-columns: 1fr; } .lp-quem-destaque { grid-row: auto; min-height: 0; } }

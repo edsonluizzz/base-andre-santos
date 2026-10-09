@@ -4,7 +4,7 @@ import { concentracao, pearson, quantil, regressaoLog, rsPorVoto, sobreposicao }
 import { cor, criarMapa, escalaSeq, legenda } from "../mapa.mjs";
 import { barras } from "../animar.mjs";
 import { esc, inteiro, pct, reais, reaisCurto } from "../fmt.mjs";
-import { disputa, folgaQuociente } from "./panorama.mjs";
+import { cartaoDisputa, disputa, folgaQuociente } from "./panorama.mjs";
 import { eficienciaVoto, medianaChapa } from "./custo.mjs";
 
 const nf2 = (v) => v.toLocaleString("pt-BR", { maximumFractionDigits: 2 });
@@ -82,7 +82,10 @@ export function conclusoes(D, foco, x) {
   if (x.folga) out.push(`A chapa ${esc(x.ag.rotulo)} fez ${inteiro(x.folga.total)} votos (${x.ag.vagas} cadeira(s)); faltaram ${inteiro(x.folga.falta)} para a ${x.folga.diretas + 1}ª pelo quociente (${inteiro(D.cargo.qe)}).`);
   if (x.disputa) {
     const d = x.disputa, seg = d.lista[1];
-    out.push(d.pos === 1 ? `Ficou em 1º no 1º turno, ${inteiro(foco.votos - (seg?.votos ?? 0))} votos à frente de ${esc(nomeCurto(seg ?? foco))}.${foco.votos2 != null ? ` No 2º turno fez ${inteiro(foco.votos2)} votos (${esc(foco.st)}).` : ""}`
+    const t2 = foco.votos2 != null ? ` No 2º turno fez ${inteiro(foco.votos2)} votos (${esc(foco.st)}).` : "";
+    if (d.vagas > 1) out.push(d.dentro ? `Ficou com uma das ${d.vagas} vagas (${d.pos}º), ${inteiro(d.folga ?? 0)} votos à frente de ${esc(nomeCurto(d.primeiroFora ?? foco))}, o primeiro que ficou de fora.`
+      : `Ficou a <b>${inteiro(d.faltaVaga)} votos</b> da última vaga, ocupada por ${esc(nomeCurto(d.ultimaVaga))}.`);
+    else out.push(d.pos === 1 ? `Ficou em 1º no 1º turno, ${inteiro(foco.votos - (seg?.votos ?? 0))} votos à frente de ${esc(nomeCurto(seg ?? foco))}.${t2}`
       : `Ficou a <b>${inteiro(d.faltaPrimeiro)} votos</b> do 1º colocado, ${esc(nomeCurto(d.primeiro))}${d.pos > 2 ? `, e a ${inteiro(d.faltaAcima)} de ${esc(nomeCurto(d.acima))}, logo acima` : ""}.${foco.votos2 != null ? ` No 2º turno fez ${inteiro(foco.votos2)} votos (${esc(foco.st)}).` : ""}`);
   }
   return out;
@@ -112,7 +115,7 @@ export function montar(el, { D, geo, foco, comparados, cores }) {
     <div class="rel-kpis">
       ${kpi("Votos", inteiro(foco.votos), `${pct(x.pctGeral)} dos válidos`)}
       ${kpi(U.municipal ? "Posição na cidade" : "Posição no estado", `${x.posGeral}º`, `de ${D.candidatos.length}`)}
-      ${x.disputa ? kpi(x.disputa.pos === 1 ? "Vantagem sobre o 2º" : "Distância para o 1º", inteiro(x.disputa.pos === 1 ? foco.votos - (x.disputa.lista[1]?.votos ?? 0) : x.disputa.faltaPrimeiro), "votos")
+      ${x.disputa ? (() => { const k = cartaoDisputa(x.disputa); return kpi(k.titulo, inteiro(k.votos), `votos${k.quem ? ` · ${esc(nomeCurto(k.quem))}` : ""}`); })()
         : kpi("Posição na chapa", `${x.posChapa}º`, `de ${x.lista.length} · ${esc(x.ag.rotulo)}`)}
       ${kpi(`${U.Uns} com voto`, inteiro(x.cMun.n), `de ${D.municipios.length}`)}
       ${kpi("Custo por voto", x.rpv == null ? "—" : reais(x.rpv), "receita ÷ votos")}

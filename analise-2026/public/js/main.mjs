@@ -1,4 +1,4 @@
-import { ANOS_GERAIS, ANOS_MUNICIPAIS, CARGOS, CARGO_PADRAO, MAX_COMPARADOS, UF, idCargo } from "./config.mjs";
+import { CARGOS, CARGO_PADRAO, MAX_COMPARADOS, UF, anosDoCargo, idCargo } from "./config.mjs";
 import { buscarCandidato, coresDe, garantirLocais, indexar, lerComparados, nomeCurto, rotuloCandidato, varCorDe } from "./dados.mjs";
 import { esc } from "./fmt.mjs";
 import { escreverRota, lerRota } from "./rota.mjs";
@@ -77,11 +77,14 @@ const globais = (params) => Object.fromEntries(GLOBAIS.filter((k) => params[k] !
 function barraEscolha(el, { D, cargo, foco, comparados, cores, mudar, cidades }) {
   const opcoes = (D?.candidatos ?? []).map((c) => `<option value="${esc(rotuloCandidato(c))}">`).join("");
   const municipal = CARGOS[cargo].municipal;
-  // Um botão por cargo (no ano em uso daquele tipo de eleição) + seletor de ano.
+  // Um botão por cargo, no ano em uso quando o cargo existe nele (senão o mais recente) + anos do cargo atual.
   const ano = CARGOS[cargo].ano, base = cargo.split("-")[0];
-  const anoG = municipal ? ANOS_GERAIS[0] : ano, anoM = municipal ? ano : ANOS_MUNICIPAIS[0];
-  const botoesCargo = [[idCargo("estadual", anoG), "Estadual"], [idCargo("federal", anoG), "Federal"], [idCargo("vereador", anoM), "Vereador"], [idCargo("prefeito", anoM), "Prefeito"]];
-  const anos = municipal ? ANOS_MUNICIPAIS : ANOS_GERAIS;
+  const BASES = [["estadual", "Estadual"], ["federal", "Federal"], ["senador", "Senador"], ["governador", "Governador"], ["presidente", "Presidente"], ["vereador", "Vereador"], ["prefeito", "Prefeito"]];
+  const botoesCargo = BASES.filter(([b]) => anosDoCargo(b).length).map(([b, rot]) => {
+    const anosB = anosDoCargo(b);
+    return [idCargo(b, anosB.includes(ano) ? ano : anosB[0]), rot];
+  });
+  const anos = anosDoCargo(base);
   el.innerHTML = `
     <span class="seg">${botoesCargo.map(([id, rot]) => `<button data-cargo="${id}" class="${id.split("-")[0] === base ? "on" : ""}">${rot}</button>`).join("")}</span>
     <span class="seg">${anos.map((a) => `<button data-ano="${a}" class="${ano === a ? "on" : ""}">${a}</button>`).join("")}</span>

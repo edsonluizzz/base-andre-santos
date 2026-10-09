@@ -2,7 +2,7 @@
 // O exemplo é fictício: telas geradas com ?demo (nomes, números e partidos inventados; ver demo.mjs).
 // Números do exemplo abaixo saem do relatório da candidata fictícia "Simone Gonçalves" (demo de 09/10/2026).
 // Animações: GSAP + ScrollTrigger auto-hospedados (vendor/); tudo desliga com prefers-reduced-motion.
-import { ANOS_GERAIS, ANOS_MUNICIPAIS, UF, idCargo } from "./config.mjs";
+import { UF, anosDoCargo, idCargo } from "./config.mjs";
 import { esc, inteiro } from "./fmt.mjs";
 import { percentuais } from "./dados.mjs";
 import { linkCompra } from "./oferta.mjs";
@@ -22,17 +22,19 @@ export function linkContato(venda) {
 
 const img = (arq, alt, extra = "") => `<img src="img/${arq}" alt="${esc(alt)}" decoding="async" ${extra}>`;
 const PASSOS = [
-  { img: "mapa-estado.jpg", titulo: "O mapa dos seus votos", texto: "Os 399 municípios coloridos pelo seu desempenho. Toque numa cidade e desça até cada escola onde você teve voto, com bairro e percentual." },
+  { img: "mapa-estado.jpg", titulo: "O mapa dos seus votos", texto: "O estado inteiro ou a sua cidade, colorido pelo seu desempenho. Desça até cada escola onde você teve voto, com bairro e percentual." },
   { img: "custo-barras.jpg", titulo: "Quanto custou cada voto", texto: "Receita declarada ao TSE dividida pelos votos, ao lado da chapa e dos adversários. E quanto você rendeu acima ou abaixo do esperado para o dinheiro." },
   { img: "concorrentes-calor.jpg", titulo: "Quem disputa o seu eleitor", texto: "O sistema encontra os concorrentes com votação parecida com a sua, de qualquer partido. Você compara mapa a mapa e troca quando quiser." },
-  { img: "relatorio-5.jpg", titulo: "Onde dá para crescer", texto: "As maiores cidades onde você ficou abaixo do seu próprio desempenho no estado, e quantos votos elas valem na sua média." },
+  { img: "relatorio-5.jpg", titulo: "Onde dá para crescer", texto: "As maiores cidades (ou bairros, na eleição municipal) onde você ficou abaixo do seu próprio desempenho, e quantos votos elas valem na sua média." },
 ];
 const FAQ = [
   ["Serve para quem não foi eleito?", "Principalmente. Suplentes e não eleitos são quem mais precisa saber de onde veio a votação, quanto custou e onde dá para crescer até a próxima eleição."],
   ["De onde vêm os dados?", "Dos dados abertos do TSE: votação por seção eleitoral, locais de votação, resultado oficial e prestação de contas. A soma por seção de cada candidato é conferida com o resultado oficial, e todas batem."],
   ["Posso escolher com quem comparar?", "Sim. O sistema sugere os 3 concorrentes mais parecidos com você em tamanho e geografia, e você troca por qualquer candidato do mesmo cargo, quantas vezes quiser."],
   ["E a prestação de contas, que ainda não é a final?", "O custo do voto usa a prestação parcial publicada pelo TSE. Quando a final sair, em novembro, os números são atualizados no seu link sem custo."],
-  ["Quais cargos estão disponíveis?", "No Paraná: deputado estadual e federal (eleição de 2026) e vereador e prefeito (eleições de 2020 e 2024) nas 399 cidades. Outros estados e eleições estão a caminho."],
+  ["Quais cargos e eleições estão disponíveis?", "No Paraná: deputado estadual, deputado federal, senador e governador em 2022 e 2026; presidente em 2022 (votos no Paraná); vereador e prefeito em 2020 e 2024, nas 399 cidades. Presidente 2026 entra depois do 2º turno, e outros estados estão a caminho."],
+  ["Vou disputar em 2028. Serve para mim?", "Serve. Veja onde os vereadores e prefeitos da sua cidade tiveram voto em 2020 e 2024, bairro por bairro e escola por escola, e onde existe eleitor que ninguém conquistou."],
+  ["Posso analisar um adversário?", "Pode. Qualquer candidato de qualquer cargo e eleição disponível: o diagnóstico mostra a base dele, quanto custou cada voto e onde ele foi mais forte que você."],
   ["Usa dados pessoais de eleitores?", "Não. Só resultados públicos agregados por seção e local de votação, os mesmos que o TSE publica para qualquer pessoa."],
 ];
 
@@ -61,7 +63,7 @@ export function landing({ venda }) {
       <div class="lp-hero-txt">
         <p class="lp-eyebrow">Eleições no ${UF.nome}</p>
         <h1 class="lp-h1" data-palavras>Você sabe onde ganhou <em>cada voto?</em></h1>
-        <p class="lp-hero-sub">O diagnóstico da sua eleição: mapa até o local de votação, custo de cada voto e quem disputa a sua base.</p>
+        <p class="lp-hero-sub">De vereador a presidente: o mapa dos seus votos até a escola, o custo de cada voto e quem disputa a sua base.</p>
         <div class="lp-ctas">
           ${whats(COMPRAR, "lp-btn lp-btn-whats lp-btn-grande")}
           <button type="button" class="lp-btn lp-btn-vidro" data-rolar="escolher">Ver prévia grátis</button>
@@ -76,7 +78,7 @@ export function landing({ venda }) {
     </section>
 
     <div class="lp-faixa" aria-hidden="true"><div class="lp-faixa-trilho">${
-      Array(2).fill(["66.644 candidatos conferidos voto a voto", "399 cidades", "Deputados 2026", "Vereadores e prefeitos 2020 e 2024", "Dados oficiais do TSE", "Relatório em PDF"]
+      Array(2).fill(["Mais de 67 mil candidatos conferidos voto a voto", "399 cidades do Paraná", "4 eleições: 2020, 2022, 2024 e 2026", "De vereador a presidente", "Dados oficiais do TSE", "Relatório em PDF"]
         .map((t) => `<span>${t}</span>`).join("")).join("")}</div></div>
 
     <section class="lp-perguntas">
@@ -84,8 +86,29 @@ export function landing({ venda }) {
       <ol class="lp-lista-perguntas">
         <li><b>Onde estão os meus votos de verdade?</b><span>Não só a cidade: o bairro e a escola.</span></li>
         <li><b>O dinheiro rendeu?</b><span>Cada voto custou quanto, perto dos adversários?</span></li>
-        <li><b>Quem está atrás do mesmo eleitor?</b><span>E em que cidades cada um levou a melhor.</span></li>
+        <li><b>Quem está atrás do mesmo eleitor?</b><span>E onde cada um levou a melhor.</span></li>
       </ol>
+    </section>
+
+    <section class="lp-quem">
+      <h2 class="lp-h2">Para quem olha para a próxima eleição.</h2>
+      <div class="lp-quem-grade">
+        <article class="lp-quem-cel lp-quem-destaque">
+          <small>Vai disputar em 2028</small>
+          <h3>Conheça a sua cidade antes de pedir o primeiro voto.</h3>
+          <p>Onde os vereadores e prefeitos tiveram voto em 2020 e 2024, bairro por bairro e escola por escola, e quanto cada um gastou para chegar lá.</p>
+        </article>
+        <article class="lp-quem-cel">
+          <small>Acabou de disputar 2026</small>
+          <h3>Entenda o resultado.</h3>
+          <p>Deputado, senador ou governador: de onde veio cada voto e o que faltou.</p>
+        </article>
+        <article class="lp-quem-cel">
+          <small>Assessorias e partidos</small>
+          <h3>Analise qualquer candidato.</h3>
+          <p>Adversários, aliados e a chapa inteira, com o mapa de cada um.</p>
+        </article>
+      </div>
     </section>
 
     <section class="lp-produto" id="lp-produto">
@@ -140,6 +163,9 @@ export function landing({ venda }) {
         <div class="lp-busca-cargos" role="tablist">
           <button type="button" data-cargo-busca="estadual" class="on">Dep. estadual</button>
           <button type="button" data-cargo-busca="federal">Dep. federal</button>
+          <button type="button" data-cargo-busca="senador">Senador</button>
+          <button type="button" data-cargo-busca="governador">Governador</button>
+          <button type="button" data-cargo-busca="presidente">Presidente</button>
           <button type="button" data-cargo-busca="vereador">Vereador</button>
           <button type="button" data-cargo-busca="prefeito">Prefeito</button>
         </div>
@@ -164,12 +190,13 @@ export function landing({ venda }) {
       <div class="lp-preco-card">
         <h2 class="lp-h2">Tudo isso sobre o seu candidato.</h2>
         <ul class="lp-preco-lista">
+          <li>Qualquer cargo e eleição disponível, de vereador a presidente</li>
           <li>Mapa dos votos até o local de votação e o bairro</li>
           <li>Custo de cada voto, contra a chapa e os adversários</li>
           <li>Até 3 concorrentes comparados, trocando quando quiser</li>
-          <li>Cidades com espaço para crescer</li>
+          <li>Cidades ou bairros com espaço para crescer</li>
           <li>Relatório PDF de 5 páginas, pronto para o partido</li>
-          <li>Atualização com a prestação de contas final</li>
+          <li>Em 2026, atualização com a prestação de contas final</li>
         </ul>
         <div class="lp-preco-revela">
           <p class="lp-preco-por">Por</p>
@@ -217,8 +244,8 @@ export function ligarBusca(el, { cargoInicial, carregarCargo, carregarCidades, a
   const lista = el.querySelector("#lp-sugestoes");
   const caixaCidade = el.querySelector(".lp-busca-cidade"), campoCidade = el.querySelector("#lp-cidade");
   let cargo = cargoInicial, D = null, cidades = [], cidade = null, anoCidades = null;
-  // ano escolhido em cada tipo de eleição (gerais e municipais têm anos diferentes)
-  const anos = { geral: ANOS_GERAIS[0], municipal: ANOS_MUNICIPAIS[0] };
+  // ano escolhido em cada tipo de eleição (gerais e municipais têm anos diferentes); cada cargo só nos anos que tem
+  const anos = { geral: 2026, municipal: 2024 };
   const tipo = (base) => (["vereador", "prefeito"].includes(base) ? "municipal" : "geral");
   const municipal = () => /^(vereador|prefeito)-/.test(cargo);
   const mostrar = () => {
@@ -242,10 +269,11 @@ export function ligarBusca(el, { cargoInicial, carregarCargo, carregarCidades, a
   };
   // aba "vereador"/"prefeito" vira o cargo do ano escolhido ("vereador-2024")
   const trocar = async (aba) => {
-    const base = aba.split("-")[0], t = tipo(base), ano = anos[t];
+    const base = aba.split("-")[0], t = tipo(base), anosB = anosDoCargo(base);
+    const ano = anosB.includes(anos[t]) ? anos[t] : anosB[0];
     cargo = idCargo(base, ano);
     el.querySelectorAll("[data-cargo-busca]").forEach((b) => b.classList.toggle("on", b.dataset.cargoBusca === base));
-    el.querySelector("#lp-anos").innerHTML = (t === "municipal" ? ANOS_MUNICIPAIS : ANOS_GERAIS)
+    el.querySelector("#lp-anos").innerHTML = anosB
       .map((a) => `<button type="button" data-ano-busca="${a}" class="${a === ano ? "on" : ""}">Eleição ${a}</button>`).join("");
     el.querySelectorAll("[data-ano-busca]").forEach((b) => { b.onclick = () => { anos[t] = Number(b.dataset.anoBusca); trocar(base); }; });
     caixaCidade.hidden = !municipal();
@@ -345,6 +373,8 @@ export function animarLanding(el, { geo, D }) {
     // Perguntas entram uma a uma; a segunda linha do título acende com a rolagem.
     gsap.from(".lp-lista-perguntas li", { opacity: 0, x: 60, duration: 0.8, stagger: 0.18, ease: "power3.out", scrollTrigger: { trigger: ".lp-perguntas", start: "top 70%" } });
     gsap.fromTo(".lp-apagado", { "--acende": "0%" }, { "--acende": "100%", ease: "none", scrollTrigger: { trigger: ".lp-perguntas", start: "top 75%", end: "top 30%", scrub: true } });
+
+    gsap.from(".lp-quem-cel", { opacity: 0, y: 50, duration: 0.8, stagger: 0.15, ease: "power3.out", scrollTrigger: { trigger: ".lp-quem", start: "top 72%" } });
 
     // Produto: no desktop o celular fica fixo e troca de tela conforme cada passo passa pelo meio da tela.
     const mm = gsap.matchMedia();

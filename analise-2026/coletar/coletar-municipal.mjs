@@ -26,7 +26,13 @@ const CACHE = join(AQUI, "cache", ANO);
 const PUBLICO = join(AQUI, "..", "public", "dados", ANO);
 const GERAL = Number(ANO) % 4 === 2; // 2018, 2022: eleições gerais; 2016, 2020, 2024: municipais
 const CARGOS = GERAL
-  ? { 6: { id: "federal", nome: "Deputado Federal", majoritario: false }, 7: { id: "estadual", nome: "Deputado Estadual", majoritario: false } }
+  ? {
+    1: { id: "presidente", nome: "Presidente", majoritario: true, nacional: true }, // votos no estado; arquivos _BR
+    3: { id: "governador", nome: "Governador", majoritario: true },
+    5: { id: "senador", nome: "Senador", majoritario: true },
+    6: { id: "federal", nome: "Deputado Federal", majoritario: false },
+    7: { id: "estadual", nome: "Deputado Estadual", majoritario: false },
+  }
   : { 11: { id: "prefeito", nome: "Prefeito", majoritario: true }, 13: { id: "vereador", nome: "Vereador", majoritario: false } };
 // "área" de uma eleição: a cidade (municipais) ou a UF inteira (gerais)
 const area = (cd) => (GERAL ? UF : cd);
@@ -61,11 +67,11 @@ async function main() {
   const oficial = new Map(); // `${cargo}:${cd}` → Map(sq → candidato)
   const partidoPorNumero = new Map(); // `${cd}:${nr}` → sigla (para atribuir voto de legenda)
   let geracao = null;
-  await percorrerCsvDoZip(arq(`votacao_candidato_munzona_${ANO}.zip`), `votacao_candidato_munzona_${ANO}_${UF}.csv`,
-    ["DT_GERACAO", "HH_GERACAO", "NR_TURNO", "CD_MUNICIPIO", "CD_CARGO", "SQ_CANDIDATO", "NR_CANDIDATO", "NM_URNA_CANDIDATO", "NR_PARTIDO", "SG_PARTIDO",
+  const lerMunzona = (csv, soNacional) => percorrerCsvDoZip(arq(`votacao_candidato_munzona_${ANO}.zip`), csv,
+    ["SG_UF", "DT_GERACAO", "HH_GERACAO", "NR_TURNO", "CD_MUNICIPIO", "CD_CARGO", "SQ_CANDIDATO", "NR_CANDIDATO", "NM_URNA_CANDIDATO", "NR_PARTIDO", "SG_PARTIDO",
       "NR_FEDERACAO", "NM_FEDERACAO", "SG_FEDERACAO", "QT_VOTOS_NOMINAIS", "NM_TIPO_DESTINACAO_VOTOS", "DS_SIT_TOT_TURNO"],
     (c, i) => {
-      if (!CARGOS[c[i.CD_CARGO]]) return;
+      if (!CARGOS[c[i.CD_CARGO]] || c[i.SG_UF] !== UF || !!CARGOS[c[i.CD_CARGO]].nacional !== soNacional) return;
       geracao ??= `${c[i.DT_GERACAO]} ${c[i.HH_GERACAO]}`;
       const chave = `${c[i.CD_CARGO]}:${area(c[i.CD_MUNICIPIO])}`;
       const cand = filho(filho(oficial, chave, () => new Map()), c[i.SQ_CANDIDATO], () => ({
@@ -83,6 +89,8 @@ async function main() {
         cand.st2 = titulo(c[i.DS_SIT_TOT_TURNO]);
       }
     });
+  await lerMunzona(`votacao_candidato_munzona_${ANO}_${UF}.csv`, false);
+  if (GERAL) await lerMunzona(`votacao_candidato_munzona_${ANO}_BR.csv`, true);
 
   console.log("locais de votação...");
   const leitor = criarLeitorLocais();
@@ -103,10 +111,10 @@ async function main() {
   const ag = new Map(); // `${cargo}:${cd}` → agregado da cidade
   const novoAg = () => ({ candLocal: new Map(), candTotal: new Map(), validoLocal: new Map(), nominalLocal: new Map(), legenda: new Map(), legendaLocal: new Map(), brancos: 0, nulos: 0, nomesLocal: new Map() });
   let geracaoSecao = null;
-  await percorrerCsvDoZip(arq(`votacao_secao_${ANO}_${UF}.zip`), `votacao_secao_${ANO}_${UF}.csv`,
-    ["DT_GERACAO", "HH_GERACAO", "NR_TURNO", "CD_MUNICIPIO", "NR_ZONA", "CD_CARGO", "NR_VOTAVEL", "QT_VOTOS", "NR_LOCAL_VOTACAO", "SQ_CANDIDATO", "NM_LOCAL_VOTACAO"],
+  const lerSecao = (zip, csv, soNacional) => percorrerCsvDoZip(zip, csv,
+    ["SG_UF", "DT_GERACAO", "HH_GERACAO", "NR_TURNO", "CD_MUNICIPIO", "NR_ZONA", "CD_CARGO", "NR_VOTAVEL", "QT_VOTOS", "NR_LOCAL_VOTACAO", "SQ_CANDIDATO", "NM_LOCAL_VOTACAO"],
     (c, i) => {
-      if (c[i.NR_TURNO] !== "1" || !CARGOS[c[i.CD_CARGO]]) return;
+      if (c[i.NR_TURNO] !== "1" || !CARGOS[c[i.CD_CARGO]] || c[i.SG_UF] !== UF || !!CARGOS[c[i.CD_CARGO]].nacional !== soNacional) return;
       geracaoSecao ??= `${c[i.DT_GERACAO]} ${c[i.HH_GERACAO]}`;
       const cd = c[i.CD_MUNICIPIO], chave = `${c[i.CD_CARGO]}:${area(cd)}`;
       const a = filho(ag, chave, novoAg);
@@ -128,6 +136,12 @@ async function main() {
         if (sg) { somar(a.legenda, sg, v); somar(a.validoLocal, id, v); somar(a.legendaLocal, id, v); }
       }
     });
+  await lerSecao(arq(`votacao_secao_${ANO}_${UF}.zip`), `votacao_secao_${ANO}_${UF}.csv`, false);
+  // presidente: arquivo nacional (só as seções da UF)
+  if (GERAL && existsSync(join(CACHE, `votacao_secao_${ANO}_BR.zip`))) {
+    console.log("votação por seção de presidente (arquivo nacional)...");
+    await lerSecao(arq(`votacao_secao_${ANO}_BR.zip`), `votacao_secao_${ANO}_BR.csv`, true);
+  }
 
   console.log("prestação de contas...");
   const contas = {};
@@ -195,7 +209,8 @@ async function main() {
       const porBairro = new Map();
       for (const [id, v] of porLocal) somar(porBairro, idxBairro.get(bairroNome(id)), v);
       if (porLocal.size) loc[c.n] = [...porLocal].map(([id, v]) => [idxLocal.get(id), v]).sort((x, y) => y[1] - x[1]);
-      const r = contasCargo?.receitas.get(c.sq), d = contasCargo?.despesas.get(c.sq);
+      // presidente: a receita é da campanha nacional; dividir pelos votos do estado não faz sentido
+      const r = cargo.nacional ? null : contasCargo?.receitas.get(c.sq), d = cargo.nacional ? null : contasCargo?.despesas.get(c.sq);
       return {
         // eleito no 1º turno ou, para prefeito, no 2º turno
         n: c.n, sq: c.sq, nm: c.nm, sg: c.sg, fed: c.fed?.nm ?? null, st: c.st2 ?? c.st, eleito: /^Eleito/.test(c.st2 ?? c.st ?? ""), votos: c.votos,

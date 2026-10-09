@@ -136,7 +136,7 @@ async function main() {
     }
     const dados = montarDados({
       oficial, municipios, agregado, locais, contas: soma.resultado(),
-      cargo: { id, nome: cfg.nome },
+      cargo: { id, nome: cfg.nome, ano: cfg.ano, majoritario: !!cfg.majoritario },
       meta: { geradoEm: new Date().toISOString(), fontes: { ...fontes, oficial: oficial.geradoEm }, divergencias: conf.divergentes.length },
     });
     prontos.push({ id, dados });

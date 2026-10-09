@@ -35,6 +35,8 @@ describe("rotas e links", () => {
     expect(arquivoDeCandidato("dados/2024/senador/75353/loc.json")).toBeNull();
     expect(arquivoDeCandidato("dados/2020/prefeito/75353/loc.json")).toEqual({ cargo: "prefeito-2020", numero: "75353" });
     expect(arquivoDeCandidato("dados/2022/estadual/30777.json")).toEqual({ cargo: "estadual-2022", numero: "30777" });
+    expect(arquivoDeCandidato("dados/governador/22.json")).toEqual({ cargo: "governador", numero: "22" });
+    expect(arquivoDeCandidato("dados/2022/presidente/13.json")).toEqual({ cargo: "presidente-2022", numero: "13" });
     expect(arquivoDeCandidato("dados/2024/vereador/75353.json")).toBeNull(); // base municipal (5 dígitos) continua pública
   });
   it("host do produto, com ou sem porta", () => {

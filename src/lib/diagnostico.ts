@@ -4,7 +4,11 @@
 export const COOKIE_DIAGNOSTICO = "diag_acesso";
 export const HOST_DIAGNOSTICO = "diagnostico.ovile.com.br";
 // Gerais 2026 (número do candidato) e municipais (número = "<cd da cidade>-<número>", porque o número se repete entre cidades).
-export const CARGOS_DIAGNOSTICO = ["estadual", "federal", "estadual-2022", "federal-2022", "vereador-2024", "prefeito-2024", "vereador-2020", "prefeito-2020"] as const;
+export const CARGOS_DIAGNOSTICO = [
+  "estadual", "federal", "governador", "senador",
+  "estadual-2022", "federal-2022", "governador-2022", "senador-2022", "presidente-2022",
+  "vereador-2024", "prefeito-2024", "vereador-2020", "prefeito-2020",
+] as const;
 export const ehMunicipal = (cargo: string) => /^(vereador|prefeito)-\d{4}$/.test(cargo);
 export type CargoDiagnostico = (typeof CARGOS_DIAGNOSTICO)[number];
 const MAX_TOKENS = 20; // um cliente pode comprar vários candidatos no mesmo navegador
@@ -33,8 +37,8 @@ export const ehHostDiagnostico = (host: string | null | undefined) =>
 export function arquivoDeCandidato(rel: string): { cargo: CargoDiagnostico; numero: string } | null {
   const g = rel.match(/^dados\/([a-z]+)\/(\d{2,5})\.json$/);
   if (g && ehCargo(g[1])) return { cargo: g[1], numero: g[2] };
-  // gerais de anos anteriores: dados/<ano>/<estadual|federal>/<número>.json
-  const h = rel.match(/^dados\/(\d{4})\/(estadual|federal)\/(\d{2,5})\.json$/);
+  // gerais de anos anteriores: dados/<ano>/<cargo geral>/<número>.json
+  const h = rel.match(/^dados\/(\d{4})\/(estadual|federal|governador|senador|presidente)\/(\d{2,5})\.json$/);
   if (h && ehCargo(`${h[2]}-${h[1]}`)) return { cargo: `${h[2]}-${h[1]}` as CargoDiagnostico, numero: h[3] };
   const m = rel.match(/^dados\/(\d{4})\/([a-z]+)\/(\d{5})\/loc\.json$/);
   const cargo = m ? `${m[2]}-${m[1]}` : null;

@@ -22,8 +22,13 @@ const PRECO = 297;
 const CARGOS = [
   { id: "estadual", nome: "Deputado Estadual 2026", municipal: false },
   { id: "federal", nome: "Deputado Federal 2026", municipal: false },
+  { id: "senador", nome: "Senador 2026", municipal: false },
+  { id: "governador", nome: "Governador 2026", municipal: false },
   { id: "estadual-2022", nome: "Deputado Estadual 2022", municipal: false },
   { id: "federal-2022", nome: "Deputado Federal 2022", municipal: false },
+  { id: "senador-2022", nome: "Senador 2022", municipal: false },
+  { id: "governador-2022", nome: "Governador 2022", municipal: false },
+  { id: "presidente-2022", nome: "Presidente 2022 (votos no PR)", municipal: false },
   { id: "vereador-2024", nome: "Vereador 2024", municipal: true },
   { id: "prefeito-2024", nome: "Prefeito 2024", municipal: true },
   { id: "vereador-2020", nome: "Vereador 2020", municipal: true },

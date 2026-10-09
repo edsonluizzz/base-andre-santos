@@ -5,6 +5,7 @@ export const idLocal = (mun, zona, local) => `${mun}-${Number(zona)}-${Number(lo
 // (só de partido com legenda válida; a de partido anulado não conta como válido); 95/96/97 = branco/nulo/anulado.
 export function classificarVotavel(nr, validos, legendas, digitos = 5) {
   const s = String(nr);
+  if (s === "95" || s === "96" || s === "97") return "descartado"; // branco, nulo, anulado (governador também tem 2 dígitos)
   if (s.length === digitos) return validos.has(s) ? "nominal" : "anulado";
   if (s.length === 2 && legendas.has(s)) return "legenda";
   return "descartado";
