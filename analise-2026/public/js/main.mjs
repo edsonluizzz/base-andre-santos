@@ -1,4 +1,4 @@
-import { ANOS_MUNICIPAIS, CARGOS, CARGO_PADRAO, MAX_COMPARADOS, UF } from "./config.mjs";
+import { ANOS_GERAIS, ANOS_MUNICIPAIS, CARGOS, CARGO_PADRAO, MAX_COMPARADOS, UF, idCargo } from "./config.mjs";
 import { buscarCandidato, coresDe, garantirLocais, indexar, lerComparados, nomeCurto, rotuloCandidato, varCorDe } from "./dados.mjs";
 import { esc } from "./fmt.mjs";
 import { escreverRota, lerRota } from "./rota.mjs";
@@ -61,7 +61,7 @@ async function carregar(url, opcional = false) {
 const cacheCargos = new Map();
 function dadosDoCargo(id, m = null) {
   const cfg = CARGOS[id], chave = cfg?.municipal ? `${id}:${m}` : id;
-  const url = cfg?.municipal ? `dados/${cfg.arquivo}/${m}.json` : `dados/${id}.json`;
+  const url = cfg?.municipal ? `dados/${cfg.arquivo}/${m}.json` : `dados/${cfg?.arquivo ?? id}.json`;
   if (!cacheCargos.has(chave)) cacheCargos.set(chave, carregar(url).then(indexar).then((D) => (DEMO ? aplicarDemo(D) : D)));
   return cacheCargos.get(chave);
 }
@@ -77,15 +77,14 @@ const globais = (params) => Object.fromEntries(GLOBAIS.filter((k) => params[k] !
 function barraEscolha(el, { D, cargo, foco, comparados, cores, mudar, cidades }) {
   const opcoes = (D?.candidatos ?? []).map((c) => `<option value="${esc(rotuloCandidato(c))}">`).join("");
   const municipal = CARGOS[cargo].municipal;
-  // Gerais: um botão por cargo. Municipais: "Vereador"/"Prefeito" (no ano em uso) + seletor de ano.
-  const anoAtual = municipal ? CARGOS[cargo].ano : ANOS_MUNICIPAIS[0];
-  const botoesCargo = [
-    ...Object.entries(CARGOS).filter(([, c]) => !c.municipal).map(([id, c]) => [id, c.curto]),
-    [`vereador-${anoAtual}`, "Vereador"], [`prefeito-${anoAtual}`, "Prefeito"],
-  ];
+  // Um botão por cargo (no ano em uso daquele tipo de eleição) + seletor de ano.
+  const ano = CARGOS[cargo].ano, base = cargo.split("-")[0];
+  const anoG = municipal ? ANOS_GERAIS[0] : ano, anoM = municipal ? ano : ANOS_MUNICIPAIS[0];
+  const botoesCargo = [[idCargo("estadual", anoG), "Estadual"], [idCargo("federal", anoG), "Federal"], [idCargo("vereador", anoM), "Vereador"], [idCargo("prefeito", anoM), "Prefeito"]];
+  const anos = municipal ? ANOS_MUNICIPAIS : ANOS_GERAIS;
   el.innerHTML = `
-    <span class="seg">${botoesCargo.map(([id, rot]) => `<button data-cargo="${id}" class="${(municipal ? id.split("-")[0] === cargo.split("-")[0] : id === cargo) ? "on" : ""}">${rot}</button>`).join("")}</span>
-    ${municipal ? `<span class="seg">${ANOS_MUNICIPAIS.map((a) => `<button data-ano="${a}" class="${CARGOS[cargo].ano === a ? "on" : ""}">${a}</button>`).join("")}</span>` : ""}
+    <span class="seg">${botoesCargo.map(([id, rot]) => `<button data-cargo="${id}" class="${id.split("-")[0] === base ? "on" : ""}">${rot}</button>`).join("")}</span>
+    <span class="seg">${anos.map((a) => `<button data-ano="${a}" class="${ano === a ? "on" : ""}">${a}</button>`).join("")}</span>
     ${municipal ? `<label class="campo">Cidade <input id="es-m" list="es-cidades" placeholder="Digite a cidade" value="${D ? esc(D.cargo.municipio.nm) : ""}"></label>
       <datalist id="es-cidades">${(cidades ?? []).map((x) => `<option value="${esc(x.nm)}">`).join("")}</datalist>` : ""}
     ${D ? `<label class="campo">Candidato <input id="es-c" list="es-lista" placeholder="Nome ou número" value="${foco ? esc(rotuloCandidato(foco)) : ""}"></label>
@@ -100,7 +99,7 @@ function barraEscolha(el, { D, cargo, foco, comparados, cores, mudar, cidades })
   });
   // troca de ano: mesmo cargo e mesma cidade, candidato de novo (os números mudam entre eleições)
   el.querySelectorAll("[data-ano]").forEach((b) => {
-    b.onclick = () => { if (Number(b.dataset.ano) !== CARGOS[cargo].ano) mudar({ cargo: `${cargo.split("-")[0]}-${b.dataset.ano}`, m: D?.cargo.municipio.cd ?? null, c: null, vs: null }); };
+    b.onclick = () => { if (Number(b.dataset.ano) !== ano) mudar({ cargo: idCargo(base, Number(b.dataset.ano)), m: municipal ? D?.cargo.municipio?.cd ?? null : null, c: null, vs: null }); };
   });
   const cidade = el.querySelector("#es-m");
   cidade?.addEventListener("change", () => {

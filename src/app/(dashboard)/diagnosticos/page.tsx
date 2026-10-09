@@ -22,6 +22,8 @@ const PRECO = 297;
 const CARGOS = [
   { id: "estadual", nome: "Deputado Estadual 2026", municipal: false },
   { id: "federal", nome: "Deputado Federal 2026", municipal: false },
+  { id: "estadual-2022", nome: "Deputado Estadual 2022", municipal: false },
+  { id: "federal-2022", nome: "Deputado Federal 2022", municipal: false },
   { id: "vereador-2024", nome: "Vereador 2024", municipal: true },
   { id: "prefeito-2024", nome: "Prefeito 2024", municipal: true },
   { id: "vereador-2020", nome: "Vereador 2020", municipal: true },
@@ -31,7 +33,8 @@ type Cidade = { cd: string; nm: string };
 const BASE = "/eleicao-2026/analise/dados";
 const urlCandidatos = (cargo: string, cidade: string) => {
   const [nome, ano] = cargo.split("-");
-  return ano ? `${BASE}/${ano}/${nome}/${cidade}.json` : `${BASE}/${cargo}.json`;
+  if (!ano) return `${BASE}/${cargo}.json`;
+  return CARGOS.find((c) => c.id === cargo)?.municipal ? `${BASE}/${ano}/${nome}/${cidade}.json` : `${BASE}/${ano}/${nome}.json`;
 };
 const reais = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 const data = (s: string | null) => (s ? new Date(s).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" }) : "—");

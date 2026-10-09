@@ -1,5 +1,8 @@
 #!/usr/bin/env node
-// Coleta das eleições MUNICIPAIS (vereador e prefeito, 1º turno) de um ano e UF: cada município é uma eleição.
+// Coleta de eleições anteriores de uma UF a partir dos dados abertos do TSE.
+//  - MUNICIPAIS (2016, 2020, 2024…: vereador e prefeito, 1º turno): cada município é uma eleição.
+//  - GERAIS (2018, 2022: deputado estadual e federal): o estado inteiro é a eleição, como em 2026; grava
+//    public/dados/<ano>/<cargo>.json (municípios da UF com região) e public/dados/<ano>/<cargo>/<número>.json (pago).
 // Grava, por cargo e município:
 //   public/dados/<ano>/<cargo>/<cd>.json      base (bairros, locais, candidatos com votos por bairro)
 //   public/dados/<ano>/<cargo>/<cd>/loc.json  votos por local de todos os candidatos da cidade (parte paga)
@@ -11,6 +14,7 @@ import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { idLocal } from "./agregar.mjs";
+import { regiaoDe } from "./regioes.mjs";
 import { criarSomaContas } from "./contas.mjs";
 import { criarLeitorLocais } from "./locais.mjs";
 import { percorrerCsvDoZip } from "./zip.mjs";
@@ -20,7 +24,12 @@ const ACEITAR = process.argv.includes("--aceitar-divergencia");
 const AQUI = dirname(fileURLToPath(import.meta.url));
 const CACHE = join(AQUI, "cache", ANO);
 const PUBLICO = join(AQUI, "..", "public", "dados", ANO);
-const CARGOS = { 11: { id: "prefeito", nome: "Prefeito", majoritario: true }, 13: { id: "vereador", nome: "Vereador", majoritario: false } };
+const GERAL = Number(ANO) % 4 === 2; // 2018, 2022: eleições gerais; 2016, 2020, 2024: municipais
+const CARGOS = GERAL
+  ? { 6: { id: "federal", nome: "Deputado Federal", majoritario: false }, 7: { id: "estadual", nome: "Deputado Estadual", majoritario: false } }
+  : { 11: { id: "prefeito", nome: "Prefeito", majoritario: true }, 13: { id: "vereador", nome: "Vereador", majoritario: false } };
+// "área" de uma eleição: a cidade (municipais) ou a UF inteira (gerais)
+const area = (cd) => (GERAL ? UF : cd);
 const BRANCO = "95", NULO = "96";
 
 const num = (s) => Number(String(s ?? "").replace(/\./g, "").replace(",", ".")) || 0;
@@ -58,13 +67,13 @@ async function main() {
     (c, i) => {
       if (!CARGOS[c[i.CD_CARGO]]) return;
       geracao ??= `${c[i.DT_GERACAO]} ${c[i.HH_GERACAO]}`;
-      const chave = `${c[i.CD_CARGO]}:${c[i.CD_MUNICIPIO]}`;
+      const chave = `${c[i.CD_CARGO]}:${area(c[i.CD_MUNICIPIO])}`;
       const cand = filho(filho(oficial, chave, () => new Map()), c[i.SQ_CANDIDATO], () => ({
         sq: c[i.SQ_CANDIDATO], n: c[i.NR_CANDIDATO], nm: c[i.NM_URNA_CANDIDATO], sg: c[i.SG_PARTIDO],
         fed: c[i.NR_FEDERACAO] !== "-1" ? { nm: c[i.NM_FEDERACAO], sg: c[i.SG_FEDERACAO] } : null,
         valido: false, votos: 0, votos2: null, st: null,
       }));
-      partidoPorNumero.set(`${c[i.CD_MUNICIPIO]}:${c[i.NR_PARTIDO]}`, c[i.SG_PARTIDO]);
+      partidoPorNumero.set(`${area(c[i.CD_MUNICIPIO])}:${c[i.NR_PARTIDO]}`, c[i.SG_PARTIDO]);
       if (c[i.NR_TURNO] === "1") {
         cand.votos += num(c[i.QT_VOTOS_NOMINAIS]);
         cand.valido ||= c[i.NM_TIPO_DESTINACAO_VOTOS].startsWith("Válido");
@@ -99,7 +108,7 @@ async function main() {
     (c, i) => {
       if (c[i.NR_TURNO] !== "1" || !CARGOS[c[i.CD_CARGO]]) return;
       geracaoSecao ??= `${c[i.DT_GERACAO]} ${c[i.HH_GERACAO]}`;
-      const cd = c[i.CD_MUNICIPIO], chave = `${c[i.CD_CARGO]}:${cd}`;
+      const cd = c[i.CD_MUNICIPIO], chave = `${c[i.CD_CARGO]}:${area(cd)}`;
       const a = filho(ag, chave, novoAg);
       const id = idLocal(cd, c[i.NR_ZONA], c[i.NR_LOCAL_VOTACAO]);
       const v = num(c[i.QT_VOTOS]), nr = c[i.NR_VOTAVEL], sq = c[i.SQ_CANDIDATO];
@@ -114,8 +123,8 @@ async function main() {
         }
       } else if (nr === BRANCO) a.brancos += v;
       else if (nr === NULO) a.nulos += v;
-      else if (CARGOS[c[i.CD_CARGO]].id === "vereador" && nr.length === 2) {
-        const sg = partidoPorNumero.get(`${cd}:${nr}`);
+      else if (!CARGOS[c[i.CD_CARGO]].majoritario && nr.length === 2) {
+        const sg = partidoPorNumero.get(`${area(cd)}:${nr}`);
         if (sg) { somar(a.legenda, sg, v); somar(a.validoLocal, id, v); somar(a.legendaLocal, id, v); }
       }
     });
@@ -160,16 +169,18 @@ async function main() {
   const centavos = (v) => Math.round(v * 100) / 100;
   for (const [chave, cands] of oficial) {
     const [cdCargo, cd] = chave.split(":");
-    const cargo = CARGOS[cdCargo], m = MUN.get(cd);
+    const cargo = CARGOS[cdCargo], m = GERAL ? { nm: UF } : MUN.get(cd);
     const a = ag.get(chave);
     if (!m || !a) continue;
-    // locais com voto válido neste cargo; bairro de cada um
+    // locais com voto válido neste cargo e a "unidade" de cada um: bairro (municipais) ou município (gerais)
     const ids = [...a.validoLocal.keys()].sort();
-    const bairroNome = (id) => String(locais.get(id)?.bairro ?? "").trim().toUpperCase() || "(SEM BAIRRO)";
+    const bairroNome = (id) => (GERAL ? id.split("-")[0] : String(locais.get(id)?.bairro ?? "").trim().toUpperCase() || "(SEM BAIRRO)");
     const validosBairro = new Map();
     for (const id of ids) somar(validosBairro, bairroNome(id), a.validoLocal.get(id));
-    const bairros = [...validosBairro].sort((x, y) => y[1] - x[1]).map(([nm, validos], k) => ({ cd: String(k), ibge: null, nm, regiao: null, validos }));
-    const idxBairro = new Map(bairros.map((b, k) => [b.nm, k]));
+    const bairros = GERAL
+      ? [...MUN.values()].map((x) => ({ cd: x.cd, ibge: x.ibge, nm: x.nm, regiao: regiaoDe(x.nm), validos: validosBairro.get(x.cd) ?? 0 }))
+      : [...validosBairro].sort((x, y) => y[1] - x[1]).map(([nm, validos], k) => ({ cd: String(k), ibge: null, nm, regiao: null, validos }));
+    const idxBairro = new Map(bairros.map((b, k) => [GERAL ? b.cd : b.nm, k]));
     const idxLocal = new Map(ids.map((id, j) => [id, j]));
     const locaisOut = ids.map((id) => {
       const l = locais.get(id);
@@ -213,8 +224,8 @@ async function main() {
     const dados = {
       meta: { geradoEm: new Date().toISOString(), fontes: { oficial: geracao, secao: geracaoSecao, locais: geracaoSecao, contas: contas.geracao ?? null }, divergencias: 0 },
       cargo: {
-        id: `${cargo.id}-${ANO}`, nome: cargo.nome, ano: Number(ANO), escopo: "municipio", majoritario: cargo.majoritario,
-        municipio: { cd, nm: m.nm, ibge: m.ibge }, vagas: nVagas, qe: cargo.majoritario || !nVagas ? null : Math.round(validos / nVagas),
+        id: `${cargo.id}-${ANO}`, nome: cargo.nome, ano: Number(ANO), escopo: GERAL ? "estado" : "municipio", majoritario: cargo.majoritario,
+        ...(GERAL ? { uf: UF } : { municipio: { cd, nm: m.nm, ibge: m.ibge } }), vagas: nVagas, qe: cargo.majoritario || !nVagas ? null : Math.round(validos / nVagas),
         validos, nominais, legenda, brancos: a.brancos, nulos: a.nulos,
       },
       agremiacoes: [...agrs.values()],
@@ -223,12 +234,21 @@ async function main() {
       candidatos,
     };
     const dir = join(PUBLICO, cargo.id);
+    if (GERAL) {
+      // como 2026: base pública do cargo + um arquivo pago por candidato com os votos por local
+      mkdirSync(dir, { recursive: true });
+      for (const [n, pares] of Object.entries(loc)) writeFileSync(join(dir, `${n}.json`), JSON.stringify(pares));
+      writeFileSync(join(PUBLICO, `${cargo.id}.json`), JSON.stringify(dados));
+      console.log(`${cargo.id}-${ANO}: ${candidatos.length} candidatos, ${nVagas} vagas, QE ${dados.cargo.qe}, ${locaisOut.length} locais`);
+      continue;
+    }
     mkdirSync(join(dir, cd), { recursive: true });
     writeFileSync(join(dir, `${cd}.json`), JSON.stringify(dados));
     writeFileSync(join(dir, cd, "loc.json"), JSON.stringify(loc));
     const e = filho(indice, cd, () => ({ cd, nm: m.nm, ibge: m.ibge }));
     e[cargo.id] = candidatos.length;
   }
+  if (GERAL) return;
   const lista = [...indice.values()].sort((x, y) => x.nm.localeCompare(y.nm, "pt-BR"));
   writeFileSync(join(PUBLICO, "municipios.json"), JSON.stringify(lista));
   console.log(`gravado public/dados/${ANO}: ${lista.length} municípios, ${lista.reduce((s, x) => s + (x.vereador ?? 0), 0)} vereadores, ${lista.reduce((s, x) => s + (x.prefeito ?? 0), 0)} candidatos a prefeito`);

@@ -38,7 +38,7 @@ export function unidade(D) {
     const cidade = tituloNome(D.cargo.municipio.nm);
     return { municipal: true, um: "bairro", uns: "bairros", Um: "Bairro", Uns: "Bairros", area: cidade, naArea: `em ${cidade}`, daArea: `de ${cidade}`, todo: "Cidade inteira", ano: D.cargo.ano };
   }
-  return { municipal: false, um: "município", uns: "municípios", Um: "Município", Uns: "Municípios", area: UF.nome, naArea: `no ${UF.sigla}`, daArea: `do ${UF.sigla}`, todo: `${UF.nome} inteiro`, ano: 2026 };
+  return { municipal: false, um: "município", uns: "municípios", Um: "Município", Uns: "Municípios", area: UF.nome, naArea: `no ${UF.sigla}`, daArea: `do ${UF.sigla}`, todo: `${UF.nome} inteiro`, ano: D.cargo?.ano ?? 2026 };
 }
 // "BAIRRO · MUNICÍPIO" do local (nas municipais a unidade já é o bairro: só ele).
 export const ondeLocal = (D, l) => (D.cargo?.escopo === "municipio" ? (l.bairro ?? D.municipios[l.mun]?.nm ?? "") : `${l.bairro ?? ""} · ${D.municipios[l.mun].nm}`);
@@ -144,6 +144,8 @@ export function escolherB(D, foco, comparados, n) {
 
 // Votos por local de cada candidato vêm de um arquivo próprio (dados/<cargo>/<número>.json).
 // Candidato sem voto não tem arquivo: fica com lista vazia.
+// Pasta dos arquivos por candidato: "estadual" (2026) ou "2022/estadual" (anos anteriores, id "estadual-2022").
+const pastaCargo = (D) => (D.cargo.id.includes("-") ? `${D.cargo.ano}/${D.cargo.id.split("-")[0]}` : D.cargo.id);
 // No modo demonstração o arquivo é o do número real (nOrig) e os votos são multiplicados pelo fator do candidato.
 export async function garantirLocais(D, numeros, buscar) {
   // Municipais: um arquivo com os votos por local de todos os candidatos da cidade (dados/<ano>/<cargo>/<cd>/loc.json).
@@ -156,7 +158,7 @@ export async function garantirLocais(D, numeros, buscar) {
   }
   const cands = [...new Set(numeros.map((n) => D.porNumero.get(n)).filter((c) => c && !c.loc))];
   await Promise.all(cands.map(async (c) => {
-    const loc = (c.votos ? await buscar(`dados/${D.cargo.id}/${c.nOrig ?? c.n}.json`) : null) ?? [];
+    const loc = (c.votos ? await buscar(`dados/${pastaCargo(D)}/${c.nOrig ?? c.n}.json`) : null) ?? [];
     c.loc = c.fatorVotos ? loc.map(([j, v]) => [j, Math.max(1, Math.round(v * c.fatorVotos))]) : loc;
   }));
 }

@@ -9,13 +9,14 @@ import { ehCargo, ehMunicipal, gerarToken, linkDiagnostico } from "@/lib/diagnos
 
 type Candidato = { n: string; nm: string; sg: string; votos: number };
 const candidatos = new Map<string, Promise<Map<string, Candidato>>>();
-// Gerais: dados/<cargo>.json. Municipais ("vereador-2024"): dados/2024/vereador/<cd da cidade>.json.
+// Gerais 2026: dados/<cargo>.json; gerais anteriores ("estadual-2022"): dados/2022/estadual.json;
+// municipais ("vereador-2024"): dados/2024/vereador/<cd da cidade>.json.
 function candidatosDo(cargo: string, cidade: string | null) {
   const chave = `${cargo}:${cidade ?? ""}`;
   if (!candidatos.has(chave)) {
     const base = join(process.cwd(), "analise-2026", "public", "dados");
     const [nome, ano] = cargo.split("-");
-    const arq = ehMunicipal(cargo) ? join(base, ano, nome, `${cidade}.json`) : join(base, `${cargo}.json`);
+    const arq = ehMunicipal(cargo) ? join(base, ano, nome, `${cidade}.json`) : ano ? join(base, ano, `${nome}.json`) : join(base, `${cargo}.json`);
     candidatos.set(chave, readFile(arq, "utf8").then((t) => new Map((JSON.parse(t).candidatos as Candidato[]).map((c) => [c.n, c]))).catch(() => new Map()));
   }
   return candidatos.get(chave)!;

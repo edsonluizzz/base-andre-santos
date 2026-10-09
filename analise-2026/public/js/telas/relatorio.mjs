@@ -177,7 +177,7 @@ export function montar(el, { D, geo, foco, comparados, cores }) {
     <ul class="rel-metodo">
       <li>Votação por seção, locais de votação, resultado oficial e prestação de contas: dados abertos do TSE. Malha municipal: IBGE.</li>
       <li>A soma dos votos por seção de cada candidato foi conferida com o resultado oficial: ${inteiro(D.candidatos.length - (D.meta.divergencias ?? 0))} de ${inteiro(D.candidatos.length)} batem exatamente.</li>
-      <li>Custo do voto = receita declarada ÷ votos, supondo que o candidato gastou o que arrecadou. ${U.municipal ? `Prestação de contas final (${esc(D.meta.fontes.contas ?? "sem dado")}).` : `A prestação de contas usada é a parcial (${esc(D.meta.fontes.contas)}); a final sai em novembro.`}</li>
+      <li>Custo do voto = receita declarada ÷ votos, supondo que o candidato gastou o que arrecadou. ${U.ano < 2026 ? `Prestação de contas final (${esc(D.meta.fontes.contas ?? "sem dado")}).` : `A prestação de contas usada é a parcial (${esc(D.meta.fontes.contas)}); a final sai em novembro.`}</li>
       <li>"% dos válidos" = votos do candidato ÷ votos nominais e de legenda válidos para ${esc(D.cargo.nome.toLowerCase())} no ${U.um}; no local de votação, ÷ votos nominais do local.</li>
       <li>A curva receita × votos mostra associação entre candidatos, não prova que mais dinheiro causa mais voto.</li>
       ${D.candidatos.some((c) => c.votos2 != null) ? `<li>Houve 2º turno: a receita declarada inclui a campanha dos dois turnos, e o custo por voto usa os votos do 1º turno.</li>` : ""}

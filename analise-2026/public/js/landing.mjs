@@ -2,7 +2,7 @@
 // O exemplo é fictício: telas geradas com ?demo (nomes, números e partidos inventados; ver demo.mjs).
 // Números do exemplo abaixo saem do relatório da candidata fictícia "Simone Gonçalves" (demo de 09/10/2026).
 // Animações: GSAP + ScrollTrigger auto-hospedados (vendor/); tudo desliga com prefers-reduced-motion.
-import { ANOS_MUNICIPAIS, UF } from "./config.mjs";
+import { ANOS_GERAIS, ANOS_MUNICIPAIS, UF, idCargo } from "./config.mjs";
 import { esc, inteiro } from "./fmt.mjs";
 import { percentuais } from "./dados.mjs";
 import { linkCompra } from "./oferta.mjs";
@@ -138,13 +138,13 @@ export function landing({ venda }) {
       <h2 class="lp-h2">Veja a prévia grátis do seu resultado</h2>
       <div class="lp-busca-caixa">
         <div class="lp-busca-cargos" role="tablist">
-          <button type="button" data-cargo-busca="estadual" class="on">Dep. estadual 2026</button>
-          <button type="button" data-cargo-busca="federal">Dep. federal 2026</button>
+          <button type="button" data-cargo-busca="estadual" class="on">Dep. estadual</button>
+          <button type="button" data-cargo-busca="federal">Dep. federal</button>
           <button type="button" data-cargo-busca="vereador">Vereador</button>
           <button type="button" data-cargo-busca="prefeito">Prefeito</button>
         </div>
+        <div class="lp-busca-anos" id="lp-anos"></div>
         <div class="lp-busca-cidade" hidden>
-          <div class="lp-busca-anos">${ANOS_MUNICIPAIS.map((a, i) => `<button type="button" data-ano-busca="${a}" class="${i ? "" : "on"}">Eleição ${a}</button>`).join("")}</div>
           <label class="lp-busca-rotulo" for="lp-cidade">Cidade</label>
           <input id="lp-cidade" class="lp-busca-campo" list="lp-cidades" autocomplete="off" placeholder="Digite a cidade">
           <datalist id="lp-cidades"></datalist>
@@ -216,8 +216,11 @@ export function ligarBusca(el, { cargoInicial, carregarCargo, carregarCidades, a
   const campo = el.querySelector("#lp-q");
   const lista = el.querySelector("#lp-sugestoes");
   const caixaCidade = el.querySelector(".lp-busca-cidade"), campoCidade = el.querySelector("#lp-cidade");
-  let cargo = cargoInicial, D = null, cidades = [], cidade = null, ano = ANOS_MUNICIPAIS[0], anoCidades = null;
-  const municipal = () => /-\d{4}$/.test(cargo);
+  let cargo = cargoInicial, D = null, cidades = [], cidade = null, anoCidades = null;
+  // ano escolhido em cada tipo de eleição (gerais e municipais têm anos diferentes)
+  const anos = { geral: ANOS_GERAIS[0], municipal: ANOS_MUNICIPAIS[0] };
+  const tipo = (base) => (["vereador", "prefeito"].includes(base) ? "municipal" : "geral");
+  const municipal = () => /^(vereador|prefeito)-/.test(cargo);
   const mostrar = () => {
     if (municipal() && !cidade) { lista.innerHTML = `<li class="lp-sug-vazio">Escolha a cidade para ver os candidatos.</li>`; return; }
     if (!D) return;
@@ -226,7 +229,7 @@ export function ligarBusca(el, { cargoInicial, carregarCargo, carregarCidades, a
       : D.candidatos.filter((c) => c.n.startsWith(t) || normal(c.nm).includes(t)).slice(0, 8);
     // Cada candidato: ver a prévia grátis ou comprar direto (a mensagem já leva nome, número e cargo).
     lista.innerHTML = res.length ? res.map((c) => {
-      const compra = linkCompra(venda, c, municipal() ? `${D.cargo.nome} ${D.cargo.ano}, ${D.cargo.municipio.nm}` : D.cargo.nome);
+      const compra = linkCompra(venda, c, municipal() ? `${D.cargo.nome} ${D.cargo.ano}, ${D.cargo.municipio.nm}` : `${D.cargo.nome}${D.cargo.ano < 2026 ? ` ${D.cargo.ano}` : ""}`);
       return `<li class="lp-sug">
         <button type="button" class="lp-sug-ver" data-n="${c.n}">
           <span class="lp-sug-nome">${esc(c.nm)}</span><span class="lp-sug-meta">${c.n} · ${esc(c.sg)} · ${inteiro(c.votos)} votos</span></button>
@@ -239,10 +242,12 @@ export function ligarBusca(el, { cargoInicial, carregarCargo, carregarCidades, a
   };
   // aba "vereador"/"prefeito" vira o cargo do ano escolhido ("vereador-2024")
   const trocar = async (aba) => {
-    const base = aba.split("-")[0];
-    cargo = ["vereador", "prefeito"].includes(base) ? `${base}-${ano}` : aba;
+    const base = aba.split("-")[0], t = tipo(base), ano = anos[t];
+    cargo = idCargo(base, ano);
     el.querySelectorAll("[data-cargo-busca]").forEach((b) => b.classList.toggle("on", b.dataset.cargoBusca === base));
-    el.querySelectorAll("[data-ano-busca]").forEach((b) => b.classList.toggle("on", Number(b.dataset.anoBusca) === ano));
+    el.querySelector("#lp-anos").innerHTML = (t === "municipal" ? ANOS_MUNICIPAIS : ANOS_GERAIS)
+      .map((a) => `<button type="button" data-ano-busca="${a}" class="${a === ano ? "on" : ""}">Eleição ${a}</button>`).join("");
+    el.querySelectorAll("[data-ano-busca]").forEach((b) => { b.onclick = () => { anos[t] = Number(b.dataset.anoBusca); trocar(base); }; });
     caixaCidade.hidden = !municipal();
     D = null;
     if (municipal()) {
@@ -266,7 +271,6 @@ export function ligarBusca(el, { cargoInicial, carregarCargo, carregarCidades, a
     if (cidade) campo.focus();
   });
   el.querySelectorAll("[data-cargo-busca]").forEach((b) => { b.onclick = () => trocar(b.dataset.cargoBusca); });
-  el.querySelectorAll("[data-ano-busca]").forEach((b) => { b.onclick = () => { ano = Number(b.dataset.anoBusca); trocar(cargo); }; });
   campo.addEventListener("input", mostrar);
   trocar(cargo);
 }

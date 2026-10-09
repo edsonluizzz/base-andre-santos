@@ -142,7 +142,7 @@ export function montar(el, { D, params, navegar, interno, foco, comparados, core
   // Gasto do módulo financeiro (interno.json, só no Mac), por número do candidato.
   const gi = interno?.[foco.n]?.gastoInterno;
   el.innerHTML = `
-    <div class="aviso">Custo do voto = <b>receita declarada ÷ votos</b>, assumindo que cada candidato gasta tudo o que arrecadou. ${D.cargo.escopo === "municipio" ? `Valores da prestação de contas final ao TSE (arquivo gerado em ${esc(D.meta.fontes.contas ?? "sem dado")}).` : `Valores da prestação de contas parcial ao TSE (arquivo gerado em ${esc(D.meta.fontes.contas)}); a prestação final sai em novembro.`} A despesa contratada fica como comparação.</div>
+    <div class="aviso">Custo do voto = <b>receita declarada ÷ votos</b>, assumindo que cada candidato gasta tudo o que arrecadou. ${(D.cargo.ano ?? 2026) < 2026 ? `Valores da prestação de contas final ao TSE (arquivo gerado em ${esc(D.meta.fontes.contas ?? "sem dado")}).` : `Valores da prestação de contas parcial ao TSE (arquivo gerado em ${esc(D.meta.fontes.contas)}); a prestação final sai em novembro.`} A despesa contratada fica como comparação.</div>
     <div class="controles espaco">
       <span class="seg"><button data-eixo="receita" class="${eixo === "receita" ? "on" : ""}">Receita</button><button data-eixo="despesa" class="${eixo === "despesa" ? "on" : ""}">Despesa contratada</button></span>
       ${gi ? `<small>Gasto de ${nome} no módulo financeiro: <b>${reais(gi)}</b> (${reais(rsPorVoto(gi, foco.votos))} por voto) — ${esc(interno[foco.n].fonte)}, ${esc(interno[foco.n].data)}</small>` : ""}
