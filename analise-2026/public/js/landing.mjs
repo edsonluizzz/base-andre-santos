@@ -39,8 +39,9 @@ const FAQ = [
 export function landing({ venda }) {
   const preco = Number(venda?.preco ?? 297);
   const contato = linkContato(venda);
-  // Compra: um rótulo só em toda a página, sempre direto para o WhatsApp.
-  const COMPRAR = `Comprar diagnóstico · R$ ${inteiro(preco)}`;
+  // Compra: sempre direto para o WhatsApp. O preço só aparece no fechamento da página (seção final),
+  // depois de mostrar o que o diagnóstico entrega; nenhum botão antes disso leva o valor.
+  const COMPRAR = "Comprar meu diagnóstico";
   const whats = (rotulo, classe = "lp-btn lp-btn-whats") => (contato ? `<a class="${classe}" href="${esc(contato)}" target="_blank" rel="noopener">${rotulo}</a>` : "");
   const ex = EXEMPLO;
 
@@ -51,9 +52,9 @@ export function landing({ venda }) {
       <span class="lp-nav-links">
         <button type="button" data-rolar="lp-produto">O que vem</button>
         <button type="button" data-rolar="lp-exemplo">Exemplo</button>
-        <button type="button" data-rolar="lp-preco">Preço</button>
+        <button type="button" data-rolar="escolher">Prévia grátis</button>
       </span>
-      ${whats(`Comprar · R$ ${inteiro(preco)}`, "lp-btn lp-btn-whats lp-btn-mini")}
+      ${whats("Comprar", "lp-btn lp-btn-whats lp-btn-mini")}
     </nav>
 
     <section class="lp-hero">
@@ -133,29 +134,6 @@ export function landing({ venda }) {
       </div>
     </section>
 
-    <section class="lp-preco" id="lp-preco">
-      <div class="lp-preco-card">
-        <h2 class="lp-h2">Diagnóstico completo</h2>
-        <p class="lp-preco-valor"><span>R$</span>${inteiro(preco)}</p>
-        <p class="lp-texto">por candidato, pagamento único por Pix</p>
-        <ul>
-          <li>Mapa até o local de votação e o bairro</li>
-          <li>Custo do voto contra a chapa e os adversários</li>
-          <li>Até 3 concorrentes, trocando quando quiser</li>
-          <li>Cidades com espaço para crescer</li>
-          <li>Relatório PDF de 5 páginas</li>
-          <li>Atualização com a prestação de contas final</li>
-        </ul>
-        ${whats(COMPRAR, "lp-btn lp-btn-whats lp-btn-largo lp-btn-grande")}
-        <p class="lp-preco-como">Você chama no WhatsApp, paga por Pix e recebe o link do seu candidato.</p>
-      </div>
-    </section>
-
-    <section class="lp-faq">
-      <h2 class="lp-h2">Perguntas frequentes</h2>
-      <div class="lp-faq-lista">${FAQ.map(([q, r]) => `<details><summary>${q}</summary><div class="lp-faq-resp"><p>${r}</p></div></details>`).join("")}</div>
-    </section>
-
     <section class="lp-busca" id="escolher">
       <h2 class="lp-h2">Veja a prévia grátis do seu resultado</h2>
       <div class="lp-busca-caixa">
@@ -169,8 +147,34 @@ export function landing({ venda }) {
       </div>
     </section>
 
+    <section class="lp-faq">
+      <h2 class="lp-h2">Perguntas frequentes</h2>
+      <div class="lp-faq-lista">${FAQ.map(([q, r]) => `<details><summary>${q}</summary><div class="lp-faq-resp"><p>${r}</p></div></details>`).join("")}</div>
+    </section>
+
+    <section class="lp-preco" id="lp-preco">
+      <div class="lp-preco-card">
+        <h2 class="lp-h2">Tudo isso sobre o seu candidato.</h2>
+        <ul class="lp-preco-lista">
+          <li>Mapa dos votos até o local de votação e o bairro</li>
+          <li>Custo de cada voto, contra a chapa e os adversários</li>
+          <li>Até 3 concorrentes comparados, trocando quando quiser</li>
+          <li>Cidades com espaço para crescer</li>
+          <li>Relatório PDF de 5 páginas, pronto para o partido</li>
+          <li>Atualização com a prestação de contas final</li>
+        </ul>
+        <div class="lp-preco-revela">
+          <p class="lp-preco-por">Por</p>
+          <p class="lp-preco-valor"><span>R$</span>${inteiro(preco)}</p>
+          <p class="lp-texto">pagamento único por Pix, sem assinatura</p>
+        </div>
+        ${whats(COMPRAR, "lp-btn lp-btn-whats lp-btn-largo lp-btn-grande")}
+        <p class="lp-preco-como">Você chama no WhatsApp, paga e recebe o link do seu candidato.</p>
+      </div>
+    </section>
+
     ${contato ? `<div class="lp-barra-compra" id="lp-barra" aria-hidden="true">
-      <span><b>Diagnóstico completo</b> do seu candidato por R$ ${inteiro(preco)}</span>
+      <span><b>Diagnóstico completo</b> do seu candidato</span>
       ${whats("Comprar pelo WhatsApp", "lp-btn lp-btn-whats")}
     </div>` : ""}
 
@@ -337,7 +341,13 @@ export function animarLanding(el, { geo, D }) {
     gsap.fromTo(".lp-trilha-linha line", { strokeDashoffset: 1, strokeDasharray: 1 }, { strokeDashoffset: 0, ease: "none", scrollTrigger: { trigger: ".lp-trilha", start: "top 75%", end: "bottom 60%", scrub: true } });
     gsap.from(".lp-etapa", { opacity: 0, y: 40, duration: 0.7, stagger: 0.2, scrollTrigger: { trigger: ".lp-trilha", start: "top 75%" } });
 
-    gsap.from(".lp-preco-card", { opacity: 0, y: 60, scale: 0.96, duration: 0.9, ease: "power3.out", scrollTrigger: { trigger: ".lp-preco", start: "top 75%" } });
+    // Fechamento: o cartão entra, os itens se acumulam um a um e só então aparece o preço.
+    const fecho = gsap.timeline({ scrollTrigger: { trigger: ".lp-preco", start: "top 65%" } });
+    fecho.from(".lp-preco-card", { opacity: 0, y: 60, scale: 0.96, duration: 0.8, ease: "power3.out" })
+      .from(".lp-preco-lista li", { opacity: 0, x: -30, duration: 0.45, stagger: 0.16, ease: "power3.out" }, 0.3)
+      .from(".lp-preco-por", { opacity: 0, y: 12, duration: 0.4 }, "+=0.15")
+      .from(".lp-preco-valor", { opacity: 0, scale: 0.6, filter: "blur(18px)", duration: 0.8, ease: "back.out(1.6)" }, "-=0.1")
+      .from(".lp-preco-revela .lp-texto, .lp-preco-card .lp-btn, .lp-preco-como", { opacity: 0, y: 16, duration: 0.5, stagger: 0.1 }, "-=0.3");
     gsap.from(".lp-faq details", { opacity: 0, y: 24, duration: 0.5, stagger: 0.06, scrollTrigger: { trigger: ".lp-faq", start: "top 80%" } });
   }, el);
 
