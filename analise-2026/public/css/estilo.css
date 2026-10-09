@@ -358,7 +358,6 @@ body[data-tela="inicio"] main { padding: 0; }
 .lp-cel-grande .lp-num { color: var(--laranja); font-size: clamp(56px, 6.4vw, 92px); }
 .lp-cel-img { margin-top: auto; width: 100%; border-radius: 10px; border: 1px solid var(--lp-linha); padding-top: 0; }
 .lp-cel-grande .lp-cel-img { margin-top: 24px; }
-.lp-nota { font-size: 13px; color: var(--suave); margin-top: 16px; opacity: .8; }
 .lp-cel-larga { grid-column: span 2; background: linear-gradient(135deg, var(--cartao), color-mix(in srgb, #4c8dff 12%, var(--cartao))); }
 
 /* como funciona */

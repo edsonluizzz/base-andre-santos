@@ -110,7 +110,6 @@ export function landing({ venda }) {
 
     <section class="lp-exemplo" id="lp-exemplo">
       <h2 class="lp-h2">O que um diagnóstico revela.</h2>
-      <p class="lp-texto">Os números de uma candidata a deputada estadual que ficou na suplência.</p>
       <div class="lp-bento">
         <div class="lp-cel lp-cel-grande">
           <small>custo de cada voto de ${esc(ex.nome)}</small>
@@ -122,7 +121,6 @@ export function landing({ venda }) {
         <div class="lp-cel"><small>base dividida</small><b class="lp-num"><span data-conta="${ex.sobreposicao}">0</span>%</b><span>dos votos em locais onde ${esc(ex.rival)} também teve voto</span></div>
         <div class="lp-cel lp-cel-larga"><small>espaço para crescer</small><b class="lp-num">+<span data-conta="${ex.crescer}">0</span></b><span>votos possíveis nas 10 maiores cidades onde ela ficou abaixo da própria média</span></div>
       </div>
-      <p class="lp-nota">Exemplo ilustrativo, com nomes e números alterados.</p>
     </section>
 
     <section class="lp-como">
