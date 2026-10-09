@@ -8,8 +8,9 @@ import {
   COOKIE_DIAGNOSTICO, arquivoDeCandidato, chaveCandidato, ehHostDiagnostico, juntarToken, lerTokens, tokenValido,
 } from "@/lib/diagnostico";
 
-// Painel "Eleição 2026 — Análise" / Diagnóstico Eleitoral: arquivos de analise-2026/public (dados públicos do TSE/IBGE).
-// Página pública (liberada em auth.config), também servida em diagnostico.ovile.com.br (rewrite no next.config).
+// Diagnóstico Eleitoral: arquivos de analise-2026/public (dados públicos do TSE/IBGE).
+// Produto à parte, público só em diagnostico.ovile.com.br (rewrite no next.config); em ovile.com.br/eleicao-2026/analise
+// é ferramenta interna, só para ADMIN.
 // Quem não comprou vê a prévia; os votos por local de cada candidato (dados/<cargo>/<nº>.json) só saem para
 // quem tem token ativo (link vendido) ou é ADMIN do sistema. O gasto interno (interno.json) nunca sai.
 export const dynamic = "force-dynamic";
@@ -27,6 +28,9 @@ export async function GET(req: NextRequest, { params }: { params: { arquivo?: st
   try {
     const noSubdominio = ehHostDiagnostico(req.headers.get("x-forwarded-host") ?? req.headers.get("host"));
     const base = noSubdominio ? "/" : "/eleicao-2026/analise/";
+    // Produto à parte: fora do subdomínio, o painel é ferramenta interna (só ADMIN do sistema).
+    // O middleware já barra; esta checagem é a segunda trava, caso a regra de lá mude.
+    if (!noSubdominio && (await auth())?.user?.role !== "ADMIN") return new NextResponse("não encontrado", { status: 404 });
 
     // Entrada pelo link vendido (?k=token): grava o token no cookie e limpa a URL (o #hash continua).
     const k = req.nextUrl.searchParams.get("k");

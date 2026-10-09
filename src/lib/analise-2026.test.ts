@@ -27,10 +27,11 @@ describe("prepararIndex", () => {
     expect(out).toContain('<head>\n  <base href="/eleicao-2026/analise/">');
     expect(out).toContain('<a id="voltar" href="../../dashboard">');
   });
-  it("visitante público não vê o link para o sistema", () => {
-    const out = prepararIndex(html, "/eleicao-2026/analise/", false);
-    expect(out).toContain('<base href="/eleicao-2026/analise/">');
-    expect(out).toContain('<a id="voltar" href="../../dashboard" hidden>');
+  it("cliente do diagnóstico não recebe nem o link para o sistema", () => {
+    const out = prepararIndex(html, "/", false);
+    expect(out).toContain('<base href="/">');
+    expect(out).not.toContain("voltar");
+    expect(out).not.toContain("dashboard");
   });
 });
 

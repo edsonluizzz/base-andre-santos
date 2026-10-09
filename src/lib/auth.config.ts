@@ -4,7 +4,7 @@ import Google from "next-auth/providers/google";
 const ROLE_RANK: Record<string, number> = { MEMBER: 0, LEADER: 1, ADMIN: 2 };
 const ROUTE_MIN_RANK: [string, number][] = [
   ["/mapa", 1], ["/zonas", 1], ["/grupos", 1], ["/agenda", 1], ["/relatorio", 1],
-  ["/comunicados", 2], ["/configuracoes", 2], ["/super-admin", 2], ["/eleicao-2026", 2],
+  ["/comunicados", 2], ["/configuracoes", 2], ["/super-admin", 2], ["/eleicao-2026", 2], ["/diagnosticos", 2],
 ];
 
 // Dono da campanha — sempre super admin + finance admin, mesmo que
@@ -108,11 +108,10 @@ export const authConfig: NextAuthConfig = {
         pathname.startsWith("/api/cep/") ||
         pathname.startsWith("/api/n8n/") ||
         pathname === "/privacidade" ||
-        // Painel de análise da eleição: público, só leitura, só esta pasta (dados TSE/IBGE).
-        pathname === "/eleicao-2026/analise" ||
-        pathname.startsWith("/eleicao-2026/analise/") ||
-        // Diagnóstico Eleitoral: o subdomínio inteiro é reescrito para o painel acima (next.config),
-        // então nenhuma página do sistema é alcançável por ele. Host fixo aqui: este arquivo roda no edge.
+        // Diagnóstico Eleitoral (produto à parte): só existe em diagnostico.ovile.com.br. O next.config
+        // reescreve TODO caminho desse host para o painel de análise, então nenhuma página ou API do
+        // sistema é alcançável por ele. No domínio do sistema, /eleicao-2026/analise é só para ADMIN
+        // (cai na regra de cargo abaixo). Host fixo aqui: este arquivo roda no edge.
         nextUrl.hostname === "diagnostico.ovile.com.br" ||
         pathname === "/api/onboarding";
 
