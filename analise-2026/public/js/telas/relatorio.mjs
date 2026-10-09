@@ -95,7 +95,7 @@ export function montar(el, { D, geo, foco, comparados, cores }) {
   const principal = x.topMun[0]?.[0] ?? null;
 
   const kpi = (rot, val, sub = "") => `<div class="rel-kpi"><small>${rot}</small><b>${val}</b>${sub ? `<small>${sub}</small>` : ""}</div>`;
-  const capa = folha("Diagnóstico eleitoral · 2026", `
+  const capa = folha("Ovile Diagnóstico · Eleição 2026", `
     <div class="rel-capa">
       <p class="rel-sobre">${esc(D.cargo.nome)} · ${UF.nome} · Eleição 2026</p>
       <h1>${esc(foco.nm)}</h1>

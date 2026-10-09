@@ -5,6 +5,7 @@ import { escreverRota, lerRota } from "./rota.mjs";
 import { esconderDica } from "./dica.mjs";
 import { tabela } from "./tabela.mjs";
 import { TELAS_LIVRES, estaLiberado, oferta } from "./oferta.mjs";
+import { landing } from "./landing.mjs";
 import * as panorama from "./telas/panorama.mjs";
 import * as candidato from "./telas/candidato.mjs";
 import * as custo from "./telas/custo.mjs";
@@ -94,16 +95,15 @@ function barraEscolha(el, { D, cargo, foco, comparados, cores, mudar }) {
 function telaInicial(el, D, mudar, acesso) {
   const meus = (acesso?.liberados ?? []).filter((k) => k.startsWith(`${D.cargo.id}:`)).map((k) => D.porNumero.get(k.split(":")[1])).filter(Boolean);
   el.innerHTML = `
-    <section class="vitrine">
-      <p class="oferta-selo">Eleição 2026 · ${UF.nome}</p>
-      <h1>Entenda de onde vieram os seus votos, quanto custou cada um e onde crescer.</h1>
-      <p>Diagnóstico de qualquer candidato a deputado estadual ou federal do ${UF.sigla}: mapa até o local de votação, custo do voto, concorrentes que disputam a mesma base e relatório PDF pronto para apresentar. Dados oficiais do TSE, conferidos voto a voto.</p>
-      <p><b>Escolha o candidato abaixo e veja a prévia grátis.</b></p>
-    </section>
-    ${meus.length ? `<div class="cartao espaco"><h2>Seus diagnósticos</h2><div class="meus">${meus.map((c) =>
+    ${meus.length ? `<div class="cartao"><h2>Seus diagnósticos</h2><div class="meus">${meus.map((c) =>
       `<a href="#relatorio?cargo=${D.cargo.id}&c=${c.n}">${esc(c.nm)} <small>${c.n} · ${esc(c.sg)}</small></a>`).join("")}</div></div>` : ""}
+    ${landing({ D, venda: acesso?.venda, totalCandidatos: 995 })}
     <div class="cartao inicio espaco"><h2>${esc(D.cargo.nome)} · ${UF.nome} · ${inteiro(D.candidatos.length)} candidatos</h2>
     <div id="in-lista" class="rolagem" style="max-height:none"></div></div>`;
+  // O # da URL é a rota das telas: âncora vira rolagem por script.
+  el.querySelectorAll("[data-rolar]").forEach((b) => {
+    b.onclick = () => document.getElementById(b.dataset.rolar)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
   tabela(el.querySelector("#in-lista"), {
     linhas: D.candidatos, ordem: 3, busca: "Buscar candidato…", aoClicar: (c) => mudar({ c: c.n, vs: null }),
     colunas: [
@@ -157,7 +157,7 @@ async function iniciar() {
     if (foco && liberado) await garantirLocais(D, [foco.n, ...comparados.map((c) => c.n), params.b ?? ""], (u) => carregar(u, true));
     if (minha !== vez) return; // outra navegação começou enquanto carregava
 
-    document.title = foco ? `${nomeCurto(foco)} · Diagnóstico ${D.cargo.nome} 2026` : `Diagnóstico Eleitoral 2026 · ${D.cargo.nome} ${UF.sigla}`;
+    document.title = foco ? `${nomeCurto(foco)} · Ovile Diagnóstico` : `Ovile Diagnóstico · Eleição 2026 ${UF.sigla}`;
     document.getElementById("cargo-titulo").textContent = `${CARGOS[cargo].curto.toUpperCase()} ${UF.sigla}`;
     const f = D.meta.fontes;
     document.getElementById("rodape").textContent =

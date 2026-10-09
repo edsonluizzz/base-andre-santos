@@ -23,7 +23,7 @@ const reais = (v: number) => v.toLocaleString("pt-BR", { style: "currency", curr
 const data = (s: string | null) => (s ? new Date(s).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" }) : "—");
 
 function mensagem(v: Venda) {
-  return `Olá, ${v.cliente.split(" ")[0]}! Seu Diagnóstico Eleitoral 2026 de ${v.candidato} (${v.numero}) está pronto.\n\n` +
+  return `Olá, ${v.cliente.split(" ")[0]}! Seu Ovile Diagnóstico 2026 de ${v.candidato} (${v.numero}) está pronto.\n\n` +
     `Acesse pelo link (é exclusivo, não compartilhe):\n${v.link}\n\n` +
     `No menu "Relatório PDF" você baixa o relatório completo.`;
 }

@@ -8,6 +8,10 @@ const TIPOS: Record<string, string> = {
   ".mjs": "text/javascript; charset=utf-8",
   ".js": "text/javascript; charset=utf-8",
   ".json": "application/json; charset=utf-8",
+  ".jpg": "image/jpeg",
+  ".png": "image/png",
+  ".svg": "image/svg+xml",
+  ".mp4": "video/mp4",
 };
 
 // Gasto interno do módulo financeiro fica só no Mac; nunca é servido online.

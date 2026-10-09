@@ -235,3 +235,41 @@ button.principal { background: var(--laranja); color: #fff; border-color: var(--
 @media (max-width: 860px) {
   .previa-sobre { position: relative; z-index: 1; inset: auto; margin-top: -30%; }
 }
+
+/* Landing (Ovile Diagnóstico) */
+h1 small { font-size: 13px; letter-spacing: 1.5px; color: var(--suave); font-weight: 600; }
+.lp { display: flex; flex-direction: column; gap: 56px; max-width: 1180px; margin: 0 auto; padding: 8px 0 8px; }
+.lp h2 { font-size: clamp(22px, 2.6vw, 32px); font-weight: 800; letter-spacing: 0; margin-bottom: 18px; line-height: 1.2; }
+.lp p { font-size: 16px; line-height: 1.6; color: var(--suave); }
+.lp-hero { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 40px; align-items: center; padding-top: 16px; }
+.lp-hero h1 { font-size: clamp(30px, 4.6vw, 54px); font-weight: 800; letter-spacing: -0.5px; line-height: 1.08; white-space: normal; margin: 10px 0 16px; }
+.lp-sub { font-size: 18px !important; }
+.lp-ctas { display: flex; gap: 12px; flex-wrap: wrap; margin: 24px 0 14px; }
+.botao-principal { background: var(--laranja); color: #fff; border: 0; text-decoration: none; font-weight: 700; padding: 12px 20px; border-radius: 10px; font-size: 16px; cursor: pointer; }
+.botao-principal:hover { filter: brightness(1.08); }
+.lp-miudo { font-size: 13px !important; }
+.lp-hero-img img { width: 100%; border-radius: 10px; box-shadow: 0 20px 60px rgba(0, 0, 0, .45); transform: rotate(1.5deg); }
+.lp-perguntas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.lp-perguntas > div { background: var(--cartao); border: 1px solid var(--borda); border-radius: 14px; padding: 20px; }
+.lp-perguntas b { font-size: 18px; display: block; margin-bottom: 6px; }
+.lp-recurso { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 36px; align-items: center; margin-top: 40px; }
+.lp-recurso.inverter .lp-recurso-texto { order: 2; }
+.lp-recurso h3 { font-size: 22px; margin-bottom: 8px; }
+.lp-recurso-img img { width: 100%; border-radius: 12px; border: 1px solid var(--borda); display: block; }
+.lp-exemplo { background: var(--cartao); border: 1px solid var(--borda); border-radius: 18px; padding: 28px; }
+.lp-numeros { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin: 18px 0; }
+.lp-numeros b { display: block; font-size: 34px; color: var(--laranja); font-weight: 800; }
+.lp-numeros span { color: var(--suave); font-size: 14px; line-height: 1.4; }
+.lp-passos { padding-left: 22px; display: flex; flex-direction: column; gap: 12px; font-size: 17px; line-height: 1.5; }
+.lp-passos b { color: var(--texto); }
+.lp-faq details { border-bottom: 1px solid var(--borda); padding: 14px 0; }
+.lp-faq summary { cursor: pointer; font-size: 17px; font-weight: 600; }
+.lp-faq details p { margin-top: 8px; }
+.lp-final { scroll-margin-top: 140px; text-align: center; padding-top: 12px; }
+@media (max-width: 860px) {
+  .lp { gap: 40px; }
+  .lp-hero, .lp-recurso, .lp-perguntas { grid-template-columns: 1fr; }
+  .lp-recurso.inverter .lp-recurso-texto { order: 0; }
+  .lp-numeros { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .lp-hero-img img { transform: none; }
+}
