@@ -68,3 +68,6 @@ apuracao-v2/data/
 # analise-2026
 /analise-2026/coletar/cache/
 /analise-2026/public/interno.json
+
+# vídeos renderizados (pesados; o código-fonte do vídeo fica no git)
+analise-2026/video/*.mp4

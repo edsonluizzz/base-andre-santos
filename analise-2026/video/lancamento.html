@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Ovile Diagnóstico · lançamento 9:16</title>
+<!-- Vídeo de lançamento (prompt 03 "Lançamento de App", adaptado para 9:16, 30 s).
+     A linha do tempo fica pausada: window.__seek(t) posiciona o quadro (renderizar.mjs grava 30 fps).
+     Aberto direto no navegador, ?play toca em tempo real para revisar. -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<style>
+  :root { --laranja: #ff6a13; --fundo: #07090f; --texto: #f2f5fa; --suave: #8b97ad; --cartao: #141a26; --borda: #232c3d; }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { width: 1080px; height: 1920px; overflow: hidden; background: var(--fundo); font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; color: var(--texto); }
+  #palco { position: relative; width: 1080px; height: 1920px; overflow: hidden; }
+  .brilho { position: absolute; border-radius: 50%; filter: blur(140px); opacity: .55; }
+  #b1 { width: 900px; height: 900px; background: #ff6a13; left: -260px; top: 980px; }
+  #b2 { width: 760px; height: 760px; background: #4c8dff; right: -280px; top: 160px; opacity: .35; }
+  #b3 { width: 600px; height: 600px; background: #b06cff; left: 240px; top: -320px; opacity: .25; }
+
+  .logo { position: absolute; left: 0; right: 0; text-align: center; font-weight: 300; letter-spacing: 10px; font-size: 64px; }
+  .logo b { color: var(--laranja); font-weight: 800; letter-spacing: 6px; }
+  #logo-abre { top: 860px; }
+
+  .titulo { position: absolute; left: 70px; right: 70px; top: 150px; font-size: 92px; line-height: 1.04; font-weight: 800; letter-spacing: -1.5px; }
+  .titulo .k { color: var(--laranja); }
+  .titulo .p { display: inline-block; }
+
+  /* celular em 3D */
+  .cena3d { position: absolute; left: 0; right: 0; top: 560px; height: 1280px; perspective: 2200px; }
+  .fone { position: absolute; left: 50%; top: 0; width: 600px; height: 1240px; margin-left: -300px; border-radius: 88px; background: #0d1018;
+    border: 14px solid #262b36; box-shadow: 0 0 0 3px #3a4150, 0 60px 120px rgba(0,0,0,.7), inset 0 0 0 2px #000; transform-style: preserve-3d; overflow: hidden; }
+  .fone::before { content: ""; position: absolute; top: 22px; left: 50%; width: 170px; height: 46px; margin-left: -85px; border-radius: 30px; background: #000; z-index: 5; }
+  .tela { position: absolute; inset: 0; padding: 92px 26px 26px; background: var(--fundo); display: flex; flex-direction: column; gap: 20px; }
+  .app-topo { font-size: 22px; letter-spacing: 4px; font-weight: 300; }
+  .app-topo b { color: var(--laranja); font-weight: 800; letter-spacing: 3px; }
+  .app-nome { font-size: 40px; font-weight: 800; line-height: 1.1; }
+  .app-sub { font-size: 22px; color: var(--suave); margin-top: -10px; }
+  .tela img { width: 100%; border-radius: 18px; border: 1px solid var(--borda); display: block; }
+  .tela .img-alta { height: 640px; object-fit: cover; object-position: top; }
+  .kpi-app { background: var(--cartao); border: 1px solid var(--borda); border-radius: 18px; padding: 18px 22px; }
+  .kpi-app small { display: block; color: var(--suave); font-size: 20px; }
+  .kpi-app b { font-size: 50px; color: var(--laranja); }
+
+  /* cards que saltam do celular */
+  .card { position: absolute; background: rgba(20,26,38,.92); border: 1px solid #2f3a50; border-radius: 26px; padding: 26px 30px; box-shadow: 0 30px 60px rgba(0,0,0,.55);
+    backdrop-filter: blur(8px); min-width: 330px; }
+  .card b { display: block; font-size: 62px; font-weight: 800; color: var(--laranja); line-height: 1.05; }
+  .card span { font-size: 26px; color: #c8d0de; line-height: 1.3; display: block; margin-top: 6px; }
+  .esq { left: 40px; } .dir { right: 40px; }
+
+  /* leque final */
+  .leque { position: absolute; left: 0; right: 0; top: 520px; height: 1200px; }
+  .mini { position: absolute; left: 50%; top: 80px; width: 420px; height: 868px; margin-left: -210px; border-radius: 64px; border: 10px solid #262b36; background: var(--fundo); overflow: hidden;
+    box-shadow: 0 40px 90px rgba(0,0,0,.7); transform-origin: 50% 120%; }
+  .mini img { width: 100%; height: 100%; object-fit: cover; object-position: top; }
+
+  #fim { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 34px; }
+  #fim .logo { position: static; font-size: 76px; }
+  #fim .tag { font-size: 60px; font-weight: 800; line-height: 1.1; padding: 0 60px; }
+  #fim .tag .k { color: var(--laranja); }
+  #fim .url { font-size: 38px; color: var(--texto); background: var(--cartao); border: 1px solid var(--borda); border-radius: 999px; padding: 20px 40px; }
+  #fim .preco { font-size: 30px; color: var(--suave); }
+</style>
+</head>
+<body>
+<div id="palco">
+  <div class="brilho" id="b1"></div><div class="brilho" id="b2"></div><div class="brilho" id="b3"></div>
+
+  <div class="logo" id="logo-abre">OVILE <b>DIAGNÓSTICO</b></div>
+
+  <!-- títulos das cenas -->
+  <h1 class="titulo" id="t1"><span class="p">Você</span> <span class="p">sabe</span> <span class="p">onde</span> <span class="p">ganhou</span> <span class="p k">cada voto?</span></h1>
+  <h1 class="titulo" id="t2"><span class="p">Quanto</span> <span class="p">custou</span> <span class="p k">cada voto?</span></h1>
+  <h1 class="titulo" id="t3"><span class="p">Quem</span> <span class="p">disputa</span> <span class="p">a</span> <span class="p k">sua base?</span></h1>
+  <h1 class="titulo" id="t4"><span class="p">Onde</span> <span class="p">dá</span> <span class="p">para</span> <span class="p k">crescer?</span></h1>
+  <h1 class="titulo" id="t5"><span class="p">Tudo</span> <span class="p">num</span> <span class="p k">relatório PDF.</span></h1>
+
+  <div class="cena3d">
+    <div class="fone" id="fone">
+      <div class="tela" id="s1">
+        <div class="app-topo">OVILE <b>DIAGNÓSTICO</b></div>
+        <div class="app-nome">André Santos</div><div class="app-sub">Deputado Estadual · NOVO · 9.481 votos</div>
+        <img src="../public/img/mapa-estado.jpg" alt="">
+        <div class="kpi-app"><small>Municípios com voto</small><b>216 de 399</b></div>
+        <div class="kpi-app"><small>Locais de votação com voto</small><b>1.669</b></div>
+      </div>
+      <div class="tela" id="s2">
+        <div class="app-topo">OVILE <b>DIAGNÓSTICO</b></div>
+        <div class="app-nome">Custo do voto</div><div class="app-sub">Receita declarada ao TSE ÷ votos</div>
+        <img src="../public/img/custo-barras.jpg" alt="">
+        <div class="kpi-app"><small>André Santos</small><b>R$ 9,71 por voto</b></div>
+      </div>
+      <div class="tela" id="s3">
+        <div class="app-topo">OVILE <b>DIAGNÓSTICO</b></div>
+        <div class="app-nome">Concorrentes</div><div class="app-sub">Mapa de calor, lado a lado</div>
+        <img src="../public/img/concorrentes-calor.jpg" alt="">
+      </div>
+      <div class="tela" id="s4">
+        <div class="app-topo">OVILE <b>DIAGNÓSTICO</b></div>
+        <div class="app-nome">Espaço para crescer</div><div class="app-sub">Cidades grandes abaixo da sua média</div>
+        <img src="../public/img/relatorio-5.jpg" alt="">
+      </div>
+      <div class="tela" id="s5">
+        <div class="app-topo">OVILE <b>DIAGNÓSTICO</b></div>
+        <img src="../public/img/relatorio-1.jpg" alt="">
+      </div>
+    </div>
+  </div>
+
+  <!-- cards de cada cena (posições em relação ao palco) -->
+  <div class="card esq" id="c1a" style="top:760px"><b>399</b><span>municípios no mapa</span></div>
+  <div class="card dir" id="c1b" style="top:1380px"><b>4.815</b><span>locais de votação</span></div>
+  <div class="card dir" id="c2a" style="top:800px"><b>R$ 9,71</b><span>por voto, contra<br>R$ 33,21 da chapa</span></div>
+  <div class="card esq" id="c2b" style="top:1420px"><b>3,34×</b><span>mais votos que o<br>esperado pelo dinheiro</span></div>
+  <div class="card esq" id="c3a" style="top:820px"><b>99%</b><span>da base dividida com<br>a maior concorrente</span></div>
+  <div class="card dir" id="c3b" style="top:1440px"><b>até 3</b><span>concorrentes,<br>de qualquer partido</span></div>
+  <div class="card dir" id="c4a" style="top:860px"><b>+1.515</b><span>votos possíveis<br>em 10 cidades</span></div>
+  <div class="card esq" id="c5a" style="top:860px"><b>5</b><span>páginas prontas<br>para o partido</span></div>
+  <div class="card dir" id="c5b" style="top:1450px"><b>100%</b><span>dados oficiais<br>do TSE</span></div>
+
+  <div class="leque" id="leque">
+    <div class="mini" id="m1"><img src="../public/img/relatorio-2.jpg" alt=""></div>
+    <div class="mini" id="m2"><img src="../public/img/relatorio-4.jpg" alt=""></div>
+    <div class="mini" id="m3"><img src="../public/img/relatorio-1.jpg" alt=""></div>
+  </div>
+
+  <div id="fim">
+    <div class="logo">OVILE <b>DIAGNÓSTICO</b></div>
+    <div class="tag">Sua eleição,<br><span class="k">voto a voto.</span></div>
+    <div class="url">diagnostico.ovile.com.br</div>
+    <div class="preco">Deputado estadual e federal · PR · R$ 297</div>
+  </div>
+</div>
+
+<script>
+const tl = gsap.timeline({ paused: true, defaults: { ease: "power3.out" } });
+const telas = ["#s1", "#s2", "#s3", "#s4", "#s5"];
+gsap.set(["#t1", "#t2", "#t3", "#t4", "#t5", ".card", ".cena3d", "#leque", "#fim"], { autoAlpha: 0 });
+gsap.set(telas.slice(1), { autoAlpha: 0 });
+gsap.set(".titulo .p", { yPercent: 60, autoAlpha: 0, filter: "blur(14px)" });
+gsap.set("#fone", { rotationY: -24, rotationX: 8, y: 260 });
+gsap.set(".mini", { autoAlpha: 0, y: 300 });
+
+// fundo vivo durante o vídeo inteiro
+tl.to("#b1", { x: 260, y: -220, duration: 30, ease: "sine.inOut" }, 0)
+  .to("#b2", { x: -200, y: 380, duration: 30, ease: "sine.inOut" }, 0)
+  .to("#b3", { x: 180, y: 120, duration: 30, ease: "sine.inOut" }, 0);
+
+// 0–1,8 s: logo
+tl.from("#logo-abre", { scale: .6, autoAlpha: 0, filter: "blur(24px)", duration: .9 }, .1)
+  .to("#logo-abre", { autoAlpha: 0, y: -80, filter: "blur(18px)", duration: .5, ease: "power2.in" }, 1.4);
+
+// celular entra e flutua até o fim das cenas
+tl.to(".cena3d", { autoAlpha: 1, duration: .01 }, 1.6)
+  .to("#fone", { y: 0, rotationY: -14, rotationX: 4, duration: 1.1 }, 1.6)
+  .to("#fone", { rotationY: 14, rotationX: -3, duration: 5, ease: "sine.inOut", yoyo: true, repeat: 3 }, 2.7)
+  .to("#fone", { y: -18, duration: 2.5, ease: "sine.inOut", yoyo: true, repeat: 8 }, 2.7);
+
+function titulo(sel, t) {
+  tl.to(sel, { autoAlpha: 1, duration: .01 }, t)
+    .to(`${sel} .p`, { yPercent: 0, autoAlpha: 1, filter: "blur(0px)", duration: .55, stagger: .09 }, t)
+    .to(sel, { autoAlpha: 0, y: -40, filter: "blur(16px)", duration: .4, ease: "power2.in" }, t + 4.1);
+}
+function cards(sels, t) {
+  sels.forEach((s, i) => {
+    tl.fromTo(s, { autoAlpha: 0, scale: .4, x: s.includes("a") ? 140 : -140, y: 120, filter: "blur(12px)" },
+      { autoAlpha: 1, scale: 1, x: 0, y: 0, filter: "blur(0px)", duration: .6, ease: "back.out(1.8)" }, t + .9 + i * .45)
+      .to(s, { autoAlpha: 0, scale: .85, filter: "blur(12px)", duration: .35, ease: "power2.in" }, t + 4.1);
+  });
+}
+function trocaTela(de, para, t) {
+  tl.to(de, { autoAlpha: 0, scale: 1.08, filter: "blur(16px)", duration: .45, ease: "power2.in" }, t)
+    .fromTo(para, { autoAlpha: 0, scale: .92, filter: "blur(16px)" }, { autoAlpha: 1, scale: 1, filter: "blur(0px)", duration: .55 }, t + .3);
+}
+
+// cenas de ~4,5 s
+const C = [2.0, 6.6, 11.2, 15.8, 20.4];
+titulo("#t1", C[0]); cards(["#c1a", "#c1b"], C[0]);
+trocaTela("#s1", "#s2", C[1] - .2); titulo("#t2", C[1]); cards(["#c2a", "#c2b"], C[1]);
+trocaTela("#s2", "#s3", C[2] - .2); titulo("#t3", C[2]); cards(["#c3a", "#c3b"], C[2]);
+trocaTela("#s3", "#s4", C[3] - .2); titulo("#t4", C[3]); cards(["#c4a"], C[3]);
+trocaTela("#s4", "#s5", C[4] - .2); titulo("#t5", C[4]); cards(["#c5a", "#c5b"], C[4]);
+// zoom na tela do relatório
+tl.to("#fone", { scale: 1.08, duration: 3, ease: "sine.inOut" }, C[4] + .6);
+
+// 25 s: celulares em leque
+tl.to(".cena3d", { autoAlpha: 0, y: 200, filter: "blur(20px)", duration: .5, ease: "power2.in" }, 25.0)
+  .to("#leque", { autoAlpha: 1, duration: .01 }, 25.2)
+  .to(".mini", { autoAlpha: 1, y: 0, duration: .6, stagger: .08 }, 25.2)
+  .to("#m1", { rotation: -18, x: -250, duration: .8, ease: "back.out(1.4)" }, 25.6)
+  .to("#m2", { rotation: 18, x: 250, duration: .8, ease: "back.out(1.4)" }, 25.6)
+  .to("#m3", { y: -40, scale: 1.06, duration: .8, ease: "back.out(1.4)" }, 25.6)
+  .to("#leque", { autoAlpha: 0, scale: .9, filter: "blur(20px)", duration: .5, ease: "power2.in" }, 27.3);
+
+// 27,6–30 s: logo + tagline + endereço
+tl.to("#fim", { autoAlpha: 1, duration: .01 }, 27.6)
+  .from("#fim .logo", { autoAlpha: 0, y: 60, filter: "blur(18px)", duration: .6 }, 27.6)
+  .from("#fim .tag", { autoAlpha: 0, y: 60, filter: "blur(18px)", duration: .6 }, 27.85)
+  .from("#fim .url", { autoAlpha: 0, scale: .7, duration: .6, ease: "back.out(2)" }, 28.2)
+  .from("#fim .preco", { autoAlpha: 0, duration: .5 }, 28.5)
+  .set({}, {}, 30);
+
+window.__duracao = 30;
+window.__seek = (t) => { tl.seek(t, false); };
+window.__pronto = Promise.all([...document.images].map((i) => (i.complete ? null : new Promise((r) => { i.onload = i.onerror = r; })))).then(() => document.fonts.ready);
+if (location.search.includes("play")) tl.play();
+</script>
+</body>
+</html>
