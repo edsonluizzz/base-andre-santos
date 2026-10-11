@@ -404,6 +404,7 @@ body[data-tela="inicio"] main { padding: 0; }
 
 /* busca */
 .lp .lp-busca { text-align: center; padding-bottom: 140px; }
+.lp-admin .lp-busca { padding-top: 48px; }
 .lp-busca .lp-h2 { margin: 0 auto; }
 .lp-meus { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; align-items: center; margin-top: 28px; color: var(--suave); }
 .lp-meus a { color: var(--texto); text-decoration: none; border: 1px solid var(--laranja); border-radius: 999px; padding: 6px 14px; }

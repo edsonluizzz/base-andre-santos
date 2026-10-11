@@ -166,7 +166,15 @@ function telaCandidatosCidade(el, { D, mudar }) {
 
 let desfazerLanding = () => {};
 function telaInicial(el, { D, brasil, acesso }) {
-  el.innerHTML = landing({ venda: acesso?.venda });
+  // Admin do sistema (acesso.todos): direto na busca, sem a página de venda nem botões de compra.
+  const admin = acesso?.todos === true;
+  el.innerHTML = landing({ venda: admin ? null : acesso?.venda });
+  if (admin) {
+    const lp = el.querySelector(".lp");
+    lp.classList.add("lp-admin");
+    [...lp.children].forEach((x) => { if (!x.classList.contains("lp-busca")) x.remove(); });
+    lp.querySelector(".lp-busca .lp-h2").textContent = "Diagnóstico completo: escolha qualquer candidato";
+  }
   // chave comprada: "<cargo>:<número>" (PR) ou "<uf>/<cargo>:<número>"; municipais com "<cidade>-<número>"
   const meus = (acesso?.liberados ?? []).map((k) => { const [cc, n] = k.split(":"); return { ...lerChaveCargo(cc), n }; });
   if (meus.length) {
@@ -183,8 +191,10 @@ function telaInicial(el, { D, brasil, acesso }) {
     carregarCidades: cidadesDoAno,
     abrir: (cargo, n, m) => { location.hash = escreverRota("panorama", { uf: UF.sigla === "PR" ? null : UF.sigla, cargo, m, c: n }); },
     trocarUF: (sigla) => definirUF(sigla),
-    venda: acesso?.venda,
+    venda: admin ? null : acesso?.venda,
+    rotuloAbrir: admin ? "Abrir" : "Ver prévia",
   });
+  if (admin) return;
   const desfazerAnim = animarLanding(el, { brasil }), desfazerBarra = ligarBarra(el);
   desfazerLanding = () => { desfazerAnim(); desfazerBarra(); };
 }

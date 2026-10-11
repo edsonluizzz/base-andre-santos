@@ -131,9 +131,13 @@ export default function DiagnosticosPage() {
           <h1 className="flex items-center gap-2 text-2xl font-bold"><FileBarChart className="h-6 w-6" /> Diagnósticos vendidos</h1>
           <p className="text-sm text-muted-foreground">Recebeu o Pix? Registre aqui e mande o link exclusivo pelo WhatsApp. {vendas.filter((v) => v.ativo).length} ativos · {reais(total)}</p>
         </div>
-        <a href="https://diagnostico.ovile.com.br/" target="_blank" rel="noreferrer" className="flex items-center gap-1 text-sm text-primary hover:underline">
-          Abrir a vitrine <ExternalLink className="h-4 w-4" />
-        </a>
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Painel inteiro, sem trava de compra: no domínio do sistema, só para ADMIN */}
+          <a href="/eleicao-2026/analise" target="_blank" rel="noreferrer"><Button size="sm"><FileBarChart className="mr-1 h-4 w-4" /> Abrir diagnóstico completo</Button></a>
+          <a href="https://diagnostico.ovile.com.br/" target="_blank" rel="noreferrer" className="flex items-center gap-1 text-sm text-primary hover:underline">
+            Ver a vitrine (como o cliente) <ExternalLink className="h-4 w-4" />
+          </a>
+        </div>
       </div>
 
       <div className="grid gap-3 rounded-xl border p-4 md:grid-cols-[160px_1fr_1fr_160px_110px_auto] md:items-end">

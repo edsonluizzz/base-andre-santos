@@ -238,7 +238,7 @@ const normal = (s) => String(s ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").t
 
 // Busca do candidato: sugestões na hora, troca de cargo sem sair da página.
 // Municipais (vereador/prefeito): primeiro a cidade, depois o candidato daquela cidade.
-export function ligarBusca(el, { cargoInicial, carregarCargo, carregarCidades, abrir, venda, trocarUF }) {
+export function ligarBusca(el, { cargoInicial, carregarCargo, carregarCidades, abrir, venda, trocarUF, rotuloAbrir = "Ver prévia" }) {
   const campo = el.querySelector("#lp-q");
   const lista = el.querySelector("#lp-sugestoes");
   const caixaCidade = el.querySelector(".lp-busca-cidade"), campoCidade = el.querySelector("#lp-cidade");
@@ -259,7 +259,7 @@ export function ligarBusca(el, { cargoInicial, carregarCargo, carregarCidades, a
       return `<li class="lp-sug">
         <button type="button" class="lp-sug-ver" data-n="${c.n}">
           <span class="lp-sug-nome">${esc(c.nm)}</span><span class="lp-sug-meta">${c.n} · ${esc(c.sg)} · ${inteiro(c.votos)} votos</span></button>
-        <button type="button" class="lp-sug-acao" data-n="${c.n}">Ver prévia</button>
+        <button type="button" class="lp-sug-acao" data-n="${c.n}">${rotuloAbrir}</button>
         ${compra ? `<a class="lp-sug-acao lp-sug-comprar" href="${esc(compra)}" target="_blank" rel="noopener">Comprar</a>` : ""}
       </li>`;
     }).join("")

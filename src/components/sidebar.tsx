@@ -41,7 +41,7 @@ const navItems = [
   { href: "/metas",          icon: Target,           label: "Metas",           minRole: "LEADER", superAdminOnly: false, financeAdminOnly: false, leadsOnly: false },
   { href: "/eleitos-2022",   icon: Award,            label: "Eleitos 2022",    minRole: "LEADER", superAdminOnly: false, financeAdminOnly: false, leadsOnly: false },
   // Página estática servida por rota (não é página do Next): abre com <a>, sem navegação client-side.
-  { href: "/eleicao-2026/analise", icon: PieChart, label: "Análise 2026", minRole: "ADMIN", superAdminOnly: false, financeAdminOnly: false, leadsOnly: false, externo: true },
+  { href: "/eleicao-2026/analise", icon: PieChart, label: "Diagnóstico completo", minRole: "ADMIN", superAdminOnly: false, financeAdminOnly: false, leadsOnly: false, externo: true },
   { href: "/materiais",      icon: Package,          label: "Material",        minRole: "LEADER", superAdminOnly: false, financeAdminOnly: false, leadsOnly: true  },
   { href: "/convites",       icon: Link2,            label: "Convites",        minRole: "ADMIN",  superAdminOnly: false, financeAdminOnly: false, leadsOnly: false },
   { href: "/igrejas",        icon: Building2,        label: "Igrejas",         minRole: "ADMIN",  superAdminOnly: false, financeAdminOnly: false, leadsOnly: false },
