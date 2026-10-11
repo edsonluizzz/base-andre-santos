@@ -2,7 +2,8 @@
  * Interruptor dos formulários públicos por campanha.
  *
  * Campanhas listadas aqui NÃO recebem dados de formulários públicos
- * (cadastro, pedido de material, convite por link). Para reativar, remova o
+ * (cadastro, pedido de material). Convites por link gerados no painel
+ * continuam funcionando mesmo com a campanha encerrada. Para reativar, remova o
  * id do conjunto e faça deploy. O descadastro (opt-out/LGPD) continua aberto.
  */
 import { NextResponse } from "next/server";
