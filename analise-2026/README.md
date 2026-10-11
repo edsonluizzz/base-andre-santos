@@ -27,7 +27,7 @@ Teclas: `1`–`7` trocam de tela · `T` tema claro/escuro.
 | 3 Custo do voto | Receita ÷ votos do candidato, comparados e chapa; curvas recurso × voto e cenários (1,5× a 5× a receita); origem do dinheiro |
 | 4 Comparador | Candidato × qualquer outro do mesmo cargo, por município ou local, lado a lado ou diferença |
 | 5 Concorrentes | "Quem lidera" ou "Mapa de calor" com os comparados; sobreposição de bases; onde cada um foi forte |
-| 6 Perfil do eleitor | Perfil (gênero, idade, escolaridade) dos locais de onde vieram os votos × média do estado; peso do perfil no voto (R² dentro das cidades); locais e bairros onde o perfil indica mais voto do que veio; troca de partido 2022↔2026 por município (Pedersen). Só eleições gerais do PR |
+| 6 Perfil do eleitor | Lugares parecidos: onde o candidato vai bem, o que esses lugares têm em comum (gênero, idade, escolaridade × média do estado) e os locais com o mesmo perfil onde ele foi fraco (padrão: só nas cidades com 50+ votos dele). Só eleições gerais do PR |
 | 7 Relatório PDF | 5 folhas A4: capa com conclusões automáticas, geografia, locais e bairros, custo e concorrentes, espaço para crescer e metodologia. "Baixar PDF" abre a impressão do navegador |
 
 Em todos os mapas: ⤢ amplia, ⛶ tela cheia, ⟲ volta ao Paraná inteiro. Clique num município (ou use o campo
@@ -80,7 +80,7 @@ config.mjs). Cada seção vai para o local que a **votação** usa (número orig
 cobertura contra os locais da votação (11/10/2026: 2026 = 100% dos votos nominais; 2022 = 99,97%; ficam de fora presídios e voto
 em trânsito). Raça/cor não entra (82% "não informado").
 
-Método (public/js/perfil.mjs): o voto esperado de cada local vem de mínimos quadrados ponderados **dentro de cada município**
-(efeito fixo), só nas cidades onde o candidato teve ≥ 30 votos — um modelo do estado inteiro confundiria demografia com
-geografia. Por isso o esperado por cidade soma o mesmo que o real; o mapa e a tabela de municípios mostram os votos que
-**faltaram** nos locais abaixo do perfil. É análise ecológica: perfil do lugar, não de quem votou.
+Método (public/js/perfil.mjs, `lugaresParecidos`): os 20 locais com maior % do candidato (≥ 100 votos nominais) definem o perfil
+de onde ele vai bem (média ponderada pelos votos dele); entre os locais onde ficou abaixo da própria média, os de perfil mais
+próximo (distância em desvios-padrão do estado) vêm primeiro. Uma versão anterior usava regressão (voto esperado) e volatilidade
+de Pedersen; foi trocada a pedido do Edson por ser difícil de entender. É análise ecológica: perfil do lugar, não de quem votou.

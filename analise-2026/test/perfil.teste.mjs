@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { PERFIL_CATS, posCat } from "../public/js/config.mjs";
-import { ajustarModelo, fracoes, indexarPerfil, perfilDosVotos, porUnidade, resolver, volatilidade } from "../public/js/perfil.mjs";
+import { destaques, distancia, fracoes, indexarPerfil, lugaresParecidos, perfilDosVotos } from "../public/js/perfil.mjs";
 
 const TAM = 1 + PERFIL_CATS.length;
 // vetor de um local: aptos e as contagens pedidas ({ f: 30, m: 70, … })
@@ -56,62 +56,35 @@ test("perfil dos votos pondera cada local pelos votos do candidato", () => {
   assert.ok(Math.abs(r.fr[posCat("f") - 1] - (30 * 0.8 + 10 * 0.5) / 40) < 1e-12);
 });
 
-test("resolver acha a solução de um sistema linear", () => {
-  const x = resolver([[2, 1], [1, 3]], [5, 10]);
-  assert.ok(Math.abs(x[0] - 1) < 1e-9 && Math.abs(x[1] - 3) < 1e-9);
+test("distância: perfis iguais = 0; diferença medida em desvios-padrão", () => {
+  assert.equal(distancia([0.5, 0.5], [0.5, 0.5], [0.1, 0.1]), 0);
+  assert.ok(Math.abs(distancia([0.6, 0.4], [0.5, 0.5], [0.1, 0.1]) - 1) < 1e-12);
 });
 
-test("modelo recupera uma relação exata e aponta o espaço para crescer", () => {
-  // % do candidato = 0,02 + 0,1 × (fração de mulheres), exatamente; idade e escolaridade constantes
+test("lugares parecidos: perfil dos melhores locais e, abaixo da média, os mais parecidos primeiro", () => {
+  // candidato forte onde há muitas mulheres; fraco nos demais
   const locais = [], loc = [], perfis = {};
-  const fem = [0.2, 0.35, 0.5, 0.65, 0.8, 0.3, 0.7, 0.45];
-  fem.forEach((f, j) => {
-    const id = `9-1-${j + 1}`, total = 1000;
-    locais.push({ id, mun: j % 2, bairro: null, total });
+  const add = (f, votos) => {
+    const j = locais.length, id = `1-1-${j}`;
+    locais.push({ id, mun: 0, bairro: `B${j}`, total: 1000 });
     perfis[id] = vet(1000, { f: f * 1000, m: (1 - f) * 1000, i35: 1000, e3: 1000 });
-    loc.push([j, Math.round(total * (0.02 + 0.1 * f) * 1000) / 1000]);
-  });
-  const D = { locais, municipios: [{ cd: "9" }, { cd: "8" }] };
-  const m = ajustarModelo(D, { loc }, indexarPerfil({ locais: perfis }), { minLocais: 5 });
-  assert.equal(m.n, fem.length);
-  assert.ok(m.r2 > 0.999, `r2 = ${m.r2}`);
-  const j = 4;
-  assert.ok(Math.abs(m.esperado.get(j) - loc[j][1]) < 0.01);
-  const porMun = porUnidade(D, m.esperado);
-  assert.ok(Math.abs(porMun.get(0) - [0, 2, 4, 6].reduce((s, k) => s + loc[k][1], 0)) < 0.05);
+    if (votos) loc.push([j, votos]);
+  };
+  add(0.8, 100); add(0.75, 90);   // fortes (10% e 9%)
+  add(0.78, 5);                    // fraco e parecido com os fortes
+  add(0.3, 2);                     // fraco e diferente
+  add(0.7, 0);                     // sem voto, parecido
+  add(0.5, 60);                    // acima da média, não entra como "parecido"
+  const D = { locais, municipios: [{ cd: "1" }] };
+  const r = lugaresParecidos(D, { loc }, indexarPerfil({ locais: perfis }), { fortes: 2 });
+  assert.deepEqual(r.fortes.map((x) => x.j), [0, 1]);
+  assert.ok(Math.abs(r.media - 257 / 6000) < 1e-12);
+  assert.ok(Math.abs(r.perfil[posCat("f") - 1] - (0.8 * 100 + 0.75 * 90) / 190) < 1e-12);
+  assert.deepEqual(r.parecidos.map((x) => x.j), [2, 4, 3]);
 });
 
-test("modelo compara dentro do município: nível da cidade e cidade sem voto não viram 'espaço'", () => {
-  // cidade 0: % = 0,01 + 0,1·f; cidade 1: mesmo efeito, nível 5× maior; cidade 2: mesmo perfil, candidato sem voto
-  const locais = [], loc = [], perfis = {};
-  const fem = [0.2, 0.4, 0.6, 0.8];
-  [[0, 0.01], [1, 0.05], [2, null]].forEach(([mun, a]) => fem.forEach((f, k) => {
-    const j = locais.length, id = `${mun}-1-${k}`;
-    locais.push({ id, mun, total: 1000 });
-    perfis[id] = vet(1000, { f: f * 1000, m: (1 - f) * 1000, i35: 1000, e3: 1000 });
-    if (a != null) loc.push([j, 1000 * (a + 0.1 * f)]);
-  }));
-  const D = { locais, municipios: [{ cd: "0" }, { cd: "1" }, { cd: "2" }] };
-  const m = ajustarModelo(D, { loc }, indexarPerfil({ locais: perfis }), { minLocais: 5 });
-  assert.ok(m.r2 > 0.999, `r2 = ${m.r2}`);
-  assert.equal(m.unidades, 2);
-  assert.ok(Math.abs(m.coef[m.vars.indexOf("f")] - 0.1) < 1e-6);
-  assert.equal([...m.esperado.keys()].some((j) => locais[j].mun === 2), false);
-  for (const [j, v] of loc) assert.ok(Math.abs(m.esperado.get(j) - v) < 1e-6);
-});
-
-test("modelo com poucos locais não ajusta", () => {
-  const { D, PI } = cenario();
-  assert.equal(ajustarModelo(D, { loc: [[0, 30], [1, 10], [2, 5]] }, PI, { minLocais: 5 }), null);
-});
-
-test("volatilidade = metade da soma das variações de participação dos partidos", () => {
-  const D = { municipios: [{ cd: "1" }, { cd: "2" }], candidatos: [
-    { sg: "AA", mun: [[0, 60], [1, 50]] }, { sg: "BB", mun: [[0, 40], [1, 50]] }] };
-  const O = { municipios: [{ cd: "2" }, { cd: "1" }], candidatos: [
-    { sg: "AA", mun: [[1, 40], [0, 50]] }, { sg: "CC", mun: [[1, 60], [0, 50]] }] };
-  const v = volatilidade(D, O);
-  assert.ok(Math.abs(v.porMun.get(0) - 0.6) < 1e-12); // AA 0,6→0,4; BB 0,4→0; CC 0→0,6 → (0,2+0,4+0,6)/2
-  assert.ok(Math.abs(v.porMun.get(1) - 0.5) < 1e-12);  // AA 0,5→0,5; BB 0,5→0; CC 0→0,5
-  assert.ok(Math.abs(v.estado - 0.55) < 1e-12);
+test("destaques: categorias mais distantes da média, ignorando diferenças pequenas", () => {
+  const base = PERFIL_CATS.map(() => 0.2), fr = PERFIL_CATS.map(() => 0.2);
+  fr[posCat("e4") - 1] = 0.3; fr[posCat("i60") - 1] = 0.15; fr[posCat("f") - 1] = 0.205;
+  assert.deepEqual(destaques(fr, base).map((x) => [x.id, Math.round(x.indice)]), [["e4", 150], ["i60", 75]]);
 });

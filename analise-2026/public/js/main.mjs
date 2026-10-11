@@ -83,13 +83,6 @@ const perfilDoAno = (ano) => {
   if (!cachePerfis.has(chave)) cachePerfis.set(chave, carregar(`${raizDados()}perfil/${ano}.json`, true).then((P) => (P ? indexarPerfil(P) : null)));
   return cachePerfis.get(chave);
 };
-// Mesmo cargo na outra eleição geral coletada (2026 ↔ 2022), para a troca de partido; null se não houver.
-const outraEleicao = (cargo) => {
-  const cfg = CARGOS[cargo];
-  if (!cfg || cfg.municipal) return null;
-  const outro = idCargo(cargo.split("-")[0], cfg.ano === 2026 ? 2022 : 2026);
-  return outro !== cargo && cargoNaUF(outro) ? outro : null;
-};
 let mapaBrasil = null; // hero da landing (img/brasil.json), carregado só quando a landing aparece
 const cacheMapas = new Map();
 const mapaDaUF = () => {
@@ -259,13 +252,8 @@ async function iniciar() {
     const liberado = foco ? estaLiberado(acesso, chaveCargo(cargo), municipal ? `${params.m}-${foco.n}` : foco.n) : false;
     // Votos por local só para quem comprou (a rota responde 403 aos demais).
     if (foco && liberado) await garantirLocais(D, [foco.n, ...comparados.map((c) => c.n), params.b ?? ""], (u) => carregar(u, true));
-    // Perfil do eleitor: perfil do eleitorado do ano e a outra eleição do mesmo cargo (troca de partido)
-    let extras = {};
-    if (foco && liberado && id === "perfil" && !municipal) {
-      const outro = outraEleicao(cargo);
-      const [P, O] = await Promise.all([perfilDoAno(CARGOS[cargo].ano), outro ? dadosDoCargo(outro).catch(() => null) : null]);
-      extras = { perfil: P, outro: O };
-    }
+    // Perfil do eleitor: perfil do eleitorado do ano da eleição
+    const extras = foco && liberado && id === "perfil" && !municipal ? { perfil: await perfilDoAno(CARGOS[cargo].ano) } : {};
     if (minha !== vez) return; // outra navegação começou enquanto carregava
 
     document.title = foco ? `${nomeCurto(foco)} · Ovile Diagnóstico` : `Ovile Diagnóstico · Eleição ${CARGOS[cargo].ano} ${UF.sigla}`;

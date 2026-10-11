@@ -483,7 +483,12 @@ body[data-tela="inicio"] main { padding: 0; }
 .lp-quem-destaque h3 { font-size: clamp(30px, 3.2vw, 42px); }
 @media (max-width: 899px) { .lp-quem-grade { grid-template-columns: 1fr; } .lp-quem-destaque { grid-row: auto; min-height: 0; } }
 
-/* Perfil do eleitor: uma tabelinha por dimensão (gênero, idade, escolaridade) */
-.perfil-tab { width: 100%; margin-bottom: 10px; }
-#pf-perfil h3 { font-size: 13px; margin: 12px 0 4px; color: var(--suave); text-transform: uppercase; letter-spacing: .04em; }
-#pf-perfil h3:first-child { margin-top: 0; }
+/* Perfil do eleitor */
+.pf-sub { font-size: 13px; margin: 14px 0 6px; color: var(--suave); text-transform: uppercase; letter-spacing: .04em; }
+.pf-frases { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+.pf-frases b { display: block; font-size: 18px; }
+.pf-frases b.mais { color: var(--laranja); }
+.pf-frases b.menos { color: var(--azul); }
+.pf-frases small, .pf-explica { color: var(--suave); }
+.pf-como summary { cursor: pointer; font-weight: 600; }
+.pf-como p { color: var(--suave); line-height: 1.6; }
