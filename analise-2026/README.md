@@ -18,7 +18,7 @@ por município. Tudo fica no endereço, então o link pode ser enviado ao client
     #relatorio?cargo=estadual&c=30777&vs=30300,10456,22622
     (vs=- → nenhum comparado; sem vs → sugestão automática)
 
-Teclas: `1`–`6` trocam de tela · `T` tema claro/escuro.
+Teclas: `1`–`7` trocam de tela · `T` tema claro/escuro.
 
 | Tela | O que mostra |
 |---|---|
@@ -27,7 +27,8 @@ Teclas: `1`–`6` trocam de tela · `T` tema claro/escuro.
 | 3 Custo do voto | Receita ÷ votos do candidato, comparados e chapa; curvas recurso × voto e cenários (1,5× a 5× a receita); origem do dinheiro |
 | 4 Comparador | Candidato × qualquer outro do mesmo cargo, por município ou local, lado a lado ou diferença |
 | 5 Concorrentes | "Quem lidera" ou "Mapa de calor" com os comparados; sobreposição de bases; onde cada um foi forte |
-| 6 Relatório PDF | 5 folhas A4: capa com conclusões automáticas, geografia, locais e bairros, custo e concorrentes, espaço para crescer e metodologia. "Baixar PDF" abre a impressão do navegador |
+| 6 Perfil do eleitor | Perfil (gênero, idade, escolaridade) dos locais de onde vieram os votos × média do estado; peso do perfil no voto (R² dentro das cidades); locais e bairros onde o perfil indica mais voto do que veio; troca de partido 2022↔2026 por município (Pedersen). Só eleições gerais do PR |
+| 7 Relatório PDF | 5 folhas A4: capa com conclusões automáticas, geografia, locais e bairros, custo e concorrentes, espaço para crescer e metodologia. "Baixar PDF" abre a impressão do navegador |
 
 Em todos os mapas: ⤢ amplia, ⛶ tela cheia, ⟲ volta ao Paraná inteiro. Clique num município (ou use o campo
 "Município") para dar zoom nele e ver os locais de votação daquela cidade nas tabelas.
@@ -67,3 +68,19 @@ Sem esse arquivo a nota simplesmente não aparece.
 
 Fontes: TSE (dados abertos: votação por seção, locais de votação, prestação de contas; resultado oficial)
 e IBGE (malha municipal). Spec: `docs/superpowers/specs/2026-10-05-analise-eleicao-2026-design.md`.
+
+## Perfil do eleitorado (tela 6)
+
+    node analise-2026/coletar/coletar-perfil.mjs 2026
+    node analise-2026/coletar/coletar-perfil.mjs 2022
+
+Lê `perfil_eleitor_secao_<ano>_PR` do TSE (baixa para `coletar/cache/perfil/`) e o cadastro de locais do mesmo ano, e grava
+`public/dados/perfil/<ano>.json` (um vetor por local: aptos + contagens por categoria, categorias em `PERFIL_DIMENSOES` de
+config.mjs). Cada seção vai para o local que a **votação** usa (número original quando a seção mudou de lugar). A coleta mostra a
+cobertura contra os locais da votação (11/10/2026: 2026 = 100% dos votos nominais; 2022 = 99,97%; ficam de fora presídios e voto
+em trânsito). Raça/cor não entra (82% "não informado").
+
+Método (public/js/perfil.mjs): o voto esperado de cada local vem de mínimos quadrados ponderados **dentro de cada município**
+(efeito fixo), só nas cidades onde o candidato teve ≥ 30 votos — um modelo do estado inteiro confundiria demografia com
+geografia. Por isso o esperado por cidade soma o mesmo que o real; o mapa e a tabela de municípios mostram os votos que
+**faltaram** nos locais abaixo do perfil. É análise ecológica: perfil do lugar, não de quem votou.

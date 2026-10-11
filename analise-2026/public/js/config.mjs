@@ -68,5 +68,22 @@ export const nomeCargo = (id, sigla = UF.sigla) => (sigla === "DF" && id.split("
 export const MAX_COMPARADOS = 3;
 // Cor do candidato principal e dos comparados, na ordem.
 export const CORES_SERIE = ["--laranja", "--azul", "--rosa", "--roxo"];
+// Perfil do eleitorado por local de votação (TSE, perfil do eleitor por seção). Cada local vira um vetor
+// [aptos, ...uma contagem por categoria, na ordem abaixo]; quem não informou fica fora da dimensão.
+// Raça/cor fica de fora: 82% "não informado" em 2026. Só PR por enquanto (dados/perfil/<ano>.json).
+export const PERFIL_ANOS = [2026, 2022];
+export const PERFIL_UFS = ["PR"];
+export const PERFIL_DIMENSOES = [
+  { id: "genero", nome: "Gênero", cats: [{ id: "f", nome: "Mulheres" }, { id: "m", nome: "Homens" }] },
+  { id: "idade", nome: "Idade", cats: [
+    { id: "i16", nome: "16 a 24 anos" }, { id: "i25", nome: "25 a 34 anos" }, { id: "i35", nome: "35 a 44 anos" },
+    { id: "i45", nome: "45 a 59 anos" }, { id: "i60", nome: "60 anos ou mais" }] },
+  { id: "escolaridade", nome: "Escolaridade", cats: [
+    { id: "e1", nome: "Até fundamental incompleto" }, { id: "e2", nome: "Fundamental completo ou médio incompleto" },
+    { id: "e3", nome: "Médio completo" }, { id: "e4", nome: "Superior (cursando ou completo)" }] },
+];
+// Posição de cada categoria no vetor do local (a 0 é o total de aptos).
+export const PERFIL_CATS = PERFIL_DIMENSOES.flatMap((d) => d.cats.map((c) => ({ ...c, dim: d.id })));
+export const posCat = (id) => 1 + PERFIL_CATS.findIndex((c) => c.id === id);
 // Ordem fixa das categorias de receita (coleta e gráfico usam a mesma lista).
 export const CATEGORIAS_RECEITA = ["FEFC", "Fundo Partidário", "Partido (outros recursos)", "Pessoas físicas", "Recursos próprios", "Outros candidatos", "Outros"];

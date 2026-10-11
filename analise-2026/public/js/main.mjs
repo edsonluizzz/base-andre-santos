@@ -1,4 +1,4 @@
-import { CARGOS, CARGO_PADRAO, MAX_COMPARADOS, UF, UFS, anosDoCargo, arquivoMapa, cargoNaUF, chaveCargo, definirUF, idCargo, lerChaveCargo, raizDados } from "./config.mjs";
+import { CARGOS, CARGO_PADRAO, MAX_COMPARADOS, PERFIL_ANOS, PERFIL_UFS, UF, UFS, anosDoCargo, arquivoMapa, cargoNaUF, chaveCargo, definirUF, idCargo, lerChaveCargo, raizDados } from "./config.mjs";
 import { buscarCandidato, coresDe, garantirLocais, indexar, lerComparados, nomeCurto, rotuloCandidato, varCorDe } from "./dados.mjs";
 import { esc } from "./fmt.mjs";
 import { escreverRota, lerRota } from "./rota.mjs";
@@ -7,6 +7,7 @@ import { TELAS_LIVRES, estaLiberado, oferta } from "./oferta.mjs";
 import { tabela } from "./tabela.mjs";
 import { animarLanding, landing, ligarBarra, ligarBusca } from "./landing.mjs";
 import { aplicarDemo } from "./demo.mjs";
+import { indexarPerfil } from "./perfil.mjs";
 
 // ?demo na URL: nomes, números e partidos fictícios (telas de divulgação).
 const DEMO = new URLSearchParams(location.search).has("demo");
@@ -16,6 +17,7 @@ import * as custo from "./telas/custo.mjs";
 import * as comparador from "./telas/comparador.mjs";
 import * as concorrentes from "./telas/concorrentes.mjs";
 import * as relatorio from "./telas/relatorio.mjs";
+import * as perfil from "./telas/perfil.mjs";
 
 const TELAS = [
   { id: "panorama", nome: "Panorama", mod: panorama },
@@ -23,6 +25,7 @@ const TELAS = [
   { id: "custo", nome: "Custo do voto", mod: custo },
   { id: "comparador", nome: "Comparador", mod: comparador },
   { id: "concorrentes", nome: "Concorrentes", mod: concorrentes },
+  { id: "perfil", nome: "Perfil do eleitor", mod: perfil },
   { id: "relatorio", nome: "Relatório PDF", mod: relatorio },
 ];
 // Escolhas que valem para todas as telas e acompanham a troca de aba.
@@ -71,6 +74,21 @@ const cidadesDoAno = (ano) => {
   const chave = `${UF.sigla}:${ano}`;
   if (!cacheCidades.has(chave)) cacheCidades.set(chave, carregar(`${raizDados()}${ano}/municipios.json`));
   return cacheCidades.get(chave);
+};
+// Perfil do eleitorado por local (dados/perfil/<ano>.json), só nas UFs coletadas.
+const cachePerfis = new Map();
+const perfilDoAno = (ano) => {
+  if (!PERFIL_UFS.includes(UF.sigla) || !PERFIL_ANOS.includes(ano)) return Promise.resolve(null);
+  const chave = `${UF.sigla}:${ano}`;
+  if (!cachePerfis.has(chave)) cachePerfis.set(chave, carregar(`${raizDados()}perfil/${ano}.json`, true).then((P) => (P ? indexarPerfil(P) : null)));
+  return cachePerfis.get(chave);
+};
+// Mesmo cargo na outra eleição geral coletada (2026 ↔ 2022), para a troca de partido; null se não houver.
+const outraEleicao = (cargo) => {
+  const cfg = CARGOS[cargo];
+  if (!cfg || cfg.municipal) return null;
+  const outro = idCargo(cargo.split("-")[0], cfg.ano === 2026 ? 2022 : 2026);
+  return outro !== cargo && cargoNaUF(outro) ? outro : null;
 };
 let mapaBrasil = null; // hero da landing (img/brasil.json), carregado só quando a landing aparece
 const cacheMapas = new Map();
@@ -241,6 +259,13 @@ async function iniciar() {
     const liberado = foco ? estaLiberado(acesso, chaveCargo(cargo), municipal ? `${params.m}-${foco.n}` : foco.n) : false;
     // Votos por local só para quem comprou (a rota responde 403 aos demais).
     if (foco && liberado) await garantirLocais(D, [foco.n, ...comparados.map((c) => c.n), params.b ?? ""], (u) => carregar(u, true));
+    // Perfil do eleitor: perfil do eleitorado do ano e a outra eleição do mesmo cargo (troca de partido)
+    let extras = {};
+    if (foco && liberado && id === "perfil" && !municipal) {
+      const outro = outraEleicao(cargo);
+      const [P, O] = await Promise.all([perfilDoAno(CARGOS[cargo].ano), outro ? dadosDoCargo(outro).catch(() => null) : null]);
+      extras = { perfil: P, outro: O };
+    }
     if (minha !== vez) return; // outra navegação começou enquanto carregava
 
     document.title = foco ? `${nomeCurto(foco)} · Ovile Diagnóstico` : `Ovile Diagnóstico · Eleição ${CARGOS[cargo].ano} ${UF.sigla}`;
@@ -288,7 +313,7 @@ async function iniciar() {
       candidato.montarPrevia(tela, { D, geo: geoTela, foco, venda: acesso?.venda });
     } else {
       TELAS.find((t) => t.id === id).mod.montar(tela, {
-        D, geo: geoTela, params, navegar, interno, foco, comparados, cores, varCor: varCorDe(foco, comparados), garantir,
+        D, geo: geoTela, params, navegar, interno, foco, comparados, cores, varCor: varCorDe(foco, comparados), garantir, ...extras,
       });
     }
     for (const m of ampliados) document.getElementById(m)?.closest(".cartao")?.classList.add("ampliado");

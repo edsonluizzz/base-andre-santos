@@ -482,3 +482,8 @@ body[data-tela="inicio"] main { padding: 0; }
   background: radial-gradient(120% 90% at 100% 0%, color-mix(in srgb, var(--laranja) 28%, var(--cartao)), var(--cartao) 62%); }
 .lp-quem-destaque h3 { font-size: clamp(30px, 3.2vw, 42px); }
 @media (max-width: 899px) { .lp-quem-grade { grid-template-columns: 1fr; } .lp-quem-destaque { grid-row: auto; min-height: 0; } }
+
+/* Perfil do eleitor: uma tabelinha por dimensão (gênero, idade, escolaridade) */
+.perfil-tab { width: 100%; margin-bottom: 10px; }
+#pf-perfil h3 { font-size: 13px; margin: 12px 0 4px; color: var(--suave); text-transform: uppercase; letter-spacing: .04em; }
+#pf-perfil h3:first-child { margin-top: 0; }
