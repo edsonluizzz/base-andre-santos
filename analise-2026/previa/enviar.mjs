@@ -4,6 +4,7 @@
 //   node analise-2026/previa/enviar.mjs --listar                  confere a lista (nada é enviado)
 //   node analise-2026/previa/enviar.mjs --teste=voce@email.com [--candidato=30777]   manda 2 exemplos (ou o do candidato) para você
 //   node analise-2026/previa/enviar.mjs --enviar [--limite=100]   dispara de verdade (pula quem já recebeu)
+//   node analise-2026/previa/enviar.mjs --relatorio               quem recebeu, abriu, clicou (grava relatorio.csv na pasta)
 // Chave: RESEND_API_KEY no ambiente ou no arquivo ~/.ovile-resend-key. Registro do que já foi enviado: <pasta>/envios.json.
 import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
@@ -107,7 +108,25 @@ console.log(`${envios.length} e-mails · ${nPdfs} de ${pdfs.size} PDFs cobertos`
 const semEmail = [...pdfs.values()].filter((a) => !envios.some((e) => e.anexos.includes(a)));
 if (semEmail.length) console.log(`PDFs sem e-mail na planilha: ${semEmail.map((a) => `${a.nome} ${a.n}`).join(", ")}`);
 
-if (args.listar) {
+if (args.relatorio) {
+  const feitos = existsSync(REGISTRO) ? JSON.parse(readFileSync(REGISTRO, "utf8")) : {};
+  const ORDEM = ["clicked", "opened", "delivered", "sent", "delivery_delayed", "bounced", "complained", "failed"];
+  const NOME = { clicked: "clicou", opened: "abriu", delivered: "entregue", sent: "enviado", delivery_delayed: "atrasado", bounced: "voltou", complained: "spam", failed: "falhou" };
+  const linhasRel = [], cont = {};
+  for (const [email, f] of Object.entries(feitos)) {
+    const r = await fetch(`https://api.resend.com/emails/${f.id}`, { headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}` } }).then((x) => x.json());
+    const ev = r.last_event ?? "?";
+    cont[ev] = (cont[ev] ?? 0) + 1;
+    const cands = f.candidatos.map((n) => { const a = pdfs.get(n); return a ? `${a.partido} ${a.nome} ${n}` : n; }).join(" | ");
+    linhasRel.push([NOME[ev] ?? ev, email, cands, f.em.slice(0, 16).replace("T", " ")]);
+    await pausa(550);
+  }
+  linhasRel.sort((a, b) => ORDEM.indexOf(Object.keys(NOME).find((k) => NOME[k] === a[0])) - ORDEM.indexOf(Object.keys(NOME).find((k) => NOME[k] === b[0])));
+  for (const l of linhasRel.filter((l) => l[0] === "clicou" || l[0] === "abriu")) console.log(`${l[0]}\t${l[2]}\t${l[1]}`);
+  console.log(`\n${Object.keys(feitos).length} enviados · ${ORDEM.filter((k) => cont[k]).map((k) => `${NOME[k]}: ${cont[k]}`).join(" · ")}`);
+  writeFileSync(join(PASTA, "relatorio.csv"), "\uFEFFstatus;email;candidatos;enviado_em\n" + linhasRel.map((l) => l.join(";")).join("\n"));
+  console.log(`planilha: ${join(PASTA, "relatorio.csv")}`);
+} else if (args.listar) {
   for (const e of envios) console.log(`${e.email}\t${e.anexos.map((a) => `${a.partido} ${a.nome} ${a.n}`).join(" | ")}`);
 } else if (args.teste || args.enviar) {
   if (!process.env.RESEND_API_KEY) { console.error("Falta RESEND_API_KEY no ambiente."); process.exit(1); }
