@@ -492,3 +492,19 @@ body[data-tela="inicio"] main { padding: 0; }
 .pf-frases small, .pf-explica { color: var(--suave); }
 .pf-como summary { cursor: pointer; font-weight: 600; }
 .pf-como p { color: var(--suave); line-height: 1.6; }
+
+/* Prévia em PDF (divulgação): tarjas e oferta */
+.tarja { display: inline-block; height: .95em; vertical-align: -0.12em; background: #2a3344; border-radius: 3px; }
+.pv-gancho { margin-top: 12px; padding: 10px 12px; border-left: 3px solid var(--laranja); background: #fff5ee; }
+.pv-bloco { border: 1px solid #d5dce7; border-radius: 10px; padding: 10px 12px; margin-top: 12px; }
+.pv-bloco p + p { margin-top: 6px; }
+.pv-oferta { padding: 14mm 6mm 0; display: flex; flex-direction: column; gap: 14px; }
+.pv-oferta h2 { font-size: 24pt !important; margin: 0 !important; }
+.pv-lista { padding-left: 20px; display: flex; flex-direction: column; gap: 8px; font-size: 12pt; }
+.pv-preco { display: flex; flex-direction: column; border: 2px solid var(--laranja); border-radius: 14px; padding: 14px 18px; align-self: flex-start; }
+.pv-preco b { font-size: 32pt; color: var(--laranja); line-height: 1.1; }
+.pv-preco small { color: #57647a; }
+.pv-botao { align-self: flex-start; background: #1fa855; color: #fff !important; text-decoration: none; font-weight: 800; font-size: 16pt; padding: 14px 28px; border-radius: 12px; }
+.pv-link { color: #57647a; font-size: 10pt; }
+.pv-link a { color: inherit; }
+.pv-passos { padding-left: 20px; display: flex; flex-direction: column; gap: 6px; font-size: 11.5pt; }

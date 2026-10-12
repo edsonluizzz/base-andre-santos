@@ -18,6 +18,7 @@ import * as comparador from "./telas/comparador.mjs";
 import * as concorrentes from "./telas/concorrentes.mjs";
 import * as relatorio from "./telas/relatorio.mjs";
 import * as perfil from "./telas/perfil.mjs";
+import * as previa from "./telas/previa.mjs";
 
 const TELAS = [
   { id: "panorama", nome: "Panorama", mod: panorama },
@@ -217,7 +218,8 @@ async function iniciar() {
   // acesso.json só existe no sistema (online); rodando local, tudo liberado.
   const [interno, acesso] = await Promise.all([(location.hostname.startsWith("diagnostico.") ? null : carregar("interno.json", true)), carregar("acesso.json", true)]);
   const nav = document.getElementById("abas");
-  const ids = TELAS.map((t) => t.id);
+  // "previa" (PDF de divulgação) não entra no menu: só pelo endereço #previa?…
+  const ids = [...TELAS.map((t) => t.id), "previa"];
   let vez = 0;
 
   const render = async () => {
@@ -295,7 +297,10 @@ async function iniciar() {
     }
     const navegar = (novos) => { location.hash = escreverRota(id, { ...params, cargo, ...novos }); };
     const garantir = (nums) => garantirLocais(D, nums, (u) => carregar(u, true));
-    if (!liberado && !TELAS_LIVRES.includes(id)) {
+    if (id === "previa") {
+      if (liberado) previa.montar(tela, { D, geo: geoTela, foco, comparados, venda: acesso?.venda });
+      else tela.innerHTML = `<div class="cartao">${oferta(foco, D, acesso?.venda)}</div>`;
+    } else if (!liberado && !TELAS_LIVRES.includes(id)) {
       tela.innerHTML = `<div class="cartao">${oferta(foco, D, acesso?.venda)}</div>`;
     } else if (!liberado && id === "candidato") {
       candidato.montarPrevia(tela, { D, geo: geoTela, foco, venda: acesso?.venda });

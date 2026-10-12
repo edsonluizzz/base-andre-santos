@@ -91,7 +91,7 @@ export function conclusoes(D, foco, x) {
   return out;
 }
 
-function folha(titulo, corpo, sub = "") {
+export function folha(titulo, corpo, sub = "") {
   return `<section class="folha"><div class="folha-topo"><span>${titulo}</span><span>${sub}</span></div>${corpo}</section>`;
 }
 
