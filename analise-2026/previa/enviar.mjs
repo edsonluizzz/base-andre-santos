@@ -4,7 +4,7 @@
 //   node analise-2026/previa/enviar.mjs --listar                  confere a lista (nada é enviado)
 //   node analise-2026/previa/enviar.mjs --teste=voce@email.com    manda 2 exemplos (individual e compartilhado) para você
 //   node analise-2026/previa/enviar.mjs --enviar [--limite=100]   dispara de verdade (pula quem já recebeu)
-// Chave: RESEND_API_KEY no ambiente. Registro do que já foi enviado: <pasta>/envios.json.
+// Chave: RESEND_API_KEY no ambiente ou no arquivo ~/.ovile-resend-key. Registro do que já foi enviado: <pasta>/envios.json.
 import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
@@ -17,6 +17,8 @@ const FROM = "OVILE - DIAGNOSTICO ELEITORAL - 2026 <contato@ovile.com.br>";
 const WHATSAPP = "5541999888951";
 const SITE = "https://diagnostico.ovile.com.br";
 const REGISTRO = join(PASTA, "envios.json");
+const ARQ_CHAVE = join(homedir(), ".ovile-resend-key");
+process.env.RESEND_API_KEY ||= existsSync(ARQ_CHAVE) ? readFileSync(ARQ_CHAVE, "utf8").trim() : "";
 
 // número do candidato → PDF (o número fica no fim do nome do arquivo)
 const pdfs = new Map();
