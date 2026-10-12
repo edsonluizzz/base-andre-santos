@@ -7,6 +7,8 @@ import { esc, inteiro, pct, reais, reaisCurto } from "../fmt.mjs";
 import { cartaoDisputa, disputa, folgaQuociente } from "./panorama.mjs";
 import { eficienciaVoto, medianaChapa } from "./custo.mjs";
 
+// % dos válidos de quem teve pouco voto: mais casas, para não aparecer "0,00%"
+export const pctFino = (x) => pct(x, x > 0 && x < 0.0001 ? 4 : x < 0.001 ? 3 : 2);
 const nf2 = (v) => v.toLocaleString("pt-BR", { maximumFractionDigits: 2 });
 const linhasTabela = (cab, linhas) => `<table><thead><tr>${cab.map((c, k) => `<th class="${k ? "n" : ""}">${c}</th>`).join("")}</tr></thead>
   <tbody>${linhas.map((l) => `<tr class="${l.classe ?? ""}">${l.cels.map((c, k) => `<td class="${k ? "n" : ""}">${c}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
@@ -63,7 +65,7 @@ export function conclusoes(D, foco, x) {
   const nome = nomeCurto(foco), U = unidade(D);
   const out = [];
   const naChapa = x.lista.length > 1 ? ` e ${x.posChapa}º de ${x.lista.length} na chapa ${esc(x.ag.rotulo)}` : "";
-  out.push(`${nome} teve <b>${inteiro(foco.votos)} votos</b> (${pct(x.pctGeral)} dos válidos): <b>${x.posGeral}º de ${D.candidatos.length}</b> ${esc(U.naArea)}${naChapa}. Situação: ${esc(foco.st)}.`);
+  out.push(`${nome} teve <b>${inteiro(foco.votos)} votos</b> (${pctFino(x.pctGeral)} dos válidos): <b>${x.posGeral}º de ${D.candidatos.length}</b> ${esc(U.naArea)}${naChapa}. Situação: ${esc(foco.st)}.`);
   if (x.topMun.length) {
     const [i, v] = x.topMun[0];
     out.push(`A base é ${x.cMun.p50 <= 3 ? "<b>muito concentrada</b>" : x.cMun.p50 <= 15 ? "<b>concentrada</b>" : "<b>espalhada</b>"}: ${inteiro(x.cMun.p50)} ${x.cMun.p50 === 1 ? U.um : U.uns} fizeram metade dos votos e ${inteiro(x.cMun.p80)} fizeram 80%, de ${inteiro(x.cMun.n)} com voto. ${U.municipal ? "O principal bairro é" : "A principal cidade é"} <b>${esc(D.municipios[i].nm)}</b>, com ${pct(v / foco.votos, 1)} do total.`);

@@ -8,7 +8,7 @@ import { quantil } from "../calc.mjs";
 import { cor, criarMapa, escalaSeq, legenda } from "../mapa.mjs";
 import { esc, inteiro, pct } from "../fmt.mjs";
 import { linkCompra } from "../oferta.mjs";
-import { conclusoes, diagnostico, folha } from "./relatorio.mjs";
+import { conclusoes, diagnostico, folha, pctFino } from "./relatorio.mjs";
 
 export const VENDA_PADRAO = { whatsapp: "5541999888951", preco: 297 };
 const tarja = (largura = 60) => `<span class="tarja" style="width:${largura}px"></span>`;
@@ -39,7 +39,7 @@ export function montar(el, { D, geo, foco, comparados, venda }) {
       <p class="rel-sobre">${foco.n} · ${esc(foco.sg)}${x.ag?.federacao ? ` (${esc(x.ag.rotulo)})` : ""} · ${esc(foco.st)}</p>
     </div>
     <div class="rel-kpis">
-      ${kpi("Votos", inteiro(foco.votos), `${pct(x.pctGeral)} dos válidos`)}
+      ${kpi("Votos", inteiro(foco.votos), `${pctFino(x.pctGeral)} dos válidos`)}
       ${kpi("Posição no estado", `${x.posGeral}º`, `de ${D.candidatos.length}`)}
       ${kpi(`${U.Uns} com voto`, inteiro(x.cMun.n), `de ${D.municipios.length}`)}
     </div>
@@ -74,7 +74,7 @@ export function montar(el, { D, geo, foco, comparados, venda }) {
     </div>
     <div class="rel-2">
       ${bloco("Espaço para crescer", x.espaco.length ? `<p>Encontramos <b>${x.espaco.length} ${U.uns}</b> grandes onde ${nome} ficou abaixo da metade do próprio desempenho.
-        Só chegar à média nelas soma cerca de <b>${inteiro(potencial)} votos</b>.</p><p>${esc(D.municipios[x.espaco[0].i].nm)}, ${x.espaco.slice(1, 4).map(() => tarja(80)).join(", ")}…</p>` : "<p>Cidades com espaço para crescer e quantos votos elas valem.</p>")}
+        ${potencial >= 100 ? `Só chegar à média nelas soma cerca de <b>${inteiro(potencial)} votos</b>.` : "E mostramos quanto cada uma vale."}</p><p>${esc(D.municipios[x.espaco[0].i].nm)}, ${x.espaco.slice(1, 4).map(() => tarja(80)).join(", ")}…</p>` : "<p>Cidades com espaço para crescer e quantos votos elas valem.</p>")}
       ${bloco("Perfil do eleitor", `<p>De onde vêm os votos por <b>idade, gênero e escolaridade</b> do eleitorado, e os <b>lugares com o mesmo perfil</b> onde ${nome} ainda teve pouco voto: ${tarja(160)}, ${tarja(120)}…</p>`)}
     </div>`, assinatura);
 
