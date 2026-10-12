@@ -2,7 +2,7 @@
 // Envia por e-mail (Resend) a prévia em PDF de cada candidato da coligação, gerada por gerar.mjs.
 // Uso (da raiz do repo):
 //   node analise-2026/previa/enviar.mjs --listar                  confere a lista (nada é enviado)
-//   node analise-2026/previa/enviar.mjs --teste=voce@email.com    manda 2 exemplos (individual e compartilhado) para você
+//   node analise-2026/previa/enviar.mjs --teste=voce@email.com [--candidato=30777]   manda 2 exemplos (ou o do candidato) para você
 //   node analise-2026/previa/enviar.mjs --enviar [--limite=100]   dispara de verdade (pula quem já recebeu)
 // Chave: RESEND_API_KEY no ambiente ou no arquivo ~/.ovile-resend-key. Registro do que já foi enviado: <pasta>/envios.json.
 import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -112,7 +112,8 @@ if (args.listar) {
 } else if (args.teste || args.enviar) {
   if (!process.env.RESEND_API_KEY) { console.error("Falta RESEND_API_KEY no ambiente."); process.exit(1); }
   if (args.teste) {
-    const exemplos = [envios.find((e) => e.nome), envios.find((e) => !e.nome)].filter(Boolean);
+    const exemplos = args.candidato ? envios.filter((e) => e.anexos.some((a) => a.n === args.candidato))
+      : [envios.find((e) => e.nome), envios.find((e) => !e.nome)].filter(Boolean);
     for (const e of exemplos) {
       const msg = mensagem(e);
       console.log(`✓ teste (${e.email}) → ${args.teste}: ${await enviar({ ...msg, to: [args.teste], subject: `[TESTE] ${msg.subject}` })}`);
