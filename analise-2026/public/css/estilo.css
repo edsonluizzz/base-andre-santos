@@ -508,3 +508,4 @@ body[data-tela="inicio"] main { padding: 0; }
 .pv-link { color: #57647a; font-size: 10pt; }
 .pv-link a { color: inherit; }
 .pv-passos { padding-left: 20px; display: flex; flex-direction: column; gap: 6px; font-size: 11.5pt; }
+.aviso-sj { margin-bottom: 16px; }

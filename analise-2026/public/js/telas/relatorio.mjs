@@ -66,6 +66,7 @@ export function conclusoes(D, foco, x) {
   const out = [];
   const naChapa = x.lista.length > 1 ? ` e ${x.posChapa}º de ${x.lista.length} na chapa ${esc(x.ag.rotulo)}` : "";
   out.push(`${nome} teve <b>${inteiro(foco.votos)} votos</b> (${pctFino(x.pctGeral)} dos válidos): <b>${x.posGeral}º de ${D.candidatos.length}</b> ${esc(U.naArea)}${naChapa}. Situação: ${esc(foco.st)}.`);
+  if (foco.anulado) out.push(`Os votos estão <b>anulados sub judice</b>: o registro de candidatura está em discussão na Justiça Eleitoral. Hoje não contam como válidos nem para a legenda; passam a valer se o registro for deferido.`);
   if (x.topMun.length) {
     const [i, v] = x.topMun[0];
     out.push(`A base é ${x.cMun.p50 <= 3 ? "<b>muito concentrada</b>" : x.cMun.p50 <= 15 ? "<b>concentrada</b>" : "<b>espalhada</b>"}: ${inteiro(x.cMun.p50)} ${x.cMun.p50 === 1 ? U.um : U.uns} fizeram metade dos votos e ${inteiro(x.cMun.p80)} fizeram 80%, de ${inteiro(x.cMun.n)} com voto. ${U.municipal ? "O principal bairro é" : "A principal cidade é"} <b>${esc(D.municipios[i].nm)}</b>, com ${pct(v / foco.votos, 1)} do total.`);

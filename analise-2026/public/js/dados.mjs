@@ -9,6 +9,8 @@ export function indexar(dados) {
     if (!locaisPorMun.has(l.mun)) locaisPorMun.set(l.mun, []);
     locaisPorMun.get(l.mun).push(j);
   });
+  // Votos anulados sub judice (registro em disputa na Justiça): a situação passa a dizer isso em todas as telas.
+  for (const c of dados.candidatos) if (c.anulado && !/sub judice/.test(c.st ?? "")) c.st = `${c.st ?? ""} · votos sub judice`.replace(/^ · /, "");
   return {
     ...dados,
     porNumero: new Map(dados.candidatos.map((c) => [c.n, c])),
@@ -194,3 +196,8 @@ export function porBairro(D, c, municipio = UF.capital) {
   }
   return [...acc.values()].sort((a, b) => b.votos - a.votos);
 }
+
+// Aviso no topo das telas para candidato com votos anulados sub judice.
+export const avisoSubJudice = (c) => (c?.anulado
+  ? `<div class="aviso aviso-sj"><b>Votos sub judice.</b> O registro de candidatura de ${nomeCurto(c)} está em discussão na Justiça Eleitoral e o TSE classifica os ${c.votos.toLocaleString("pt-BR")} votos como <b>anulados sub judice</b>: hoje eles não contam como válidos nem para a legenda. Se o registro for deferido, os votos passam a valer. A análise abaixo mostra onde esses votos foram dados.</div>`
+  : "");

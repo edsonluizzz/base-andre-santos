@@ -32,6 +32,11 @@ test("agregador: município, local, válidos e anulados", () => {
   assert.deepEqual([...r.votosMun.get("12345")], [["78255", 6]]);
   assert.deepEqual([...r.votosLocal.get("30777")], [["75353-3-1155", 5], ["75353-4-1392", 3]]);
   assert.equal(r.votosLocal.has("10456"), false); // fora do foco
-  assert.deepEqual([...r.totalLocal], [["75353-3-1155", 7], ["75353-4-1392", 3]]);
+  // anulado sub judice: guarda votos por local, mas não soma no total do local
+  const ag2 = criarAgregador({ validos: new Set(["30777"]), legendas: new Set() });
+  ag2.adicionar({ mun: "78255", zona: "59", local: "1244", votavel: "12345", votos: 6 });
+  assert.deepEqual([...ag2.resultado().votosLocal.get("12345")], [["78255-59-1244", 6]]);
+  assert.deepEqual([...ag2.resultado().totalLocal], [["78255-59-1244", 0]]);
+  assert.deepEqual([...r.totalLocal], [["75353-3-1155", 7], ["75353-4-1392", 3], ["78255-59-1244", 0]]);
   assert.deepEqual([...r.validosMun], [["75353", 15]]); // 8 + 2 + 5; anulado e branco fora
 });

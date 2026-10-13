@@ -1,5 +1,5 @@
 import { CARGOS, CARGO_PADRAO, MAX_COMPARADOS, PERFIL_ANOS, PERFIL_UFS, UF, UFS, anosDoCargo, arquivoMapa, cargoNaUF, chaveCargo, definirUF, idCargo, lerChaveCargo, raizDados } from "./config.mjs";
-import { buscarCandidato, coresDe, garantirLocais, indexar, lerComparados, nomeCurto, rotuloCandidato, varCorDe } from "./dados.mjs";
+import { avisoSubJudice, buscarCandidato, coresDe, garantirLocais, indexar, lerComparados, nomeCurto, rotuloCandidato, varCorDe } from "./dados.mjs";
 import { esc } from "./fmt.mjs";
 import { escreverRota, lerRota } from "./rota.mjs";
 import { esconderDica } from "./dica.mjs";
@@ -309,6 +309,7 @@ async function iniciar() {
         D, geo: geoTela, params, navegar, interno, foco, comparados, cores, varCor: varCorDe(foco, comparados), garantir, ...extras,
       });
     }
+    if (foco.anulado && id !== "relatorio" && id !== "previa") tela.insertAdjacentHTML("afterbegin", avisoSubJudice(foco));
     for (const m of ampliados) document.getElementById(m)?.closest(".cartao")?.classList.add("ampliado");
     if (cheio) document.getElementById(cheio)?.closest(".cartao")?.requestFullscreen?.().catch(() => {});
     document.body.dataset.pronta = id;

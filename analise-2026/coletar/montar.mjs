@@ -40,6 +40,7 @@ export function montarDados({ oficial, municipios, agregado, locais, contas, foc
     const d = contas.despesas.get(c.sq);
     return {
       n: c.n, sq: c.sq, nm: c.nm, sg: c.sg, fed: c.fed, st: c.st, eleito: c.eleito, votos: c.votos,
+      ...(c.valido === false ? { anulado: true } : {}), // votos anulados sub judice (registro em disputa)
       receita: r ? centavos(r.total) : null,
       despesa: d != null ? centavos(d) : null,
       receitaPorOrigem: r ? Object.fromEntries(Object.entries(r.porOrigem).map(([k, v]) => [k, centavos(v)])) : null,

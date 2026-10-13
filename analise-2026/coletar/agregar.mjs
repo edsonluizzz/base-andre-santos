@@ -34,10 +34,12 @@ export function criarAgregador({ validos, legendas, focoLocal = null, digitos = 
       if (tipo === "legenda") { somar(validosMun, mun, votos); return; }
       // anulado entra em votosMun para a conferência com o "vap" oficial bater, mas não conta como válido
       somar(filho(votosMun, votavel), mun, votos);
-      if (tipo !== "nominal") return;
-      somar(validosMun, mun, votos);
+      // anulado sub judice também guarda votos por local (o candidato aparece com o selo), sem entrar no total do local
       const id = idLocal(mun, zona, local);
-      somar(totalLocal, id, votos);
+      if (tipo === "nominal") {
+        somar(validosMun, mun, votos);
+        somar(totalLocal, id, votos);
+      } else if (!totalLocal.has(id)) totalLocal.set(id, 0);
       if (!focoLocal || focoLocal.has(votavel)) somar(filho(votosLocal, votavel), id, votos);
     },
     resultado: () => ({ votosMun, votosLocal, totalLocal, validosMun }),
