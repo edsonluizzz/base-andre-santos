@@ -6,6 +6,7 @@ import { tabela } from "../tabela.mjs";
 import { seletorMunicipio } from "../seletor.mjs";
 import { esc, inteiro, pct } from "../fmt.mjs";
 import { dicaLocal, dicaMunicipio } from "./candidato.mjs";
+import { resumo } from "../resumo.mjs";
 
 export function montar(el, { D, geo, params, navegar, foco, comparados, cores: CORES, varCor }) {
   const FOCO = foco.n;
@@ -31,7 +32,20 @@ export function montar(el, { D, geo, params, navegar, foco, comparados, cores: C
   const vitorias = (n) => [...venc.values()].filter((w) => w.n === n).length;
   const daCidade = sel == null ? null : new Set(locaisDoMunicipio(D, sel));
 
-  el.innerHTML = `
+  // Em resumo: com quem a base é mais dividida e quem ganhou mais municípios/bairros (todos os comparados).
+  const fLoc = serie(foco, "loc"), fMun = serie(foco, "mun");
+  const pares = comparados.map((c) => {
+    const cm = serie(c, "mun");
+    let ganha = 0, perde = 0;
+    for (const i of new Set([...fMun.keys(), ...cm.keys()])) { const x = fMun.get(i) ?? 0, y = cm.get(i) ?? 0; if (x > y) ganha++; else if (y > x) perde++; }
+    return { c, frac: sobreposicao(fLoc, serie(c, "loc")).fracA, ganha, perde };
+  }).sort((x, y) => y.frac - x.frac);
+  const nf = esc(curto(foco));
+  const topoResumo = resumo([
+    `Quem mais divide a base com ${nf}: <b>${esc(curto(pares[0].c))}</b>. ${pct(pares[0].frac, 0)} dos votos de ${nf} vieram de locais onde ${esc(curto(pares[0].c))} também teve voto.`,
+    ...pares.map((p) => `Contra <b>${esc(curto(p.c))}</b> (${esc(p.c.sg)}, ${inteiro(p.c.votos)} votos): ${nf} teve mais votos em ${inteiro(p.ganha)} ${U.uns} e ${esc(curto(p.c))} em ${inteiro(p.perde)}.`),
+  ]);
+  el.innerHTML = `${topoResumo}
     <div class="controles">
       <span class="marcas">${TODOS.map((n) => { const c = D.porNumero.get(n); return `<label><input type="checkbox" value="${n}" ${ver.includes(n) ? "checked" : ""}><span class="chip" style="background:${CORES[n]}"></span>${esc(c.nm)} <small>(${esc(c.sg)})</small></label>`; }).join("")}</span>
     </div>

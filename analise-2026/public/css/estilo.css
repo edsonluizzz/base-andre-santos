@@ -518,3 +518,5 @@ body[data-tela="inicio"] main { padding: 0; }
 .es-resumo { display: none; width: 100%; justify-content: space-between; align-items: center; gap: 10px; background: var(--cartao); color: var(--texto); border: 1px solid var(--borda); border-radius: 10px; padding: 8px 12px; font: inherit; font-size: 14px; text-align: left; }
 .es-resumo > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .es-trocar { color: var(--laranja); white-space: nowrap; font-size: 13px; }
+.resumo { margin-bottom: 16px; border-left: 3px solid var(--laranja); }
+.resumo ul { margin: 6px 0 0; padding-left: 18px; display: grid; gap: 6px; font-size: 15px; line-height: 1.5; }

@@ -5,9 +5,10 @@ import { projetar, quantil, regressaoLog, rsPorVoto } from "../calc.mjs";
 import { tabela } from "../tabela.mjs";
 import { barras, reduzido } from "../animar.mjs";
 import { esc, inteiro, pct, reais, reaisCurto } from "../fmt.mjs";
+import { resumo } from "../resumo.mjs";
 
 const CORES_CATS = ["--laranja", "--laranja-2", "--ambar", "--azul", "--roxo", "--rosa", "--barra"];
-const porVoto = (v, c) => (!c.votos ? "—" : reais(v));
+const porVoto = (v, c) => (!c.votos || !(v > 0) ? "—" : reais(v));
 
 // Cores e grupo do candidato escolhido (preenchidos em montar).
 let CORES = new Map();
@@ -128,6 +129,23 @@ function origem(el, cands) {
       </div>`).join("");
 }
 
+function resumoCusto(D, foco, grupo, lista, comparados, eixo, fit, rotuloGrupo) {
+  const nome = esc(nomeCurto(foco)), U = unidade(D), dinheiro = eixo === "receita" ? "receita declarada" : "despesa contratada";
+  if (!(foco[eixo] > 0)) return resumo([`${nome} ainda não tem ${dinheiro} na prestação de contas ${(D.cargo.ano ?? 2026) < 2026 ? "" : "parcial "}do TSE, então o custo do voto dele não pode ser calculado${(D.cargo.ano ?? 2026) < 2026 ? "" : "; ele aparece quando sair a prestação final, em novembro"}.`]);
+  const rk = grupo.filter((c) => c[eixo] > 0 && c.votos > 0).map((c) => ({ c, v: rsPorVoto(c[eixo], c.votos) })).sort((a, b) => a.v - b.v);
+  const pos = rk.findIndex((x) => x.c.n === foco.n) + 1;
+  const meu = rsPorVoto(foco[eixo], foco.votos), med = medianaChapa(lista, eixo);
+  const ef = eficienciaVoto(fit, foco, eixo);
+  const comp = comparados.filter((c) => c[eixo] > 0 && c.votos > 0);
+  const maisBarato = comp.filter((c) => rsPorVoto(c[eixo], c.votos) < meu);
+  return resumo([
+    `Cada voto de ${nome} custou <b>${reais(meu)}</b> (${dinheiro} ÷ votos): o <b>${pos}º mais barato</b> de ${rk.length} (${esc(rotuloGrupo)}).`,
+    med ? `${meu <= med ? "Pagou <b>menos</b>" : "Pagou <b>mais</b>"} que a metade da chapa: a mediana foi ${reais(med)} por voto.` : null,
+    ef ? `Com ${reais(foco[eixo], 0)}, um candidato médio ${esc(U.daArea)} faria cerca de ${inteiro(ef.previsto)} votos. ${nome} fez ${inteiro(foco.votos)}: <b>${nf2(ef.razao)}× o esperado</b>${ef.razao >= 1 ? ", rendeu mais que a média" : ", rendeu menos que a média"}.` : null,
+    comp.length ? (maisBarato.length ? `Entre os comparados, ${maisBarato.map((c) => `<b>${esc(nomeCurto(c))}</b> (${reais(rsPorVoto(c[eixo], c.votos))})`).join(", ")} ${maisBarato.length === 1 ? "teve" : "tiveram"} voto mais barato.` : `Nenhum dos comparados teve voto mais barato que ${nome}.`) : null,
+  ]);
+}
+
 export function montar(el, { D, params, navegar, interno, foco, comparados, cores }) {
   CORES = cores;
   const eixo = params.eixo === "despesa" ? "despesa" : "receita";
@@ -141,7 +159,10 @@ export function montar(el, { D, params, navegar, interno, foco, comparados, core
   const nome = esc(nomeCurto(foco));
   // Gasto do módulo financeiro (interno.json, só no Mac), por número do candidato.
   const gi = interno?.[foco.n]?.gastoInterno;
-  el.innerHTML = `
+  const pontos = (f) => D.candidatos.filter(f).map((c) => ({ x: c[eixo], y: c.votos }));
+  const fitPR = regressaoLog(pontos(() => true));
+  const fitChapa = regressaoLog(pontos((c) => naChapa.has(c.n)));
+  el.innerHTML = `${resumoCusto(D, foco, grupo, lista, comparados, eixo, fitPR, rotuloGrupo)}
     <div class="aviso">Custo do voto = <b>receita declarada ÷ votos</b>, assumindo que cada candidato gasta tudo o que arrecadou. ${(D.cargo.ano ?? 2026) < 2026 ? `Valores da prestação de contas final ao TSE (arquivo gerado em ${esc(D.meta.fontes.contas ?? "sem dado")}).` : `Valores da prestação de contas parcial ao TSE (arquivo gerado em ${esc(D.meta.fontes.contas)}); a prestação final sai em novembro.`} A despesa contratada fica como comparação.</div>
     <div class="controles espaco">
       <span class="seg"><button data-eixo="receita" class="${eixo === "receita" ? "on" : ""}">Receita</button><button data-eixo="despesa" class="${eixo === "despesa" ? "on" : ""}">Despesa contratada</button></span>
@@ -153,13 +174,10 @@ export function montar(el, { D, params, navegar, interno, foco, comparados, core
         <small>Ordem: do voto mais barato ao mais caro.${grupo.length - comValor.length ? ` ${grupo.length - comValor.length} do grupo sem ${eixo} declarada ficaram fora.` : ""}</small></div>
       <div class="cartao"><h2>R$ por voto · do mais barato ao mais caro</h2><div id="cu-rank" class="rolagem" style="max-height:560px"></div></div>
     </div>
-    <div class="cartao espaco"><h2>Recurso × voto · cenários para ${nome}</h2><div id="cu-cen"></div></div>
+    <details class="cartao espaco pf-como"><summary>E se tivesse mais dinheiro? Cenários para ${nome}</summary><div id="cu-cen" class="espaco"></div></details>
     <div class="cartao espaco"><h2>De onde veio o dinheiro</h2><div id="cu-origem"></div></div>
-    <div class="cartao espaco"><h2>${esc(rotuloGrupo)} · clique no cabeçalho para ordenar</h2><div id="cu-tab"></div></div>`;
+    <details class="cartao espaco pf-como"><summary>Tabela completa · ${esc(rotuloGrupo)}</summary><div id="cu-tab" class="espaco"></div></details>`;
   el.querySelectorAll("[data-eixo]").forEach((b) => { b.onclick = () => navegar({ eixo: b.dataset.eixo }); });
-  const pontos = (f) => D.candidatos.filter(f).map((c) => ({ x: c[eixo], y: c.votos }));
-  const fitPR = regressaoLog(pontos(() => true));
-  const fitChapa = regressaoLog(pontos((c) => naChapa.has(c.n)));
   cartoes(el.querySelector("#cu-kpis"), destaques, lista, ag.rotulo, eixo);
   const destaque = grupo.filter((c) => (cores.has(c.n) || (naChapa.has(c.n) && c.eleito)) && c[eixo] != null && c.votos > 0)
     .sort((a, b) => rsPorVoto(a[eixo], a.votos) - rsPorVoto(b[eixo], b.votos));

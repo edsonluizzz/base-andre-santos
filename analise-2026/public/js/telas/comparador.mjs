@@ -5,6 +5,7 @@ import { cor, criarMapa, escalaDiv, escalaSeq, legenda } from "../mapa.mjs";
 import { tabela } from "../tabela.mjs";
 import { esc, inteiro, pct, pp, reais } from "../fmt.mjs";
 import { dicaLocal, dicaMunicipio } from "./candidato.mjs";
+import { resumo } from "../resumo.mjs";
 
 export function montar(el, { D, geo, params, navegar, foco: a, comparados }) {
   const b = escolherB(D, a, comparados, params.b);
@@ -27,9 +28,22 @@ export function montar(el, { D, geo, params, navegar, foco: a, comparados }) {
   const linha = (rot, x, y) => `<tr><td>${rot}</td><td class="n destaque">${x}</td><td class="n">${y}</td></tr>`;
   const rpv = (c) => (!c.votos ? "—" : reais(rsPorVoto(c.receita, c.votos)));
 
-  el.innerHTML = `
+  // Em resumo: quanto as bases se parecem e quem ganhou onde (sempre por município/bairro, a visão geral).
+  const ma = serie(a, "mun"), mb = serie(b, "mun");
+  let ganha = 0, perde = 0;
+  for (const i of new Set([...ma.keys(), ...mb.keys()])) { const x = ma.get(i) ?? 0, y = mb.get(i) ?? 0; if (x > y) ganha++; else if (y > x) perde++; }
+  const rm = pearson(percentuais(D, a, "mun"), percentuais(D, b, "mun")), sm = sobreposicao(ma, mb);
+  const parecidas = rm == null ? null : rm >= 0.6 ? "<b>muito parecidas</b>: os dois são fortes nos mesmos lugares" : rm >= 0.3 ? "<b>parecidas</b> em parte" : rm > -0.1 ? "<b>diferentes</b>: cada um tem a sua região" : "<b>opostas</b>: onde um vai bem, o outro vai mal";
+  const topoResumo = resumo([
+    parecidas ? `As bases de ${esc(na)} e ${esc(nb)} são ${parecidas}.` : null,
+    `${pct(sm.fracA, 0)} dos votos de ${esc(na)} vieram de ${U.uns} onde ${esc(nb)} também teve voto (e ${pct(sm.fracB, 0)} dos de ${esc(nb)}, ao contrário).`,
+    `${esc(na)} teve mais votos em <b>${inteiro(ganha)} ${U.uns}</b>; ${esc(nb)}, em <b>${inteiro(perde)}</b>.`,
+  ]);
+  const atalhos = comparados.length > 1 ? `<span class="seg">${comparados.map((c) => `<button data-b="${c.n}" class="${c.n === b.n ? "on" : ""}">${esc(nomeCurto(c))}</button>`).join("")}</span>` : "";
+  el.innerHTML = `${topoResumo}
     <div class="controles">
-      <label>Comparar ${esc(na)} com <select id="cp-b">${comparaveis(D, a).map((c) =>
+      ${atalhos}
+      <label>${atalhos ? "ou outro:" : `Comparar ${esc(na)} com`} <select id="cp-b">${comparaveis(D, a).map((c) =>
         `<option value="${c.n}" ${c.n === b.n ? "selected" : ""}>${esc(c.nm)} (${esc(c.sg)}) — ${inteiro(c.votos)}</option>`).join("")}</select></label>
       ${sel == null && !U.municipal ? `<span class="seg"><button data-nivel="mun" class="${nivel === "mun" ? "on" : ""}">${U.Uns}</button><button data-nivel="loc" class="${nivel === "loc" ? "on" : ""}">Locais de votação</button></span>` : ""}
       <span id="cp-sel"></span>
@@ -64,6 +78,7 @@ export function montar(el, { D, geo, params, navegar, foco: a, comparados }) {
       <div class="cartao"><h2>Onde ${esc(na)} foi forte e ${esc(nb)} fraco${nomeSel ? ` · ${esc(nomeSel)}` : ""}</h2><div id="cp-ta" class="rolagem"></div></div>
     </div>`;
   el.querySelector("#cp-b").onchange = (e) => navegar({ b: e.target.value });
+  el.querySelectorAll("[data-b]").forEach((x) => { x.onclick = () => navegar({ b: x.dataset.b }); });
   el.querySelectorAll("[data-nivel]").forEach((x) => { x.onclick = () => navegar({ nivel: x.dataset.nivel }); });
   el.querySelectorAll("[data-modo]").forEach((x) => { x.onclick = () => navegar({ modo: x.dataset.modo }); });
   seletorMunicipio(el.querySelector("#cp-sel"), D, sel, irPara);
