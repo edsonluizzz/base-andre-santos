@@ -1,6 +1,6 @@
 import { agremiacaoDe, chapa, idxMunicipio, sugerirConcorrentes, nomeCurto, locaisDoMunicipio, ondeLocal, percentuais, porBairro, porRegiao, rankingNoMunicipio, serie, unidade } from "../dados.mjs";
 import { concentracao, rsPorVoto } from "../calc.mjs";
-import { cor, criarMapa, escalaSeq, legenda } from "../mapa.mjs";
+import { criarMapa, escalaFaixas, escalaSeq, legendaFaixas } from "../mapa.mjs";
 import { barras } from "../animar.mjs";
 import { tabela } from "../tabela.mjs";
 import { seletorMunicipio } from "../seletor.mjs";
@@ -117,12 +117,9 @@ export function montar(el, { D, geo, params, navegar, foco: a }) {
 
   const mapa = criarMapa(el.querySelector("#an-mapa"), { geo, D });
   const valores = modo === "pct" ? pMun : vMun;
-  const max = Math.max(1e-9, ...valores.values());
-  const escala = escalaSeq(max, "--laranja");
-  mapa.colorir((i) => (valores.get(i) ? escala(valores.get(i)) : null));
-  legenda(el.querySelector("#an-leg"), {
-    cores: [cor("--mapa-vazio"), cor("--laranja")], min: "0", max: modo === "pct" ? pct(max) : inteiro(max), titulo: modo === "pct" ? "% dos válidos" : "votos",
-  });
+  const fx = escalaFaixas([...valores.values()], "--laranja");
+  mapa.colorir((i) => (valores.get(i) ? fx.cor(valores.get(i)) : null));
+  legendaFaixas(el.querySelector("#an-leg"), { faixas: fx.faixas, formato: modo === "pct" ? (v) => pct(v) : (v) => inteiro(Math.round(v)), titulo: modo === "pct" ? "% dos válidos" : "votos", inteiros: modo !== "pct" });
   const maxL = Math.max(1, ...vLoc.values());
   const sem = mapa.pontos([...vLoc].map(([j, v]) => ({ j, raio: 2 + 14 * Math.sqrt(v / maxL), cor: "var(--laranja-2)" })));
   if (sem) el.querySelector("#an-semcoord").textContent = `${sem} locais sem coordenada ficaram fora do mapa.`;

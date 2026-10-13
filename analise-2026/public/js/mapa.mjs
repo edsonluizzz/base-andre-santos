@@ -12,6 +12,27 @@ export function escalaSeq(max, nomeVar, { linear = false } = {}) {
   return (v) => s(0.01 * (max || 1) + 0.99 * v); // valor positivo pequeno ainda aparece levemente tingido
 }
 
+// Faixas por quantil (cada faixa com ~o mesmo nº de áreas): a cidade com muito voto não apaga todas as outras.
+export function escalaFaixas(valores, nomeVar, n = 5) {
+  const vs = valores.filter((v) => v > 0).sort((a, b) => a - b);
+  const cortes = [...new Set(d3.range(1, n).map((k) => d3.quantileSorted(vs, k / n)))].filter((c) => c > (vs[0] ?? 0));
+  const tons = d3.range(cortes.length + 1).map((k) => d3.interpolateRgb(cor("--mapa-vazio"), cor(nomeVar))(0.25 + 0.75 * (k / Math.max(1, cortes.length))));
+  const s = d3.scaleThreshold().domain(cortes).range(tons);
+  const faixas = tons.map((t, k) => ({ cor: t, de: k ? cortes[k - 1] : vs[0] ?? 0, ate: k < cortes.length ? cortes[k] : vs.at(-1) ?? 0 }));
+  return { cor: (v) => s(v), faixas };
+}
+
+// Inteiros (votos): cada faixa vai até o corte − 1; a última é "N ou mais".
+export function legendaFaixas(el, { faixas, formato, titulo, inteiros = false }) {
+  const rot = (f, k) => {
+    const ult = k === faixas.length - 1, ate = inteiros && !ult ? f.ate - 1 : f.ate;
+    if (ult && faixas.length > 1) return `${formato(f.de)} ou mais`;
+    if (!k && !inteiros) return `até ${formato(ate)}`;
+    return ate > f.de ? `${formato(f.de)}–${formato(ate)}` : formato(f.de);
+  };
+  el.innerHTML = `<div class="legenda">${titulo ? `<span>${esc(titulo)}</span>` : ""}${faixas.map((f, k) => `<span><span class="chip" style="background:${f.cor}"></span>${esc(rot(f, k))}</span>`).join("")}</div>`;
+}
+
 export function escalaDiv(lim) {
   const s = d3.scaleDivergingSqrt(d3.interpolateRgbBasis([cor("--azul"), cor("--mapa-vazio"), cor("--laranja")])).domain([-lim, 0, lim]).clamp(true);
   return (d) => s(d);
