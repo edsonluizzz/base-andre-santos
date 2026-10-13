@@ -509,3 +509,6 @@ body[data-tela="inicio"] main { padding: 0; }
 .pv-link a { color: inherit; }
 .pv-passos { padding-left: 20px; display: flex; flex-direction: column; gap: 6px; font-size: 11.5pt; }
 .aviso-sj { margin-bottom: 16px; }
+.previa-conclusoes { margin-bottom: 16px; border-color: color-mix(in srgb, var(--laranja) 45%, var(--borda)); }
+.previa-conclusoes ol { margin: 8px 0 0; padding-left: 20px; display: grid; gap: 8px; font-size: 15px; line-height: 1.5; }
+.previa-trava { margin: 12px 0 0; font-size: 13px; color: var(--suave, inherit); opacity: .85; }

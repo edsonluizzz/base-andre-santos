@@ -309,6 +309,8 @@ async function iniciar() {
         D, geo: geoTela, params, navegar, interno, foco, comparados, cores, varCor: varCorDe(foco, comparados), garantir, ...extras,
       });
     }
+    // Panorama grátis (onde caem os links de prévia): abre com as conclusões reais do candidato.
+    if (!liberado && id === "panorama") tela.insertAdjacentHTML("afterbegin", candidato.conclusoesPrevia(D, foco));
     if (foco.anulado && id !== "relatorio" && id !== "previa") tela.insertAdjacentHTML("afterbegin", avisoSubJudice(foco));
     for (const m of ampliados) document.getElementById(m)?.closest(".cartao")?.classList.add("ampliado");
     if (cheio) document.getElementById(cheio)?.closest(".cartao")?.requestFullscreen?.().catch(() => {});

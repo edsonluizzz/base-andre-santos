@@ -1,5 +1,5 @@
-import { agremiacaoDe, idxMunicipio, nomeCurto, locaisDoMunicipio, ondeLocal, percentuais, porBairro, porRegiao, rankingNoMunicipio, serie, unidade } from "../dados.mjs";
-import { concentracao } from "../calc.mjs";
+import { agremiacaoDe, chapa, idxMunicipio, sugerirConcorrentes, nomeCurto, locaisDoMunicipio, ondeLocal, percentuais, porBairro, porRegiao, rankingNoMunicipio, serie, unidade } from "../dados.mjs";
+import { concentracao, rsPorVoto } from "../calc.mjs";
 import { cor, criarMapa, escalaSeq, legenda } from "../mapa.mjs";
 import { barras } from "../animar.mjs";
 import { tabela } from "../tabela.mjs";
@@ -41,8 +41,29 @@ export function cartaoCidade(D, a, i, vMun, pMun) {
 
 // Prévia sem compra: o mapa por município aparece borrado, sem números, sem dica e sem clique; a oferta fica por cima.
 // Os votos por local nem são carregados (a rota responde 403 a quem não comprou).
+// Prévia grátis: 2 a 3 conclusões reais sobre o candidato (só com dados por município, que já são públicos),
+// e o que fica para o diagnóstico completo.
+export function conclusoesPrevia(D, a) {
+  const U = unidade(D), nome = esc(nomeCurto(a)), out = [];
+  const vMun = [...serie(a, "mun")].sort((x, y) => y[1] - x[1]);
+  if (vMun.length) {
+    const c = concentracao(vMun.map(([, v]) => v)), [i, v] = vMun[0];
+    out.push(`<b>${inteiro(c.p50)} ${c.p50 === 1 ? U.um : U.uns}</b> ${c.p50 === 1 ? "fez" : "fizeram"} metade dos votos de ${nome}. O principal é <b>${esc(D.municipios[i].nm)}</b>, com ${pct(v / a.votos, 1)} do total.`);
+  }
+  const lista = chapa(D, a);
+  const custos = lista.filter((c) => c.receita > 0 && c.votos > 0).map((c) => ({ c, v: rsPorVoto(c.receita, c.votos) })).sort((x, y) => x.v - y.v);
+  const pos = custos.findIndex((x) => x.c.n === a.n);
+  if (pos >= 0 && custos.length > 1) out.push(`Cada voto custou <b>R$ ${custos[pos].v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</b> (receita declarada ÷ votos): o <b>${pos + 1}º mais barato</b> de ${custos.length} na chapa ${esc(agremiacaoDe(D, a)?.rotulo ?? a.sg)}.`);
+  const [rival] = sugerirConcorrentes(D, a, 1);
+  if (rival) out.push(`Quem mais disputa a mesma base (mesmos ${U.uns}, na mesma proporção): <b>${esc(nomeCurto(rival))}</b> (${esc(rival.sg)}), com ${inteiro(rival.votos)} votos.`);
+  if (!out.length) return "";
+  return `<div class="cartao previa-conclusoes"><h2>O que a votação de ${nome} já mostra</h2>
+    <ol>${out.map((t) => `<li>${t}</li>`).join("")}</ol>
+    <p class="previa-trava">🔒 No diagnóstico completo: em quais locais de votação e bairros, quanto custou o voto de cada concorrente, o perfil do eleitor e onde dá para crescer.</p></div>`;
+}
+
 export function montarPrevia(el, { D, geo, foco: a, venda }) {
-  el.innerHTML = `
+  el.innerHTML = `${conclusoesPrevia(D, a)}
     <div class="cartao previa-mapa">
       <h2>${esc(nomeCurto(a))} · mapa dos votos por ${unidade(D).um} e local de votação</h2>
       <div class="previa-borrado" aria-hidden="true"><div id="pv-mapa"></div></div>
