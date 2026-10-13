@@ -9,16 +9,16 @@ import { seletorMunicipio } from "../seletor.mjs";
 import { esc, inteiro, pct } from "../fmt.mjs";
 
 // Cidade "da base": pelo menos tantos votos do candidato.
-const MIN_VOTOS_BASE = 50;
+export const MIN_VOTOS_BASE = 50;
 const MOSTRAR = 15;
 // Como cada categoria aparece na frase "Mais … / Menos …".
-const FRASE = {
+export const FRASE = {
   f: "mulheres", m: "homens", i16: "jovens de 16 a 24 anos", i25: "eleitores de 25 a 34 anos", i35: "eleitores de 35 a 44 anos",
   i45: "eleitores de 45 a 59 anos", i60: "idosos (60 anos ou mais)", e1: "eleitores com pouca escolaridade",
   e2: "eleitores com fundamental completo", e3: "eleitores com ensino médio completo", e4: "eleitores com nível superior",
 };
-const tituloNome = (s) => String(s ?? "").toLowerCase().replace(/(^|[\s/-])(\S)/g, (m, a, b) => a + b.toUpperCase());
-const onde = (D, l) => `${l.bairro ? `${tituloNome(l.bairro)} · ` : ""}${tituloNome(D.municipios[l.mun].nm)}`;
+export const tituloNome = (s) => String(s ?? "").toLowerCase().replace(/(^|[\s/-])(\S)/g, (m, a, b) => a + b.toUpperCase());
+export const onde = (D, l) => `${l.bairro ? `${tituloNome(l.bairro)} · ` : ""}${tituloNome(D.municipios[l.mun].nm)}`;
 
 // Motivo para a tela não se aplicar (ou null).
 export function indisponivel(D, foco, perfil) {

@@ -124,7 +124,7 @@ export function landing({ venda }) {
     </section>
 
     <section class="lp-pdf">
-      <h2 class="lp-h2">Tudo num relatório de 5 páginas.</h2>
+      <h2 class="lp-h2">Tudo num relatório em PDF.</h2>
       <p class="lp-texto">Conclusões em português claro, mapas e tabelas, prontos para levar ao partido, à equipe ou aos apoiadores.</p>
       <div class="lp-leque">${[1, 2, 3, 4, 5].map((n) => `<div class="lp-folha" data-folha="${n}">${img(`relatorio-${n}.jpg`, `Página ${n} do relatório`, 'loading="lazy"')}</div>`).join("")}</div>
     </section>
@@ -194,7 +194,8 @@ export function landing({ venda }) {
           <li>Custo de cada voto, contra a chapa e os adversários</li>
           <li>Até 3 concorrentes comparados, trocando quando quiser</li>
           <li>Cidades ou bairros com espaço para crescer</li>
-          <li>Relatório PDF de 5 páginas, pronto para o partido</li>
+          <li>Perfil do eleitor: onde há eleitores parecidos com os seus</li>
+          <li>Relatório PDF pronto para o partido</li>
           <li>Em 2026, atualização com a prestação de contas final</li>
         </ul>
         <div class="lp-preco-revela">

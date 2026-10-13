@@ -29,7 +29,8 @@ export function oferta(foco, D, venda, { compacta = false } = {}) {
         <li><b>Custo de cada voto</b> comparado à chapa e aos concorrentes</li>
         <li>Quem <b>disputa a mesma base</b> e onde cada um foi mais forte</li>
         <li><b>Cidades com espaço para crescer</b> e quantos votos elas valem</li>
-        <li><b>Relatório PDF</b> de 5 páginas pronto para apresentar ao partido e à equipe</li>
+        <li><b>Perfil do eleitor</b>: o que os seus melhores lugares têm em comum e onde há eleitores parecidos</li>
+        <li><b>Relatório PDF</b> pronto para apresentar ao partido e à equipe</li>
         <li>Dados oficiais do TSE, conferidos voto a voto com o resultado</li>
       </ul>
     </div>

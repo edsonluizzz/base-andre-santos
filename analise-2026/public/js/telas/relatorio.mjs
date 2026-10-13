@@ -6,6 +6,8 @@ import { barras } from "../animar.mjs";
 import { esc, inteiro, pct, reais, reaisCurto } from "../fmt.mjs";
 import { cartaoDisputa, disputa, folgaQuociente } from "./panorama.mjs";
 import { eficienciaVoto, medianaChapa } from "./custo.mjs";
+import { FRASE, MIN_VOTOS_BASE, indisponivel as perfilIndisponivel, onde as ondePerfil } from "./perfil.mjs";
+import { destaques, fracoes, lugaresParecidos } from "../perfil.mjs";
 
 // % dos válidos de quem teve pouco voto: mais casas, para não aparecer "0,00%"
 export const pctFino = (x) => pct(x, x > 0 && x < 0.0001 ? 4 : x < 0.001 ? 3 : 2);
@@ -98,7 +100,7 @@ export function folha(titulo, corpo, sub = "") {
   return `<section class="folha"><div class="folha-topo"><span>${titulo}</span><span>${sub}</span></div>${corpo}</section>`;
 }
 
-export function montar(el, { D, geo, foco, comparados, cores }) {
+export function montar(el, { D, geo, foco, comparados, cores, perfil: PI }) {
   // O relatório é sempre claro (vira papel); a tela volta ao tema do usuário na próxima navegação.
   document.documentElement.dataset.tema = "claro";
   const x = diagnostico(D, foco, comparados);
@@ -173,6 +175,29 @@ export function montar(el, { D, geo, foco, comparados, cores }) {
     <div class="rel-2 espaco">${x.rivais.slice(0, 2).map((r) => `<div><h3>Onde ${esc(nomeCurto(r.c))} foi mais forte que ${nome}</h3>
       ${linhasTabela([U.Um, nome, esc(nomeCurto(r.c))], r.ondeEleForte.map((o) => ({ cels: [esc(D.municipios[o.i].nm), inteiro(o.a), inteiro(o.v)] })))}</div>`).join("")}</div>` : ""}`, assinatura);
 
+  // Perfil do eleitor (só quando há perfil do eleitorado para o ano/UF): o que os melhores locais têm em comum
+  // e os lugares de perfil parecido onde o candidato foi fraco, nas cidades onde já tem base.
+  const rp = PI && !perfilIndisponivel(D, foco, PI) ? lugaresParecidos(D, foco, PI, { parecidos: Infinity }) : null;
+  const perfilFolha = !rp ? "" : (() => {
+    const frases = destaques(rp.perfil, fracoes(PI.total));
+    const vm = new Map(foco.mun);
+    const base = rp.parecidos.filter((y) => (vm.get(y.l.mun) ?? 0) >= MIN_VOTOS_BASE);
+    const lista = (base.length >= 5 ? base : rp.parecidos).slice(0, 15);
+    const fortes = [...new Set(rp.fortes.map((y) => ondePerfil(D, y.l)))].slice(0, 5);
+    return folha("Perfil do eleitor", `
+    <h3>Onde ${nome} vai bem</h3>
+    <p>Os ${rp.fortes.length} melhores locais de votação ficam em <b>${fortes.map(esc).join("</b>, <b>")}</b>${rp.fortes.length > fortes.length ? " e outros" : ""}.</p>
+    <h3 class="espaco">O que esses lugares têm em comum</h3>
+    ${frases.length ? `<ul class="rel-metodo">${frases.map((f) => `<li><b>${f.indice > 100 ? "Mais" : "Menos"} ${esc(FRASE[f.id])}</b>: ${inteiro(Math.abs(f.indice - 100))}% ${f.indice > 100 ? "acima" : "abaixo"} da média ${esc(U.daArea)}</li>`).join("")}</ul>`
+      : `<p>Perfil parecido com a média ${esc(U.daArea)}: o voto vem mais de rede e presença do que de um tipo de eleitor.</p>`}
+    <h3 class="espaco">Lugares parecidos onde ${nome} foi fraco${base.length >= 5 ? ` (cidades com ${MIN_VOTOS_BASE}+ votos dele)` : ""}</h3>
+    <p>Mesmo perfil de eleitor dos lugares onde ${nome} vai bem, mas com votação abaixo da média dele. São os primeiros lugares para levar campanha.</p>
+    ${linhasTabela(["Local de votação", "Eleitores", `Votos de ${nome}`], lista.map((y) => ({
+      cels: [`${esc(y.l.nm)}<br><small>${esc(ondePerfil(D, y.l))}</small>`, inteiro(y.l.aptos), inteiro(y.votos)],
+    })))}
+    <p class="nota">Perfil = gênero, idade e escolaridade do eleitorado de cada local (cadastro do TSE). É o perfil do lugar, não de quem votou: o voto é secreto.</p>`, assinatura);
+  })();
+
   const crescer = folha("Espaço para crescer e metodologia", `
     <h3>Maiores ${U.uns} onde ${nome} ficou abaixo da metade do seu desempenho ${U.municipal ? "na cidade" : "no estado"}</h3>
     ${linhasTabela([U.Um, "Votos válidos", "Votos de " + nome, "% dos válidos", "Votos na sua média"], x.espaco.map((e) => ({
@@ -195,7 +220,7 @@ export function montar(el, { D, geo, foco, comparados, cores }) {
       <button id="rl-pdf" class="principal">⬇ Baixar PDF</button>
       <small>Na janela que abrir, escolha <b>Salvar como PDF</b> (papel A4, sem cabeçalhos). A comparação usa os candidatos escolhidos em “Comparar com”.</small>
     </div>
-    <div class="relatorio">${capa}${geografia}${cidade}${custo}${crescer}</div>`;
+    <div class="relatorio">${capa}${geografia}${cidade}${custo}${perfilFolha}${crescer}</div>`;
   el.querySelector("#rl-pdf").onclick = () => {
     const titulo = document.title;
     document.title = `Diagnóstico ${nomeCurto(foco)} ${foco.n} - ${D.cargo.nome} ${U.area} ${U.ano}`; // vira o nome do arquivo

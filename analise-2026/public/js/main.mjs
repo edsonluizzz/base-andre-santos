@@ -255,7 +255,7 @@ async function iniciar() {
     // Votos por local só para quem comprou (a rota responde 403 aos demais).
     if (foco && liberado) await garantirLocais(D, [foco.n, ...comparados.map((c) => c.n), params.b ?? ""], (u) => carregar(u, true));
     // Perfil do eleitor: perfil do eleitorado do ano da eleição
-    const extras = foco && liberado && id === "perfil" && !municipal ? { perfil: await perfilDoAno(CARGOS[cargo].ano) } : {};
+    const extras = foco && liberado && (id === "perfil" || id === "relatorio") && !municipal ? { perfil: await perfilDoAno(CARGOS[cargo].ano) } : {};
     if (minha !== vez) return; // outra navegação começou enquanto carregava
 
     document.title = foco ? `${nomeCurto(foco)} · Ovile Diagnóstico` : `Ovile Diagnóstico · Eleição ${CARGOS[cargo].ano} ${UF.sigla}`;
