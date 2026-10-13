@@ -93,6 +93,7 @@ const mapaDaUF = () => {
 
 const globais = (params) => Object.fromEntries(GLOBAIS.filter((k) => params[k] != null).map((k) => [k, params[k]]));
 
+let barraAberta = false;
 // Barra fixa: cargo, candidato principal e quem entra na comparação.
 function barraEscolha(el, { D, cargo, foco, comparados, cores, mudar, cidades }) {
   const opcoes = (D?.candidatos ?? []).map((c) => `<option value="${esc(rotuloCandidato(c))}">`).join("");
@@ -105,7 +106,10 @@ function barraEscolha(el, { D, cargo, foco, comparados, cores, mudar, cidades })
     return [idCargo(b, anosB.includes(ano) ? ano : anosB[0]), rot];
   });
   const anos = anosDoCargo(base);
-  el.innerHTML = `
+  // No celular a barra fica recolhida numa linha quando já há candidato (quem comprou quase não troca).
+  const resumo = foco ? `<button class="es-resumo" type="button" aria-expanded="${barraAberta}"><span><b>${esc(nomeCurto(foco))}</b> · ${foco.n} · ${esc(CARGOS[cargo].curto)}${CARGOS[cargo].ano === 2026 ? " 2026" : ""}${UF.sigla === "PR" ? "" : ` · ${UF.sigla}`}${comparados.length ? ` · +${comparados.length} comparados` : ""}</span><span class="es-trocar">${barraAberta ? "fechar ▴" : "trocar ▾"}</span></button>` : "";
+  el.classList.toggle("recolhida", !!foco && !barraAberta);
+  el.innerHTML = `${resumo}
     <label class="campo campo-uf">Estado <select id="es-uf">${Object.entries(UFS).map(([s, u]) => `<option value="${s}"${s === UF.sigla ? " selected" : ""}>${s} · ${esc(u.nome)}</option>`).join("")}</select></label>
     <span class="seg">${botoesCargo.map(([id, rot]) => `<button data-cargo="${id}" class="${id.split("-")[0] === base ? "on" : ""}">${rot}</button>`).join("")}</span>
     <span class="seg">${anos.map((a) => `<button data-ano="${a}" class="${ano === a ? "on" : ""}">${a}</button>`).join("")}</span>
@@ -117,6 +121,13 @@ function barraEscolha(el, { D, cargo, foco, comparados, cores, mudar, cidades })
       ${comparados.length < MAX_COMPARADOS ? `<input id="es-vs" list="es-lista" placeholder="+ adicionar">` : ""}
     </span>` : ""}
     <datalist id="es-lista">${opcoes}</datalist>` : ""}`;
+  el.querySelector(".es-resumo")?.addEventListener("click", () => {
+    barraAberta = !barraAberta;
+    el.classList.toggle("recolhida", !barraAberta);
+    const b = el.querySelector(".es-resumo");
+    b.setAttribute("aria-expanded", String(barraAberta));
+    b.querySelector(".es-trocar").textContent = barraAberta ? "fechar ▴" : "trocar ▾";
+  });
   // troca de estado: mesmo cargo quando ele existe lá (as municipais, por enquanto, só no PR)
   el.querySelector("#es-uf").onchange = (e) => {
     const uf = e.target.value;
