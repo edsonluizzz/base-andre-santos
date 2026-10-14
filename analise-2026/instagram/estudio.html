@@ -44,6 +44,10 @@
   .fone img { position: absolute; left: 0; width: 100%; }
   .cartao-num { position: absolute; padding: 26px 32px; border-radius: 26px; background: rgba(16,21,31,.92); border: 1px solid #34405a; box-shadow: 0 30px 70px rgba(0,0,0,.6); z-index: 3; }
   .cartao-num small { display: block; font-size: 22px; color: var(--suave); }
+  .miolo { flex: 1; display: flex; flex-direction: column; justify-content: center; padding-bottom: 40px; }
+  .miolo h1 { margin-top: 0; }
+  .miolo .sub { font-size: 40px; }
+  .num { font-weight: 800; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; }
   .cartao-num b { font: 700 64px/1.05 "Geist Mono", monospace; color: var(--laranja); letter-spacing: -0.02em; }
 </style>
 </head>
@@ -74,6 +78,12 @@ async function mapa(alvo, { largura, altura, linha = .9 }) {
 const BIO = ["Diagnóstico da sua eleição a deputado no PR", "Mapa até o local de votação, custo do voto e concorrentes", "Veja a prévia grátis 👇"];
 const CORES = [["Fundo", "#07090F"], ["Superfície", "#141A26"], ["Laranja Ovile", "#FF6A13"], ["Laranja claro", "#FFB074"], ["Texto", "#F2F5FA"], ["Texto suave", "#8B97AD"], ["Compra (WhatsApp)", "#1FA855"]];
 const GRADE = ["post-1-reel-capa", "post-2-pergunta", "post-3-local", "post-4-custo", "post-5-concorrentes", "post-6-relatorio"];
+
+// Peças da série de dados: topo com contador, rodapé com a fonte.
+const serie = (i, miolo, luzes) => `<div class="peca post">${brilhos(luzes)}<div class="topo">${marca(44)}<span class="contador">${i}/6</span></div><div class="miolo">${miolo}</div>${rodape("Fonte: TSE · deputado estadual PR 2026 · contas parciais", "@ovilediagnostico")}</div>`;
+const duelo = (a, b) => `<div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:64px;position:relative;z-index:2">${[a, b].map(([rot, num, pe, forte]) =>
+  `<div style="padding:34px;border-radius:26px;${forte ? "background:linear-gradient(140deg,#3a1d0e,#141a26 70%);border:1px solid #5a2e15" : "background:var(--cartao);border:1px solid var(--linha)"}"><small style="font-size:26px;color:var(--suave)">${rot}</small><div class="num" style="font-size:96px;${forte ? "color:var(--laranja);" : ""}letter-spacing:-0.04em;line-height:1.1">${num}</div><small style="font-size:24px;color:var(--suave)">${pe}</small></div>`).join("")}</div>`;
+const barra = (rot, v, max, txt, forte) => `<div style="margin-bottom:34px"><div style="display:flex;justify-content:space-between;font-size:28px;color:var(--suave);margin-bottom:12px"><span>${rot}</span><b class="mono" style="color:${forte ? "var(--laranja)" : "var(--texto)"}">${txt}</b></div><div style="height:44px;border-radius:22px;background:var(--cartao);border:1px solid var(--linha);overflow:hidden"><div style="height:100%;width:${(100 * v / max).toFixed(1)}%;background:${forte ? "var(--laranja)" : "#3a4458"};border-radius:22px"></div></div></div>`;
 
 const PECAS = {
   // Prancha da identidade: logo, cores, tipografia, bio e a grade do perfil como vai aparecer.
@@ -167,6 +177,39 @@ const PECAS = {
         ${[["relatorio-2", -16, -300, 30], ["relatorio-4", 16, 300, 30], ["relatorio-1", 0, 0, 0]].map(([f, r, x, y]) =>
           `<img src="${IMG}${f}.jpg" style="position:absolute;left:50%;width:380px;margin-left:-190px;top:${y}px;transform:translateX(${x}px) rotate(${r}deg);border-radius:12px;box-shadow:0 40px 80px -20px rgba(0,0,0,.8)">`).join("")}
       </div>
+      <div class="rodape"><span class="pilula">Prévia grátis no link da bio</span><b>diagnostico.ovile.com.br</b></div></div>` },
+  // Série "Dinheiro elege?" (14/10): números agregados de deputado estadual PR 2026, sem nome de candidato.
+  // Fonte: public/dados/estadual.json (prestação de contas parcial de 04/10). Receita ÷ votos, medianas.
+  "dados-1": { w: 1080, h: 1350, html: () => serie(1, `
+      <h1 style="font-size:124px"><span class="k">R$&nbsp;59,7 milhões</span></h1>
+      <p style="font-size:62px;font-weight:700;line-height:1.1;letter-spacing:-0.03em;margin-top:24px;position:relative;z-index:2">foram arrecadados por candidatos que não se elegeram.</p>
+      <p class="sub" style="max-width:26ch;margin-top:40px">Deputado estadual no Paraná, 2026. O que os dados do TSE mostram sobre dinheiro e voto.</p>
+      <div style="margin-top:60px;position:relative;z-index:2"><span class="pilula vidro">Arraste →</span></div>`, [[500, 700, 900, "#ff6a13", .35]]) },
+  "dados-2": { w: 1080, h: 1350, html: () => serie(2, `
+      <h1>Quem se elegeu pagou <span class="k">3× menos</span> por voto.</h1>
+      ${duelo(["eleitos", "R$&nbsp;10,35", "por voto (mediana)", true], ["não eleitos", "R$&nbsp;32,05", "por voto (mediana)"])}
+      <p class="sub" style="max-width:30ch;margin-top:44px">Voto é escala: quem convence muita gente dilui o custo de cada um.</p>`, [[500, -200, 800, "#ff6a13", .3]]) },
+  "dados-3": { w: 1080, h: 1350, html: () => serie(3, `
+      <h1>Mas dinheiro <span class="k">não explica tudo.</span></h1>
+      ${duelo(["eleito mais barato", "R$&nbsp;1,65", "por voto", true], ["eleito mais caro", "R$&nbsp;28,18", "por voto"])}
+      <p class="sub" style="max-width:30ch;margin-top:44px">Entre os 54 eleitos, o custo do voto variou <b style="color:var(--texto)">17 vezes</b>. A diferença está em onde e como o voto foi buscado.</p>`, [[-260, 700, 800, "#ff6a13", .35]]) },
+  "dados-4": { w: 1080, h: 1350, html: () => serie(4, `
+      <h1>O que mais separa eleito de não eleito: <span class="k">alcance.</span></h1>
+      <div style="margin-top:60px;position:relative;z-index:2">
+        ${barra("Cidades com voto · eleitos", 325, 399, "325 de 399", true)}
+        ${barra("Cidades com voto · não eleitos", 68, 399, "68 de 399")}
+      </div>
+      <p class="sub" style="max-width:32ch;margin-top:30px">E quem não se elegeu concentrou <b style="color:var(--texto)">77%</b> dos votos em 5 cidades. Os eleitos, <b style="color:var(--texto)">48%</b>.</p>`, [[600, 800, 800, "#ff6a13", .3]]) },
+  "dados-5": { w: 1080, h: 1350, html: () => serie(5, `
+      <h1 style="font-size:220px"><span class="k num">65.776</span></h1>
+      <p style="font-size:62px;font-weight:700;line-height:1.1;letter-spacing:-0.03em;margin-top:20px;position:relative;z-index:2">votos, e ficou de fora.</p>
+      <p class="sub" style="max-width:28ch;margin-top:40px">Enquanto outro candidato se elegeu com <b style="color:var(--texto)">30.467</b>. Chapa e quociente pesam tanto quanto o voto, e isso se planeja antes.</p>`, [[-200, 300, 800, "#4c8dff", .22], [600, 900, 700, "#ff6a13", .3]]) },
+  "dados-6": { w: 1080, h: 1350, html: () => `<div class="peca post">
+      ${brilhos([[100, 700, 900, "#ff6a13", .35]])}
+      <div class="topo">${marca(44)}<span class="contador">6/6</span></div>
+      <h1 style="margin-top:150px">E a <span class="k">sua</span> eleição?</h1>
+      <p class="sub" style="max-width:24ch;font-size:40px">Onde você ganhou cada voto, quanto custou e onde dá para crescer.</p>
+      <p class="sub" style="max-width:30ch">Deputados estaduais e federais de todo o Brasil, com dados oficiais do TSE.</p>
       <div class="rodape"><span class="pilula">Prévia grátis no link da bio</span><b>diagnostico.ovile.com.br</b></div></div>` },
 };
 
