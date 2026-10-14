@@ -80,7 +80,8 @@ const CORES = [["Fundo", "#07090F"], ["Superfície", "#141A26"], ["Laranja Ovile
 const GRADE = ["post-1-reel-capa", "post-2-pergunta", "post-3-local", "post-4-custo", "post-5-concorrentes", "post-6-relatorio"];
 
 // Peças da série de dados: topo com contador, rodapé com a fonte.
-const serie = (i, miolo, luzes) => `<div class="peca post">${brilhos(luzes)}<div class="topo">${marca(44)}<span class="contador">${i}/6</span></div><div class="miolo">${miolo}</div>${rodape("Fonte: TSE · deputado estadual PR 2026 · contas parciais", "@ovilediagnostico")}</div>`;
+const serie = (i, miolo, luzes, total = 6, fonte = "deputado estadual PR 2026") => `<div class="peca post">${brilhos(luzes)}<div class="topo">${marca(44)}<span class="contador">${i}/${total}</span></div><div class="miolo">${miolo}</div>${rodape(`Fonte: TSE · ${fonte} · contas parciais`, "@ovilediagnostico")}</div>`;
+const fed = (i, miolo, luzes) => serie(i, miolo, luzes, 7, "deputado federal PR 2026");
 const duelo = (a, b) => `<div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:64px;position:relative;z-index:2">${[a, b].map(([rot, num, pe, forte]) =>
   `<div style="padding:34px;border-radius:26px;${forte ? "background:linear-gradient(140deg,#3a1d0e,#141a26 70%);border:1px solid #5a2e15" : "background:var(--cartao);border:1px solid var(--linha)"}"><small style="font-size:26px;color:var(--suave)">${rot}</small><div class="num" style="font-size:96px;${forte ? "color:var(--laranja);" : ""}letter-spacing:-0.04em;line-height:1.1">${num}</div><small style="font-size:24px;color:var(--suave)">${pe}</small></div>`).join("")}</div>`;
 const barra = (rot, v, max, txt, forte) => `<div style="margin-bottom:34px"><div style="display:flex;justify-content:space-between;font-size:28px;color:var(--suave);margin-bottom:12px"><span>${rot}</span><b class="mono" style="color:${forte ? "var(--laranja)" : "var(--texto)"}">${txt}</b></div><div style="height:44px;border-radius:22px;background:var(--cartao);border:1px solid var(--linha);overflow:hidden"><div style="height:100%;width:${(100 * v / max).toFixed(1)}%;background:${forte ? "var(--laranja)" : "#3a4458"};border-radius:22px"></div></div></div>`;
@@ -207,6 +208,42 @@ const PECAS = {
   "dados-6": { w: 1080, h: 1350, html: () => `<div class="peca post">
       ${brilhos([[100, 700, 900, "#ff6a13", .35]])}
       <div class="topo">${marca(44)}<span class="contador">6/6</span></div>
+      <h1 style="margin-top:150px">E a <span class="k">sua</span> eleição?</h1>
+      <p class="sub" style="max-width:24ch;font-size:40px">Onde você ganhou cada voto, quanto custou e onde dá para crescer.</p>
+      <p class="sub" style="max-width:30ch">Deputados estaduais e federais de todo o Brasil, com dados oficiais do TSE.</p>
+      <div class="rodape"><span class="pilula">Prévia grátis no link da bio</span><b>diagnostico.ovile.com.br</b></div></div>` },
+  // Série "Dinheiro elege?" · deputado federal PR 2026 (15/10). Mesmos critérios da estadual.
+  "federal-1": { w: 1080, h: 1350, html: () => fed(1, `
+      <h1 style="font-size:116px"><span class="k">R$&nbsp;122,2 milhões</span></h1>
+      <p style="font-size:62px;font-weight:700;line-height:1.1;letter-spacing:-0.03em;margin-top:24px;position:relative;z-index:2">foram arrecadados por candidatos a deputado federal que não se elegeram.</p>
+      <p class="sub" style="max-width:26ch;margin-top:40px">Paraná, 2026. Parte 2 da série: o que os dados do TSE mostram sobre dinheiro e voto.</p>
+      <div style="margin-top:60px;position:relative;z-index:2"><span class="pilula vidro">Arraste →</span></div>`, [[500, 700, 900, "#ff6a13", .35]]) },
+  "federal-2": { w: 1080, h: 1350, html: () => fed(2, `
+      <h1>Quem se elegeu pagou <span class="k">2,5× menos</span> por voto.</h1>
+      ${duelo(["eleitos", "R$&nbsp;24,01", "por voto (mediana)", true], ["não eleitos", "R$&nbsp;60,42", "por voto (mediana)"])}
+      <p class="sub" style="max-width:30ch;margin-top:44px">Para quem se elegeu, o voto federal custou mais que o dobro do estadual. São só 30 cadeiras para o mesmo eleitorado.</p>`, [[500, -200, 800, "#ff6a13", .3]]) },
+  "federal-3": { w: 1080, h: 1350, html: () => fed(3, `
+      <h1>Mesmo entre os eleitos, <span class="k">10× de diferença.</span></h1>
+      ${duelo(["eleito mais barato", "R$&nbsp;5,22", "por voto", true], ["eleito mais caro", "R$&nbsp;52,66", "por voto"])}
+      <p class="sub" style="max-width:30ch;margin-top:44px">Os 30 eleitos chegaram lá com estratégias muito diferentes. Dinheiro ajuda, mas não decide sozinho.</p>`, [[-260, 700, 800, "#ff6a13", .35]]) },
+  "federal-4": { w: 1080, h: 1350, html: () => fed(4, `
+      <h1>Eleito federal é eleito <span class="k">no estado inteiro.</span></h1>
+      <div style="margin-top:60px;position:relative;z-index:2">
+        ${barra("Cidades com voto · eleitos", 386, 399, "386 de 399", true)}
+        ${barra("Cidades com voto · não eleitos", 93, 399, "93 de 399")}
+      </div>
+      <p class="sub" style="max-width:32ch;margin-top:30px">Quem não se elegeu concentrou <b style="color:var(--texto)">70%</b> dos votos em 5 cidades. Os eleitos, <b style="color:var(--texto)">39%</b>.</p>`, [[600, 800, 800, "#ff6a13", .3]]) },
+  "federal-5": { w: 1080, h: 1350, html: () => fed(5, `
+      <h1 style="font-size:220px"><span class="k num">80.485</span></h1>
+      <p style="font-size:62px;font-weight:700;line-height:1.1;letter-spacing:-0.03em;margin-top:20px;position:relative;z-index:2">votos, e ficou de fora.</p>
+      <p class="sub" style="max-width:28ch;margin-top:40px">Enquanto outro candidato se elegeu com <b style="color:var(--texto)">44.029</b>. No proporcional, a chapa decide quase tanto quanto o candidato.</p>`, [[-200, 300, 800, "#4c8dff", .22], [600, 900, 700, "#ff6a13", .3]]) },
+  "federal-6": { w: 1080, h: 1350, html: () => fed(6, `
+      <h1 style="font-size:220px"><span class="k num">43%</span></h1>
+      <p style="font-size:62px;font-weight:700;line-height:1.1;letter-spacing:-0.03em;margin-top:20px;position:relative;z-index:2">dos candidatos tiveram menos de 1.000 votos.</p>
+      <p class="sub" style="max-width:28ch;margin-top:40px">São <b style="color:var(--texto)">170 de 391</b>. Muitos vão tentar de novo, e a próxima campanha começa entendendo onde está cada voto desta.</p>`, [[500, 800, 900, "#ff6a13", .32]]) },
+  "federal-7": { w: 1080, h: 1350, html: () => `<div class="peca post">
+      ${brilhos([[100, 700, 900, "#ff6a13", .35]])}
+      <div class="topo">${marca(44)}<span class="contador">7/7</span></div>
       <h1 style="margin-top:150px">E a <span class="k">sua</span> eleição?</h1>
       <p class="sub" style="max-width:24ch;font-size:40px">Onde você ganhou cada voto, quanto custou e onde dá para crescer.</p>
       <p class="sub" style="max-width:30ch">Deputados estaduais e federais de todo o Brasil, com dados oficiais do TSE.</p>

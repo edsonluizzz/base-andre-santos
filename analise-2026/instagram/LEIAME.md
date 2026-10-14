@@ -134,3 +134,21 @@ Números agregados de deputado estadual PR 2026 (`public/dados/estadual.json`, p
 > Quer ver esses números da sua eleição, do estado inteiro até cada local de votação? A prévia é grátis no link da bio.
 >
 > #eleicoes2026 #parana #deputadoestadual #deputadofederal #campanhaeleitoral #marketingpolitico #tse #dadoseleitorais
+
+## Série "Dinheiro elege?" parte 2: federal (para 15/10/2026)
+
+Carrossel `pecas/federal-1.png` … `federal-7.png`. Mesmos critérios da parte 1 (`public/dados/federal.json`).
+
+**Legenda**
+
+> Dinheiro elege? Parte 2: deputado federal.
+>
+> No Paraná, R$ 122,2 milhões foram arrecadados por candidatos a deputado federal que não se elegeram. Na mediana, os eleitos pagaram R$ 24,01 por voto; os não eleitos, R$ 60,42.
+>
+> Entre os 30 eleitos, o custo do voto foi de R$ 5,22 a R$ 52,66. E o que mais separou eleito de não eleito foi o alcance: os eleitos tiveram voto em 386 das 399 cidades do estado; os não eleitos, em 93.
+>
+> Teve candidato com 80.485 votos que ficou de fora, e 43% dos candidatos tiveram menos de 1.000 votos.
+>
+> A próxima campanha começa entendendo onde está cada voto desta. Prévia grátis no link da bio.
+>
+> #eleicoes2026 #parana #deputadofederal #deputadoestadual #campanhaeleitoral #marketingpolitico #tse #dadoseleitorais
