@@ -53,7 +53,7 @@ async function gerarFala(texto, arq, i) {
 async function gerarGemini() {
   const [voz, modelo = "gemini-3.8-flash-tts"] = VOZ.slice(3).split("@");
   // cache por voz+modelo+roteiro: rodar de novo (ajuste de mixagem) não gasta a cota diária
-  const cache = join(AQUI, `.cache-${voz}-${modelo}-${createHash("sha1").update(JSON.stringify(falas)).digest("hex").slice(0, 10)}.bin`);
+  const cache = join(AQUI, `.cache-${voz}-${modelo}-${createHash("sha1").update(JSON.stringify(falas.map((f) => f.texto))).digest("hex").slice(0, 10)}.bin`);
   const bruto = join(tmp, "gemini.bin"), tudo = join(tmp, "gemini.wav");
   if (!existsSync(cache)) {
   const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent`, {
@@ -76,8 +76,14 @@ async function gerarGemini() {
   if (pausas.length < falas.length - 1) throw new Error(`só ${pausas.length} pausas para ${falas.length} falas`);
   const cortes = pausas.sort((a, b) => (b.fim - b.ini) - (a.fim - a.ini)).slice(0, falas.length - 1).sort((a, b) => a.ini - b.ini);
   return falas.map((_, i) => {
-    const arq = join(tmp, `f${i}.wav`), de = i ? cortes[i - 1].fim - 0.05 : 0, ate = cortes[i]?.ini + 0.08;
-    execFileSync(FFMPEG, ["-y", "-loglevel", "error", "-i", tudo, "-ss", String(Math.max(0, de)), ...(ate ? ["-to", String(ate)] : []), "-af", "silenceremove=start_periods=1:start_threshold=-45dB", arq]);
+    // o ataque das consoantes (s, f, d) fica abaixo do limiar do silencedetect: cortar com folga dentro da pausa
+    // e só depois tirar o silêncio inicial com limiar bem baixo, deixando 80 ms antes da voz
+    const ant = cortes[i - 1], prox = cortes[i];
+    const de = ant ? Math.max(ant.ini + 0.02, ant.fim - 0.3) : 0;
+    const ate = prox ? Math.min(prox.fim - 0.02, prox.ini + 0.2) : undefined;
+    const arq = join(tmp, `f${i}.wav`);
+    execFileSync(FFMPEG, ["-y", "-loglevel", "error", "-i", tudo, "-ss", de.toFixed(3), ...(ate ? ["-to", ate.toFixed(3)] : []),
+      "-af", "silenceremove=start_periods=1:start_threshold=-62dB:start_silence=0.08,areverse,silenceremove=start_periods=1:start_threshold=-48dB:start_silence=0.1,areverse,afade=t=in:d=0.01", arq]);
     return arq;
   });
 }
