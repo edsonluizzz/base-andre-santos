@@ -1,0 +1,78 @@
+{
+  "comentario": "Narração do vídeo do Sul (80 s, trilha sul/trilha.wav).",
+  "duracao": 80,
+  "falas": [
+    {
+      "inicio": 0.6,
+      "texto": "Paraná, Santa Catarina e Rio Grande do Sul."
+    },
+    {
+      "inicio": 3.6,
+      "texto": "Em quatro anos, os três governos passaram para o mesmo partido."
+    },
+    {
+      "inicio": 8.6,
+      "texto": "Em dois mil e vinte e dois, eram três partidos diferentes."
+    },
+    {
+      "inicio": 12.0,
+      "texto": "PSD no Paraná, PL em Santa Catarina, PSDB no Rio Grande do Sul."
+    },
+    {
+      "inicio": 16.6,
+      "texto": "Em dois mil e vinte e seis, o PL levou os três."
+    },
+    {
+      "inicio": 19.6,
+      "texto": "E todos no primeiro turno."
+    },
+    {
+      "inicio": 24.6,
+      "texto": "Em dois mil e vinte e dois, o PL venceu em quatrocentas e noventa e três cidades do Sul."
+    },
+    {
+      "inicio": 32.6,
+      "texto": "Agora, em mil e quarenta e sete. Oitenta e oito por cento do mapa."
+    },
+    {
+      "inicio": 40.6,
+      "texto": "No Paraná, o PSD caiu de trezentas e setenta e nove cidades para noventa e nove."
+    },
+    {
+      "inicio": 45.4,
+      "texto": "E Moro venceu no primeiro turno."
+    },
+    {
+      "inicio": 48.6,
+      "texto": "No Rio Grande do Sul, a revanche."
+    },
+    {
+      "inicio": 50.8,
+      "texto": "O PL perdeu em vinte e dois. Agora, Zucco levou no primeiro turno, com cinquenta e oito por cento."
+    },
+    {
+      "inicio": 56.6,
+      "texto": "No Senado, seis vagas em disputa."
+    },
+    {
+      "inicio": 59.0,
+      "texto": "Todas ficaram com PL e Novo."
+    },
+    {
+      "inicio": 64.6,
+      "texto": "Nas Assembleias, a bancada do PL cresceu nos três estados."
+    },
+    {
+      "inicio": 68.0,
+      "texto": "No Paraná, de cinco para catorze deputados."
+    },
+    {
+      "inicio": 72.4,
+      "texto": "Ovile Diagnóstico. Sua eleição, voto a voto."
+    },
+    {
+      "inicio": 76.0,
+      "texto": "Comenta aqui: e o seu estado, quem vai governar?"
+    }
+  ]
+}

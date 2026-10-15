@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Ovile Diagnóstico · O Sul do PL</title>
+<!-- Reels 9:16, 80 s: como os três governos do Sul ficaram com o PL em 2026. Cenas a cada 8 s na trilha trilha.wav
+     (longo/trilha.mjs + trilha.json: suspense em 2022, impacto na virada de 2026 em 16 s, final em 72 s).
+     Mapas e contagens em dados.js (dados.mjs). Base visual: ../longo/base.css e base.js. -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="../../public/vendor/d3.v7.min.js"></script>
+<script src="dados.js"></script>
+<script src="../longo/base.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300..800&family=Geist+Mono:wght@500;700&display=swap">
+<link rel="stylesheet" href="../longo/base.css">
+<style>
+  .cards3 .card small { letter-spacing: 4px; }
+  .cards3 .card span { margin-top: 4px; font-size: 28px; }
+  .cards3 .tag { display: inline-block; font: 700 26px "Geist Mono", monospace; padding: 6px 14px; border-radius: 10px; margin-left: 12px; vertical-align: middle; color: #07090f; }
+</style>
+</head>
+<body>
+<div id="palco"><div id="cenas"></div></div>
+<script>
+const V = videoLongo({ dur: 80, fim: 72, cta: "Comenta: e o seu estado,<br>quem vai governar?" });
+const { titulo, fmt, tl } = V, C = window.CONTAGEM;
+const COR = { PL: "rgb(47,111,255)", PSD: "#f5a623", PT: "rgb(229,49,47)", PDT: "#d9467a", REPUBLICANOS: "#8b5cf6", PSDB: "#14b8a6", outros: "#6b7690" };
+const tag = (sg) => `<span class="tag" style="background:${COR[sg]}">${sg}</span>`;
+const gov = (uf, nm, sg, p, det) => `<div class="card"><div><small>${uf}</small><b>${nm}${tag(sg)}</b><span>${det}</span></div><div class="pc" style="color:${COR[sg]}">${p}</div></div>`;
+const leg = (ano, ordem) => ordem.filter((k) => C[ano][k]).map((k) => ({ nome: k === "outros" ? "outros" : k, cor: COR[k], n: C[ano][k] }));
+const total = Object.values(C[2026]).reduce((a, b) => a + b, 0);
+V.cenas([
+  `<div class="cena" id="c0"><div class="abs rotulo" style="top:560px">Região Sul · governadores</div>${titulo(["Como o Sul", "ficou todo", "*do* *PL.*"], 640)}<div class="abs sub" style="top:1120px">Paraná, Santa Catarina e Rio Grande do Sul<br><b>em 2022 e em 2026.</b></div></div>`,
+  `<div class="cena" id="c1">${titulo(["*2022:* três", "partidos."], 260)}<div class="cards3" style="top:600px">
+     ${gov("PARANÁ", "Ratinho Júnior", "PSD", "69,8%", "eleito no 1º turno")}${gov("SANTA CATARINA", "Jorginho Mello", "PL", "70,7%", "eleito no 2º turno")}${gov("RIO GRANDE DO SUL", "Eduardo Leite", "PSDB", "57,1%", "eleito no 2º turno")}</div>
+     <div class="fonte">% dos votos válidos no turno em que foram eleitos</div></div>`,
+  `<div class="cena" id="c2">${titulo(["*2026:* um", "partido só."], 260)}<div class="cards3" style="top:600px">
+     ${gov("PARANÁ", "Sergio Moro", "PL", "50,1%", "eleito no 1º turno")}${gov("SANTA CATARINA", "Jorginho Mello", "PL", "69,0%", "reeleito no 1º turno")}${gov("RIO GRANDE DO SUL", "Zucco", "PL", "58,1%", "eleito no 1º turno")}</div>
+     <div class="abs sub" style="top:1420px">Os três <b>no primeiro turno.</b></div><div class="fonte">% dos votos válidos · TSE</div></div>`,
+  `<div class="cena" id="c3">${titulo(["Cidade por cidade:", "*2022.*"], 220)}${V.mapa("m2022", 470, 980)}${V.legenda(leg(2022, ["PL", "PSD", "PT", "REPUBLICANOS", "PSDB", "outros"]), 1480)}<div class="fonte">governador mais votado em cada cidade · 1º turno</div></div>`,
+  `<div class="cena" id="c4">${titulo(["Cidade por cidade:", "*2026.*"], 220)}${V.mapa("m2026", 470, 980)}${V.legenda(leg(2026, ["PL", "PSD", "PDT"]), 1480)}
+     <div class="abs sub" style="top:1570px">O PL foi de <b>${Math.round(100 * C[2022].PL / total)}%</b> para <b>${Math.round(100 * C[2026].PL / total)}%</b> das ${fmt(total)} cidades.</div></div>`,
+  `<div class="cena" id="c5">${titulo(["Paraná: a", "*troca* de grupo."], 260)}<div class="abs" style="top:620px">
+     <div class="par"><div class="cab"><span>Cidades do PSD</span><b><em>379 →</em> 99</b></div><div class="linhas"><div class="t"><i data-w="95" style="background:#3a4458"></i></div><div class="t"><i data-w="24.8" style="background:${COR.PSD}"></i></div></div></div>
+     <div class="par"><div class="cab"><span>Cidades do PL</span><b><em>0 →</em> 287</b></div><div class="linhas"><div class="t"><i data-w="0" style="background:#3a4458"></i></div><div class="t"><i data-w="71.9" style="background:${COR.PL}"></i></div></div></div></div>
+     <div class="abs sub" style="top:1180px">O candidato do PSD, partido de Ratinho Júnior,<br><b>Sandro Alex</b>, fez 25,4%. Moro venceu no 1º turno<br>por <b>6.774 votos</b> acima da metade.</div><div class="fonte">barra cinza: 2022 · colorida: 2026 · cidades vencidas para governador</div></div>`,
+  `<div class="cena" id="c6">${titulo(["Rio Grande:", "a *revanche.*"], 260)}<div class="abs" style="top:620px">
+     <div class="bar"><div class="cab"><span>2022 · Onyx Lorenzoni (PL)<small>liderou o 1º turno e perdeu o 2º</small></span><b class="v" data-v="42.9">0</b></div><div class="trilho"><div class="enche" style="background:#3a4458" data-w="42.9"></div><div class="meta" style="left:calc(50% - 2px)"></div></div></div>
+     <div class="bar"><div class="cab"><span>2026 · Zucco (PL)<small>eleito no 1º turno</small></span><b class="v" data-v="58.1">0</b></div><div class="trilho"><div class="enche" style="background:${COR.PL}" data-w="58.1"></div><div class="meta" style="left:calc(50% - 2px)"></div></div></div></div>
+     <div class="abs sub" style="top:1180px">Em 2022, o PL perdeu para Eduardo Leite no<br>2º turno. Em 2026, <b>venceu em 475 das 497 cidades.</b></div><div class="fonte">% dos válidos no turno decisivo · linha branca: 50%</div></div>`,
+  `<div class="cena" id="c7">${titulo(["Senado:", "*6* de *6.*"], 260)}<div class="abs lista" style="top:560px">
+     ${[["Filipe Barros", "PR", "PL"], ["Deltan Dallagnol", "PR", "NOVO"], ["Carol De Toni", "SC", "PL"], ["Carlos Bolsonaro", "SC", "PL"], ["Sanderson", "RS", "PL"], ["Marcel van Hattem", "RS", "NOVO"]]
+       .map(([n, uf, sg]) => `<div class="item"><span>${n}<small>${uf}</small></span><b style="color:${sg === "PL" ? COR.PL : "#ff6a13"}">${sg}</b></div>`).join("")}</div>
+     <div class="abs sub" style="top:1500px">As seis vagas do Sul no Senado ficaram<br>com <b>PL e Novo</b>, aliados nos três estados.</div><div class="fonte">senadores eleitos em 2026</div></div>`,
+  `<div class="cena" id="c8">${titulo(["E nas", "*Assembleias.*"], 260)}<div class="abs" style="top:560px">
+     ${[["Paraná", 5, 14, 54], ["Santa Catarina", 11, 16, 40], ["Rio Grande do Sul", 5, 12, 55]].map(([n, a, d, v]) => `<div class="par"><div class="cab"><span>${n}<small style="display:block;font-size:26px;color:var(--suave);font-weight:400">de ${v} deputados</small></span><b><em>${a} →</em> ${d}</b></div><div class="linhas"><div class="t"><i data-w="${(100 * a / 16).toFixed(1)}" style="background:#3a4458"></i></div><div class="t"><i data-w="${(100 * d / 16).toFixed(1)}" style="background:${COR.PL}"></i></div></div></div>`).join("")}</div>
+     <div class="abs sub" style="top:1470px">Para presidente, Flávio Bolsonaro venceu<br>nos três: <b>SC 66,7%</b>, <b>PR 59,9%</b>, <b>RS 55,6%</b>.</div><div class="fonte">deputados estaduais do PL · cinza: 2022 · azul: 2026</div></div>`,
+]);
+V.desenharMapas(GEO, MAPAS, CONTORNO);
+
+{ const el = V.entra("c0", 0, 8); tl.from(el.querySelector(".rotulo"), { autoAlpha: 0, letterSpacing: "22px", duration: 1.2 }, .2); V.surge(el.querySelector(".sub"), 3.0); }
+V.varre(7.6); { const el = V.entra("c1", 8, 16); tl.fromTo(el.querySelectorAll(".card"), { autoAlpha: 0, x: -140 }, { autoAlpha: 1, x: 0, duration: .7, stagger: 1.1, ease: "back.out(1.3)" }, 9.2); V.surge(el.querySelector(".fonte"), 12.6); }
+{ const el = V.entra("c2", 16, 24); V.flash(16, .6); tl.fromTo(el.querySelectorAll(".card"), { autoAlpha: 0, scale: 1.25, filter: "blur(16px)" }, { autoAlpha: 1, scale: 1, filter: "blur(0px)", duration: .6, stagger: .5, ease: "expo.out" }, 16.6);
+  V.surge(el.querySelector(".sub"), 19.2); V.surge(el.querySelector(".fonte"), 19.6); }
+V.varre(23.6); V.animarMapa(V.entra("c3", 24, 32), 24, "svg.mapa", 2.6);
+V.varre(31.6); { const el = V.entra("c4", 32, 40); V.animarMapa(el, 32, "svg.mapa", 2.6); V.surge(el.querySelector(".sub"), 36.4); }
+V.varre(39.6); { const el = V.entra("c5", 40, 48); V.pares(el, 41); V.surge(el.querySelector(".sub"), 43.6); V.surge(el.querySelector(".fonte"), 44); }
+V.varre(47.6); { const el = V.entra("c6", 48, 56); V.barras(el, 49, 1.4, (v) => V.pct(v)); V.surge(el.querySelector(".sub"), 52.2); V.surge(el.querySelector(".fonte"), 52.6); }
+V.varre(55.6); { const el = V.entra("c7", 56, 64); V.lista(el, 57, .4); V.surge(el.querySelector(".sub"), 60); V.surge(el.querySelector(".fonte"), 60.4); }
+V.varre(63.6); { const el = V.entra("c8", 64, 72); V.pares(el, 65); V.surge(el.querySelector(".sub"), 68); V.surge(el.querySelector(".fonte"), 68.4); }
+V.fechar();
+</script>
+</body>
+</html>

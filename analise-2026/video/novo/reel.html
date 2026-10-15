@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Ovile Diagnóstico · Novo e a cláusula de barreira</title>
+<!-- Reels 9:16, 96 s: como o Novo passou a cláusula de barreira de 2026 (por 976 votos no DF). Cenas a cada 8 s na trilha
+     trilha.wav (longo/trilha.mjs + trilha.json: tensa até 56 s, coração e relógio na contagem, abre em tom maior em 72 s).
+     Números em dados.js (dados.mjs). Base visual: ../longo/base.css e base.js. -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="../../public/vendor/d3.v7.min.js"></script>
+<script src="dados.js"></script>
+<script src="../longo/base.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300..800&family=Geist+Mono:wght@500;700&display=swap">
+<link rel="stylesheet" href="../longo/base.css">
+<style>
+  .regra { position: absolute; left: 70px; right: 70px; display: grid; gap: 26px; }
+  .regra .card { position: relative; left: 0; right: 0; }
+  .regra .ou { text-align: center; font: 700 34px "Geist Mono", monospace; color: var(--suave); letter-spacing: 8px; }
+  .acao { position: absolute; left: 0; right: 0; top: 230px; text-align: center; font: 700 30px "Geist Mono", monospace; letter-spacing: 8px; color: var(--laranja); }
+  .contagem { position: absolute; left: 70px; right: 70px; top: 1060px; display: grid; grid-template-columns: repeat(9, 1fr); gap: 12px; }
+  .contagem div { height: 120px; border-radius: 18px; background: var(--cartao); border: 1px solid var(--borda); display: grid; place-items: center; font: 700 30px "Geist Mono", monospace; color: var(--suave); }
+  .contagem div.ok { background: rgba(47,111,255,.18); border-color: var(--azul); color: #fff; }
+  .contagem div.df { background: rgba(255,106,19,.22); border-color: var(--laranja); color: #fff; }
+  .selo { position: absolute; left: 50%; top: 560px; width: 520px; height: 520px; margin-left: -260px; border-radius: 50%; border: 10px solid var(--verde);
+    display: grid; place-items: center; text-align: center; box-shadow: 0 0 120px rgba(31,168,85,.35); }
+  .selo b { display: block; font-size: 120px; font-weight: 800; letter-spacing: -4px; line-height: 1; }
+  .selo small { display: block; font: 700 30px "Geist Mono", monospace; letter-spacing: 6px; color: var(--verde); margin-top: 10px; }
+</style>
+</head>
+<body>
+<div id="palco"><div id="cenas"></div></div>
+<script>
+const D = window.DADOS, V = videoLongo({ dur: 96, fim: 88, cta: "Comenta: o Novo passa<br>na regra de 2030?" });
+const { titulo, pct, fmt, tl } = V;
+const nome = (s) => s.toLowerCase().replace(/(^|\s)\S/g, (x) => x.toUpperCase()).replace(" De ", " de ").replace(" Do ", " do ");
+const AZ = "rgb(47,111,255)";
+V.cenas([
+  `<div class="cena" id="c0"><div class="abs rotulo" style="top:560px">Partido Novo · cláusula de barreira</div>${titulo(["O partido que", "*passou* por", "*976* *votos.*"], 640)}<div class="abs sub" style="top:1100px">Como o Novo escapou de perder o<br><b>fundo partidário e o tempo de TV.</b></div></div>`,
+  `<div class="cena" id="c1">${titulo(["A regra de", "*2026.*"], 260)}<div class="regra" style="top:560px">
+     <div class="card"><small>OPÇÃO 1 · VOTOS</small><b>2,5% <em class="k">no país</em></b><span>dos votos válidos para deputado federal,<br>com pelo menos <b style="display:inline;font-size:34px;letter-spacing:0">1,5% em 9 estados</b>.</span></div>
+     <div class="ou">OU</div>
+     <div class="card"><small>OPÇÃO 2 · CADEIRAS</small><b>13 <em class="k">deputados</em></b><span>federais eleitos em pelo menos 9 estados.</span></div></div>
+     <div class="abs sub" style="top:1420px">Quem não cumpre nenhuma das duas perde<br><b>fundo partidário e propaganda na TV.</b></div><div class="fonte">EC 97/2017 · cláusula de desempenho</div></div>`,
+  `<div class="cena" id="c2">${titulo(["*2022:* o", "tombo."], 260)}<div class="abs" style="top:600px">
+     <div class="par"><div class="cab"><span>Deputados federais</span><b><em>8 →</em> 3</b></div><div class="linhas"><div class="t"><i data-w="100" style="background:#3a4458"></i></div><div class="t"><i data-w="37.5" style="background:var(--verm)"></i></div></div></div>
+     <div class="bar" style="margin-top:90px"><div class="cab"><span>Votos para federal<small>a regra de 2022 pedia 2%</small></span><b class="v" data-v="${D.p22}">0</b></div><div class="trilho"><div class="enche" style="background:var(--verm)" data-w="${(D.p22 / 3 * 100).toFixed(1)}"></div><div class="meta" style="left:calc(${(2 / 3 * 100).toFixed(1)}% - 2px)"></div></div></div>
+   </div><div class="abs sub" style="top:1260px">Ficou <b>abaixo da cláusula</b>: sem fundo<br>partidário e sem tempo de TV até 2026.</div><div class="fonte">barra cinza: 2018 · vermelha: 2022 · linha branca: meta</div></div>`,
+  `<div class="cena" id="c3"><div class="cap"><small>COMO SAIU DO BURACO</small><b style="font-size:150px">4<br>movimentos</b><i></i></div></div>`,
+  `<div class="cena" id="c4"><div class="acao">MOVIMENTO 1</div>${titulo(["Mais", "*candidatos.*"], 300)}<div class="abs" style="top:660px">
+     <div class="par"><div class="cab"><span>Candidatos a federal</span><b><em>${D.cand22} →</em> ${D.cand26}</b></div><div class="linhas"><div class="t"><i data-w="${(100 * D.cand22 / D.cand26).toFixed(1)}" style="background:#3a4458"></i></div><div class="t"><i data-w="100" style="background:var(--laranja)"></i></div></div></div>
+   </div><div class="grande k" style="top:1000px;font-size:220px">${(D.cand26 / D.cand22).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}×</div>
+   <div class="abs sub" style="top:1260px">Chapas mais cheias em mais estados:<br><b>cada candidato soma voto para a legenda.</b></div><div class="fonte">barra cinza: 2022 · laranja: 2026</div></div>`,
+  `<div class="cena" id="c5"><div class="acao">MOVIMENTO 2</div>${titulo(["Puxadores", "de *voto.*"], 300)}<div class="abs lista" style="top:600px">${D.top.map((c) => `<div class="item"><span>${nome(c.nm)}<small>${c.uf} · eleito</small></span><b>${fmt(c.v)}</b></div>`).join("")}</div>
+   <div class="abs sub" style="top:1380px">Os cinco somaram <b>${fmt(D.top.reduce((s, c) => s + c.v, 0))} votos</b>:<br>mais de um terço do partido no país.</div><div class="fonte">os mais votados do Novo para deputado federal em 2026</div></div>`,
+  `<div class="cena" id="c6"><div class="acao">MOVIMENTO 3</div>${titulo(["A fortaleza:", "o *Paraná.*"], 300)}<div class="grande k" style="top:640px;font-size:280px">${pct(D.pr.p)}</div>
+   <div class="abs sub" style="top:940px">dos votos para deputado federal no PR.<br><b>${D.pr.e} eleitos</b>, e Deltan Dallagnol no Senado.</div>
+   <div class="card" style="top:1180px"><small>SEM O PARANÁ</small><b><em class="vm">${pct(D.pr.semPr, 2)}</em> no país</b><span>O PR deu <b style="display:inline;font-size:34px;letter-spacing:0">1 em cada 3 votos</b> do Novo no Brasil.<br>Sem ele, o partido não passaria.</span></div></div>`,
+  `<div class="cena" id="c7"><div class="acao">MOVIMENTO 4</div>${titulo(["Novos", "*estados.*"], 300)}${V.mapa("estados", 560, 760)}
+   ${V.legenda([{ nome: "manteve", cor: AZ, n: D.ufs26.filter((u) => D.ufs22.includes(u)).length }, { nome: "conquistou", cor: "#ff6a13", n: D.ufs26.filter((u) => !D.ufs22.includes(u)).length }, { nome: "perdeu", cor: "#5b2330", n: D.ufs22.filter((u) => !D.ufs26.includes(u)).length }], 1360)}
+   <div class="abs sub" style="top:1460px">Estados com <b>1,5% ou mais</b> dos votos.<br>Precisava de 9. Chegou a <b>exatamente 9</b>.</div></div>`,
+  `<div class="cena" id="c8">${titulo(["O *9º* estado."], 280)}<div class="grande k" style="top:450px;font-size:330px">976</div>
+   <div class="abs sub" style="top:800px">votos acima do mínimo no <b>Distrito Federal</b>,<br>com ${pct(D.df.p, 2)}. Sem eles, seriam só 8 estados.</div>
+   <div class="contagem">${D.ufs26.map((u) => `<div class="${u === "DF" ? "df" : "ok"}">${u}</div>`).join("")}</div>
+   <div class="fonte">estados com 1,5% ou mais dos votos para federal, do maior para o menor</div></div>`,
+  `<div class="cena" id="c9"><div class="selo"><div><b>Passou.</b><small>CLÁUSULA CUMPRIDA</small></div></div>
+   <div class="abs" style="top:1150px"><div class="bar"><div class="cab"><span>Votos para federal no país<small>meta 2,5%</small></span><b class="v" data-v="${D.p26}">0</b></div><div class="trilho"><div class="enche" style="background:var(--verde)" data-w="${(D.p26 / 3 * 100).toFixed(1)}"></div><div class="meta" style="left:calc(${(2.5 / 3 * 100).toFixed(1)}% - 2px)"></div></div></div></div>
+   <div class="abs sub" style="top:1450px"><b>${fmt(D.margem)} votos</b> acima da meta nacional.<br>Pelas cadeiras, não passaria: ${D.eleitos26} deputados, de 13.</div></div>`,
+  `<div class="cena" id="c10">${titulo(["O próximo", "desafio: *2030.*"], 260)}
+   <div class="card" style="top:620px"><small>A REGRA SOBE</small><b>3% <em class="k">no país</em></b><span>com 2% em 9 estados, ou 15 deputados federais.</span></div>
+   <div class="card" style="top:1010px"><small>COM OS VOTOS DE 2026</small><b><em class="vm">${pct(D.p26, 2)}</em> e ${D.ufs2030} estados</b><span>O Novo ficaria de fora. A bancada de<br>${D.eleitos26} deputados e ${D.senadores.length} senadores precisa crescer.</span></div>
+   <div class="fonte">senadores eleitos pelo Novo: Deltan (PR), Van Hattem (RS) e Lahesio Bonfim (MA)</div></div>`,
+]);
+V.desenharMapas(GEO, MAPAS);
+
+// 0 abertura
+{ const el = V.entra("c0", 0, 8); tl.from(el.querySelector(".rotulo"), { autoAlpha: 0, letterSpacing: "22px", duration: 1.2 }, .2); V.surge(el.querySelector(".sub"), 3.0); }
+// 8 a regra
+V.varre(7.6); { const el = V.entra("c1", 8, 16); tl.fromTo(el.querySelectorAll(".regra > *"), { autoAlpha: 0, x: (i) => (i % 2 ? 0 : i ? 120 : -120) }, { autoAlpha: 1, x: 0, duration: .7, stagger: .9, ease: "back.out(1.3)" }, 9.0);
+  V.surge(el.querySelector(".sub"), 12.4); V.surge(el.querySelector(".fonte"), 12.8); }
+// 16 2022
+V.varre(15.6); { const el = V.entra("c2", 16, 24); V.pares(el, 17); V.barras(el, 18.8, 0, (v) => pct(v, 2)); V.surge(el.querySelector(".sub"), 20.6); V.surge(el.querySelector(".fonte"), 21); }
+// 24 capítulo (impacto da trilha)
+V.capitulo("c3", 24, 32);
+// 32, 40, 48, 56: os quatro movimentos
+V.varre(31.6); { const el = V.entra("c4", 32, 40); V.surge(el.querySelector(".acao"), 32.1); V.pares(el, 33); V.grande(el.querySelector(".grande"), 35.0); V.surge(el.querySelector(".sub"), 36.0); V.surge(el.querySelector(".fonte"), 36.4); }
+V.varre(39.6); { const el = V.entra("c5", 40, 48); V.surge(el.querySelector(".acao"), 40.1); V.lista(el, 41.0, .45); V.surge(el.querySelector(".sub"), 44.2); V.surge(el.querySelector(".fonte"), 44.6); }
+V.varre(47.6); { const el = V.entra("c6", 48, 56); V.surge(el.querySelector(".acao"), 48.1); V.grande(el.querySelector(".grande"), 49.0); V.surge(el.querySelector(".sub"), 50.0);
+  tl.fromTo(el.querySelector(".card"), { autoAlpha: 0, y: 80 }, { autoAlpha: 1, y: 0, duration: .8 }, 51.6); }
+V.varre(55.6); { const el = V.entra("c7", 56, 64); V.surge(el.querySelector(".acao"), 56.1); V.animarMapa(el, 56.4, "svg.mapa", 2.2); V.surge(el.querySelector(".sub"), 60.6); }
+// 64 o 9º estado: as casas acendem uma a uma (no tique do relógio), o DF por último
+{ const el = V.entra("c8", 64, 72); V.grande(el.querySelector(".grande"), 64.6); V.surge(el.querySelector(".sub"), 65.6);
+  tl.fromTo(el.querySelectorAll(".contagem div"), { autoAlpha: 0, scale: .6 }, { autoAlpha: 1, scale: 1, duration: .3, stagger: .62, ease: "back.out(2)" }, 66.2)
+    .fromTo(el.querySelector(".contagem .df"), { scale: 1 }, { scale: 1.18, duration: .3, yoyo: true, repeat: 3 }, 71.0 - .1);
+  V.surge(el.querySelector(".fonte"), 66.4); }
+// 72 passou (impacto, tom maior)
+{ const el = V.entra("c9", 72, 80); V.flash(72, .7); tl.fromTo(el.querySelector(".selo"), { autoAlpha: 0, scale: 1.6, rotate: -12 }, { autoAlpha: 1, scale: 1, rotate: 0, duration: .9, ease: "back.out(1.6)" }, 72.2);
+  V.barras(el, 73.8, 0, (v) => pct(v, 2)); V.surge(el.querySelector(".sub"), 75.8); }
+// 80 2030
+V.varre(79.6); { const el = V.entra("c10", 80, 88); el.querySelectorAll(".card").forEach((c, k) => tl.fromTo(c, { autoAlpha: 0, x: k ? 120 : -120 }, { autoAlpha: 1, x: 0, duration: .8, ease: "back.out(1.4)" }, 81.2 + k * 2.4)); V.surge(el.querySelector(".fonte"), 84.6); }
+V.fechar();
+</script>
+</body>
+</html>
