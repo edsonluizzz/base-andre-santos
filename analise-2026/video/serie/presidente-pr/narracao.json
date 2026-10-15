@@ -1,0 +1,80 @@
+{
+  "comentario": "Narração do Reels presidente-pr (60 s).",
+  "duracao": 60,
+  "falas": [
+    {
+      "inicio": 0.6,
+      "texto": "Como o Paraná votou para presidente?"
+    },
+    {
+      "inicio": 4.4,
+      "texto": "Flávio Bolsonaro teve quase sessenta por cento dos votos válidos."
+    },
+    {
+      "inicio": 8.9,
+      "texto": "Lula, trinta e um por cento."
+    },
+    {
+      "inicio": 12.4,
+      "texto": "Flávio venceu em trezentas e cinquenta das trezentas e noventa e nove cidades."
+    },
+    {
+      "inicio": 17.4,
+      "texto": "Quase nove de cada dez."
+    },
+    {
+      "inicio": 20.4,
+      "texto": "E venceu em todas as grandes."
+    },
+    {
+      "inicio": 23.0,
+      "texto": "Só em Curitiba, abriu quase trezentos mil votos de vantagem."
+    },
+    {
+      "inicio": 28.4,
+      "texto": "Onde foi mais forte: no oeste."
+    },
+    {
+      "inicio": 31.0,
+      "texto": "Em Quatro Pontes, teve oitenta e três por cento dos votos."
+    },
+    {
+      "inicio": 36.4,
+      "texto": "Lula venceu em quarenta e nove cidades."
+    },
+    {
+      "inicio": 39.4,
+      "texto": "Todas pequenas: juntas, somam menos de quatro por cento dos votos do estado."
+    },
+    {
+      "inicio": 44.3,
+      "texto": "E teve cidade decidida por quatro votos."
+    },
+    {
+      "inicio": 47.2,
+      "texto": "Em Boa Ventura de São Roque e em Cerro Azul, Lula venceu por quatro votos."
+    },
+    {
+      "inicio": 52.2,
+      "texto": "Ovile Diagnóstico. Sua eleição, voto a voto."
+    },
+    {
+      "inicio": 56.5,
+      "texto": "Comenta aqui: qual cidade você quer ver em detalhe?"
+    }
+  ],
+  "cortes": {
+    "take": "3538dad991",
+    "trocar": [
+      [
+        17.4,
+        18.49
+      ],
+      [
+        24.16,
+        25.14
+      ]
+    ],
+    "motivo": "o alinhador cortava na pausa curta de 'todas as grandes' e nos dois-pontos de 'mais forte: no oeste'"
+  }
+}

@@ -5,9 +5,12 @@
 <title>Ovile Diagnóstico · reels de dados</title>
 <!-- Modelo de Reels 9:16, 60 s, só com dados (sem boneco): cada pasta serie/<id>/ tem reel.html (cópia deste arquivo) e textos.js
      com CFG.cenas = 8 cenas nos tempos 0, 4, 12, 20, 28, 36, 44, 52 (mesma trilha ../chiquini/trilha60.wav).
-     Tipos de cena: abertura · contador · hemiciclo · barras · pares (2022 → 2026) · lista · destaque · fim.
+     Tipos de cena: abertura · contador · hemiciclo · barras · pares (2022 → 2026) · lista · destaque · mapa · fim.
+     Cena "mapa": dados.js opcional com window.GEO (malha) e window.MAPAS[c.mapa] = { ibge: cor }; acende de oeste para leste.
      A linha do tempo fica pausada: window.__seek(t) posiciona o quadro (../renderizar.mjs grava 30 fps). ?play toca em tempo real. -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="../../../public/vendor/d3.v7.min.js"></script>
+<script src="dados.js"></script>
 <script src="textos.js"></script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300..800&family=Geist+Mono:wght@500;700&display=swap">
 <style>
@@ -110,7 +113,7 @@
 </div>
 <script>
 const T0 = [0, 4, 12, 20, 28, 36, 44, 52];
-const fmt = (v, tipo) => tipo === "corr" ? v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : tipo === "reais" ? (v >= 1e6 ? `R$ ${(v / 1e6).toLocaleString("pt-BR", { maximumFractionDigits: 2 })} mi` : `R$ ${Math.round(v / 1e3)} mil`) : Math.round(v).toLocaleString("pt-BR");
+const fmt = (v, tipo) => tipo === "pct" ? v.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + "%" : tipo === "corr" ? v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : tipo === "reais" ? (v >= 1e6 ? `R$ ${(v / 1e6).toLocaleString("pt-BR", { maximumFractionDigits: 2 })} mi` : `R$ ${Math.round(v / 1e3)} mil`) : Math.round(v).toLocaleString("pt-BR");
 const titulo = (linhas, top) => `<div class="abs titulo" style="top:${top}px">${linhas.map((l) => `<span class="linha">${l.split(" ").map((p) =>
   p.startsWith("*") ? `<span class="p k">${p.replaceAll("*", "")}</span>` : `<span class="p">${p}</span>`).join(" ")}</span>`).join("")}</div>`;
 if (CFG.cta) document.getElementById("cta-txt").innerHTML = CFG.cta;
@@ -141,9 +144,15 @@ const html = (c, i) => {
     return `<div class="cena" id="${id}">${titulo(c.titulo, 300)}<div class="abs" style="top:${c.top ?? 760}px">${c.itens.map((b, k) => `<div class="barra${k === 0 ? " top" : ""}"><div class="cab"><span>${b.nome}<small>${b.detalhe ?? ""}</small></span><b class="conta" data-v="${b.v}" data-tipo="${c.formato ?? ""}">0</b></div><div class="trilho"><div class="enche" data-w="${(100 * b.v / max).toFixed(1)}"></div></div></div>`).join("")}</div>${c.fonte ? `<div class="fonte">${c.fonte}</div>` : ""}</div>`; }
   if (c.tipo === "pares") { const max = Math.max(...c.itens.flatMap((x) => [x.antes, x.depois]));
     return `<div class="cena" id="${id}">${titulo(c.titulo, 300)}<div class="abs" style="top:640px">${c.itens.map((p) => `<div class="par"><div class="cab"><span>${p.nome}</span><b><em>${p.antes} →</em> ${p.depois}</b></div><div class="linhas"><div class="t"><i data-w="${(100 * p.antes / max).toFixed(1)}" style="background:#3a4458"></i></div><div class="t"><i data-w="${(100 * p.depois / max).toFixed(1)}" style="background:${p.cor ?? "var(--laranja)"}"></i></div></div></div>`).join("")}</div><div class="fonte">${c.fonte ?? "barra cinza: 2022 · colorida: 2026"}</div></div>`; }
+  if (c.tipo === "mapa") return `<div class="cena" id="${id}">${titulo(c.titulo, 250)}<svg class="mapa-pr" data-mapa="${c.mapa}" viewBox="0 0 1000 820" style="position:absolute;left:40px;top:${c.top ?? 560}px;width:1000px;height:820px"></svg>${c.legenda ? `<div class="legenda" style="top:${(c.top ?? 560) + 850}px">${c.legenda.map((g) => `<span><i style="background:${g.cor}"></i>${g.nome} <b>${g.n ?? ""}</b></span>`).join("")}</div>` : ""}${c.sub ? `<div class="abs sub" style="top:${(c.top ?? 560) + 940}px">${c.sub}</div>` : ""}</div>`;
   if (c.tipo === "lista") return `<div class="cena" id="${id}">${titulo(c.titulo, 240)}<div class="abs lista" style="top:${c.top ?? 640}px">${c.itens.map((x) => `<div class="item"><span>${x.nome}<small>${x.detalhe ?? ""}</small></span><b>${x.valor}</b></div>`).join("")}</div>${c.fonte ? `<div class="fonte">${c.fonte}</div>` : ""}</div>`;
 };
 document.getElementById("cenas").innerHTML = CFG.cenas.map(html).join("");
+document.querySelectorAll(".mapa-pr").forEach((svg) => {
+  const caminho = d3.geoPath(d3.geoMercator().fitSize([1000, 820], GEO)), cores = MAPAS[svg.dataset.mapa];
+  d3.select(svg).selectAll("path").data(GEO.features).join("path").attr("d", caminho).attr("fill", "#141a26").attr("stroke", "#07090f").attr("stroke-width", .8)
+    .attr("data-cor", (f) => cores[f.properties.codarea] ?? "#1b2232").attr("data-x", (f) => caminho.centroid(f)[0]);
+});
 
 const tl = gsap.timeline({ paused: true, defaults: { ease: "power3.out" } });
 gsap.set([".cena", "#fim"], { autoAlpha: 0 });
@@ -168,6 +177,10 @@ CFG.cenas.forEach((c, i) => {
   if (c.tipo === "pares") { el.querySelectorAll(".par").forEach((p, k) => { const tb = t + 1.0 + k * .7; surge(p, tb, { duration: .5 });
       p.querySelectorAll(".t i").forEach((x, j) => tl.to(x, { width: x.dataset.w + "%", duration: 1.2, ease: "power2.out" }, tb + .2 + j * .5)); });
     surge(el.querySelector(".fonte"), t + 2.5); }
+  if (c.tipo === "mapa") { const ps = [...el.querySelectorAll(".mapa-pr path")].sort((a, b) => a.dataset.x - b.dataset.x);
+    tl.from(el.querySelector(".mapa-pr"), { autoAlpha: 0, scale: .94, duration: .7 }, t + .4)
+      .to(ps, { attr: { fill: (k, x) => x.dataset.cor }, duration: .3, stagger: 2.6 / ps.length }, t + .9);
+    surge(el.querySelectorAll(".legenda span"), t + 3.2, { stagger: .15, duration: .5 }); if (el.querySelector(".sub")) surge(el.querySelector(".sub"), t + 3.8); }
   if (c.tipo === "lista") { surge(el.querySelectorAll(".item"), t + 1.0, { stagger: .35, duration: .5 }); if (el.querySelector(".fonte")) surge(el.querySelector(".fonte"), t + 3); }
   tl.to(el, { autoAlpha: 0, filter: "blur(14px)", duration: .35, ease: "power2.in" }, fimC);
 });

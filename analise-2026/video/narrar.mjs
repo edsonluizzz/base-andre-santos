@@ -100,7 +100,15 @@ async function gerarGemini() {
   let jf = 0; for (let j = 1; j < m; j++) if (melhor[n - 1][j] < melhor[n - 1][jf]) jf = j;
   const cortes = [];
   for (let k = n - 1; k >= 0; k--) { cortes.unshift(internas[jf]); jf = de[k][jf]; }
-  if (process.env.SO_MEDIR) console.log("cortes:", cortes.map((c) => c.ini.toFixed(2)).join(" "));
+  // correção manual presa a UM take: "cortes": { "take": <sha1 do áudio>, "trocar": [[de, para], …] } troca o corte em `de` pela
+  // pausa que começa em `para` (s); se a narração for gerada de novo, o take muda e a correção deixa de valer sozinha
+  const take = createHash("sha1").update(dados).digest("hex").slice(0, 10);
+  if (roteiro.cortes?.take === take) for (const [de, para] of roteiro.cortes.trocar) {
+    const k = cortes.findIndex((c) => Math.abs(c.ini - de) < .05), p = internas.find((c) => Math.abs(c.ini - para) < .05);
+    if (k < 0 || !p) throw new Error(`correção de corte ${de} → ${para} não encontrada no take ${take}`);
+    cortes[k] = p;
+  }
+  if (process.env.SO_MEDIR) console.log(`cortes (take ${take}):`, cortes.map((c) => c.ini.toFixed(2)).join(" "));
   // "junta": true numa fala = sai no mesmo trecho da anterior (quando a pausa entre as duas é curta demais para separar)
   return falas.map((_, i) => {
     if (falas[i].junta) return null;
