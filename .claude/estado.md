@@ -1,6 +1,17 @@
 # Estado — Ovile Eleitoral (Base André Santos)
 
-**Última atualização:** 2026-10-06 (sessão: painel "Eleição 2026 — Análise" — analise-2026/ local + módulo online em /eleicao-2026/analise)
+**Última atualização:** 2026-10-14 (sessão: Ovile Diagnóstico — sub judice, prévia com conclusões, resumos, mapa por faixas; lote 2 de e-mails)
+
+---
+
+## Sessão 2026-10-13/14 — Ovile Diagnóstico: auto-avaliação e melhorias 1–5
+
+- Commits 7ad7ecc8..e7263b9a no GitHub, **NÃO publicados**: Vercel recusa deploy ("Your team has an overdue balance", time edsonluizzzs-projects). Depois do pagamento: `vercel --prod --yes` e conferir `vercel ls`.
+- Feito: (1) votos anulados sub judice (27 no PR 2026) com votos por local, aviso e selo; outras UFs não recoletadas; (2) folha "Perfil do eleitor" no PDF; (3) prévia grátis com conclusões reais (`conclusoesPrevia`); (4) barra recolhida no celular, "Em resumo" em Custo/Comparador/Concorrentes, detalhes recolhidos; (5) mapa de votos por faixas de quantil. 75/75 testes.
+- Campanha de e-mail: lote 2 enviado 13/10 (100/100). Lote 3 (37) só quando o Edson pedir, envio imediato.
+- Leads WhatsApp: Evandro Cruz 20070 (votos sub judice, receita R$ 0 parcial) e Capitão Marques 3022 (sem resposta). Regra: sem vídeo, chamada ou print; CTA = mandar a prévia em PDF; preço só se perguntarem.
+- Snapshot TSE do comparativo financeiro atualizado 13/10 via bookmarklet/window.name.
+- Pendentes: #6 visão 2028 e produto p/ partido (aguarda decisões do Edson); #7 recoleta com prestação final em novembro (`coletar.mjs --refazer`).
 
 ---
 
