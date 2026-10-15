@@ -94,6 +94,9 @@
   .par .linhas { display: grid; gap: 8px; }
   .par .t { height: 34px; border-radius: 17px; background: var(--cartao); border: 1px solid var(--borda); overflow: hidden; }
   .par .t i { display: block; height: 100%; width: 0; border-radius: 17px; }
+  .saldo { display: flex; justify-content: center; gap: 120px; text-align: center; }
+  .saldo b { display: block; font-size: 200px; font-weight: 800; letter-spacing: -8px; line-height: 1; }
+  .saldo span { display: block; font: 600 34px "Geist Mono", monospace; letter-spacing: 4px; color: var(--suave); margin-top: 12px; }
   .lista .item { display: flex; justify-content: space-between; align-items: baseline; padding: 22px 0; border-bottom: 1px solid var(--borda); font-size: 38px; }
   .lista .item span small { display: block; font-size: 26px; color: var(--suave); margin-top: 4px; }
   .lista .item b { font: 700 40px "Geist Mono", monospace; color: var(--laranja); white-space: nowrap; margin-left: 20px; }
@@ -143,7 +146,7 @@ const html = (c, i) => {
   if (c.tipo === "barras") { const max = Math.max(...c.itens.map((x) => x.v));
     return `<div class="cena" id="${id}">${titulo(c.titulo, 300)}<div class="abs" style="top:${c.top ?? 760}px">${c.itens.map((b, k) => `<div class="barra${k === 0 ? " top" : ""}"><div class="cab"><span>${b.nome}<small>${b.detalhe ?? ""}</small></span><b class="conta" data-v="${b.v}" data-tipo="${c.formato ?? ""}">0</b></div><div class="trilho"><div class="enche" data-w="${(100 * b.v / max).toFixed(1)}"></div></div></div>`).join("")}</div>${c.fonte ? `<div class="fonte">${c.fonte}</div>` : ""}</div>`; }
   if (c.tipo === "pares") { const max = Math.max(...c.itens.flatMap((x) => [x.antes, x.depois]));
-    return `<div class="cena" id="${id}">${titulo(c.titulo, 300)}<div class="abs" style="top:640px">${c.itens.map((p) => `<div class="par"><div class="cab"><span>${p.nome}</span><b><em>${p.antes} →</em> ${p.depois}</b></div><div class="linhas"><div class="t"><i data-w="${(100 * p.antes / max).toFixed(1)}" style="background:#3a4458"></i></div><div class="t"><i data-w="${(100 * p.depois / max).toFixed(1)}" style="background:${p.cor ?? "var(--laranja)"}"></i></div></div></div>`).join("")}</div><div class="fonte">${c.fonte ?? "barra cinza: 2022 · colorida: 2026"}</div></div>`; }
+    return `<div class="cena" id="${id}">${titulo(c.titulo, 300)}<div class="abs" style="top:640px">${c.itens.map((p) => `<div class="par"><div class="cab"><span>${p.nome}</span><b><em>${p.antes} →</em> ${p.depois}</b></div><div class="linhas"><div class="t"><i data-w="${(100 * p.antes / max).toFixed(1)}" style="background:#3a4458"></i></div><div class="t"><i data-w="${(100 * p.depois / max).toFixed(1)}" style="background:${p.cor ?? "var(--laranja)"}"></i></div></div></div>`).join("")}</div>${c.saldo ? `<div class="abs saldo" style="top:${c.saldoTop ?? 1080}px">${c.saldo.map((x) => `<div><b style="color:${x.cor}">${x.v}</b><span>${x.nome}</span></div>`).join("")}</div>` : ""}<div class="fonte">${c.fonte ?? "barra cinza: 2022 · colorida: 2026"}</div></div>`; }
   if (c.tipo === "mapa") return `<div class="cena" id="${id}">${titulo(c.titulo, 250)}<svg class="mapa-pr" data-mapa="${c.mapa}" viewBox="0 0 1000 820" style="position:absolute;left:40px;top:${c.top ?? 560}px;width:1000px;height:820px"></svg>${c.legenda ? `<div class="legenda" style="top:${(c.top ?? 560) + 850}px">${c.legenda.map((g) => `<span><i style="background:${g.cor}"></i>${g.nome} <b>${g.n ?? ""}</b></span>`).join("")}</div>` : ""}${c.sub ? `<div class="abs sub" style="top:${(c.top ?? 560) + 940}px">${c.sub}</div>` : ""}</div>`;
   if (c.tipo === "lista") return `<div class="cena" id="${id}">${titulo(c.titulo, 240)}<div class="abs lista" style="top:${c.top ?? 640}px">${c.itens.map((x) => `<div class="item"><span>${x.nome}<small>${x.detalhe ?? ""}</small></span><b>${x.valor}</b></div>`).join("")}</div>${c.fonte ? `<div class="fonte">${c.fonte}</div>` : ""}</div>`;
 };
@@ -176,7 +179,7 @@ CFG.cenas.forEach((c, i) => {
     if (el.querySelector(".fonte")) surge(el.querySelector(".fonte"), t + 3); }
   if (c.tipo === "pares") { el.querySelectorAll(".par").forEach((p, k) => { const tb = t + 1.0 + k * .7; surge(p, tb, { duration: .5 });
       p.querySelectorAll(".t i").forEach((x, j) => tl.to(x, { width: x.dataset.w + "%", duration: 1.2, ease: "power2.out" }, tb + .2 + j * .5)); });
-    surge(el.querySelector(".fonte"), t + 2.5); }
+    surge(el.querySelector(".fonte"), t + 2.5); if (el.querySelector(".saldo")) surge(el.querySelectorAll(".saldo div"), t + 2.8, { stagger: .3, duration: .6, ease: "back.out(1.7)" }); }
   if (c.tipo === "mapa") { const ps = [...el.querySelectorAll(".mapa-pr path")].sort((a, b) => a.dataset.x - b.dataset.x);
     tl.from(el.querySelector(".mapa-pr"), { autoAlpha: 0, scale: .94, duration: .7 }, t + .4)
       .to(ps, { attr: { fill: (k, x) => x.dataset.cor }, duration: .3, stagger: 2.6 / ps.length }, t + .9);
