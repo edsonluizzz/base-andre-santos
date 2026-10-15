@@ -1,10 +1,13 @@
 #!/usr/bin/env node
 // Narração do vídeo: gera uma fala por cena (narracao.json), confere se cada uma cabe antes da próxima e
 // mixa voz + trilha com a música abaixando sozinha quando a voz entra (sidechain).
-// Voz do macOS (`say`) para rascunho, ou ElevenLabs com voz=el:<voice_id> (chave em ELEVENLABS_API_KEY ou ~/.config/elevenlabs.env).
-// Uso: node analise-2026/video/narrar.mjs <trilha.wav> <saida.wav> <ffmpeg> [voz=Reed|el:<voice_id>] [velocidade=210]
+// Voz do macOS (`say`) para rascunho, ElevenLabs com voz=el:<voice_id> (chave em ~/.config/elevenlabs.env) ou
+// Gemini com voz=gm:<Voz>[@modelo] (chave em ~/.config/gemini.env). No Gemini o roteiro inteiro sai num pedido só
+// (o plano grátis dá 10 pedidos/dia por modelo) e é cortado nas N-1 maiores pausas, uma fala por cena.
+// Uso: node analise-2026/video/narrar.mjs <trilha.wav> <saida.wav> <ffmpeg> [voz=Reed|el:<id>|gm:Orus@gemini-3.8-flash-tts] [velocidade=210]
 import { execFileSync, spawnSync } from "node:child_process";
 import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { createHash } from "node:crypto";
 import { homedir, tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -18,7 +21,14 @@ const tmp = mkdtempSync(join(tmpdir(), "narracao-"));
 // duração lida do relatório do ffmpeg (sai na saída de erro)
 const duracao = (arq) => spawnSync(FFMPEG, ["-i", arq, "-f", "null", "-"]).stderr.toString()
   .match(/time=(\d+):(\d+):([\d.]+)/g).pop().replace("time=", "").split(":").reduce((s, v) => s * 60 + Number(v), 0);
-const ELEVEN = VOZ.startsWith("el:");
+const ELEVEN = VOZ.startsWith("el:"), GEMINI = VOZ.startsWith("gm:");
+const chave = (arq, nome) => {
+  if (process.env[nome]) return process.env[nome];
+  const p = join(homedir(), ".config", arq);
+  const m = existsSync(p) && readFileSync(p, "utf8").match(new RegExp(`${nome}=(\\S+)`));
+  if (!m) throw new Error(`falta ${nome} (variável de ambiente ou ~/.config/${arq})`);
+  return m[1];
+};
 const chaveEleven = () => {
   if (process.env.ELEVENLABS_API_KEY) return process.env.ELEVENLABS_API_KEY;
   const arq = join(homedir(), ".config/elevenlabs.env");
@@ -39,13 +49,54 @@ async function gerarFala(texto, arq, i) {
   writeFileSync(arq, Buffer.from(await r.arrayBuffer()));
 }
 
+// Gemini: um pedido com o roteiro todo (uma fala por parágrafo), cortado nas N-1 maiores pausas.
+async function gerarGemini() {
+  const [voz, modelo = "gemini-3.8-flash-tts"] = VOZ.slice(3).split("@");
+  // cache por voz+modelo+roteiro: rodar de novo (ajuste de mixagem) não gasta a cota diária
+  const cache = join(AQUI, `.cache-${voz}-${modelo}-${createHash("sha1").update(JSON.stringify(falas)).digest("hex").slice(0, 10)}.bin`);
+  const bruto = join(tmp, "gemini.bin"), tudo = join(tmp, "gemini.wav");
+  if (!existsSync(cache)) {
+  const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent`, {
+    method: "POST", headers: { "x-goog-api-key": chave("gemini.env", "GEMINI_API_KEY"), "content-type": "application/json" },
+    body: JSON.stringify({ contents: [{ parts: [{ text: falas.map((f) => f.texto).join("\n\n") }] }],
+      generationConfig: { responseModalities: ["AUDIO"], speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: voz } } } } }),
+  });
+  if (!r.ok) throw new Error(`Gemini ${r.status}: ${(await r.text()).slice(0, 300)}`);
+  const parte = (await r.json()).candidates[0].content.parts[0].inlineData;
+  writeFileSync(cache, Buffer.from(parte.data, "base64"));
+  console.log(`Gemini: ${parte.mimeType}`);
+  }
+  // WAV de verdade começa com "RIFF"; senão é PCM 16 bits mono 24 kHz (o que a API devolve como audio/L16)
+  const dados = readFileSync(cache); writeFileSync(bruto, dados);
+  const cru = dados.subarray(0, 4).toString() === "RIFF" ? [] : ["-f", "s16le", "-ar", "24000", "-ac", "1"];
+  execFileSync(FFMPEG, ["-y", "-loglevel", "error", ...cru, "-i", bruto, tudo]);
+  const log = spawnSync(FFMPEG, ["-i", tudo, "-af", "silencedetect=n=-40dB:d=0.15", "-f", "null", "-"]).stderr.toString();
+  const pausas = [...log.matchAll(/silence_start: ([\d.]+)[\s\S]*?silence_end: ([\d.]+)/g)].map((m) => ({ ini: +m[1], fim: +m[2] }))
+    .filter((p) => p.ini > 0.2);
+  if (pausas.length < falas.length - 1) throw new Error(`só ${pausas.length} pausas para ${falas.length} falas`);
+  const cortes = pausas.sort((a, b) => (b.fim - b.ini) - (a.fim - a.ini)).slice(0, falas.length - 1).sort((a, b) => a.ini - b.ini);
+  return falas.map((_, i) => {
+    const arq = join(tmp, `f${i}.wav`), de = i ? cortes[i - 1].fim - 0.05 : 0, ate = cortes[i]?.ini + 0.08;
+    execFileSync(FFMPEG, ["-y", "-loglevel", "error", "-i", tudo, "-ss", String(Math.max(0, de)), ...(ate ? ["-to", String(ate)] : []), "-af", "silenceremove=start_periods=1:start_threshold=-45dB", arq]);
+    return arq;
+  });
+}
+
 const arquivos = [];
+const prontos = GEMINI ? await gerarGemini() : null;
 for (const [i, f] of falas.entries()) {
-  const aiff = join(tmp, `f${i}.${ELEVEN ? "mp3" : "aiff"}`);
-  await gerarFala(f.texto, aiff, i);
+  const aiff = prontos ? prontos[i] : join(tmp, `f${i}.${ELEVEN ? "mp3" : "aiff"}`);
+  if (!prontos) await gerarFala(f.texto, aiff, i);
   const dur = duracao(aiff);
   const limite = (falas[i + 1]?.inicio ?? 30) - f.inicio - 0.1;
   console.log(`${f.inicio.toFixed(1).padStart(4)} s  ${dur.toFixed(2)} s / ${limite.toFixed(2)} s  ${dur > limite ? "ESTOURA" : "ok"}  ${f.texto}`);
+  // até 15% acima do espaço: acelera só essa fala (atempo mantém o tom); acima disso, reescrever o roteiro
+  if (dur > limite && dur / limite <= 1.15) {
+    const rapida = aiff.replace(/\.\w+$/, "-rapida.wav");
+    execFileSync(FFMPEG, ["-y", "-loglevel", "error", "-i", aiff, "-af", `atempo=${(dur / (limite - 0.02)).toFixed(3)}`, rapida]);
+    console.log(`      acelerada ${(dur / (limite - 0.02)).toFixed(2)}× para caber`);
+    arquivos.push(rapida); continue;
+  }
   if (dur > limite) throw new Error(`a fala "${f.texto}" não cabe na cena (${dur.toFixed(2)} s > ${limite.toFixed(2)} s)`);
   arquivos.push(aiff);
 }
@@ -56,4 +107,4 @@ const atrasos = falas.map((f, i) => `[${i + 1}:a]aresample=44100,pan=stereo|c0=c
 const voz = `${falas.map((_, i) => `[v${i}]`).join("")}amix=inputs=${falas.length}:normalize=0,highpass=f=90,equalizer=f=3000:t=q:w=1:g=3,acompressor=threshold=-18dB:ratio=3:attack=5:release=120,volume=2.2,asplit=2[voz][chave]`;
 const mix = `[0:a]volume=0.9[mus];[mus][chave]sidechaincompress=threshold=0.04:ratio=8:attack=20:release=350[musd];[musd][voz]amix=inputs=2:normalize=0,alimiter=limit=0.89,loudnorm=I=-14:TP=-1.5:LRA=7`;
 execFileSync(FFMPEG, ["-y", "-loglevel", "error", "-i", trilha, ...entradas, "-filter_complex", `${atrasos};${voz};${mix}`, "-t", "30", "-ar", "44100", saida]);
-console.log(`gravado ${saida} (voz ${VOZ}, velocidade ${VEL})`);
+console.log(`gravado ${saida} (voz ${VOZ}${GEMINI || ELEVEN ? "" : `, velocidade ${VEL}`})`);
