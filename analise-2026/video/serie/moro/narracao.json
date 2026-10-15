@@ -1,0 +1,54 @@
+{
+  "comentario": "Narração do Reels de moro (série Campeões de voto, 60 s).",
+  "duracao": 60,
+  "falas": [
+    {
+      "inicio": 0.6,
+      "texto": "Eleito no primeiro turno."
+    },
+    {
+      "inicio": 4.4,
+      "texto": "Três milhões, cento e vinte e sete mil votos."
+    },
+    {
+      "inicio": 8.6,
+      "texto": "Sergio Moro, governador do Paraná."
+    },
+    {
+      "inicio": 12.3,
+      "texto": "Para vencer no primeiro turno, precisava de metade dos votos válidos."
+    },
+    {
+      "inicio": 16.9,
+      "texto": "Passou por apenas seis mil, setecentos e setenta e quatro votos."
+    },
+    {
+      "inicio": 21.8,
+      "texto": "Teve voto em todas as trezentas e noventa e nove cidades do estado."
+    },
+    {
+      "inicio": 28.4,
+      "texto": "E foi o mais votado em duzentas e oitenta e sete delas."
+    },
+    {
+      "inicio": 32.6,
+      "texto": "Sete em cada dez cidades do Paraná."
+    },
+    {
+      "inicio": 36.3,
+      "texto": "Ficou um milhão e meio de votos à frente do segundo colocado."
+    },
+    {
+      "inicio": 44.6,
+      "texto": "E teve o voto mais barato entre os três primeiros: quatro reais e quinze centavos."
+    },
+    {
+      "inicio": 52.2,
+      "texto": "Ovile Diagnóstico. Sua eleição, voto a voto."
+    },
+    {
+      "inicio": 56.5,
+      "texto": "Comenta aqui: de qual político você quer ver os dados?"
+    }
+  ]
+}

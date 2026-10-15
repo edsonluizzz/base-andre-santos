@@ -91,10 +91,13 @@ async function gerarGemini() {
     if (!melhor) throw new Error("faltou pausa para separar as falas");
     cortes.push(melhor); depois = melhor.fim;
   }
+  // "junta": true numa fala = sai no mesmo trecho da anterior (quando a pausa entre as duas é curta demais para separar)
   return falas.map((_, i) => {
+    if (falas[i].junta) return null;
+    let fimGrupo = i; while (falas[fimGrupo + 1]?.junta) fimGrupo++;
     // o ataque das consoantes (s, f, d) fica abaixo do limiar do silencedetect: cortar com folga dentro da pausa
     // e só depois tirar o silêncio inicial com limiar bem baixo, deixando 80 ms antes da voz
-    const ant = cortes[i - 1], prox = cortes[i];
+    const ant = cortes[i - 1], prox = cortes[fimGrupo];
     const de = ant ? Math.max(ant.ini + 0.02, ant.fim - 0.3) : 0;
     const ate = prox ? Math.min(prox.fim - 0.02, prox.ini + 0.2) : undefined;
     const arq = join(tmp, `f${i}.wav`);
@@ -106,11 +109,13 @@ async function gerarGemini() {
 
 const arquivos = [];
 const prontos = GEMINI ? await gerarGemini() : null;
+const proxima = (i) => { let j = i + 1; while (falas[j]?.junta) j++; return falas[j]; };
 for (const [i, f] of falas.entries()) {
+  if (f.junta) continue;
   const aiff = prontos ? prontos[i] : join(tmp, `f${i}.${ELEVEN ? "mp3" : "aiff"}`);
   if (!prontos) await gerarFala(f.texto, aiff, i);
   const dur = duracao(aiff);
-  const limite = (falas[i + 1]?.inicio ?? DURACAO) - f.inicio - 0.1;
+  const limite = (proxima(i)?.inicio ?? DURACAO) - f.inicio - 0.1;
   console.log(`${f.inicio.toFixed(1).padStart(4)} s  ${dur.toFixed(2)} s / ${limite.toFixed(2)} s  ${dur > limite ? "ESTOURA" : "ok"}  ${f.texto}`);
   // até 15% acima do espaço: acelera só essa fala (atempo mantém o tom); acima disso, reescrever o roteiro
   if (dur > limite && dur / limite <= 1.15 && !process.env.SO_MEDIR) {
@@ -125,9 +130,10 @@ for (const [i, f] of falas.entries()) {
 }
 
 // voz: cada fala atrasada até o seu início, juntas numa faixa; leve compressão e brilho para soar "de locutor".
+const usadas = falas.filter((f) => !f.junta);
 const entradas = arquivos.flatMap((a) => ["-i", a]);
-const atrasos = falas.map((f, i) => `[${i + 1}:a]aresample=44100,pan=stereo|c0=c0|c1=c0,adelay=${Math.round(f.inicio * 1000)}|${Math.round(f.inicio * 1000)}[v${i}]`).join(";");
-const voz = `${falas.map((_, i) => `[v${i}]`).join("")}amix=inputs=${falas.length}:normalize=0,highpass=f=90,equalizer=f=3000:t=q:w=1:g=3,acompressor=threshold=-18dB:ratio=3:attack=5:release=120,volume=2.2,asplit=2[voz][chave]`;
+const atrasos = usadas.map((f, i) => `[${i + 1}:a]aresample=44100,pan=stereo|c0=c0|c1=c0,adelay=${Math.round(f.inicio * 1000)}|${Math.round(f.inicio * 1000)}[v${i}]`).join(";");
+const voz = `${usadas.map((_, i) => `[v${i}]`).join("")}amix=inputs=${usadas.length}:normalize=0,highpass=f=90,equalizer=f=3000:t=q:w=1:g=3,acompressor=threshold=-18dB:ratio=3:attack=5:release=120,volume=2.2,asplit=2[voz][chave]`;
 const mix = `[0:a]volume=0.9[mus];[mus][chave]sidechaincompress=threshold=0.04:ratio=8:attack=20:release=350[musd];[musd][voz]amix=inputs=2:normalize=0,alimiter=limit=0.89,loudnorm=I=-14:TP=-1.5:LRA=7`;
 if (process.env.SO_MEDIR) process.exit(0);
 execFileSync(FFMPEG, ["-y", "-loglevel", "error", "-i", trilha, ...entradas, "-filter_complex", `${atrasos};${voz};${mix}`, "-t", String(DURACAO), "-ar", "44100", saida]);

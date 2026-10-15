@@ -1,0 +1,59 @@
+{
+  "comentario": "Narração do Reels de nikolas (série Campeões de voto, 60 s).",
+  "duracao": 60,
+  "falas": [
+    {
+      "inicio": 0.6,
+      "texto": "O deputado mais votado do Brasil."
+    },
+    {
+      "inicio": 4.4,
+      "texto": "Três milhões, cento e dezenove mil votos."
+    },
+    {
+      "inicio": 9.2,
+      "texto": "Nikolas Ferreira, de Minas Gerais."
+    },
+    {
+      "inicio": 12.3,
+      "texto": "Mais que o dobro de dois mil e vinte e dois,"
+    },
+    {
+      "inicio": 15.8,
+      "texto": "quando ele já tinha sido o mais votado do país."
+    },
+    {
+      "inicio": 20.6,
+      "texto": "Teve voto em todas as oitocentas e cinquenta e três cidades de Minas."
+    },
+    {
+      "inicio": 28.4,
+      "texto": "E foi o mais votado em trezentas e cinco delas."
+    },
+    {
+      "inicio": 32.4,
+      "texto": "Mais de um terço do estado.",
+      "junta": true
+    },
+    {
+      "inicio": 36.3,
+      "texto": "Sozinho, fez mais de catorze quocientes eleitorais."
+    },
+    {
+      "inicio": 40.3,
+      "texto": "O PL elegeu vinte e um deputados em Minas."
+    },
+    {
+      "inicio": 44.6,
+      "texto": "E teve o voto mais barato entre os cinquenta e três eleitos: sessenta e oito centavos."
+    },
+    {
+      "inicio": 52.2,
+      "texto": "Ovile Diagnóstico. Sua eleição, voto a voto."
+    },
+    {
+      "inicio": 56.5,
+      "texto": "Comenta aqui: de qual político você quer ver os dados?"
+    }
+  ]
+}
