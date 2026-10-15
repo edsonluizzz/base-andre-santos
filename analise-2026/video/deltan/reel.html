@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Ovile Diagnóstico · Deltan Dallagnol</title>
+<!-- Reels 9:16, 104 s: Deltan Dallagnol na eleição para o Senado de 2026 (PR). Cenas a cada 8 s na
+     trilha trilha.wav (longo/trilha.mjs + trilha.json: Mi menor → Sol maior; impactos em 16, 40 e 96 s).
+     Números e mapas em dados.js (dados.mjs). Base visual: ../longo/base.css e base.js. -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="../../public/vendor/d3.v7.min.js"></script>
+<script src="dados.js"></script>
+<script src="../longo/base.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300..800&family=Geist+Mono:wght@500;700&display=swap">
+<link rel="stylesheet" href="../longo/base.css">
+<style>
+  /* abertura: rosto com halo e raios */
+  #raios { position: absolute; left: 50%; top: 640px; width: 1400px; height: 1400px; margin: -700px 0 0 -700px;
+    background: repeating-conic-gradient(from 0deg, rgba(255,106,19,.10) 0deg 6deg, transparent 6deg 18deg); border-radius: 50%;
+    -webkit-mask: radial-gradient(circle, #000 0 30%, transparent 62%); mask: radial-gradient(circle, #000 0 30%, transparent 62%); }
+  #halo { position: absolute; left: 50%; top: 640px; width: 560px; height: 560px; margin: -280px 0 0 -280px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,106,19,.55), rgba(255,106,19,0) 68%); }
+  #rosto { position: absolute; left: 50%; top: 380px; width: 400px; margin-left: -200px; filter: drop-shadow(0 30px 40px rgba(0,0,0,.6)); }
+  #nomeAb { top: 960px; text-align: center; font-size: 76px; font-weight: 800; letter-spacing: -2px; }
+  #nomeAb small { display: block; font: 600 30px "Geist Mono", monospace; letter-spacing: 6px; color: var(--suave); margin-top: 12px; }
+  #contaAb { top: 1140px; text-align: center; font-size: 176px; font-weight: 800; letter-spacing: -8px; color: var(--laranja); font-variant-numeric: tabular-nums; line-height: 1; }
+  #contaSub { top: 1360px; }
+
+  /* linha do tempo */
+  .tempo { position: absolute; left: 110px; right: 70px; top: 560px; }
+  .tempo::before { content: ""; position: absolute; left: 22px; top: 20px; bottom: 30px; width: 4px; background: var(--borda); }
+  .tempo .fio { position: absolute; left: 22px; top: 20px; width: 4px; height: 0; background: var(--laranja); }
+  .marco { position: relative; padding-left: 90px; margin-bottom: 110px; }
+  .marco i { position: absolute; left: 6px; top: 8px; width: 36px; height: 36px; border-radius: 50%; background: var(--fundo); border: 6px solid var(--laranja); }
+  .marco small { display: block; font: 700 34px "Geist Mono", monospace; color: var(--laranja); letter-spacing: 2px; }
+  .marco b { display: block; font-size: 56px; font-weight: 800; letter-spacing: -1.5px; margin-top: 8px; line-height: 1.05; }
+  .marco span { display: block; font-size: 34px; color: #c8d0de; margin-top: 10px; }
+  .marco.cinza i { border-color: #6b7690; } .marco.cinza small { color: #8b97ad; }
+
+  /* grades de 100 eleitores */
+  .grades { position: absolute; left: 170px; right: 170px; top: 520px; }
+  .grade h3 { font: 700 34px "Geist Mono", monospace; color: var(--suave); text-align: center; letter-spacing: 3px; }
+  .grade .g { display: grid; grid-template-columns: repeat(10, 1fr); gap: 14px; }
+  .grade .g i { aspect-ratio: 1; border-radius: 50%; background: #1b2232; }
+  .grade .n { text-align: center; font-size: 150px; font-weight: 800; letter-spacing: -4px; margin-top: 26px; color: var(--laranja); }
+  .grade .n small { display: block; font-size: 30px; letter-spacing: 0; color: var(--suave); font-weight: 500; }
+
+  /* dispersão */
+  #disp { position: absolute; left: 60px; top: 520px; width: 960px; height: 860px; overflow: visible; }
+  #disp text { fill: #8b97ad; font: 500 24px "Geist Mono", monospace; }
+  #disp .eixo { stroke: #2a3446; stroke-width: 2; }
+  #disp .ponto { fill: var(--laranja); opacity: .75; }
+  #disp .cwb { fill: #fff; opacity: 1; }
+  #disp .reta { stroke: #fff; stroke-width: 4; stroke-dasharray: 12 10; }
+
+  /* pódio */
+  .podio { position: absolute; left: 70px; right: 70px; top: 640px; }
+  .podio .barra { display: flex; height: 120px; border-radius: 24px; overflow: hidden; border: 1px solid var(--borda); }
+  .podio .barra div { width: 0; display: grid; place-items: center; font: 800 44px "Geist Mono", monospace; color: #07090f; overflow: hidden; white-space: nowrap; }
+  .podio .rot { display: flex; justify-content: space-between; margin-top: 18px; font: 600 28px "Geist Mono", monospace; color: var(--suave); }
+
+  /* custo */
+  .custos { position: absolute; left: 70px; right: 70px; top: 600px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; text-align: center; }
+  .custos small { display: block; font: 700 30px "Geist Mono", monospace; letter-spacing: 4px; color: var(--suave); }
+  .custos b { display: block; white-space: nowrap; font-size: 104px; font-weight: 800; letter-spacing: -5px; margin-top: 10px; }
+  .custos .seta { font-size: 90px; color: var(--suave); padding: 0 20px; }
+</style>
+</head>
+<body>
+<div id="palco"><div id="cenas"></div></div>
+<script>
+const D = window.DADOS, V = videoLongo({ dur: 104, fim: 96, cta: "Comenta: quem a gente<br>analisa no próximo vídeo?" });
+const { titulo, pct, fmt, tl } = V;
+const cap = (s) => s.toLowerCase().replace(/(^|\s)\S/g, (x) => x.toUpperCase()).replace(/ (De|Do|Da|Dos|Das) /g, (x) => x.toLowerCase());
+const real = (v) => "R$ " + v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const n100 = Math.round(100 * D.eleitores), tot = 399, P = D.pos, Rg = D.regioes, COR = { PL: "rgb(47,111,255)", NOVO: "#ff6a13", REPUBLICANOS: "#8b5cf6", PT: "rgb(229,49,47)" };
+function dispersao() {
+  const W = 960, H = 760, m = { l: 90, b: 70, t: 20, r: 20 }, pts = D.dispersao, xs = pts.map((p) => p[0]), ys = pts.map((p) => p[1]);
+  const x = d3.scaleLinear().domain([d3.min(xs) - 2, d3.max(xs) + 2]).range([m.l, W - m.r]), y = d3.scaleLinear().domain([0, d3.max(ys) + 2]).range([H - m.b, m.t]);
+  const mx = d3.mean(xs), my = d3.mean(ys), b = d3.sum(pts, (p) => (p[0] - mx) * (p[1] - my)) / d3.sum(pts, (p) => (p[0] - mx) ** 2), a = my - b * mx, x0 = d3.min(xs), x1 = d3.max(xs);
+  return `<svg id="disp" viewBox="0 0 ${W} ${H + 100}"><line class="eixo" x1="${m.l}" y1="${H - m.b}" x2="${W - m.r}" y2="${H - m.b}"/><line class="eixo" x1="${m.l}" y1="${m.t}" x2="${m.l}" y2="${H - m.b}"/>
+    ${x.ticks(5).map((t) => `<text x="${x(t)}" y="${H - m.b + 38}" text-anchor="middle">${t}%</text>`).join("")}${y.ticks(5).map((t) => `<text x="${m.l - 14}" y="${y(t) + 8}" text-anchor="end">${t}%</text>`).join("")}
+    <text x="${(W + m.l) / 2}" y="${H + 20}" text-anchor="middle" style="fill:#c8d0de">voto em Moro para governador →</text>
+    <text transform="translate(26 ${(H - m.b) / 2}) rotate(-90)" text-anchor="middle" style="fill:#c8d0de">voto em Deltan para senador →</text>
+    ${pts.map((p) => `<circle class="ponto${p[2] ? " cwb" : ""}" cx="${x(p[0]).toFixed(1)}" cy="${y(p[1]).toFixed(1)}" r="${p[2] ? 13 : 7}"/>`).join("")}
+    <line class="reta" x1="${x(x0)}" y1="${y(a + b * x0)}" x2="${x(x1)}" y2="${y(a + b * x1)}"/></svg>`;
+}
+const maxDisp = D.disputa[0].v, maxC = Math.max(...D.disputa.map((c) => c.custo));
+V.cenas([
+  `<div class="cena" id="c0"><div id="raios"></div><div id="halo"></div><img id="rosto" src="rosto.png" alt="">
+     <div class="abs" id="nomeAb">Deltan Dallagnol<small>SENADOR ELEITO · PARANÁ · ${D.sg}</small></div>
+     <div class="abs" id="contaAb" data-v="${D.votos}">0</div><div class="abs sub" id="contaSub">votos para o <b>Senado</b> em 2026.</div></div>`,
+  `<div class="cena" id="c1">${titulo(["A disputa pelas", "*duas* *vagas.*"], 250)}<div class="abs" style="top:540px">
+     ${D.disputa.map((c) => `<div class="bar" style="margin-top:44px"><div class="cab"><span>${cap(c.nm)}<small>${c.sg}${c.eleito ? " · eleito" : ""}</small></span><b class="v" data-v="${c.v}" style="color:${c.eleito ? COR[c.sg] : "#c8d0de"}">0</b></div><div class="trilho"><div class="enche" style="background:${c.eleito ? COR[c.sg] : "#3a4458"}" data-w="${(100 * c.v / maxDisp).toFixed(1)}"></div></div></div>`).join("")}</div>
+     <div class="fonte">votos para senador no Paraná · cada eleitor votou em dois</div></div>`,
+  `<div class="cena" id="c2">${titulo(["De cada *100*", "eleitores…"], 250)}<div class="grades"><div class="grade"><div class="g">${Array.from({ length: 100 }, (_, i) => `<i data-on="${i < n100 ? "#ff6a13" : ""}"></i>`).join("")}</div>
+     <div class="n">${n100}<small>escolheram Deltan para uma das vagas</small></div></div></div><div class="fonte">votos ÷ eleitores que compareceram no PR</div></div>`,
+  `<div class="cena" id="c3">${titulo(["Voto no estado", "*inteiro.*"], 240)}${V.mapa("m2026", 560, 800)}<div class="abs sub" style="top:1400px">Teve voto nas <b>399 cidades</b>.</div><div class="fonte">cada bolha é uma cidade, do tamanho dos votos</div></div>`,
+  `<div class="cena" id="c4">${titulo(["De onde vieram", "*os* *votos.*"], 260)}<div class="abs" style="top:560px">
+     ${[["Interior", Rg.Interior], ["Curitiba", Rg.Curitiba], ["Região metropolitana", Rg.RMC], ["Litoral", Rg.Litoral]].map(([n, p], k) => `<div class="bar"><div class="cab"><span>${n}</span><b class="v${k ? "" : " k"}" data-v="${100 * p}">0</b></div><div class="trilho"><div class="enche" style="background:${k ? "#3a4458" : "var(--laranja)"}" data-w="${(100 * p / Rg.Interior).toFixed(1)}"></div></div></div>`).join("")}</div>
+     <div class="abs sub" style="top:1480px"><b>Dois em cada três votos</b> vieram do interior.</div><div class="fonte">% dos votos de Deltan</div></div>`,
+  `<div class="cena" id="c5">${titulo(["Onde foi", "*mais* *forte.*"], 260)}<div class="abs lista" style="top:580px">${D.fortes.map((c) => `<div class="item"><span>${cap(c.nm)}<small>${fmt(c.v)} votos</small></span><b>${pct(c.p)}</b></div>`).join("")}</div>
+     <div class="abs sub" style="top:1300px">O <b>Oeste e o Sudoeste</b> do Paraná.</div><div class="fonte">% dos votos para senador na cidade · cada eleitor dá dois votos</div></div>`,
+  `<div class="cena" id="c6">${titulo(["As maiores", "*votações.*"], 260)}<div class="abs" style="top:560px">${D.maiores.map((c, k) => `<div class="bar" style="margin-top:44px"><div class="cab"><span>${cap(c.nm)}</span><b class="v${k ? "" : " k"}" data-v="${c.v}">0</b></div><div class="trilho"><div class="enche" style="background:${k ? "#3a4458" : "var(--laranja)"}" data-w="${(100 * c.v / D.maiores[0].v).toFixed(1)}"></div></div></div>`).join("")}</div><div class="fonte">votos para senador</div></div>`,
+  `<div class="cena" id="c7">${titulo(["O mais votado", "*em* *Curitiba.*"], 260)}<div class="abs" style="top:620px">
+     <div class="bar"><div class="cab"><span>Deltan Dallagnol<small>NOVO</small></span><b class="v k" data-v="${D.curitiba.deltan}">0</b></div><div class="trilho"><div class="enche" style="background:var(--laranja)" data-w="100"></div></div></div>
+     <div class="bar"><div class="cab"><span>Filipe Barros<small>PL</small></span><b class="v" data-v="${D.curitiba.filipe}">0</b></div><div class="trilho"><div class="enche" style="background:${COR.PL}" data-w="${(100 * D.curitiba.filipe / D.curitiba.deltan).toFixed(1)}"></div></div></div></div>
+     <div class="abs sub" style="top:1220px">Na capital, ficou <b>${fmt(D.curitiba.deltan - D.curitiba.filipe)} votos</b> à frente<br>de Filipe Barros, o mais votado do estado.</div><div class="fonte">votos para senador em Curitiba</div></div>`,
+  `<div class="cena" id="c8">${titulo(["Cidade por cidade,", "*no* *pódio.*"], 260)}<div class="podio">
+     <div class="barra"><div style="background:#ff6a13" data-w="${100 * P[1] / tot}">${P[1]}</div><div style="background:#ffb074" data-w="${100 * P[2] / tot}">${P[2]}</div><div style="background:#6b7690" data-w="${100 * P[3] / tot}">${P[3]}</div><div style="background:#2a3446;color:#8b97ad" data-w="${100 * P.outros / tot}">${P.outros}</div></div>
+     <div class="rot"><span>1º lugar</span><span>2º lugar</span><span>3º</span><span>outros</span></div></div>
+     <div class="abs sub" style="top:960px">Ficou numa das <b>duas vagas</b> em<br><b>${P[1] + P[2]} das 399 cidades.</b> Foi o primeiro em ${P[1]}.</div></div>`,
+  `<div class="cena" id="c9">${titulo(["Lado a lado", "*com* *Moro.*"], 230)}${dispersao()}<div class="abs sub" style="top:1500px">Cada ponto é uma cidade. Onde Moro foi forte,<br>Deltan também foi: <b>correlação de ${D.corr.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</b>.</div></div>`,
+  `<div class="cena" id="c10">${titulo(["Vaga garantida", "*com* *folga.*"], 300)}<div class="grande k" style="top:640px;font-size:220px">${fmt(D.margem)}</div>
+     <div class="abs sub" style="top:900px">votos à frente do terceiro colocado,<br><b>Alexandre Curi (Republicanos)</b>.</div></div>`,
+  `<div class="cena" id="c11">${titulo(["Quanto custou", "*cada* *voto.*"], 260)}<div class="abs" style="top:560px">
+     ${[...D.disputa].sort((a, b) => a.custo - b.custo).map((c) => `<div class="bar" style="margin-top:44px"><div class="cab"><span>${cap(c.nm)}<small>${c.sg}</small></span><b class="v" data-v="${c.custo}" style="color:${/DALLAGNOL/.test(c.nm) ? "#ff6a13" : "#c8d0de"}">0</b></div><div class="trilho"><div class="enche" style="background:${/DALLAGNOL/.test(c.nm) ? "var(--laranja)" : "#3a4458"}" data-w="${(100 * c.custo / maxC).toFixed(1)}"></div></div></div>`).join("")}</div>
+     <div class="fonte">receita de campanha ÷ votos · prestação de contas parcial</div></div>`,
+]);
+V.desenharMapas(GEO, MAPAS);
+{ const maxV = d3.max(Object.values(D.bolhas), (x) => x[1]), raio = (v) => 125 * Math.sqrt(v / maxV);
+  document.querySelectorAll("svg.mapa").forEach((svg) => { const alt = +svg.getAttribute("viewBox").split(" ")[3], caminho = d3.geoPath(d3.geoMercator().fitSize([1000, alt], GEO));
+    const dados = GEO.features.map((f) => ({ c: caminho.centroid(f), v: D.bolhas[f.properties.codarea]?.[1] ?? 0 })).filter((x) => x.v > 0).sort((p, q) => q.v - p.v);
+    d3.select(svg).append("g").attr("class", "bolhas").selectAll("circle").data(dados).join("circle").attr("cx", (x) => x.c[0]).attr("cy", (x) => x.c[1])
+      .attr("r", 0).attr("data-r", (x) => raio(x.v).toFixed(1)).attr("data-x", (x) => x.c[0]).attr("fill", "rgba(255,106,19,.55)").attr("stroke", "#ffb074").attr("stroke-width", 1.2); }); }
+
+{ const el = V.entra("c0", 0, 8);
+  tl.fromTo("#raios", { rotate: 0, autoAlpha: 0 }, { rotate: 40, autoAlpha: 1, duration: 8, ease: "none" }, 0)
+    .fromTo("#halo", { scale: .4, autoAlpha: 0 }, { scale: 1, autoAlpha: 1, duration: 1.4, ease: "expo.out" }, .2)
+    .fromTo("#rosto", { y: 120, autoAlpha: 0, scale: .85 }, { y: 0, autoAlpha: 1, scale: 1, duration: 1.2, ease: "expo.out" }, .4)
+    .from("#nomeAb", { autoAlpha: 0, y: 40, duration: .8 }, 1.2).fromTo("#contaAb", { autoAlpha: 0, scale: .8 }, { autoAlpha: 1, scale: 1, duration: .6 }, 2.0);
+  V.contar(el.querySelector("#contaAb"), 2.0, 3.2); V.surge(el.querySelector("#contaSub"), 5.0); }
+V.varre(7.6); { const el = V.entra("c1", 8, 16); V.barras(el, 9, .55); V.surge(el.querySelector(".fonte"), 12); }
+{ const el = V.entra("c2", 16, 24); V.flash(16, .6); const on = [...el.querySelectorAll(".g i")].filter((i) => i.dataset.on);
+  tl.from(el.querySelectorAll(".g i"), { scale: 0, duration: .3, stagger: .008 }, 16.6).to(on, { backgroundColor: "#ff6a13", duration: .15, stagger: 2.4 / on.length }, 17.6)
+    .from(el.querySelector(".n"), { autoAlpha: 0, scale: .6, duration: .6, ease: "back.out(2)" }, 20.2); V.surge(el.querySelector(".fonte"), 21); }
+V.varre(23.6); { const el = V.entra("c3", 24, 32); V.animarMapa(el, 24, "svg.mapa", .6); const bs = [...el.querySelectorAll(".bolhas circle")].sort((p, q) => p.dataset.x - q.dataset.x);
+  tl.to(bs, { attr: { r: (i, x) => x.dataset.r }, duration: .5, ease: "back.out(1.6)", stagger: 2.6 / bs.length }, 25.2); V.surge(el.querySelector(".sub"), 28.4); V.surge(el.querySelector(".fonte"), 28.8); }
+V.varre(31.6); { const el = V.entra("c4", 32, 40); V.barras(el, 33, .6, (v) => pct(v, 0)); V.surge(el.querySelector(".sub"), 36.2); V.surge(el.querySelector(".fonte"), 36.6); }
+{ const el = V.entra("c5", 40, 48); V.flash(40, .5); V.lista(el, 41, .4); V.surge(el.querySelector(".sub"), 44); V.surge(el.querySelector(".fonte"), 44.4); }
+V.varre(47.6); { const el = V.entra("c6", 48, 56); V.barras(el, 49, .5); V.surge(el.querySelector(".fonte"), 52); }
+V.varre(55.6); { const el = V.entra("c7", 56, 64); V.barras(el, 57, 1.0); V.surge(el.querySelector(".sub"), 59.6); V.surge(el.querySelector(".fonte"), 60); }
+V.varre(63.6); { const el = V.entra("c8", 64, 72); el.querySelectorAll(".barra div").forEach((d, k) => tl.to(d, { width: d.dataset.w + "%", duration: .8, ease: "power2.out" }, 65 + k * .35));
+  V.surge(el.querySelector(".rot"), 66.6); V.surge(el.querySelector(".sub"), 67.2); }
+V.varre(71.6); { const el = V.entra("c9", 72, 80); const pts = [...el.querySelectorAll(".ponto")];
+  tl.from(el.querySelectorAll("#disp .eixo, #disp text"), { autoAlpha: 0, duration: .5 }, 72.4).from(pts, { attr: { r: 0 }, duration: .25, stagger: 2.2 / pts.length }, 72.8)
+    .from(el.querySelector(".reta"), { autoAlpha: 0, duration: .6 }, 75.2); V.surge(el.querySelector(".sub"), 76); }
+V.varre(79.6); { const el = V.entra("c10", 80, 88); V.grande(el.querySelector(".grande"), 80.8); V.surge(el.querySelector(".sub"), 82); }
+V.varre(87.6); { const el = V.entra("c11", 88, 96); V.barras(el, 88.8, .5, real); V.surge(el.querySelector(".fonte"), 91.6); }
+V.fechar();
+</script>
+</body>
+</html>
