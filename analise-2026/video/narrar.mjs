@@ -104,11 +104,23 @@ async function gerarGemini() {
     // o ataque das consoantes (s, f, d) fica abaixo do limiar do silencedetect: cortar com folga dentro da pausa
     // e só depois tirar o silêncio inicial com limiar bem baixo, deixando 80 ms antes da voz
     const ant = cortes[i - 1], prox = cortes[fimGrupo];
-    const de = ant ? Math.max(ant.ini + 0.02, ant.fim - 0.3) : 0;
-    const ate = prox ? Math.min(prox.fim - 0.02, prox.ini + 0.2) : undefined;
+    // pausa curta: a cauda da palavra anterior e o ataque da seguinte ficam dentro dela, então cada lado só usa a sua metade
+    const de = ant ? Math.max(ant.ini + (ant.fim - ant.ini) * 0.5, ant.fim - 0.3) : 0;
+    const ate = prox ? prox.ini + Math.min(0.1, (prox.fim - prox.ini) * 0.2) : undefined;
     const arq = join(tmp, `f${i}.wav`);
     execFileSync(FFMPEG, ["-y", "-loglevel", "error", "-i", tudo, "-ss", de.toFixed(3), ...(ate ? ["-to", ate.toFixed(3)] : []),
       "-af", "silenceremove=start_periods=1:start_threshold=-62dB:start_silence=0.08,areverse,silenceremove=start_periods=1:start_threshold=-48dB:start_silence=0.1,areverse,afade=t=in:d=0.01", arq]);
+    // trava: som curto e isolado no fim (ataque da próxima palavra que vazou) é cortado na pausa que o antecede
+    const fimLog = spawnSync(FFMPEG, ["-i", arq, "-af", "silencedetect=n=-45dB:d=0.06", "-f", "null", "-"]).stderr.toString();
+    const durSeg = duracao(arq);
+    const ps = [...fimLog.matchAll(/silence_start: ([\d.]+)[\s\S]*?silence_end: ([\d.]+)/g)].map((m) => [+m[1], +m[2]]).filter(([, e]) => e < durSeg - 0.02);
+    const ultimaP = ps.at(-1);
+    if (prox && prox.fim - prox.ini < 0.4 && ultimaP && durSeg - ultimaP[1] < 0.18 && ultimaP[1] - ultimaP[0] > 0.08) {
+      const limpo = arq.replace(/\.wav$/, "-limpo.wav");
+      execFileSync(FFMPEG, ["-y", "-loglevel", "error", "-i", arq, "-to", (ultimaP[0] + 0.08).toFixed(3), "-af", "afade=t=out:st=" + Math.max(0, ultimaP[0] + 0.03).toFixed(3) + ":d=0.05", limpo]);
+      console.log(`      fala ${i + 1}: resquício de ${(durSeg - ultimaP[1]).toFixed(2)} s no fim removido`);
+      return limpo;
+    }
     return arq;
   });
 }
