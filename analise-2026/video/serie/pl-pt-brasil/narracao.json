@@ -8,7 +8,7 @@
     },
     {
       "inicio": 4.4,
-      "texto": "Na Câmara, o PL foi de noventa e oito para cento e dezenove deputados."
+      "texto": "Na Câmara, o PL foi de noventa e oito para cento e vinte e um deputados."
     },
     {
       "inicio": 9.4,
@@ -16,11 +16,11 @@
     },
     {
       "inicio": 12.4,
-      "texto": "Nas Assembleias, o PL foi de cento e vinte e seis para duzentos e nove."
+      "texto": "Nas Assembleias, o PL foi de cento e vinte e seis para duzentos e doze."
     },
     {
       "inicio": 17.4,
-      "texto": "O PT chegou a cento e trinta e nove."
+      "texto": "O PT chegou a cento e quarenta e um."
     },
     {
       "inicio": 20.4,
@@ -36,7 +36,7 @@
     },
     {
       "inicio": 36.4,
-      "texto": "Agora, em vinte."
+      "texto": "Agora, em vinte e um."
     },
     {
       "inicio": 38.4,
@@ -58,5 +58,15 @@
       "inicio": 56.5,
       "texto": "Comenta aqui: qual partido você quer ver em detalhe?"
     }
-  ]
+  ],
+  "cortes": {
+    "take": "3189a8f54c",
+    "trocar": [
+      [
+        32.79,
+        31.87
+      ]
+    ],
+    "motivo": "cortava na vírgula de 'Agora, em vinte e um'"
+  }
 }
