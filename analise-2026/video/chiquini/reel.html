@@ -5,7 +5,7 @@
 <title>Ovile Diagnóstico · Reels Chiquini</title>
 <!-- Reels 9:16, 60 s: a votação histórica de Jeffrey Chiquini (NOVO, deputado federal PR 2026).
      Trilha trilha60.wav (trilha60.mjs, 120 BPM): cenas trocam em 4, 12, 20, 28, 36, 44 s e o fim entra no impacto de 52 s.
-     Boneco: corpo vetorial + rosto da foto oficial do TSE (rosto.jpg, ampliada da foto de 161×225).
+     Boneco: corpo vetorial + rosto recortado da foto oficial do TSE (rosto.png: fundo removido por preenchimento a partir das bordas, queixo em elipse, ampliado 4×).
      Dados em dados.js (gerar.mjs, TSE). Recorde anterior (Ratinho Júnior, 2010, 358.924) vem da imprensa, não do nosso banco.
      A linha do tempo fica pausada: window.__seek(t) posiciona o quadro (../renderizar.mjs grava 30 fps). ?play toca em tempo real. -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
@@ -68,9 +68,8 @@
   /* boneco: corpo vetorial + rosto (foto oficial do TSE) recortado em adesivo */
   #boneco { position: absolute; left: 50%; top: 0; width: 420px; height: 940px; margin-left: -210px; transform-origin: 50% 100%; z-index: 4; }
   #boneco svg { position: absolute; left: 10px; top: 360px; width: 400px; height: 580px; overflow: visible; }
-  #cabeca { position: absolute; left: 50%; top: 0; width: 340px; height: 430px; margin-left: -170px; border-radius: 50%; overflow: hidden;
-    border: 10px solid #fff; box-shadow: 0 0 0 6px var(--laranja), 0 30px 60px rgba(0,0,0,.55); background: #fff; transform-origin: 50% 95%; z-index: 2; }
-  #cabeca img { position: absolute; width: 400px; left: -30px; top: -8px; }
+  #cabeca { position: absolute; left: 50%; top: 10px; width: 300px; margin-left: -150px; transform-origin: 50% 92%; z-index: 2; filter: drop-shadow(0 24px 30px rgba(0,0,0,.45)); }
+  #cabeca img { display: block; width: 100%; }
   #sombra { position: absolute; left: 50%; bottom: -16px; width: 340px; height: 40px; margin-left: -170px; border-radius: 50%; background: rgba(0,0,0,.55); filter: blur(10px); }
   #fim { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 330px; gap: 44px; text-align: center; }
   #fim .tag { font-size: 100px; font-weight: 750; line-height: 1.02; letter-spacing: -3px; }
@@ -138,8 +137,9 @@
 
   <div id="boneco">
     <div id="sombra"></div>
-    <div id="cabeca"><img src="rosto.jpg" alt=""></div>
+    <div id="cabeca"><img src="rosto.png" alt=""></div>
     <svg viewBox="0 0 400 580" aria-hidden="true">
+      <rect x="168" y="-30" width="64" height="80" rx="24" fill="#d99c76"/>
       <g id="pernas">
         <rect x="110" y="300" width="78" height="230" rx="34" fill="#16223b"/>
         <rect x="212" y="300" width="78" height="230" rx="34" fill="#16223b"/>
@@ -148,11 +148,27 @@
       </g>
       <g id="braco-e" style="transform-origin:78px 70px">
         <rect x="40" y="58" width="74" height="250" rx="37" fill="#1f2f4f"/>
-        <circle cx="77" cy="316" r="38" fill="#e2a982"/>
+        <g transform="translate(77 300)">
+          <rect x="-28" y="18" width="14" height="40" rx="7" fill="#e2a982" stroke="#b97c57" stroke-width="2.5"/>
+          <rect x="-13" y="22" width="14" height="44" rx="7" fill="#e2a982" stroke="#b97c57" stroke-width="2.5"/>
+          <rect x="2" y="22" width="14" height="42" rx="7" fill="#e2a982" stroke="#b97c57" stroke-width="2.5"/>
+          <rect x="17" y="18" width="13" height="36" rx="6.5" fill="#e2a982" stroke="#b97c57" stroke-width="2.5"/>
+          <rect x="-34" y="-2" width="66" height="44" rx="20" fill="#e2a982" stroke="#b97c57" stroke-width="2.5"/>
+          <rect x="22" y="0" width="14" height="34" rx="7" transform="rotate(-28 29 4)" fill="#e2a982" stroke="#b97c57" stroke-width="2.5"/>
+          <rect x="-30" y="-14" width="60" height="18" rx="6" fill="#ffffff"/>
+        </g>
       </g>
       <g id="braco-d" style="transform-origin:322px 70px">
         <rect x="286" y="58" width="74" height="250" rx="37" fill="#1f2f4f"/>
-        <circle cx="323" cy="316" r="38" fill="#e2a982"/>
+        <g transform="translate(323 300) scale(-1 1)">
+          <rect x="-28" y="18" width="14" height="40" rx="7" fill="#e2a982" stroke="#b97c57" stroke-width="2.5"/>
+          <rect x="-13" y="22" width="14" height="44" rx="7" fill="#e2a982" stroke="#b97c57" stroke-width="2.5"/>
+          <rect x="2" y="22" width="14" height="42" rx="7" fill="#e2a982" stroke="#b97c57" stroke-width="2.5"/>
+          <rect x="17" y="18" width="13" height="36" rx="6.5" fill="#e2a982" stroke="#b97c57" stroke-width="2.5"/>
+          <rect x="-34" y="-2" width="66" height="44" rx="20" fill="#e2a982" stroke="#b97c57" stroke-width="2.5"/>
+          <rect x="22" y="0" width="14" height="34" rx="7" transform="rotate(-28 29 4)" fill="#e2a982" stroke="#b97c57" stroke-width="2.5"/>
+          <rect x="-30" y="-14" width="60" height="18" rx="6" fill="#ffffff"/>
+        </g>
       </g>
       <path d="M70 70 Q70 30 130 22 L270 22 Q330 30 330 70 L320 320 Q200 345 80 320 Z" fill="#1f2f4f"/>
       <path d="M150 22 L200 120 L250 22 Z" fill="#ffffff"/>
