@@ -81,7 +81,9 @@ async function gerarGemini() {
   const ultima = pausas.at(-1), fimFala = ultima && ultima.fim > total - 0.05 ? ultima.ini : total;
   const inicioFala = +(log.match(/silence_start: 0(?:\.0+)?\s[\s\S]*?silence_end: ([\d.]+)/)?.[1] ?? 0);
   const internas = pausas.filter((p) => p.ini < fimFala - 0.05);
-  const letras = falas.map((f) => f.texto.length), soma = letras.reduce((x, y) => x + y, 0);
+  // peso de cada fala ≈ tempo falado: letras + pausas internas (ponto no meio da fala ≈ 14 letras; vírgula/dois-pontos ≈ 5)
+  const letras = falas.map((f) => f.texto.length + 14 * (f.texto.trim().slice(0, -1).match(/[.!?]/g)?.length ?? 0) + 5 * (f.texto.match(/[,:;]/g)?.length ?? 0));
+  const soma = letras.reduce((x, y) => x + y, 0);
   const alvos = []; let acum = 0;
   for (const l of letras.slice(0, -1)) { acum += l; alvos.push(inicioFala + (fimFala - inicioFala) * acum / soma); }
   const PESO = 4, n = alvos.length, m = internas.length;

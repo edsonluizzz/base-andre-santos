@@ -192,6 +192,13 @@ const PARTIDOS = { NOVO: ["#ff6a13", "#fff"], PL: ["#0b3d91", "#ffd400"], PP: ["
 const [corB, corT] = PARTIDOS[RESUMO.sg] ?? ["#3a4458", "#fff"];
 document.getElementById("broche").setAttribute("fill", corB);
 Object.assign(document.getElementById("broche-txt"), { textContent: RESUMO.sg.length > 5 ? RESUMO.sg.slice(0, 4) : RESUMO.sg }).setAttribute("fill", corT);
+// corpo feminino (CFG.corpo = "feminino"): saia e pernas no lugar da calça
+if (CFG.corpo === "feminino") document.getElementById("pernas").innerHTML = `
+  <rect x="128" y="380" width="44" height="160" rx="20" fill="#d99c76"/><rect x="228" y="380" width="44" height="160" rx="20" fill="#d99c76"/>
+  <path d="M84 300 L316 300 L340 430 Q200 452 60 430 Z" fill="#1f2f4f"/>
+  <ellipse cx="148" cy="542" rx="40" ry="18" fill="#0c0f16"/><ellipse cx="252" cy="542" rx="40" ry="18" fill="#0c0f16"/>`;
+if (CFG.s6.tam) document.getElementById("grande").style.fontSize = CFG.s6.tam + "px";
+if (CFG.s7.tam) document.getElementById("custo").style.fontSize = CFG.s7.tam + "px";
 // contador: 7 dígitos ou mais não cabem no tamanho padrão
 if (RESUMO.votos >= 1e6) document.getElementById("conta").style.fontSize = "176px";
 document.getElementById("barras").innerHTML = CFG.s3.barras.map((b, i) =>

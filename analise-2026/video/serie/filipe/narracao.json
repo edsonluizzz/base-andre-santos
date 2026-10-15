@@ -1,0 +1,54 @@
+{
+  "comentario": "Narração do Reels filipe (60 s).",
+  "duracao": 60,
+  "falas": [
+    {
+      "inicio": 0.6,
+      "texto": "Mais votos que o próprio governador."
+    },
+    {
+      "inicio": 4.4,
+      "texto": "Três milhões, cento e quarenta e oito mil votos."
+    },
+    {
+      "inicio": 9.2,
+      "texto": "Filipe Barros, senador pelo Paraná."
+    },
+    {
+      "inicio": 12.3,
+      "texto": "Foi o candidato mais votado de toda a eleição no estado,"
+    },
+    {
+      "inicio": 16.4,
+      "texto": "à frente até de Sergio Moro, eleito governador."
+    },
+    {
+      "inicio": 20.6,
+      "texto": "Teve voto em todas as trezentas e noventa e nove cidades."
+    },
+    {
+      "inicio": 28.4,
+      "texto": "E foi o mais votado em duzentas e cinco delas."
+    },
+    {
+      "inicio": 32.4,
+      "texto": "Mais da metade do Paraná."
+    },
+    {
+      "inicio": 36.3,
+      "texto": "Em dois mil e vinte e dois, foi eleito deputado federal com duzentos e quarenta e nove mil votos."
+    },
+    {
+      "inicio": 44.6,
+      "texto": "E teve o voto mais barato entre os senadores eleitos: um real e vinte e sete centavos."
+    },
+    {
+      "inicio": 52.2,
+      "texto": "Ovile Diagnóstico. Sua eleição, voto a voto."
+    },
+    {
+      "inicio": 56.5,
+      "texto": "Comenta aqui: de qual político você quer ver os dados?"
+    }
+  ]
+}

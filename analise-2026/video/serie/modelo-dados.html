@@ -110,7 +110,7 @@
 </div>
 <script>
 const T0 = [0, 4, 12, 20, 28, 36, 44, 52];
-const fmt = (v, tipo) => tipo === "reais" ? (v >= 1e6 ? `R$ ${(v / 1e6).toLocaleString("pt-BR", { maximumFractionDigits: 2 })} mi` : `R$ ${Math.round(v / 1e3)} mil`) : Math.round(v).toLocaleString("pt-BR");
+const fmt = (v, tipo) => tipo === "corr" ? v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : tipo === "reais" ? (v >= 1e6 ? `R$ ${(v / 1e6).toLocaleString("pt-BR", { maximumFractionDigits: 2 })} mi` : `R$ ${Math.round(v / 1e3)} mil`) : Math.round(v).toLocaleString("pt-BR");
 const titulo = (linhas, top) => `<div class="abs titulo" style="top:${top}px">${linhas.map((l) => `<span class="linha">${l.split(" ").map((p) =>
   p.startsWith("*") ? `<span class="p k">${p.replaceAll("*", "")}</span>` : `<span class="p">${p}</span>`).join(" ")}</span>`).join("")}</div>`;
 if (CFG.cta) document.getElementById("cta-txt").innerHTML = CFG.cta;

@@ -1,0 +1,58 @@
+{
+  "comentario": "Narração do Reels fahur (60 s).",
+  "duracao": 60,
+  "falas": [
+    {
+      "inicio": 0.6,
+      "texto": "A força do interior."
+    },
+    {
+      "inicio": 4.4,
+      "texto": "Duzentos e quarenta e dois mil, seiscentos e quarenta e três votos."
+    },
+    {
+      "inicio": 9.6,
+      "texto": "Sargento Fahur, do PL."
+    },
+    {
+      "inicio": 12.3,
+      "texto": "Cinquenta por cento a mais do que em dois mil e vinte e dois,"
+    },
+    {
+      "inicio": 16.4,
+      "texto": "quando teve cento e sessenta e um mil votos."
+    },
+    {
+      "inicio": 20.6,
+      "texto": "Teve voto em todas as trezentas e noventa e nove cidades do Paraná."
+    },
+    {
+      "inicio": 28.4,
+      "texto": "E foi o mais votado em Maringá e em Marialva."
+    },
+    {
+      "inicio": 31.8,
+      "texto": "Maringá deu a ele mais votos do que Curitiba."
+    },
+    {
+      "inicio": 36.3,
+      "texto": "Sozinho, fez mais de um quociente eleitoral."
+    },
+    {
+      "inicio": 40.3,
+      "texto": "O PL elegeu cinco deputados federais no estado."
+    },
+    {
+      "inicio": 44.6,
+      "texto": "Cada voto custou onze reais e oitenta e dois centavos: o quinto mais barato entre os eleitos."
+    },
+    {
+      "inicio": 52.2,
+      "texto": "Ovile Diagnóstico. Sua eleição, voto a voto."
+    },
+    {
+      "inicio": 56.5,
+      "texto": "Comenta aqui: de qual político você quer ver os dados?"
+    }
+  ]
+}

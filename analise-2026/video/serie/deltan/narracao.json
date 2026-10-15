@@ -1,0 +1,58 @@
+{
+  "comentario": "Narração do Reels deltan (60 s).",
+  "duracao": 60,
+  "falas": [
+    {
+      "inicio": 0.6,
+      "texto": "O senador de Curitiba."
+    },
+    {
+      "inicio": 4.4,
+      "texto": "Dois milhões, novecentos e quatro mil votos."
+    },
+    {
+      "inicio": 9.0,
+      "texto": "Deltan Dallagnol, eleito senador pelo Paraná."
+    },
+    {
+      "inicio": 12.3,
+      "texto": "Em Curitiba, foi o senador mais votado,"
+    },
+    {
+      "inicio": 15.8,
+      "texto": "com quinhentos e vinte e oito mil votos, à frente de Filipe Barros."
+    },
+    {
+      "inicio": 20.6,
+      "texto": "Teve voto em todas as trezentas e noventa e nove cidades do estado."
+    },
+    {
+      "inicio": 28.4,
+      "texto": "Mas foi o mais votado em só vinte e duas."
+    },
+    {
+      "inicio": 31.8,
+      "texto": "E mesmo assim, ficou quase um milhão de votos à frente do terceiro colocado."
+    },
+    {
+      "inicio": 36.3,
+      "texto": "Em dois mil e vinte e dois, foi o deputado federal mais votado do Paraná."
+    },
+    {
+      "inicio": 40.6,
+      "texto": "Agora, multiplicou os votos por oito."
+    },
+    {
+      "inicio": 44.6,
+      "texto": "Cada voto custou um real e quarenta centavos."
+    },
+    {
+      "inicio": 52.2,
+      "texto": "Ovile Diagnóstico. Sua eleição, voto a voto."
+    },
+    {
+      "inicio": 56.5,
+      "texto": "Comenta aqui: de qual político você quer ver os dados?"
+    }
+  ]
+}

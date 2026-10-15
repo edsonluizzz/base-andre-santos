@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Ovile Diagnóstico · série Campeões de voto</title>
+<!-- Modelo da série de Reels 9:16, 60 s (mesmo desenho do Reels do Chiquini). Cada pasta serie/<id>/ tem reel.html (cópia deste
+     arquivo, feita por gerar.mjs), dados.js (GEO, CIDADES, RESUMO), textos.js (CFG: o texto de cada cena) e rosto.png.
+     Cenas: 0 abertura · 4 contador · 12 barras · 20 mapa (todas as cidades) · 28 mapa (cidades vencidas) · 36 número de destaque ·
+     44 custo do voto · 52 fim com CTA. Trilha ../chiquini/trilha60.wav (cortes em 4, 12, 20, 28, 36, 44; impacto em 52).
+     A linha do tempo fica pausada: window.__seek(t) posiciona o quadro (../renderizar.mjs grava 30 fps). ?play toca em tempo real. -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="../../../public/vendor/d3.v7.min.js"></script>
+<script src="dados.js"></script>
+<script src="textos.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300..800&family=Geist+Mono:wght@500;700&display=swap">
+<style>
+  :root { --laranja: #ff6a13; --laranja-2: #ffb074; --fundo: #07090f; --texto: #f2f5fa; --suave: #8b97ad; --cartao: #141a26; --borda: #2a3446; }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { width: 1080px; height: 1920px; overflow: hidden; background: var(--fundo); font-family: "Geist", -apple-system, Arial, sans-serif; color: var(--texto); }
+  #palco { position: relative; width: 1080px; height: 1920px; overflow: hidden; }
+  .brilho { position: absolute; border-radius: 50%; filter: blur(150px); }
+  #b1 { width: 900px; height: 900px; background: #ff6a13; left: -300px; top: 1100px; opacity: .42; }
+  #b2 { width: 700px; height: 700px; background: #4c8dff; right: -300px; top: 250px; opacity: .2; }
+  .k { color: var(--laranja); }
+  .abs { position: absolute; left: 70px; right: 70px; }
+  .cena { position: absolute; inset: 0; }
+
+  .logo { font-weight: 300; letter-spacing: 12px; font-size: 54px; text-align: center; }
+  .logo b { color: var(--laranja); font-weight: 800; letter-spacing: 8px; }
+  .rotulo { font: 600 30px "Geist Mono", monospace; letter-spacing: 6px; color: var(--suave); text-transform: uppercase; text-align: center; }
+  .titulo { font-size: 92px; line-height: 1.03; font-weight: 750; letter-spacing: -2.8px; text-align: center; }
+  .titulo .linha { display: block; overflow: hidden; padding-bottom: 8px; }
+  .titulo .p { display: inline-block; }
+  .sub { font-size: 40px; line-height: 1.3; color: #c8d0de; text-align: center; }
+  .fonte { position: absolute; left: 0; right: 0; bottom: 70px; text-align: center; font: 500 24px "Geist Mono", monospace; color: #5d6880; letter-spacing: 1px; }
+
+  /* cena 2: contador */
+  #nome { top: 250px; font-size: 64px; font-weight: 700; text-align: center; letter-spacing: -1px; }
+  #nome small { display: block; font: 600 30px "Geist Mono", monospace; color: var(--suave); letter-spacing: 6px; margin-top: 14px; }
+  #conta { top: 440px; text-align: center; font-size: 230px; font-weight: 800; letter-spacing: -9px; color: var(--laranja); font-variant-numeric: tabular-nums; line-height: 1; }
+  #conta-sub { top: 700px; }
+
+  /* cena 3: barras */
+  .barra { margin-top: 56px; }
+  .barra .cab { display: flex; justify-content: space-between; align-items: baseline; font-size: 36px; margin-bottom: 16px; }
+  .barra .cab b { font: 700 46px "Geist Mono", monospace; letter-spacing: -1px; }
+  .barra .cab span small { display: block; font-size: 26px; color: var(--suave); }
+  .barra .trilho { height: 64px; border-radius: 32px; background: var(--cartao); border: 1px solid var(--borda); overflow: hidden; }
+  .barra .enche { height: 100%; width: 0; border-radius: 32px; background: #3a4458; }
+  .barra.top .enche { background: linear-gradient(90deg, #ff6a13, #ffb074); }
+  .barra.top .cab b { color: var(--laranja); }
+
+  /* cenas 4 e 5: mapa */
+  #mapa { position: absolute; left: 40px; top: 600px; width: 1000px; height: 820px; }
+  .card { position: absolute; padding: 26px 32px; border-radius: 26px; background: rgba(16,21,31,.92); border: 1px solid #34405a; box-shadow: 0 30px 70px rgba(0,0,0,.6); }
+  .card b { display: block; font: 700 64px/1.05 "Geist Mono", monospace; color: var(--laranja); letter-spacing: -1px; }
+  .card span { display: block; font-size: 28px; line-height: 1.3; color: #c8d0de; margin-top: 8px; }
+
+  /* cena 6: quocientes */
+  #blocos { top: 820px; display: flex; gap: 14px; height: 200px; }
+  .bloco { position: relative; border-radius: 22px; overflow: hidden; background: var(--cartao); border: 1px solid var(--borda); }
+  .bloco i { position: absolute; inset: 0; background: linear-gradient(160deg, #ff6a13, #c94a06); transform-origin: 0 50%; transform: scaleX(0); }
+  .bloco em { position: absolute; left: 24px; bottom: 18px; font: 700 34px "Geist Mono", monospace; font-style: normal; color: #fff; }
+
+  /* cena 7: custo */
+  #custo { top: 760px; text-align: center; font-size: 220px; font-weight: 800; letter-spacing: -8px; color: var(--laranja); line-height: 1; }
+
+
+  /* boneco: corpo vetorial + rosto (foto oficial do TSE) recortado em adesivo */
+  #boneco { position: absolute; left: 50%; top: 0; width: 420px; height: 940px; margin-left: -210px; transform-origin: 50% 100%; z-index: 4; }
+  #boneco svg { position: absolute; left: 10px; top: 360px; width: 400px; height: 580px; overflow: visible; }
+  #cabeca { position: absolute; left: 50%; top: 10px; width: 300px; margin-left: -150px; transform-origin: 50% 92%; z-index: 2; filter: drop-shadow(0 24px 30px rgba(0,0,0,.45)); }
+  #cabeca img { display: block; width: 100%; }
+  #sombra { position: absolute; left: 50%; bottom: -16px; width: 340px; height: 40px; margin-left: -170px; border-radius: 50%; background: rgba(0,0,0,.55); filter: blur(10px); }
+  #fim { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 330px; gap: 44px; text-align: center; }
+  #fim .tag { font-size: 100px; font-weight: 750; line-height: 1.02; letter-spacing: -3px; }
+  #fim .url { font: 600 40px "Geist", sans-serif; background: var(--cartao); border: 1px solid var(--borda); border-radius: 999px; padding: 22px 46px; }
+  #cta { margin-top: 26px; font-size: 50px; font-weight: 750; line-height: 1.15; letter-spacing: -1px; padding: 30px 46px; border-radius: 34px; background: var(--laranja); color: #fff; box-shadow: 0 30px 70px rgba(255,106,19,.35); }
+  #cta span { font-size: 54px; }
+  #anel { position: absolute; left: 50%; top: 50%; width: 1600px; height: 1600px; margin: -800px 0 0 -800px; border-radius: 50%; border: 3px solid var(--laranja); opacity: 0; }
+</style>
+<style>
+  #grande { top: 700px; text-align: center; font-size: 230px; font-weight: 800; letter-spacing: -8px; color: var(--laranja); line-height: 1; font-variant-numeric: tabular-nums; }
+  #custo { font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body>
+<div id="palco">
+  <div class="brilho" id="b1"></div><div class="brilho" id="b2"></div>
+
+  <div class="cena" id="s1"><div class="abs rotulo" style="top:330px" data-t="s1.rotulo"></div><div class="abs titulo" style="top:400px" data-titulo="s1.titulo"></div></div>
+
+  <div class="cena" id="s2">
+    <div class="abs" id="nome"><span data-t="s2.nome"></span><small data-t="s2.cargo"></small></div>
+    <div class="abs" id="conta">0</div>
+    <div class="abs sub" id="conta-sub" data-h="s2.sub"></div>
+  </div>
+
+  <div class="cena" id="s3">
+    <div class="abs titulo" style="top:240px" data-titulo="s3.titulo"></div>
+    <div class="abs" id="barras" style="top:720px"></div>
+    <div class="fonte" style="text-align:left;left:70px" data-h="s3.fonte"></div>
+  </div>
+
+  <div class="cena" id="s4">
+    <div class="abs titulo" id="t4a" style="top:200px" data-titulo="s4.titulo"></div>
+    <div class="abs titulo" id="t4b" style="top:200px" data-titulo="s5.titulo"></div>
+    <svg id="mapa" viewBox="0 0 1000 820"></svg>
+    <div class="card" id="c4a" style="left:60px;top:1470px"><b data-t="s4.card1.n"></b><span data-t="s4.card1.t"></span></div>
+    <div class="card" id="c4b" style="right:60px;top:1470px"><b data-t="s4.card2.n"></b><span data-t="s4.card2.t"></span></div>
+    <div class="abs sub" id="c5" style="top:1480px" data-h="s5.sub"></div>
+  </div>
+
+  <div class="cena" id="s6">
+    <div class="abs titulo" style="top:330px" data-titulo="s6.titulo"></div>
+    <div class="abs" id="grande" data-t="s6.grande"></div>
+    <div class="abs sub" id="s6sub" style="top:1000px" data-h="s6.sub"></div>
+  </div>
+
+  <div class="cena" id="s7">
+    <div class="abs titulo" style="top:330px" data-titulo="s7.titulo"></div>
+    <div class="abs" id="custo" data-t="s7.grande"></div>
+    <div class="abs sub" id="s7sub" style="top:1040px" data-h="s7.sub"></div>
+    <div class="fonte">TSE · prestação de contas parcial</div>
+  </div>
+
+  <div id="boneco">
+    <div id="sombra"></div>
+    <div id="cabeca"><img src="rosto.png" id="rosto" alt=""></div>
+    <svg viewBox="0 0 400 580" aria-hidden="true">
+      <rect x="168" y="-30" width="64" height="80" rx="24" fill="#d99c76"/>
+      <g id="pernas">
+        <rect x="110" y="300" width="78" height="230" rx="34" fill="#16223b"/>
+        <rect x="212" y="300" width="78" height="230" rx="34" fill="#16223b"/>
+        <ellipse cx="146" cy="540" rx="62" ry="28" fill="#0c0f16"/>
+        <ellipse cx="254" cy="540" rx="62" ry="28" fill="#0c0f16"/>
+      </g>
+      <g id="braco-e" style="transform-origin:78px 70px">
+        <rect x="40" y="58" width="74" height="250" rx="37" fill="#1f2f4f"/>
+        <g transform="translate(77 300)">
+          <rect x="-28" y="18" width="14" height="40" rx="7" fill="#e2a982" stroke="#b97c57" stroke-width="2.5"/>
+          <rect x="-13" y="22" width="14" height="44" rx="7" fill="#e2a982" stroke="#b97c57" stroke-width="2.5"/>
+          <rect x="2" y="22" width="14" height="42" rx="7" fill="#e2a982" stroke="#b97c57" stroke-width="2.5"/>
+          <rect x="17" y="18" width="13" height="36" rx="6.5" fill="#e2a982" stroke="#b97c57" stroke-width="2.5"/>
+          <rect x="-34" y="-2" width="66" height="44" rx="20" fill="#e2a982" stroke="#b97c57" stroke-width="2.5"/>
+          <rect x="22" y="0" width="14" height="34" rx="7" transform="rotate(-28 29 4)" fill="#e2a982" stroke="#b97c57" stroke-width="2.5"/>
+          <rect x="-30" y="-14" width="60" height="18" rx="6" fill="#ffffff"/>
+        </g>
+      </g>
+      <g id="braco-d" style="transform-origin:322px 70px">
+        <rect x="286" y="58" width="74" height="250" rx="37" fill="#1f2f4f"/>
+        <g transform="translate(323 300) scale(-1 1)">
+          <rect x="-28" y="18" width="14" height="40" rx="7" fill="#e2a982" stroke="#b97c57" stroke-width="2.5"/>
+          <rect x="-13" y="22" width="14" height="44" rx="7" fill="#e2a982" stroke="#b97c57" stroke-width="2.5"/>
+          <rect x="2" y="22" width="14" height="42" rx="7" fill="#e2a982" stroke="#b97c57" stroke-width="2.5"/>
+          <rect x="17" y="18" width="13" height="36" rx="6.5" fill="#e2a982" stroke="#b97c57" stroke-width="2.5"/>
+          <rect x="-34" y="-2" width="66" height="44" rx="20" fill="#e2a982" stroke="#b97c57" stroke-width="2.5"/>
+          <rect x="22" y="0" width="14" height="34" rx="7" transform="rotate(-28 29 4)" fill="#e2a982" stroke="#b97c57" stroke-width="2.5"/>
+          <rect x="-30" y="-14" width="60" height="18" rx="6" fill="#ffffff"/>
+        </g>
+      </g>
+      <path d="M70 70 Q70 30 130 22 L270 22 Q330 30 330 70 L320 320 Q200 345 80 320 Z" fill="#1f2f4f"/>
+      <path d="M150 22 L200 120 L250 22 Z" fill="#ffffff"/>
+      <path d="M150 22 L185 150 L130 60 Z M250 22 L215 150 L270 60 Z" fill="#2b3f66"/>
+      <circle cx="200" cy="190" r="7" fill="#0c0f16"/><circle cx="200" cy="250" r="7" fill="#0c0f16"/>
+      <rect id="broche" x="228" y="78" width="54" height="34" rx="6" fill="#ff6a13"/>
+      <text id="broche-txt" x="255" y="101" text-anchor="middle" font-family="Geist" font-weight="800" font-size="15" fill="#fff">NOVO</text>
+    </svg>
+  </div>
+  <div id="anel"></div>
+  <div class="cena" id="fim">
+    <div class="logo">OVILE <b>DIAGNÓSTICO</b></div>
+    <div class="tag">Sua eleição,<br><span class="k">voto a voto.</span></div>
+    <div class="url">diagnostico.ovile.com.br</div>
+    <div id="cta"><span>💬</span> Comenta: de qual político<br>você quer ver os dados?</div>
+  </div>
+</div>
+
+<script>
+// ---- textos (CFG) nos elementos ----
+const pega = (cam) => cam.split(".").reduce((o, k) => o?.[k], CFG);
+document.querySelectorAll("[data-t]").forEach((el) => (el.textContent = pega(el.dataset.t)));
+document.querySelectorAll("[data-h]").forEach((el) => (el.innerHTML = pega(el.dataset.h) ?? ""));
+// título: [["Uma", "votação"], ["*histórica.*"]] → palavras com * ficam laranja
+document.querySelectorAll("[data-titulo]").forEach((el) => {
+  el.innerHTML = pega(el.dataset.titulo).map((linha) => `<span class="linha">${linha.split(" ").map((p) =>
+    p.startsWith("*") ? `<span class="p k">${p.replaceAll("*", "")}</span>` : `<span class="p">${p}</span>`).join(" ")}</span>`).join("");
+});
+const fmt = (n) => Math.round(n).toLocaleString("pt-BR");
+// broche do partido no paletó (cor aproximada da marca de cada partido)
+const PARTIDOS = { NOVO: ["#ff6a13", "#fff"], PL: ["#0b3d91", "#ffd400"], PP: ["#1f5fbf", "#fff"], PSD: ["#f5a623", "#13306b"], UNIÃO: ["#0a3d91", "#ffcc00"], REPUBLICANOS: ["#1f6fb2", "#fff"], PODE: ["#13a538", "#fff"] };
+const [corB, corT] = PARTIDOS[RESUMO.sg] ?? ["#3a4458", "#fff"];
+document.getElementById("broche").setAttribute("fill", corB);
+Object.assign(document.getElementById("broche-txt"), { textContent: RESUMO.sg.length > 5 ? RESUMO.sg.slice(0, 4) : RESUMO.sg }).setAttribute("fill", corT);
+// corpo feminino (CFG.corpo = "feminino"): saia e pernas no lugar da calça
+if (CFG.corpo === "feminino") document.getElementById("pernas").innerHTML = `
+  <rect x="128" y="380" width="44" height="160" rx="20" fill="#d99c76"/><rect x="228" y="380" width="44" height="160" rx="20" fill="#d99c76"/>
+  <path d="M84 300 L316 300 L340 430 Q200 452 60 430 Z" fill="#1f2f4f"/>
+  <ellipse cx="148" cy="542" rx="40" ry="18" fill="#0c0f16"/><ellipse cx="252" cy="542" rx="40" ry="18" fill="#0c0f16"/>`;
+if (CFG.s6.tam) document.getElementById("grande").style.fontSize = CFG.s6.tam + "px";
+if (CFG.s7.tam) document.getElementById("custo").style.fontSize = CFG.s7.tam + "px";
+// contador: 7 dígitos ou mais não cabem no tamanho padrão
+if (RESUMO.votos >= 1e6) document.getElementById("conta").style.fontSize = "176px";
+document.getElementById("barras").innerHTML = CFG.s3.barras.map((b, i) =>
+  `<div class="barra${i === 0 ? " top" : ""}"><div class="cab"><span>${b.nome}<small>${b.detalhe}</small></span><b data-v="${b.v}">0</b></div><div class="trilho"><div class="enche" data-w="${(100 * b.v / CFG.s3.barras[0].v).toFixed(1)}"></div></div></div>`).join("");
+
+// ---- mapa: cor pelo % dos válidos na cidade; vencidas ganham destaque ----
+const proj = d3.geoMercator().fitSize([1000, 820], GEO), caminho = d3.geoPath(proj);
+const porIbge = new Map(CIDADES.map((c) => [c.ibge, c]));
+const max = d3.max(CIDADES, (c) => c.pct);
+const cor = (c) => d3.interpolateRgb("#2a1a12", "#ff6a13")(Math.sqrt((c?.pct ?? 0) / max));
+d3.select("#mapa").selectAll("path.m").data(GEO.features).join("path").attr("class", "m").attr("d", caminho)
+  .attr("fill", "#141a26").attr("stroke", "#07090f").attr("stroke-width", CIDADES.length > 500 ? .4 : .8)
+  .attr("data-cor", (f) => cor(porIbge.get(f.properties.codarea)))
+  .attr("data-venceu", (f) => (porIbge.get(f.properties.codarea)?.venceu ? 1 : 0))
+  .attr("data-x", (f) => caminho.centroid(f)[0]);
+const muns = [...document.querySelectorAll("#mapa path.m")].sort((a, b) => (CFG.mapaOrdem === "oeste" ? a.dataset.x - b.dataset.x : b.dataset.x - a.dataset.x));
+const venc = muns.filter((p) => p.dataset.venceu === "1"), outros = muns.filter((p) => p.dataset.venceu !== "1");
+
+const tl = gsap.timeline({ paused: true, defaults: { ease: "power3.out" } });
+gsap.set([".cena", "#fim", "#boneco"], { autoAlpha: 0 });
+gsap.set(".titulo .p", { yPercent: 110 });
+gsap.set("#braco-e", { svgOrigin: "78 72" }); gsap.set("#braco-d", { svgOrigin: "322 72" });
+tl.to("#b1", { x: 300, y: -260, duration: 60, ease: "sine.inOut" }, 0).to("#b2", { x: -220, y: 420, duration: 60, ease: "sine.inOut" }, 0);
+
+const entra = (sel, t) => tl.to(sel, { autoAlpha: 1, duration: .01 }, t);
+const sai = (sel, t) => tl.to(sel, { autoAlpha: 0, filter: "blur(14px)", duration: .35, ease: "power2.in" }, t);
+const titulo = (sel, t) => tl.to(`${sel} .p`, { yPercent: 0, duration: .6, stagger: .08 }, t);
+const surge = (sel, t, extra = {}) => tl.fromTo(sel, { autoAlpha: 0, y: 40 }, { autoAlpha: 1, y: 0, duration: .7, ...extra }, t);
+const contador = (el, alvo, t, dur) => { const o = { v: 0 }; tl.to(o, { v: alvo, duration: dur, ease: "power2.out", onUpdate: () => (el.textContent = fmt(o.v)) }, t); };
+
+// ---- boneco ----
+const B = "#boneco", BE = "#braco-e", BD = "#braco-d", CAB = "#cabeca";
+const pos = (t, { x = 0, y, s }, dur = .8) => tl.to(B, { x, y, scale: s, duration: dur, ease: "power3.inOut" }, t);
+function balanca(t0, t1) { for (let t = t0; t < t1 - .01; t += .5) tl.to(B, { y: "-=14", duration: .25, ease: "sine.out" }, t).to(B, { y: "+=14", duration: .25, ease: "sine.in" }, t + .25).to(CAB, { rotation: ((t * 2) % 2 ? 4 : -4), duration: .5, ease: "sine.inOut" }, t); }
+function acena(t, vezes = 4) { tl.to(BD, { rotation: -150, duration: .35, ease: "back.out(2)" }, t); for (let i = 0; i < vezes; i++) tl.to(BD, { rotation: i % 2 ? -150 : -120, duration: .25, ease: "sine.inOut" }, t + .35 + i * .25); tl.to(BD, { rotation: 0, duration: .4, ease: "power2.inOut" }, t + .35 + vezes * .25); }
+function comemora(t, vezes = 4) {
+  tl.to(BE, { rotation: 160, duration: .3, ease: "back.out(2)" }, t).to(BD, { rotation: -160, duration: .3, ease: "back.out(2)" }, t);
+  for (let i = 0; i < vezes; i++) tl.to(B, { y: i % 2 ? "+=40" : "-=40", duration: .25, ease: i % 2 ? "power2.in" : "power2.out" }, t + .3 + i * .25);
+  tl.to(BE, { rotation: 0, duration: .4, ease: "power2.inOut" }, t + .3 + vezes * .25).to(BD, { rotation: 0, duration: .4, ease: "power2.inOut" }, t + .3 + vezes * .25);
+}
+function aponta(t, dur, ang = -100) { tl.to(BD, { rotation: ang, duration: .4, ease: "back.out(2)" }, t).to(BD, { rotation: 0, duration: .4, ease: "power2.inOut" }, t + dur); }
+
+// 0–4 s
+entra("#s1", 0); tl.from("#s1 .rotulo", { autoAlpha: 0, letterSpacing: "20px", duration: 1 }, .1); titulo("#s1", .5);
+tl.set(B, { y: 1950, scale: .95, autoAlpha: 1 }, 0).to(B, { y: 900, duration: .9, ease: "back.out(1.3)" }, .6);
+acena(1.4, 6); balanca(1.6, 3.6); sai("#s1", 3.6);
+
+// 4–12 s: contador
+entra("#s2", 4.0); pos(4.0, { y: 960, s: .8 }); surge("#nome", 4.2);
+tl.fromTo("#conta", { autoAlpha: 0, scale: .8 }, { autoAlpha: 1, scale: 1, duration: .6 }, 4.6);
+contador(document.getElementById("conta"), RESUMO.votos, 4.6, 3.4);
+tl.fromTo("#conta", { scale: 1 }, { scale: 1.07, duration: .2, yoyo: true, repeat: 1, ease: "power1.inOut" }, 8.0);
+comemora(8.0, 6); surge("#conta-sub", 8.4); balanca(10.0, 11.5); sai("#s2", 11.6);
+
+// 12–20 s: barras
+entra("#s3", 12.0); titulo("#s3", 12.0); pos(12.0, { x: 340, y: 965, s: .42 });
+document.querySelectorAll("#s3 .barra").forEach((b, i) => {
+  const t = 13.4 + i * 1.1; surge(b, t, { duration: .5 });
+  tl.to(b.querySelector(".enche"), { width: b.querySelector(".enche").dataset.w + "%", duration: 2, ease: "power2.out" }, t + .1);
+  contador(b.querySelector("b"), +b.querySelector("b").dataset.v, t + .1, 2);
+});
+aponta(13.6, 2.6, -60); comemora(17.0, 4); surge("#s3 .fonte", 15.5); sai("#s3", 19.6);
+tl.to(B, { autoAlpha: 0, y: 1950, duration: .5, ease: "power2.in" }, 19.4);
+
+// 20–28 s: mapa acende
+entra("#s4", 20.0); titulo("#t4a", 20.0);
+tl.from("#mapa", { autoAlpha: 0, scale: .92, duration: .8 }, 20.2);
+tl.to(muns, { attr: { fill: (i, el) => el.dataset.cor }, duration: .3, stagger: { each: 3.2 / muns.length } }, 20.8);
+surge("#c4a", 24.4); surge("#c4b", 25.0);
+tl.to("#t4a", { autoAlpha: 0, y: -30, filter: "blur(14px)", duration: .35, ease: "power2.in" }, 27.6).to(["#c4a", "#c4b"], { autoAlpha: 0, y: 30, duration: .35, ease: "power2.in" }, 27.6);
+
+// 28–36 s: cidades em que foi o mais votado
+titulo("#t4b", 28.0);
+tl.to(outros, { attr: { "fill-opacity": .25 }, duration: .8, ease: "power1.inOut" }, 28.6)
+  .to(venc, { attr: { fill: "#ffd2b0", stroke: "#ffffff", "stroke-width": CIDADES.length > 500 ? 1.2 : 2.4 }, duration: .6, stagger: { each: Math.min(.25, 2 / Math.max(1, venc.length)) } }, 29.0);
+surge("#c5", 30.8);
+tl.to(outros, { attr: { "fill-opacity": 1 }, duration: 1.2, ease: "power1.inOut" }, 33.2);
+sai("#s4", 35.6);
+
+// 36–44 s: número de destaque
+entra("#s6", 36.0); titulo("#s6", 36.0);
+tl.fromTo("#grande", { autoAlpha: 0, scale: .7, filter: "blur(16px)" }, { autoAlpha: 1, scale: 1, filter: "blur(0px)", duration: .7, ease: "back.out(1.7)" }, 37.0);
+surge("#s6sub", 38.6); sai("#s6", 43.6);
+
+// 44–52 s: custo
+entra("#s7", 44.0); titulo("#s7", 44.0);
+tl.fromTo("#custo", { autoAlpha: 0, scale: .7, filter: "blur(16px)" }, { autoAlpha: 1, scale: 1, filter: "blur(0px)", duration: .7, ease: "back.out(1.7)" }, 45.2);
+surge("#s7sub", 46.4); surge("#s7 .fonte", 47.0); sai("#s7", 51.6);
+
+// 52 s: fim
+tl.fromTo("#anel", { autoAlpha: .9, scale: .05 }, { autoAlpha: 0, scale: 1.2, duration: 1.4, ease: "power2.out", immediateRender: false }, 52.0)
+  .to("#fim", { autoAlpha: 1, duration: .01 }, 52.0)
+  .from("#fim .logo", { autoAlpha: 0, y: 50, filter: "blur(16px)", duration: .7 }, 52.0)
+  .from("#fim .tag", { autoAlpha: 0, scale: .9, filter: "blur(16px)", duration: .8 }, 52.3)
+  .from("#fim .url", { autoAlpha: 0, y: 30, duration: .7, ease: "back.out(2)" }, 53.0)
+  .from("#cta", { autoAlpha: 0, scale: .8, y: 40, duration: .7, ease: "back.out(1.8)" }, 54.0)
+  .to("#cta", { scale: 1.05, duration: .25, yoyo: true, repeat: 5, ease: "sine.inOut" }, 55.0);
+tl.set(B, { x: 0, y: 1950, scale: .66 }, 53.2).to(B, { autoAlpha: 1, duration: .01 }, 53.2).to(B, { y: 930, duration: .8, ease: "back.out(1.4)" }, 53.3);
+acena(54.2, 4); aponta(55.8, 2.6, -150); balanca(54.4, 58.4);
+tl.to("#palco", { autoAlpha: 0, duration: .8, ease: "power1.in" }, 59.2).set({}, {}, 60);
+
+window.__duracao = 60;
+window.__seek = (t) => { tl.seek(t, false); };
+window.__pronto = Promise.all([...document.images].map((i) => (i.complete ? null : new Promise((r) => { i.onload = i.onerror = r; })))).then(() => document.fonts.ready);
+if (location.search.includes("play")) tl.play();
+</script>
+</body>
+</html>
