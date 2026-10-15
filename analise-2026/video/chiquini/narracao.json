@@ -1,0 +1,58 @@
+{
+  "comentario": "Narração do Reels do Chiquini (60 s). Cenas: 0 abertura, 4 contador, 12 recorde, 20 mapa, 28 só 6 cidades, 36 quocientes, 44 custo, 52 fim. Números por extenso para a voz ler certo.",
+  "duracao": 60,
+  "falas": [
+    {
+      "inicio": 0.6,
+      "texto": "Uma votação histórica."
+    },
+    {
+      "inicio": 4.4,
+      "texto": "Quatrocentos e vinte e cinco mil, trezentos e noventa e nove votos."
+    },
+    {
+      "inicio": 9.9,
+      "texto": "O mais votado do Paraná."
+    },
+    {
+      "inicio": 12.3,
+      "texto": "É a maior votação para deputado federal da história do estado."
+    },
+    {
+      "inicio": 16.8,
+      "texto": "Acima do recorde de dois mil e dez."
+    },
+    {
+      "inicio": 20.6,
+      "texto": "Ele teve voto em todas as trezentas e noventa e nove cidades do Paraná."
+    },
+    {
+      "inicio": 28.4,
+      "texto": "Mas foi o mais votado em só seis delas."
+    },
+    {
+      "inicio": 31.6,
+      "texto": "O resto ele conquistou voto a voto, no estado inteiro."
+    },
+    {
+      "inicio": 36.3,
+      "texto": "Sozinho, fez mais de dois quocientes eleitorais."
+    },
+    {
+      "inicio": 40.3,
+      "texto": "E o Novo elegeu quatro deputados federais."
+    },
+    {
+      "inicio": 44.6,
+      "texto": "E foi o voto mais barato entre os trinta eleitos: cinco reais e vinte e dois centavos."
+    },
+    {
+      "inicio": 52.2,
+      "texto": "Ovile Diagnóstico. Sua eleição, voto a voto."
+    },
+    {
+      "inicio": 56.5,
+      "texto": "Comenta aqui: de qual deputado você quer ver os dados?"
+    }
+  ]
+}
