@@ -1,7 +1,7 @@
 // Textos das cenas: Sergio Moro, governador PR 2026 (dados TSE; custo = receita ÷ votos, contas parciais).
 window.CFG = {
   s1: { rotulo: "Eleição 2026 · Paraná", titulo: ["Governador no", "*primeiro* *turno.*"] },
-  s2: { nome: "Sergio Moro", cargo: "PL · GOVERNADOR", sub: "votos. <b style='color:var(--texto)'>50,11%</b> dos válidos:<br>eleito no primeiro turno." },
+  s2: { nome: "Sergio Moro", cargo: "PL · GOVERNADOR", sub: "votos. <b style='color:var(--texto)'>50,1%</b> dos válidos:<br>eleito no primeiro turno." },
   s3: { titulo: ["Passou da metade", "por *6.774* *votos.*"],
         barras: [{ nome: "Sergio Moro", detalhe: "eleito", v: 3127911 }, { nome: "Metade dos válidos", detalhe: "o mínimo para levar no 1º turno", v: 3121137 }, { nome: "Sandro Alex", detalhe: "PSD · 2º colocado", v: 1583764 }],
         fonte: "TSE · votos válidos<br>para governador" },
