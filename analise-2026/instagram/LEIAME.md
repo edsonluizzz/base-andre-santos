@@ -151,4 +151,6 @@ Carrossel `pecas/federal-1.png` … `federal-7.png`. Mesmos critérios da parte 
 >
 > A próxima campanha começa entendendo onde está cada voto desta. Prévia grátis no link da bio.
 >
+> 💬 Comenta aqui: de qual deputado você quer ver os dados?
+>
 > #eleicoes2026 #parana #deputadofederal #deputadoestadual #campanhaeleitoral #marketingpolitico #tse #dadoseleitorais
