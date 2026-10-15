@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 // Narração do vídeo: gera uma fala por cena (narracao.json), confere se cada uma cabe antes da próxima e
 // mixa voz + trilha com a música abaixando sozinha quando a voz entra (sidechain).
-// Rascunho com voz do macOS (`say`); para voz realista, troque gerarFala() por um serviço de TTS ou por gravação.
-// Uso: node analise-2026/video/narrar.mjs <trilha.wav> <saida.wav> <ffmpeg> [voz=Reed] [velocidade=210]
+// Voz do macOS (`say`) para rascunho, ou ElevenLabs com voz=el:<voice_id> (chave em ELEVENLABS_API_KEY ou ~/.config/elevenlabs.env).
+// Uso: node analise-2026/video/narrar.mjs <trilha.wav> <saida.wav> <ffmpeg> [voz=Reed|el:<voice_id>] [velocidade=210]
 import { execFileSync, spawnSync } from "node:child_process";
-import { mkdtempSync, readFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { homedir, tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -18,17 +18,37 @@ const tmp = mkdtempSync(join(tmpdir(), "narracao-"));
 // duração lida do relatório do ffmpeg (sai na saída de erro)
 const duracao = (arq) => spawnSync(FFMPEG, ["-i", arq, "-f", "null", "-"]).stderr.toString()
   .match(/time=(\d+):(\d+):([\d.]+)/g).pop().replace("time=", "").split(":").reduce((s, v) => s * 60 + Number(v), 0);
-const gerarFala = (texto, arq) => execFileSync("say", ["-v", VOZ, "-r", VEL, "-o", arq, texto]);
+const ELEVEN = VOZ.startsWith("el:");
+const chaveEleven = () => {
+  if (process.env.ELEVENLABS_API_KEY) return process.env.ELEVENLABS_API_KEY;
+  const arq = join(homedir(), ".config/elevenlabs.env");
+  const m = existsSync(arq) && readFileSync(arq, "utf8").match(/ELEVENLABS_API_KEY=(\S+)/);
+  if (!m) throw new Error("falta ELEVENLABS_API_KEY (variável de ambiente ou ~/.config/elevenlabs.env)");
+  return m[1];
+};
+// ElevenLabs: multilingual v2, uma chamada por fala; previous/next_text dão a entonação de frase contínua.
+async function gerarFala(texto, arq, i) {
+  if (!ELEVEN) return execFileSync("say", ["-v", VOZ, "-r", VEL, "-o", arq, texto]);
+  const r = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${VOZ.slice(3)}?output_format=mp3_44100_128`, {
+    method: "POST", headers: { "xi-api-key": chaveEleven(), "content-type": "application/json" },
+    body: JSON.stringify({ text: texto, model_id: "eleven_multilingual_v2", language_code: "pt",
+      previous_text: falas[i - 1]?.texto, next_text: falas[i + 1]?.texto,
+      voice_settings: { stability: 0.45, similarity_boost: 0.8, style: 0.25, use_speaker_boost: true, speed: Number(process.env.VELOCIDADE ?? 1) } }),
+  });
+  if (!r.ok) throw new Error(`ElevenLabs ${r.status}: ${await r.text()}`);
+  writeFileSync(arq, Buffer.from(await r.arrayBuffer()));
+}
 
-const arquivos = falas.map((f, i) => {
-  const aiff = join(tmp, `f${i}.aiff`);
-  gerarFala(f.texto, aiff);
+const arquivos = [];
+for (const [i, f] of falas.entries()) {
+  const aiff = join(tmp, `f${i}.${ELEVEN ? "mp3" : "aiff"}`);
+  await gerarFala(f.texto, aiff, i);
   const dur = duracao(aiff);
   const limite = (falas[i + 1]?.inicio ?? 30) - f.inicio - 0.1;
   console.log(`${f.inicio.toFixed(1).padStart(4)} s  ${dur.toFixed(2)} s / ${limite.toFixed(2)} s  ${dur > limite ? "ESTOURA" : "ok"}  ${f.texto}`);
   if (dur > limite) throw new Error(`a fala "${f.texto}" não cabe na cena (${dur.toFixed(2)} s > ${limite.toFixed(2)} s)`);
-  return aiff;
-});
+  arquivos.push(aiff);
+}
 
 // voz: cada fala atrasada até o seu início, juntas numa faixa; leve compressão e brilho para soar "de locutor".
 const entradas = arquivos.flatMap((a) => ["-i", a]);
