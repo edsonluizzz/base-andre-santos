@@ -75,22 +75,28 @@ async function gerarGemini() {
   const log = spawnSync(FFMPEG, ["-i", tudo, "-af", "silencedetect=n=-40dB:d=0.15", "-f", "null", "-"]).stderr.toString();
   const pausas = [...log.matchAll(/silence_start: ([\d.]+)[\s\S]*?silence_end: ([\d.]+)/g)].map((m) => ({ ini: +m[1], fim: +m[2] }))
     .filter((p) => p.ini > 0.2);
-  if (pausas.length < falas.length - 1) throw new Error(`só ${pausas.length} pausas para ${falas.length} falas`);
-  // cada fronteira cai na pausa mais próxima da posição esperada (proporcional ao tamanho do texto), em ordem;
-  // pausa curta (vírgula) só ganha se não houver pausa longa por perto
+  // escolhe as N-1 pausas de uma vez (programação dinâmica, em ordem): cada fronteira deve cair perto da posição
+  // esperada (proporcional ao tamanho do texto, entre o início e o fim da fala) e pausa longa vale mais que vírgula
   const total = +log.match(/time=(\d+):(\d+):([\d.]+)/g).pop().replace("time=", "").split(":").reduce((s, v) => s * 60 + Number(v), 0);
+  const ultima = pausas.at(-1), fimFala = ultima && ultima.fim > total - 0.05 ? ultima.ini : total;
+  const inicioFala = +(log.match(/silence_start: 0(?:\.0+)?\s[\s\S]*?silence_end: ([\d.]+)/)?.[1] ?? 0);
+  const internas = pausas.filter((p) => p.ini < fimFala - 0.05);
   const letras = falas.map((f) => f.texto.length), soma = letras.reduce((x, y) => x + y, 0);
-  const cortes = [];
-  let acum = 0, depois = 0;
-  for (let i = 0; i < falas.length - 1; i++) {
-    acum += letras[i];
-    const alvo = total * acum / soma;
-    const cand = pausas.filter((p) => p.ini > depois);
-    const custo = (p) => Math.abs((p.ini + p.fim) / 2 - alvo) - 2.5 * (p.fim - p.ini);
-    const melhor = cand.sort((x, y) => custo(x) - custo(y))[0];
-    if (!melhor) throw new Error("faltou pausa para separar as falas");
-    cortes.push(melhor); depois = melhor.fim;
+  const alvos = []; let acum = 0;
+  for (const l of letras.slice(0, -1)) { acum += l; alvos.push(inicioFala + (fimFala - inicioFala) * acum / soma); }
+  const PESO = 4, n = alvos.length, m = internas.length;
+  if (m < n) throw new Error(`só ${m} pausas para ${falas.length} falas`);
+  const custo = (k, j) => Math.abs((internas[j].ini + internas[j].fim) / 2 - alvos[k]) - PESO * (internas[j].fim - internas[j].ini);
+  const melhor = alvos.map(() => new Array(m).fill(Infinity)), de = alvos.map(() => new Array(m).fill(-1));
+  for (let j = 0; j < m; j++) melhor[0][j] = custo(0, j);
+  for (let k = 1; k < n; k++) for (let j = k; j < m; j++) for (let i = k - 1; i < j; i++) {
+    const v = melhor[k - 1][i] + custo(k, j);
+    if (v < melhor[k][j]) { melhor[k][j] = v; de[k][j] = i; }
   }
+  let jf = 0; for (let j = 1; j < m; j++) if (melhor[n - 1][j] < melhor[n - 1][jf]) jf = j;
+  const cortes = [];
+  for (let k = n - 1; k >= 0; k--) { cortes.unshift(internas[jf]); jf = de[k][jf]; }
+  if (process.env.SO_MEDIR) console.log("cortes:", cortes.map((c) => c.ini.toFixed(2)).join(" "));
   // "junta": true numa fala = sai no mesmo trecho da anterior (quando a pausa entre as duas é curta demais para separar)
   return falas.map((_, i) => {
     if (falas[i].junta) return null;
