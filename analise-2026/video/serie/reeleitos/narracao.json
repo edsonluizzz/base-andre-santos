@@ -1,0 +1,42 @@
+{
+  "comentario": "Narração do Reels reeleitos (60 s).",
+  "duracao": 60,
+  "falas": [
+    {
+      "inicio": 0.6,
+      "texto": "Quanto custou se reeleger?"
+    },
+    {
+      "inicio": 4.4,
+      "texto": "Na Assembleia, trinta deputados se reelegeram, de trinta e oito que tentaram."
+    },
+    {
+      "inicio": 12.4,
+      "texto": "Quem mais gastou para voltar foi Marcio Nunes, do PSD."
+    },
+    {
+      "inicio": 20.4,
+      "texto": "Um milhão e duzentos mil reais em despesas: dez reais e dezoito centavos por voto."
+    },
+    {
+      "inicio": 28.4,
+      "texto": "Na Câmara, quinze deputados federais do Paraná se reelegeram, de vinte e dois."
+    },
+    {
+      "inicio": 36.4,
+      "texto": "O que mais gastou foi Aliel Machado, do PV."
+    },
+    {
+      "inicio": 44.4,
+      "texto": "Três milhões e duzentos mil reais: vinte e sete reais por voto."
+    },
+    {
+      "inicio": 52.2,
+      "texto": "Ovile Diagnóstico. Sua eleição, voto a voto."
+    },
+    {
+      "inicio": 56.5,
+      "texto": "Comenta aqui: de qual político você quer ver os dados?"
+    }
+  ]
+}

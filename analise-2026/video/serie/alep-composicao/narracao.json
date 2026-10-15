@@ -1,0 +1,42 @@
+{
+  "comentario": "Narração do Reels alep-composicao (60 s).",
+  "duracao": 60,
+  "falas": [
+    {
+      "inicio": 0.6,
+      "texto": "Como fica a nova Assembleia do Paraná?"
+    },
+    {
+      "inicio": 4.4,
+      "texto": "Cinquenta e quatro cadeiras, divididas em nove bancadas."
+    },
+    {
+      "inicio": 12.4,
+      "texto": "Comparando com dois mil e vinte e dois, o mapa mudou bastante."
+    },
+    {
+      "inicio": 20.4,
+      "texto": "O PL quase triplicou: saiu de cinco para catorze deputados."
+    },
+    {
+      "inicio": 28.4,
+      "texto": "E empatou com o PSD. Juntos, os dois têm mais da metade da Casa."
+    },
+    {
+      "inicio": 36.4,
+      "texto": "PP e União, agora federados, caíram de onze para seis cadeiras."
+    },
+    {
+      "inicio": 44.4,
+      "texto": "E o Novo estreia na Assembleia com três deputados."
+    },
+    {
+      "inicio": 52.2,
+      "texto": "Ovile Diagnóstico. Sua eleição, voto a voto."
+    },
+    {
+      "inicio": 56.5,
+      "texto": "Comenta aqui: de qual político você quer ver os dados?"
+    }
+  ]
+}

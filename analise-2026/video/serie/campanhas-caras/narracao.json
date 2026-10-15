@@ -1,0 +1,42 @@
+{
+  "comentario": "Narração do Reels campanhas-caras (60 s).",
+  "duracao": 60,
+  "falas": [
+    {
+      "inicio": 0.6,
+      "texto": "Gastou muito e não levou."
+    },
+    {
+      "inicio": 4.4,
+      "texto": "Na Assembleia, a campanha mais cara sem vaga foi a de Natan Sperafico, do PP."
+    },
+    {
+      "inicio": 12.4,
+      "texto": "Novecentos e sessenta e dois mil reais, e trinta e sete mil votos. Ficou como suplente."
+    },
+    {
+      "inicio": 20.4,
+      "texto": "Na Câmara, a mais cara foi a de Aline Sleutjes, do PL."
+    },
+    {
+      "inicio": 28.4,
+      "texto": "Dois milhões e quatrocentos e cinquenta mil reais, e quarenta e quatro mil votos."
+    },
+    {
+      "inicio": 36.4,
+      "texto": "E o voto mais caro da eleição: trezentos e vinte e cinco reais por voto."
+    },
+    {
+      "inicio": 44.4,
+      "texto": "Dinheiro não garante voto. O que faz diferença é saber onde está o seu eleitor."
+    },
+    {
+      "inicio": 52.2,
+      "texto": "Ovile Diagnóstico. Sua eleição, voto a voto."
+    },
+    {
+      "inicio": 56.5,
+      "texto": "Comenta aqui: qual candidato você quer ver por aqui?"
+    }
+  ]
+}
