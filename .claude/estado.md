@@ -1,6 +1,6 @@
 # Estado — Ovile Eleitoral (Base André Santos)
 
-**Última atualização:** 2026-10-14 (sessão: Ovile Diagnóstico — sub judice, prévia com conclusões, resumos, mapa por faixas; lote 2 de e-mails)
+**Última atualização:** 2026-10-16 (sessão: Ovile Diagnóstico — sub judice, prévia com conclusões, resumos, mapa por faixas; lote 2 de e-mails)
 
 ---
 
@@ -8,7 +8,7 @@
 
 - Commits 7ad7ecc8..e7263b9a no GitHub, **NÃO publicados**: Vercel recusa deploy ("Your team has an overdue balance", time edsonluizzzs-projects). Depois do pagamento: `vercel --prod --yes` e conferir `vercel ls`.
 - Feito: (1) votos anulados sub judice (27 no PR 2026) com votos por local, aviso e selo; outras UFs não recoletadas; (2) folha "Perfil do eleitor" no PDF; (3) prévia grátis com conclusões reais (`conclusoesPrevia`); (4) barra recolhida no celular, "Em resumo" em Custo/Comparador/Concorrentes, detalhes recolhidos; (5) mapa de votos por faixas de quantil. 75/75 testes.
-- Campanha de e-mail: lote 2 enviado 13/10 (100/100). Lote 3 (37) só quando o Edson pedir, envio imediato.
+- Campanha de e-mail COMPLETA: lote 2 13/10 (100/100), lote 3 15/10 (37/37) → 237/237. Relatório 15/10: clicou 8, abriu 118, entregue 106, voltou 5 (`enviar.mjs --relatorio`, planilha em ~/Downloads/Ovile Prévias/relatorio.csv). Leads que clicaram e ainda não foram abordados: Gilberto Ribeiro 22222, Ana Pavelski 2027, Cristiano Santos 20555, Marinho Guimaraes 30789, Faynara Barbosa 3007, Roberto Aciolli 20190.
 - Leads WhatsApp: Evandro Cruz 20070 (votos sub judice, receita R$ 0 parcial) e Capitão Marques 3022 (sem resposta). Regra: sem vídeo, chamada ou print; CTA = mandar a prévia em PDF; preço só se perguntarem.
 - Snapshot TSE do comparativo financeiro atualizado 13/10 via bookmarklet/window.name.
 - Pendentes: #6 visão 2028 e produto p/ partido (aguarda decisões do Edson); #7 recoleta com prestação final em novembro (`coletar.mjs --refazer`).
