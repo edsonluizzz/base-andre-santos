@@ -14,6 +14,7 @@ const FFMPEG = ffmpegArg ?? process.env.FFMPEG ?? "ffmpeg";
 
 const b = await chromium.launch({ executablePath: `${process.env.HOME}/Desktop/Google Chrome.app/Contents/MacOS/Google Chrome` });
 const p = await b.newPage({ viewport: { width: 1080, height: 1920 } });
+p.setDefaultTimeout(0); // máquina lenta (bateria) não derruba a gravação no meio
 await p.goto(pathToFileURL(resolve(html)).href);
 await p.waitForFunction(() => window.__seek && window.__pronto);
 await p.evaluate(() => window.__pronto);

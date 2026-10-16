@@ -31,51 +31,52 @@
       "texto": "Para sair do buraco, foram quatro movimentos."
     },
     {
-      "inicio": 28.0,
+      "inicio": 29.6,
       "texto": "E todos aparecem nos números."
     },
     {
-      "inicio": 32.6,
+      "inicio": 32.3,
       "texto": "Primeiro: mais candidatos."
     },
     {
       "inicio": 34.6,
-      "texto": "De duzentos e oito para quatrocentos e noventa e cinco. Cada um somando voto para a legenda."
+      "texto": "De duzentos e oito para quatrocentos e noventa e cinco. Cada um somando voto para a legenda.",
+      "junta": true
     },
     {
       "inicio": 40.6,
       "texto": "Segundo: puxadores de voto."
     },
     {
-      "inicio": 42.8,
+      "inicio": 43.3,
       "texto": "Jeffrey Chiquini, Guilherme Kilter, Marina Helena. Os cinco maiores somaram mais de um milhão e cem mil votos."
     },
     {
-      "inicio": 48.6,
+      "inicio": 48.7,
       "texto": "Terceiro: o Paraná."
     },
     {
-      "inicio": 50.4,
+      "inicio": 50.7,
       "texto": "Quinze por cento dos votos para federal no estado. Sem o Paraná, o Novo não passaria."
     },
     {
-      "inicio": 56.6,
+      "inicio": 56.9,
       "texto": "Quarto: novos estados."
     },
     {
-      "inicio": 58.4,
+      "inicio": 59.2,
       "texto": "Precisava de um e meio por cento em nove. Chegou a exatamente nove."
     },
     {
-      "inicio": 64.4,
+      "inicio": 64.7,
       "texto": "E o nono foi o Distrito Federal."
     },
     {
-      "inicio": 66.6,
+      "inicio": 67.0,
       "texto": "Por novecentos e setenta e seis votos."
     },
     {
-      "inicio": 69.4,
+      "inicio": 69.8,
       "texto": "Sem eles, seriam só oito."
     },
     {
@@ -91,7 +92,7 @@
       "texto": "Mas a régua sobe em dois mil e trinta: três por cento."
     },
     {
-      "inicio": 84.0,
+      "inicio": 84.4,
       "texto": "Com os votos de agora, o Novo ficaria de fora."
     },
     {
@@ -99,8 +100,30 @@
       "texto": "Ovile Diagnóstico. Sua eleição, voto a voto."
     },
     {
-      "inicio": 92.0,
+      "inicio": 92.3,
       "texto": "Comenta aqui: o Novo passa na regra de dois mil e trinta?"
     }
-  ]
+  ],
+  "cortes": {
+    "take": "2d4892fc8b",
+    "trocar": [
+      [
+        30.55,
+        34.15
+      ],
+      [
+        29.19,
+        30.55
+      ],
+      [
+        49.81,
+        47.48
+      ],
+      [
+        54.07,
+        49.81
+      ]
+    ],
+    "motivo": "narração gerada em 2 pedidos (o único caía por ECONNRESET); o alinhador cortava em pausas internas e na emenda das metades"
+  }
 }

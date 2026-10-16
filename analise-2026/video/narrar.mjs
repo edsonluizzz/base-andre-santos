@@ -139,9 +139,10 @@ async function gerarGemini() {
 
 const arquivos = [];
 const prontos = GEMINI ? await gerarGemini() : null;
-const proxima = (i) => { let j = i + 1; while (falas[j]?.junta) j++; return falas[j]; };
+// "pular": true = a fala continua no roteiro (o áudio em cache não muda), mas fica fora da mixagem
+const proxima = (i) => { let j = i + 1; while (falas[j]?.junta || falas[j]?.pular) j++; return falas[j]; };
 for (const [i, f] of falas.entries()) {
-  if (f.junta) continue;
+  if (f.junta || f.pular) continue;
   const aiff = prontos ? prontos[i] : join(tmp, `f${i}.${ELEVEN ? "mp3" : "aiff"}`);
   if (!prontos) await gerarFala(f.texto, aiff, i);
   const dur = duracao(aiff);
@@ -160,7 +161,7 @@ for (const [i, f] of falas.entries()) {
 }
 
 // voz: cada fala atrasada até o seu início, juntas numa faixa; leve compressão e brilho para soar "de locutor".
-const usadas = falas.filter((f) => !f.junta);
+const usadas = falas.filter((f) => !f.junta && !f.pular);
 const entradas = arquivos.flatMap((a) => ["-i", a]);
 const atrasos = usadas.map((f, i) => `[${i + 1}:a]aresample=44100,pan=stereo|c0=c0|c1=c0,adelay=${Math.round(f.inicio * 1000)}|${Math.round(f.inicio * 1000)}[v${i}]`).join(";");
 const voz = `${usadas.map((_, i) => `[v${i}]`).join("")}amix=inputs=${usadas.length}:normalize=0,highpass=f=90,equalizer=f=3000:t=q:w=1:g=3,acompressor=threshold=-18dB:ratio=3:attack=5:release=120,volume=2.2,asplit=2[voz][chave]`;

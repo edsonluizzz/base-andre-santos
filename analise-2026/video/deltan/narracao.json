@@ -7,7 +7,7 @@
       "texto": "Dois milhões, novecentos e quatro mil votos."
     },
     {
-      "inicio": 4.0,
+      "inicio": 4.4,
       "texto": "Deltan Dallagnol, eleito senador pelo Paraná."
     },
     {
@@ -15,15 +15,15 @@
       "texto": "Eram duas vagas, e cada eleitor votou em dois candidatos."
     },
     {
-      "inicio": 12.2,
+      "inicio": 12.9,
       "texto": "Filipe Barros ficou com a primeira. Deltan, com a segunda."
     },
     {
-      "inicio": 16.6,
+      "inicio": 17.2,
       "texto": "De cada cem eleitores que foram votar,"
     },
     {
-      "inicio": 19.2,
+      "inicio": 20.0,
       "texto": "quarenta e três escolheram Deltan para uma das vagas."
     },
     {
@@ -31,7 +31,7 @@
       "texto": "Ele teve voto nas trezentas e noventa e nove cidades do estado."
     },
     {
-      "inicio": 28.6,
+      "inicio": 28.9,
       "texto": "Das maiores às menores."
     },
     {
@@ -47,11 +47,11 @@
       "texto": "Onde foi mais forte: o Oeste e o Sudoeste."
     },
     {
-      "inicio": 43.8,
+      "inicio": 44.3,
       "texto": "Em Nova Santa Rosa, um em cada três votos para senador foi dele."
     },
     {
-      "inicio": 48.6,
+      "inicio": 49.2,
       "texto": "As maiores votações: Curitiba, Londrina, Maringá, Cascavel e Ponta Grossa."
     },
     {
@@ -83,7 +83,7 @@
       "texto": "No fim, quase um milhão de votos à frente do terceiro colocado."
     },
     {
-      "inicio": 84.4,
+      "inicio": 84.8,
       "texto": "Vaga garantida, com folga."
     },
     {
@@ -91,7 +91,7 @@
       "texto": "Cada voto custou um real e quarenta centavos."
     },
     {
-      "inicio": 91.6,
+      "inicio": 91.8,
       "texto": "Entre os mais votados, um dos menores custos da disputa."
     },
     {
@@ -102,5 +102,23 @@
       "inicio": 100.2,
       "texto": "Comenta aqui: quem a gente analisa no próximo vídeo?"
     }
-  ]
+  ],
+  "cortes": {
+    "take": "d46c6297ed",
+    "trocar": [
+      [
+        54.94,
+        58.43
+      ],
+      [
+        52.31,
+        54.94
+      ],
+      [
+        50.36,
+        52.31
+      ]
+    ],
+    "motivo": "cortava na vírgula de 'Maringá, Cascavel' e deslocava as três falas seguintes"
+  }
 }

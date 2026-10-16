@@ -19,7 +19,7 @@
       "texto": "No primeiro turno, Flávio teve quarenta e sete por cento; Lula, quarenta e cinco."
     },
     {
-      "inicio": 16.6,
+      "inicio": 16.4,
       "texto": "Na Câmara, a coligação de Flávio elegeu cento e vinte e um deputados."
     },
     {
@@ -27,7 +27,7 @@
       "texto": "A de Lula, cento e vinte e quatro. A maioria é duzentos e cinquenta e sete."
     },
     {
-      "inicio": 25.0,
+      "inicio": 25.6,
       "texto": "Quem decide é o centro: duzentas e sessenta e oito cadeiras fora das duas coligações."
     },
     {
@@ -55,7 +55,7 @@
       "texto": "Na Câmara, empate técnico. No Senado, vantagem do PL."
     },
     {
-      "inicio": 60.4,
+      "inicio": 61.2,
       "texto": "Quem vencer vai depender do centro para governar."
     },
     {
@@ -75,12 +75,13 @@
       "texto": "O bloco do PSD tem vinte e cinco."
     },
     {
-      "inicio": 80.6,
+      "inicio": 80.1,
       "texto": "Para ter maioria, faltam oito. E o maior bloco fora do governo é o do PSD, de Ratinho Júnior."
     },
     {
       "inicio": 85.6,
-      "texto": "Em Brasília, os dois senadores eleitos são da coligação de Moro."
+      "texto": "Em Brasília, os dois senadores eleitos são da coligação de Moro.",
+      "pular": true
     },
     {
       "inicio": 88.4,
@@ -90,5 +91,27 @@
       "inicio": 92.0,
       "texto": "Comenta aqui: o que você espera do próximo governo?"
     }
-  ]
+  ],
+  "cortes": {
+    "take": "6df4d157b3",
+    "trocar": [
+      [
+        67.01,
+        68.97
+      ],
+      [
+        61.9,
+        64.28
+      ],
+      [
+        59.91,
+        61.9
+      ],
+      [
+        51.95,
+        53.82
+      ]
+    ],
+    "motivo": "cortava nos dois-pontos de 'faltam vinte e cinco: dois terços' e deslocava as falas até o Paraná"
+  }
 }
